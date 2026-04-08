@@ -60,6 +60,21 @@ export default function ParentDashboard({
     [profile.sessionHistory],
   );
 
+  const evolutionData = useMemo(() => {
+    const sessions = profile.sessionHistory.slice(-20);
+    if (sessions.length < 2) return null;
+
+    const points = sessions.map((s) => ({
+      date: new Date(s.date).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+      }),
+      pct: Math.round((s.correctCount / s.questionsCount) * 100),
+    }));
+
+    return points;
+  }, [profile.sessionHistory]);
+
   const boxColors = [
     'var(--box-gray)', 'var(--box-red)', 'var(--box-orange)',
     'var(--box-yellow)', 'var(--box-lightgreen)', 'var(--box-green)',
@@ -128,6 +143,113 @@ export default function ParentDashboard({
           ))}
         </div>
       </div>
+
+      {/* Evolution graph */}
+      {evolutionData && (() => {
+        const padding = { top: 20, right: 15, bottom: 40, left: 38 };
+        const svgW = 400;
+        const svgH = 200;
+        const chartW = svgW - padding.left - padding.right;
+        const chartH = svgH - padding.top - padding.bottom;
+        const n = evolutionData.length;
+        const xStep = chartW / (n - 1);
+
+        const pts = evolutionData.map((d, i) => ({
+          x: padding.left + i * xStep,
+          y: padding.top + chartH - (d.pct / 100) * chartH,
+          pct: d.pct,
+          date: d.date,
+        }));
+
+        const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+        const areaPath = `${linePath} L${pts[pts.length - 1].x},${padding.top + chartH} L${pts[0].x},${padding.top + chartH} Z`;
+
+        const yTicks = [0, 25, 50, 75, 100];
+
+        // Show a subset of x labels to avoid overlap
+        const maxLabels = 6;
+        const labelInterval = n <= maxLabels ? 1 : Math.ceil(n / maxLabels);
+
+        return (
+          <div className="parent-section">
+            <h3>{'\u00C9'}volution</h3>
+            <div className="parent-evolution-chart">
+              <svg viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMid meet">
+                {/* Y-axis grid lines and labels */}
+                {yTicks.map((tick) => {
+                  const y = padding.top + chartH - (tick / 100) * chartH;
+                  return (
+                    <Fragment key={`y-${tick}`}>
+                      <line
+                        x1={padding.left}
+                        y1={y}
+                        x2={padding.left + chartW}
+                        y2={y}
+                        stroke="var(--border)"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x={padding.left - 6}
+                        y={y + 1}
+                        textAnchor="end"
+                        dominantBaseline="middle"
+                        fontSize="10"
+                        fill="var(--text-muted)"
+                        fontFamily="Nunito, sans-serif"
+                      >
+                        {tick}%
+                      </text>
+                    </Fragment>
+                  );
+                })}
+
+                {/* Area fill */}
+                <path
+                  d={areaPath}
+                  fill="var(--primary)"
+                  opacity="0.1"
+                />
+
+                {/* Line */}
+                <path
+                  d={linePath}
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {/* Dots and X-axis labels */}
+                {pts.map((p, i) => (
+                  <Fragment key={i}>
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r="4"
+                      fill="var(--surface)"
+                      stroke="var(--primary)"
+                      strokeWidth="2"
+                    />
+                    {i % labelInterval === 0 && (
+                      <text
+                        x={p.x}
+                        y={padding.top + chartH + 16}
+                        textAnchor="middle"
+                        fontSize="9"
+                        fill="var(--text-light)"
+                        fontFamily="Nunito, sans-serif"
+                      >
+                        {p.date}
+                      </text>
+                    )}
+                  </Fragment>
+                ))}
+              </svg>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Hardest facts */}
       {hardFacts.length > 0 && (

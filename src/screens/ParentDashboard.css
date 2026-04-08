@@ -88,6 +88,21 @@
   color: var(--text-muted);
 }
 
+/* Evolution chart */
+.parent-evolution-chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px 4px;
+  overflow: hidden;
+}
+
+.parent-evolution-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* Hard facts */
 .parent-hard-facts {
   display: flex;
