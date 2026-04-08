@@ -9,6 +9,7 @@ import './RecapScreen.css';
 interface RecapScreenProps {
   result: SessionResult;
   newBadges: BadgeType[];
+  newlyCompletedTables: number[];
   mascotLevel: number;
   previousMascotLevel: number;
   onFinish: () => void;
@@ -40,6 +41,7 @@ function getStarCount(result: SessionResult): number {
 export default function RecapScreen({
   result,
   newBadges,
+  newlyCompletedTables,
   mascotLevel,
   previousMascotLevel,
   onFinish,
@@ -56,7 +58,10 @@ export default function RecapScreen({
 
     const leveledUp = mascotLevel > previousMascotLevel;
 
-    if (leveledUp) {
+    if (newlyCompletedTables.length > 0) {
+      playLevelUp();
+      triggerConfetti();
+    } else if (leveledUp) {
       playLevelUp();
       triggerConfetti();
     } else if (newBadges.length > 0) {
@@ -65,16 +70,34 @@ export default function RecapScreen({
     } else if (starCount >= 3) {
       triggerConfetti();
     }
-  }, [mascotLevel, previousMascotLevel, newBadges.length, starCount, playBadge, playLevelUp, triggerConfetti]);
+  }, [mascotLevel, previousMascotLevel, newBadges.length, newlyCompletedTables.length, starCount, playBadge, playLevelUp, triggerConfetti]);
   const mascotMood =
-    starCount >= 3
+    newlyCompletedTables.length > 0
       ? 'celebrate'
-      : starCount >= 2
-        ? 'happy'
-        : 'idle';
+      : starCount >= 3
+        ? 'celebrate'
+        : starCount >= 2
+          ? 'happy'
+          : 'idle';
 
   return (
     <div className="recap-screen">
+      {newlyCompletedTables.length > 0 && (
+        <div className="recap-table-complete">
+          <div className="recap-table-complete-icon">
+            {newlyCompletedTables.length === 1 ? '\u2B50' : '\u{1F31F}'}
+          </div>
+          <div className="recap-table-complete-title">
+            {newlyCompletedTables.length === 1
+              ? `Tu as maîtrisé la table de ${newlyCompletedTables[0]}\u202F!`
+              : `Tu as maîtrisé les tables de ${newlyCompletedTables.join(' et ')}\u202F!`}
+          </div>
+          <div className="recap-table-complete-subtitle">
+            Tous les faits sont en boîte 5 !
+          </div>
+        </div>
+      )}
+
       <Mascot level={mascotLevel} mood={mascotMood as 'celebrate' | 'happy' | 'idle'} size="normal" />
 
       <div className="recap-title">Séance terminée !</div>
