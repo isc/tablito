@@ -1,0 +1,103 @@
+.mystery-image-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.mystery-image {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  background: var(--line-soft);
+}
+
+.mystery-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+}
+
+.mystery-cell {
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  transition: background 0.5s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mystery-cell.mystery-level-0 {
+  background: linear-gradient(135deg, var(--line-soft) 0%, var(--line) 100%);
+  cursor: default;
+}
+
+.mystery-cell.mystery-diagonal.mystery-level-5 {
+  box-shadow: inset 0 0 0 2px rgba(217, 154, 31, 0.55);
+}
+
+.mystery-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 26, 46, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.mystery-detail-card {
+  background: var(--paper);
+  border-radius: 22px;
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-md);
+}
+
+.mystery-detail-card h3 {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin: 0 0 16px 0;
+  color: var(--ink);
+}
+
+.mystery-detail-box {
+  margin: 12px 0 0 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.mystery-detail-close {
+  margin-top: 16px;
+  padding: 12px 28px;
+  background: var(--indigo);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 0 var(--indigo-ink);
+}
+
+.mystery-detail-close:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--indigo-ink);
+}

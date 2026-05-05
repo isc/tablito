@@ -1,0 +1,66 @@
+.changelog-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--cream);
+  padding: 1rem 1.25rem 3rem;
+  position: relative;
+}
+
+.changelog-back-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.changelog-content {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-top: 2.5rem;
+  font-family: var(--sans);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.changelog-title {
+  font-family: var(--serif);
+  font-size: 2rem;
+  color: var(--indigo-ink);
+  margin-bottom: 0.5rem;
+}
+
+.changelog-subtitle {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.changelog-entry {
+  margin-bottom: 1.75rem;
+}
+
+.changelog-entry h2 {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--indigo-ink);
+  margin-bottom: 0.5rem;
+}
+
+.changelog-entry ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  color: var(--ink-soft);
+}
+
+.changelog-entry li {
+  margin-bottom: 0.4rem;
+}

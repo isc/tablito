@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Multiplix — Guide d'utilisation</title>
+<link rel="icon" href="../favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;600;700;800&display=swap" />
+<style>
+  :root {
+    --cream: #FBF6EC;
+    --cream-deep: #F3EADB;
+    --paper: #FFFFFF;
+    --ink: #1E1A2E;
+    --ink-soft: #52495F;
+    --ink-muted: #8A8295;
+    --line: #E6DECE;
+    --line-soft: #EFE7D6;
+    --indigo: #4F46BA;
+    --indigo-soft: #E8E6F7;
+    --indigo-ink: #2B2478;
+    --coral: #E8623D;
+    --honey: #D99A1F;
+    --honey-soft: #F7E9C4;
+    --sage: #3F9B7A;
+    --sage-soft: #D9EDE2;
+    --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --sans: 'Nunito', 'SF Pro Text', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    background: var(--cream);
+    color: var(--ink);
+    padding: 56px 24px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  header .eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header h1 {
+    margin: 0 0 10px;
+    font-family: var(--serif);
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--ink);
+  }
+  header h1 em {
+    color: var(--indigo);
+    font-style: italic;
+  }
+  header p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+  header .back-link {
+    display: inline-block;
+    margin-top: 18px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--indigo);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    transition: background 0.15s;
+  }
+  header .back-link:hover { background: var(--cream-deep); }
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+  nav.toc {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 22px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  nav.toc .toc-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink-muted);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  nav.toc ul {
+    margin: 0;
+    padding: 0 0 0 4px;
+    columns: 2;
+    list-style: none;
+  }
+  nav.toc li {
+    margin: 6px 0;
+    break-inside: avoid;
+    padding-left: 18px;
+    position: relative;
+  }
+  nav.toc li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--honey);
+  }
+  nav.toc a {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.2px;
+  }
+  nav.toc a:hover { color: var(--indigo); }
+  section.section {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 22px;
+    padding: 36px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 40px;
+    align-items: start;
+  }
+  .section-text { max-width: 55ch; }
+  .section-text h2 {
+    margin: 0 0 14px;
+    font-family: var(--serif);
+    color: var(--ink);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+  .section-text p {
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+    font-size: 15px;
+  }
+  .section-text p:last-child { margin-bottom: 0; }
+  .section.section-full {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .section-full .section-text { max-width: 72ch; margin: 0 auto; }
+  ul.principles {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    display: grid;
+    gap: 12px;
+  }
+  ul.principles li {
+    color: var(--ink);
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  ul.principles li strong {
+    color: var(--indigo);
+    font-weight: 700;
+  }
+  ul.principles .cite {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-muted);
+    font-size: 12px;
+    font-style: italic;
+  }
+  .principles-footer {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .principles-footer a { color: var(--indigo); text-decoration: none; font-weight: 700; }
+  .principles-footer a:hover { text-decoration: underline; }
+  .principles-footer code {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.85em;
+  }
+  .shots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    justify-items: center;
+  }
+  .shots-1 { grid-template-columns: minmax(0, 320px); justify-content: center; }
+  figure.shot {
+    margin: 0;
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 18px;
+    padding: 12px;
+    text-align: center;
+    width: 100%;
+    max-width: 320px;
+  }
+  figure.shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 12px;
+    background: var(--paper);
+  }
+  figure.shot figcaption {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  footer {
+    text-align: center;
+    color: var(--ink-muted);
+    padding: 32px 24px;
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    margin-top: 24px;
+  }
+  footer p { margin: 0 0 8px; }
+  footer p:last-child { margin-bottom: 0; font-size: 12px; color: var(--ink-soft); }
+  footer a { color: var(--indigo); text-decoration: none; font-weight: 700; }
+  footer a:hover { text-decoration: underline; }
+  footer code {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.9em;
+  }
+  @media (max-width: 800px) {
+    section.section { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
+    .shots-1 { justify-self: center; }
+  }
+  @media (max-width: 640px) {
+    nav.toc ul { columns: 1; }
+    header { padding: 36px 20px 28px; }
+    header h1 { font-size: 32px; }
+    main { padding: 20px 16px; }
+    section.section { padding: 20px; border-radius: 18px; }
+    .shots { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Guide d'utilisation</div>
+  <h1>Multiplix<em>.</em></h1>
+  <a class="back-link" href="../">← Retour à l'application</a>
+</header>
+<main>
+  <nav class="toc">
+    <div class="toc-label">Sommaire</div>
+    <ul><li><a href="#principes">Les principes</a></li><li><a href="#welcome">Bienvenue</a></li><li><a href="#home">Écran d'accueil</a></li><li><a href="#session">La séance</a></li><li><a href="#recap">Bilan de séance</a></li><li><a href="#progress">Mon image mystère</a></li><li><a href="#badges">Les badges</a></li><li><a href="#rules">Les règles ×1 et ×10</a></li><li><a href="#parent">Espace parent</a></li></ul>
+  </nav>
+  
+      <section id="principes" class="section section-full">
+        <div class="section-text">
+          <h2>Les principes</h2>
+          <p>Multiplix n'est pas un simple quiz. Chaque choix de conception s'appuie
+      sur la recherche en psychologie cognitive et en didactique des
+      mathématiques. Cinq piliers portent l'application :</p>
+      <ul class="principles">
+        <li>
+          <strong>Répétition espacée — les boîtes de Leitner.</strong> Chaque
+          fait vit dans l'une des cinq boîtes numérotées de 1 (à peine appris)
+          à 5 (bien ancré). Un fait nouveau démarre en boîte 1 : il est revu
+          le jour même. Une bonne réponse le fait monter d'une boîte et
+          repousse la prochaine révision : 1 jour en boîte 2, 3 jours en
+          boîte 3, 7 jours en boîte 4, 21 jours en boîte 5. Une erreur le
+          renvoie en boîte 1, le temps de le réancrer. L'enfant revoit ainsi
+          chaque fait juste avant de l'oublier, avec des intervalles de plus
+          en plus longs — bien plus durable que le bachotage en une soirée.
+          <span class="cite">Kang (2016) ; Cepeda et al. (2008) ; Rea &amp; Modigliani (1985)</span>
+        </li>
+        <li>
+          <strong>Faible interférence.</strong> Les faits qui se ressemblent
+          (même opérande, résultats proches) ne sont jamais introduits la même
+          semaine. Une séance contient uniquement des faits suffisamment
+          dissemblables pour que l'enfant ne les confonde pas en mémoire.
+          <span class="cite">Dotan &amp; Zviran-Ginat (2022)</span>
+        </li>
+        <li>
+          <strong>Entrelacement.</strong> Les tables sont mélangées au sein
+          d'une même séance plutôt que travaillées l'une après l'autre. L'enfant
+          doit aller chercher la bonne opération à chaque question, ce qui
+          solidifie le rappel à long terme.
+          <span class="cite">Rohrer &amp; Taylor (2007) ; Rohrer, Dedrick &amp; Burgess (2014)</span>
+        </li>
+        <li>
+          <strong>Comprendre avant de mémoriser.</strong> Chaque nouveau fait
+          est d'abord présenté comme une grille de points (addition répétée),
+          puis par la commutativité (3 × 5 = 5 × 3), enfin par une astuce de
+          dérivation adaptée (× 9 = × 10 − n, × 4 = double-double, × 6 = × 5 + n,
+          etc.). Quelques faits-repères (doubles, × 5, × 9, carrés) servent
+          d'appui aux faits dérivés. L'échafaudage disparaît quand le rappel
+          devient automatique.
+          <span class="cite">Van de Walle via Wichita Public Schools (2014) ; Brendefur et al. (2015)</span>
+        </li>
+        <li>
+          <strong>Feedback orienté progrès, pas performance.</strong> Pas de
+          score chiffré côté enfant, pas d'étoiles calculées sur le taux de
+          réussite : uniquement des encouragements constants et la mise en
+          avant des faits appris. L'objectif est la motivation intrinsèque et
+          la maîtrise, pas la note. Les chiffres bruts restent disponibles
+          dans l'espace parent.
+          <span class="cite">Butler (1988) ; Hattie &amp; Timperley (2007)</span>
+        </li>
+      </ul>
+      <p class="principles-footer">Détails et justifications dans
+      <a href="https://github.com/isc/multiplix/blob/main/specs-multiplix.md"><code>specs-multiplix.md</code></a>.</p>
+        </div>
+      </section>
+
+      <section id="welcome" class="section">
+        <div class="section-text">
+          <h2>Bienvenue</h2>
+          <p>À la toute première ouverture, Multiplix déroule un parcours d'accueil en quatre étapes : une salutation de la mascotte, la saisie du prénom, une présentation du test de positionnement, puis le test lui-même (15 questions bien réparties). Le résultat sert à placer les faits déjà connus directement dans les boîtes supérieures du système de Leitner.</p>
+        </div>
+        <div class="shots shots-4">
+          
+          <figure class="shot">
+            <img src="screenshots/01-welcome-intro.png" alt="La mascotte se présente à l'enfant." width="360" height="760" loading="lazy" />
+            <figcaption>La mascotte se présente à l'enfant.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/02-welcome-name.png" alt="Saisie du prénom." width="360" height="760" loading="lazy" />
+            <figcaption>Saisie du prénom.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/03-welcome-ready.png" alt="Annonce du test de positionnement." width="360" height="760" loading="lazy" />
+            <figcaption>Annonce du test de positionnement.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/04-welcome-test.png" alt="Test de positionnement (15 questions)." width="360" height="760" loading="lazy" />
+            <figcaption>Test de positionnement (15 questions).</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="home" class="section">
+        <div class="section-text">
+          <h2>Écran d'accueil</h2>
+          <p>Le hub quotidien. La mascotte est un compagnon stable — elle accueille l'enfant à chaque session, réagit aux bonnes réponses, encourage en cas d'erreur, sans jamais juger. La flamme affiche la série en cours. Le gros bouton lance la séance du jour, et la barre du bas donne accès aux progrès, aux badges et aux règles ×1 / ×10. L'icône engrenage ouvre l'espace parent, après une courte multiplication-gate pour écarter les doigts curieux.</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/05-home.png" alt="Accueil avec la mascotte et la série de 5 jours." width="360" height="760" loading="lazy" />
+            <figcaption>Accueil avec la mascotte et la série de 5 jours.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="session" class="section">
+        <div class="section-text">
+          <h2>La séance</h2>
+          <p>Une séance contient 12 à 15 questions. Quand un fait nouveau apparaît, il est introduit en trois temps : une grille de points qui montre la multiplication comme une addition répétée, la propriété de commutativité (3×5 = 5×3, sauf pour les carrés), et une astuce de dérivation adaptée au fait (par exemple « × 9 = × 10 moins une fois »). Ensuite viennent les questions. Une bonne réponse rapide donne une étoile dorée. En cas d'erreur, la bonne réponse est affichée avec la grille de points et — tant que le fait est en début d'apprentissage — l'astuce de dérivation est rappelée. Le fait est re-posé un peu plus loin dans la séance.</p>
+        </div>
+        <div class="shots shots-5">
+          
+          <figure class="shot">
+            <img src="screenshots/06-session-intro.png" alt="Introduction d'un nouveau fait — étape 1 : grille de points et addition répétée." width="360" height="760" loading="lazy" />
+            <figcaption>Introduction d'un nouveau fait — étape 1 : grille de points et addition répétée.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/06b-session-intro-strategy.png" alt="Introduction — étape 3 : astuce de dérivation pour mémoriser le fait." width="360" height="760" loading="lazy" />
+            <figcaption>Introduction — étape 3 : astuce de dérivation pour mémoriser le fait.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/07-session-question.png" alt="Question standard et pavé numérique." width="360" height="760" loading="lazy" />
+            <figcaption>Question standard et pavé numérique.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/08-session-feedback-correct.png" alt="Bonne réponse rapide — étoile dorée." width="360" height="760" loading="lazy" />
+            <figcaption>Bonne réponse rapide — étoile dorée.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/09-session-feedback-incorrect.png" alt="Réponse incorrecte — grille de points et rappel de l'astuce." width="360" height="760" loading="lazy" />
+            <figcaption>Réponse incorrecte — grille de points et rappel de l'astuce.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="recap" class="section">
+        <div class="section-text">
+          <h2>Bilan de séance</h2>
+          <p>À la fin d'une séance, l'écran de bilan affiche les éventuels nouveaux faits, invite à aller voir l'image mystère (avec une mention spéciale quand elle a changé) et déclenche les confettis si une table est entièrement maîtrisée, si l'image mystère est complétée, ou pour un nouveau badge. La progression globale est affichée via une barre « X faits connus sur 36 ».</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/14-recap.png" alt="Bilan d'une séance avec barre de progression." width="360" height="760" loading="lazy" />
+            <figcaption>Bilan d'une séance avec barre de progression.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="progress" class="section">
+        <div class="section-text">
+          <h2>Mon image mystère</h2>
+          <p>Une grille 8×8 (tables 2 à 9) où chaque case est un fragment d'une image cachée. Plus l'enfant maîtrise un fait, plus son fragment gagne en finesse — silhouette floue, aplat, couleurs, ombres, détails complets, en miroir des 5 boîtes Leitner. Un fait oublié voit son fragment se re-flouter un peu, sans notion d'échec. Quand les 36 faits sont maîtrisés, l'image est entièrement révélée. Les totaux « découverts / maîtrisés / total » sont affichés en haut.</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/10-progress.png" alt="Image mystère qui se révèle au fur et à mesure des progrès." width="360" height="760" loading="lazy" />
+            <figcaption>Image mystère qui se révèle au fur et à mesure des progrès.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="badges" class="section">
+        <div class="section-text">
+          <h2>Les badges</h2>
+          <p>16 badges au total, répartis en trois familles : jalons (première séance, 7 jours, 30 jours), performance (10 réponses de suite, 5 réponses < 2 s), et maîtrise (un badge par table + un badge « génie des maths » quand tout est en boîte 5). Chaque vignette est cliquable et ouvre une fiche qui explique la condition de déblocage. Pour les badges verrouillés, une barre de progression montre où en est l'enfant — les icônes seules ne sont pas auto-portantes pour qui découvre la gamification.</p>
+        </div>
+        <div class="shots shots-2">
+          
+          <figure class="shot">
+            <img src="screenshots/11-badges.png" alt="Collection de badges — obtenus et à débloquer." width="360" height="760" loading="lazy" />
+            <figcaption>Collection de badges — obtenus et à débloquer.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/11-badges-detail.png" alt="En cliquant sur un badge verrouillé, on découvre la condition et la progression." width="360" height="760" loading="lazy" />
+            <figcaption>En cliquant sur un badge verrouillé, on découvre la condition et la progression.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="rules" class="section">
+        <div class="section-text">
+          <h2>Les règles ×1 et ×10</h2>
+          <p>Deux règles que l'app met en avant dès le début pour alléger la charge mnésique : multiplier par 1 (le nombre ne change pas) et multiplier par 10 (les chiffres glissent d'une place vers la gauche, un 0 prend la place des unités). Ces tables ne font donc pas partie des 36 faits appris.</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/12-rules.png" alt="Règles pour ×1 et ×10." width="360" height="760" loading="lazy" />
+            <figcaption>Règles pour ×1 et ×10.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="parent" class="section">
+        <div class="section-text">
+          <h2>Espace parent</h2>
+          <p>Accessible depuis l'accueil via l'engrenage, après une petite multiplication (un opérande entre 11 et 19, l'autre entre 3 et 9) pour confirmer qu'un adulte est derrière l'écran. On y retrouve : les statistiques générales, un histogramme des boîtes Leitner, l'évolution du taux de réussite, les faits les plus difficiles, les temps de réponse moyens par table, l'historique des 10 dernières séances, et les actions export / import du profil (JSON).</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/13-parent-dashboard.png" alt="Tableau de bord parent complet." width="360" height="760" loading="lazy" />
+            <figcaption>Tableau de bord parent complet.</figcaption>
+          </figure>
+        </div>
+      </section>
+</main>
+<footer>
+  <p>
+    Pour aller plus loin :
+    <a href="https://github.com/isc/multiplix/blob/main/specs-multiplix.md">spécifications fonctionnelles</a> ·
+    <a href="https://github.com/isc/multiplix">code source</a>
+  </p>
+  <p>
+    Guide généré automatiquement le 2026-05-05 ·
+    Régénérable en local avec <code>npm run user-guide</code>.
+  </p>
+</footer>
+</body>
+</html>

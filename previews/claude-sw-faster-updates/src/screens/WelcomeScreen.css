@@ -1,0 +1,297 @@
+.welcome-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  gap: 20px;
+  background: var(--cream);
+  animation: fadeIn 0.5s ease;
+}
+
+/* Étape test de placement : contenu ancré en haut (pas centré vertic.). */
+.welcome-screen:has(.welcome-test-progress) {
+  justify-content: flex-start;
+  padding: 14px 20px 24px;
+}
+
+/* Étape prénom : ancrer en haut pour que le clavier mobile ne masque pas
+   le titre/input/bouton. Combiné à `interactive-widget=resizes-content`
+   dans la viewport meta, iOS 17+ réduit la zone visible quand le clavier
+   apparaît, donc tout reste visible. */
+.welcome-screen:has(.welcome-step-name) {
+  justify-content: flex-start;
+  padding-top: 32px;
+}
+
+/* Sur écran court (petits téléphones, ou clavier ouvert sur navigateurs
+   plus anciens qui n'honorent pas interactive-widget), réduire la
+   mascotte pour garder titre + input + bouton visibles. */
+@media (max-height: 640px) {
+  .welcome-step-name .mascot {
+    width: 90px;
+    height: 90px;
+  }
+}
+
+.welcome-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  animation: slideUp 0.4s ease;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+}
+
+.welcome-title {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--indigo);
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+.welcome-subtitle {
+  font-family: var(--sans);
+  font-size: 16px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  max-width: 300px;
+}
+
+.welcome-input {
+  padding: 18px 20px;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  border: 1.5px solid var(--indigo);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  width: 100%;
+  max-width: 320px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.welcome-input:focus {
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px var(--indigo-soft);
+}
+
+.welcome-input::placeholder {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.welcome-btn {
+  padding: 18px 32px;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--cream);
+  background: var(--ink);
+  border: none;
+  border-radius: 999px;
+  transition: transform 0.1s ease;
+  width: 100%;
+  max-width: 320px;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+}
+
+.welcome-btn:active {
+  transform: translateY(1px);
+}
+
+.welcome-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.welcome-btn-primary {
+  background: var(--ink);
+  color: var(--cream);
+  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
+}
+
+.welcome-btn-primary:disabled {
+  box-shadow: none;
+}
+
+.welcome-btn-skip {
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  box-shadow: none;
+}
+
+.welcome-btn-skip:active:not(:disabled) {
+  color: var(--ink);
+}
+
+.welcome-btn-skip:disabled {
+  background: transparent;
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Placement test */
+.welcome-test-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  padding: 0 8px;
+}
+
+.welcome-test-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line-soft);
+  transition: all 0.3s ease;
+}
+
+.welcome-test-progress-dot.done {
+  background: var(--sage);
+}
+
+.welcome-test-progress-dot.current {
+  width: 14px;
+  background: var(--indigo);
+}
+
+.welcome-test-question {
+  font-family: var(--serif);
+  font-size: 52px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.welcome-test-operator {
+  color: var(--indigo);
+  font-style: italic;
+  font-weight: 400;
+  margin: 0 6px;
+}
+
+.welcome-test-equals {
+  color: var(--ink-muted);
+  margin-left: 10px;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.welcome-test-placeholder {
+  color: var(--ink-muted);
+  margin-left: 10px;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.welcome-test-answer {
+  color: var(--ink);
+  margin-left: 10px;
+}
+
+.welcome-dontknow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--paper);
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.welcome-dontknow:active {
+  background: var(--cream-deep);
+}
+
+.welcome-dontknow:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.welcome-dontknow-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--line-soft);
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.welcome-test-feedback {
+  font-family: var(--serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  animation: slideUp 0.2s ease;
+}
+
+.welcome-test-feedback.correct {
+  color: var(--sage);
+}
+
+.welcome-test-feedback.incorrect {
+  color: var(--coral);
+}
+
+.welcome-test-hint {
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+  margin-top: 4px;
+}
+
+.welcome-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.welcome-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: all 0.3s ease;
+}
+
+.welcome-dot.active {
+  width: 24px;
+  background: var(--ink);
+}
