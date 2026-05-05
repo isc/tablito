@@ -23,10 +23,54 @@
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
 
     <title>Multiplix</title>
-    <script type="module" crossorigin src="/multiplix/assets/index-RKuLTZ-_.js"></script>
-    <link rel="stylesheet" crossorigin href="/multiplix/assets/index-DMwb3sUb.css">
-  <link rel="manifest" href="/multiplix/manifest.webmanifest"></head>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "preact":              "/multiplix/vendor/preact/preact.module.js",
+        "preact/hooks":        "/multiplix/vendor/preact/hooks.module.js",
+        "preact/compat":       "/multiplix/vendor/preact/compat.module.js",
+        "preact/jsx-runtime":  "/multiplix/vendor/preact/jsx-runtime.module.js",
+        "react":               "/multiplix/vendor/preact/compat.module.js",
+        "react-dom":           "/multiplix/vendor/preact/compat.module.js",
+        "react-dom/client":    "/multiplix/vendor/preact/compat-client.mjs",
+        "virtual:pwa-register":"/multiplix/pwa-register.js"
+      }
+    }
+    </script>
+      <link rel="stylesheet" href="/multiplix/src/App.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/Badge.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/BadgeDetailModal.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/DotGrid.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/ErrorBoundary.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/FeedbackModal.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/FeedbackOverlay.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/IOSInstallModal.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/Mascot.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/Modal.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/MysteryImage.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/NumPad.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/ParentGate.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/ProgressGrid.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/StrategyHint.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/StreakDetailModal.css" />
+    <link rel="stylesheet" href="/multiplix/src/components/VoiceInput.css" />
+    <link rel="stylesheet" href="/multiplix/src/index.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/BadgesScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/ChangelogScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/HomeScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/LandingScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/ParentDashboard.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/PrivacyScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/ProgressScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/RecapScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/RulesIntroScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/RulesScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/SessionScreen.css" />
+    <link rel="stylesheet" href="/multiplix/src/screens/WelcomeScreen.css" />
+  </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/multiplix/src/main.js"></script>
   </body>
 </html>

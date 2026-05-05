@@ -1,0 +1,3 @@
+import{useEffect as i,useState as l,useCallback as d}from"react";function c(){const[e,n]=l(null),[s,a]=l(!1);i(()=>{const t=o=>{o.preventDefault(),n(o)},r=()=>{a(!0),n(null)};return window.addEventListener("beforeinstallprompt",t),window.addEventListener("appinstalled",r),()=>{window.removeEventListener("beforeinstallprompt",t),window.removeEventListener("appinstalled",r)}},[]);const p=d(async()=>{if(!e)return!1;await e.prompt();const t=await e.userChoice;return n(null),t.outcome==="accepted"},[e]);return{canPrompt:e!==null,installed:s,promptInstall:p}}export{c as useInstallPrompt};
+
+//# sourceMappingURL=useInstallPrompt.js.map
