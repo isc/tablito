@@ -10,7 +10,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260503153025"
+const CACHE = 'multiplix-' + "20260505174937"
 const BASE = "/multiplix/previews/claude-nobuild-approach-sM4zO/"
 const ASSETS = [
   "/multiplix/previews/claude-nobuild-approach-sM4zO/favicon.svg",
