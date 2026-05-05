@@ -126,4 +126,27 @@ describe('parseFrenchAnswer', () => {
     expect(parseFrenchAnswer('soixante-douze')).toBe(72);
     expect(parseFrenchAnswer('zéro')).toBe(0);
   });
+
+  it('extrait la réponse après un marqueur d\'égalité (équation parlée)', () => {
+    // L'enfant répète la question avec sa réponse — fréquent à voix haute.
+    expect(parseFrenchAnswer('6 fois 5 égale 30')).toBe(30);
+    expect(parseFrenchAnswer('six fois cinq égale trente')).toBe(30);
+    expect(parseFrenchAnswer('6 fois 5 égal 30')).toBe(30);
+    expect(parseFrenchAnswer('8 fois 7 égale 56')).toBe(56);
+    expect(parseFrenchAnswer('6 fois 5 c\'est 30')).toBe(30);
+    expect(parseFrenchAnswer('ça fait 30')).toBe(30);
+    expect(parseFrenchAnswer('ça donne quarante-deux')).toBe(42);
+    expect(parseFrenchAnswer('ils font 42')).toBe(42);
+    // Si plusieurs marqueurs, on prend après le dernier.
+    expect(parseFrenchAnswer('6 fois 5 égale 30 ça fait 30')).toBe(30);
+  });
+
+  it('rejette un écho TTS pur (pas de marqueur d\'égalité)', () => {
+    // L'écho de la question seule ne doit pas être interprété comme réponse.
+    expect(parseFrenchAnswer('6 fois 5')).toBeNull();
+    expect(parseFrenchAnswer('six fois cinq')).toBeNull();
+    // Marqueur sans nombre derrière → rien à soumettre.
+    expect(parseFrenchAnswer('6 fois 5 égale')).toBeNull();
+    expect(parseFrenchAnswer('ça fait')).toBeNull();
+  });
 });

@@ -129,7 +129,28 @@ export function parseFrenchNumber(input: string): number | null {
   return null;
 }
 
+// Marqueurs d'égalité dans une équation parlée. Si l'enfant répète la question
+// avec sa réponse ("6 fois 5 égale 30"), on prend ce qui suit le dernier
+// marqueur. Un écho TTS pur ("6 fois 5") n'a pas de marqueur et tombe dans
+// la logique stricte ci-dessous.
+// L'input est passé par `normalize` (espaces collapsés à un seul) avant matching,
+// donc les bigrams comme "c est" / "ca fait" peuvent utiliser un espace littéral.
+const EQUALITY_MARKER_RE =
+  /(?:^|\s)(?:egale|egales|egalent|egal|font|vaut|valent|c est|ca fait|ca donne|ca vaut)(?=\s|$)/g;
+
+function afterEqualityMarker(input: string): string | null {
+  const s = normalize(input);
+  let lastEnd = -1;
+  for (const m of s.matchAll(EQUALITY_MARKER_RE)) {
+    lastEnd = (m.index ?? 0) + m[0].length;
+  }
+  if (lastEnd === -1) return null;
+  const tail = s.slice(lastEnd).trim();
+  return tail || null;
+}
+
 // Parse a spoken answer in range 0..100. Tries the whole string, then the
+// part après un marqueur d'égalité ("6 fois 5 égale 30" → 30), puis les
 // trailing 2-3 tokens (handles filler words like "euh trente-deux"), then as
 // a last resort the trailing single token — but only if the prefix contains
 // no recognizable number word. Rationale : une compound cassé comme "quatre
@@ -138,6 +159,11 @@ export function parseFrenchNumber(input: string): number | null {
 export function parseFrenchAnswer(input: string): number | null {
   const direct = parseFrenchNumber(input);
   if (direct !== null && direct >= 0 && direct <= 100) return direct;
+  const afterMarker = afterEqualityMarker(input);
+  if (afterMarker !== null) {
+    const n = parseFrenchNumber(afterMarker);
+    if (n !== null && n >= 0 && n <= 100) return n;
+  }
   const tokens = input.trim().split(/\s+/).filter(Boolean);
   for (let k = 2; k <= Math.min(3, tokens.length); k++) {
     const tail = tokens.slice(-k).join(' ');
