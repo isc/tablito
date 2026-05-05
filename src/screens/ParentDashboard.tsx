@@ -1,7 +1,5 @@
 import { useState, useMemo, Fragment } from 'react';
 import type { UserProfile } from '../types';
-import { RESPONSE_TIME } from '../types';
-import { factsForTable } from '../lib/badges';
 import { getFactKey } from '../lib/facts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
@@ -33,7 +31,7 @@ export default function ParentDashboard({
   const [importJson, setImportJson] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
 
-  const { boxCounts, maxBoxCount, hardFacts, tableAvgTimes } = useMemo(() => {
+  const { boxCounts, maxBoxCount, hardFacts } = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0];
     for (const fact of profile.facts) {
       if (!fact.introduced) counts[0]++;
@@ -50,20 +48,10 @@ export default function ParentDashboard({
       .slice(0, 5)
       .filter((f) => f.errorCount > 0);
 
-    const avgTimes: { table: number; avgMs: number }[] = [];
-    for (let t = 2; t <= 9; t++) {
-      const allAttempts = factsForTable(profile.facts, t).flatMap((f) => f.history);
-      if (allAttempts.length > 0) {
-        const avg = allAttempts.reduce((sum, a) => sum + a.responseTimeMs, 0) / allAttempts.length;
-        avgTimes.push({ table: t, avgMs: Math.round(avg) });
-      }
-    }
-
     return {
       boxCounts: counts,
       maxBoxCount: Math.max(...counts, 1),
       hardFacts: hard,
-      tableAvgTimes: avgTimes,
     };
   }, [profile.facts]);
 
@@ -299,38 +287,6 @@ export default function ParentDashboard({
                 </span>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Response time per table */}
-      {tableAvgTimes.length > 0 && (
-        <div className="parent-section">
-          <h3>Temps moyen par table</h3>
-          <div className="parent-time-table">
-            <div className="parent-time-cell header">Table</div>
-            <div className="parent-time-cell header">Temps</div>
-            <div className="parent-time-cell header">Table</div>
-            <div className="parent-time-cell header">Temps</div>
-            {tableAvgTimes.map((t) => {
-              const seconds = (t.avgMs / 1000).toFixed(1);
-              const speedClass =
-                t.avgMs < RESPONSE_TIME.FAST
-                  ? 'fast'
-                  : t.avgMs < RESPONSE_TIME.SLOW
-                    ? 'medium'
-                    : 'slow';
-              return (
-                <Fragment key={t.table}>
-                  <div className="parent-time-cell header">
-                    {'\u00D7'}{t.table}
-                  </div>
-                  <div className={`parent-time-cell ${speedClass}`}>
-                    {seconds}s
-                  </div>
-                </Fragment>
-              );
-            })}
           </div>
         </div>
       )}

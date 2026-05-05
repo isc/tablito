@@ -238,47 +238,6 @@
   font-weight: 700;
 }
 
-/* Response time table */
-.parent-time-table {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-  padding: 10px;
-}
-
-.parent-time-cell {
-  padding: 8px;
-  text-align: center;
-  border-radius: 10px;
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.parent-time-cell.header {
-  background: var(--cream);
-  color: var(--ink-soft);
-}
-
-.parent-time-cell.fast {
-  background: var(--sage-soft);
-  color: var(--sage);
-}
-
-.parent-time-cell.medium {
-  background: var(--honey-soft);
-  color: var(--honey-ink);
-}
-
-.parent-time-cell.slow {
-  background: var(--coral-soft);
-  color: var(--coral);
-}
-
 /* Session history */
 .parent-session-history {
   display: flex;
