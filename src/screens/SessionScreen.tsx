@@ -89,6 +89,12 @@ export default function SessionScreen({
   // Adjust UI state when the question changes (render-time)
   const [prevIndex, setPrevIndex] = useState(-1);
   if (currentIndex !== prevIndex && currentQuestion) {
+    // Reset le guard ici (pas dans un useEffect plus bas), sinon une réponse
+    // trop rapide après le changement de question voit submittingRef encore
+    // à true (l'effet est microtask-async sous Preact). Garde de transition
+    // (prev !== next) → ne peut pas boucler.
+    // eslint-disable-next-line react-hooks/refs
+    submittingRef.current = false;
     setPrevIndex(currentIndex);
     if (currentQuestion.isIntroduction) {
       setShowIntro(true);
@@ -100,10 +106,7 @@ export default function SessionScreen({
   }
 
   // Side effects when the question changes (TTS, timer, tracking).
-  // Reset du double-submit guard ici (et pas dans le bloc render-time
-  // ci-dessus) pour respecter react-hooks/refs.
   useEffect(() => {
-    submittingRef.current = false;
     if (!currentQuestion) return;
 
     if (currentQuestion.isIntroduction) {

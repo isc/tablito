@@ -43,14 +43,14 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_BASE_PATH: ${{ steps.slug.outputs.base }}
+          BASE: ${{ steps.slug.outputs.base }}
 
       - run: npx playwright install --with-deps chromium
       - run: npm run user-guide
         env:
-          # Required so `vite preview` serves at the same base as the built
-          # assets, and so the user-guide script navigates to the right URL.
-          VITE_BASE_PATH: ${{ steps.slug.outputs.base }}
+          # Required so the preview server serves at the same base as the
+          # built assets, and the user-guide script navigates to the right URL.
+          BASE: ${{ steps.slug.outputs.base }}
 
       # Marker poll-able from GitHub Pages once it's actually serving the
       # fresh build. Used by the wait step below — without it, the PR

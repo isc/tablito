@@ -7,10 +7,11 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "node scripts/dev.mjs",
+    "build": "tsc -b && node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "vendor": "node scripts/vendor-preact.mjs",
     "lint": "eslint .",
-    "preview": "vite preview",
     "check-node": "node scripts/check-node.mjs",
     "pretest": "npm run check-node",
     "test": "vitest run",
@@ -22,18 +23,17 @@
     "feedback:treat": "node --env-file=.env.local scripts/feedback-treat.mjs"
   },
   "dependencies": {
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "preact": "^10.29.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@playwright/cli": "^0.1.9",
-    "@testing-library/react": "^16.3.2",
+    "@testing-library/preact": "^3.2.4",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^4.7.0",
+    "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
@@ -43,8 +43,6 @@
     "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "^6.4.1",
-    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.4"
   }
 }

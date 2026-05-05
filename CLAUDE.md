@@ -1,23 +1,43 @@
 # Multiplix
 
-App d'apprentissage des tables de multiplication (PWA React + TypeScript).
+App d'apprentissage des tables de multiplication (PWA, sans backend).
 
 ## Stack
 
-- Vite 6 + React + TypeScript
-- PWA via vite-plugin-pwa
-- localStorage pour la persistance (pas de backend)
-- Déploiement : GitHub Pages via GitHub Actions (`base: '/multiplix/'`)
-- Node minimum : 20.19+ pour le build (CI utilise Node 22)
+- Approche **nobuild** : ESM natif côté navigateur via import maps.
+  Pas de bundler. Voir `BASE=/multiplix/ npm run build`.
+- **Preact 10** vendoré dans `vendor/preact/` (fichiers ESM publiés tels
+  quels sur npm, copiés par `npm run vendor`). Le code applicatif
+  importe `react`/`react-dom` — l'import map (prod + dev + vitest)
+  redirige vers `preact/compat`.
+- **TypeScript** vérifié par `tsc -b` (noEmit). esbuild fait la
+  transformation .tsx → .js (à la volée en dev, en pré-build pour
+  prod). Aucune autre étape de transpilation.
+- **Service Worker** maison (`scripts/sw.js`, ~50 lignes) : précache
+  shell + lazy-cache média + navigation fallback offline.
+- localStorage pour la persistance (pas de backend).
+- Déploiement : GitHub Pages via GitHub Actions (`BASE=/multiplix/`).
+- Node minimum : 22.12+ (CI utilise Node 22).
 
 ## Structure
 
 - `src/lib/` — logique métier (Leitner, sélection de questions, similarité, badges, stockage)
-- `src/components/` — composants React réutilisables
+- `src/components/` — composants UI réutilisables
 - `src/screens/` — écrans de l'app
 - `src/hooks/` — hooks custom (son, timer, streak, confetti)
+- `scripts/` — tooling (dev server, build, preview, vendor, SW templates)
+- `vendor/preact/` — Preact ESM vendoré (régénéré par `npm run vendor`)
+- `index.html` — entry avec import map
 - `specs-multiplix.md` — spécifications fonctionnelles complètes
 - `TODO.md` — évolutions techniques envisagées (pistes non tranchées)
+
+## Commandes principales
+
+- `npm run dev` — dev server (port 5174, transformation à la volée)
+- `npm run build` — produit `dist/` statique (tsc -b + scripts/build.mjs)
+- `npm run preview` — sert `dist/` en local (port 5175)
+- `npm run vendor` — re-vendore Preact depuis `node_modules/`
+- `npm test` — vitest (alias `react` → `preact/compat`)
 
 ## Guide utilisateur
 

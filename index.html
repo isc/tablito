@@ -23,6 +23,21 @@
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
 
     <title>Multiplix</title>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "preact":              "/vendor/preact/preact.module.js",
+        "preact/hooks":        "/vendor/preact/hooks.module.js",
+        "preact/compat":       "/vendor/preact/compat.module.js",
+        "preact/jsx-runtime":  "/vendor/preact/jsx-runtime.module.js",
+        "react":               "/vendor/preact/compat.module.js",
+        "react-dom":           "/vendor/preact/compat.module.js",
+        "react-dom/client":    "/vendor/preact/compat-client.mjs",
+        "virtual:pwa-register":"/scripts/pwa-register-noop.js"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
