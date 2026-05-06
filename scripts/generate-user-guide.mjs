@@ -160,7 +160,9 @@ function buildSampleProfile({ sessionAvailable = true } = {}) {
     lastSessionDate: sessionAvailable ? yesterday : today,
     badges: [
       { id: 'premier-pas', name: 'Premier pas', description: 'Terminer la première séance', earnedDate: '2026-03-15', icon: '🌱' },
+      { id: 'premiere-case', name: 'Première case révélée', description: 'Une multiplication presque maîtrisée', earnedDate: '2026-03-20', icon: '🖼️' },
       { id: 'machine', name: 'Machine', description: '10 bonnes réponses de suite', earnedDate: '2026-03-22', icon: '⚡' },
+      { id: 'premiere-maitrise', name: 'Première multiplication maîtrisée', description: 'Une multiplication au top niveau', earnedDate: '2026-03-28', icon: '🥇' },
       { id: 'table-2', name: 'Table de 2', description: 'Maîtriser la table de 2', earnedDate: '2026-04-01', icon: '⭐' },
       { id: 'veloce', name: 'Véloce', description: '5 réponses < 2s de suite', earnedDate: '2026-04-05', icon: '🚀' },
       { id: 'exploration', name: 'Exploration', description: 'Avoir vu tous les faits', icon: '🗺️', earnedDate: '2026-04-08' },
@@ -705,14 +707,14 @@ const SECTIONS = [
   {
     id: 'badges',
     title: 'Les badges',
-    description: `16 badges au total, répartis en trois familles : jalons
+    description: `18 badges au total, répartis en trois familles : jalons
       (première séance, 7 jours, 30 jours), performance (10 réponses de suite,
-      5 réponses < 2 s), et maîtrise (un badge par table + un badge « génie des
-      maths » quand tout est en boîte 5). Chaque vignette est cliquable et
-      ouvre une fiche qui explique la condition de déblocage. Pour les badges
-      verrouillés, une barre de progression montre où en est l'enfant — les
-      icônes seules ne sont pas auto-portantes pour qui découvre la
-      gamification.`,
+      5 réponses < 2 s), et maîtrise (premier fait en boîte 4, premier en
+      boîte 5, un badge par table + un badge « génie des maths » quand tout
+      est en boîte 5). Chaque vignette est cliquable et ouvre une fiche qui
+      explique la condition de déblocage. Pour les badges verrouillés, une
+      barre de progression montre où en est l'enfant — les icônes seules ne
+      sont pas auto-portantes pour qui découvre la gamification.`,
     shots: [
       { file: '11-badges', caption: 'Collection de badges — obtenus et à débloquer.' },
       { file: '11-badges-detail', caption: 'En cliquant sur un badge verrouillé, on découvre la condition et la progression.' },

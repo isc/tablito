@@ -338,6 +338,8 @@ Un petit personnage **stable** qui accompagne l'enfant tout au long du parcours.
 | Badge | Condition | Icône |
 |-------|-----------|-------|
 | Premier pas | Terminer la 1ère séance | 🌱 |
+| Première case révélée | Premier fait passé en boîte 4 (1ère case quasi-nette sur l'image mystère) | 🖼️ |
+| Première multiplication maîtrisée | Premier fait passé en boîte 5 (1ère case entièrement dévoilée) | 🥇 |
 | Régularité | 7 jours consécutifs | 🔥 |
 | Machine | 10 réponses correctes d'affilée dans une séance | ⚡ |
 | Exploration | Avoir vu tous les faits au moins une fois | 🗺️ |
@@ -346,6 +348,8 @@ Un petit personnage **stable** qui accompagne l'enfant tout au long du parcours.
 | Véloce | 5 réponses < 2s d'affilée | 🚀 |
 | Persévérance | Revenir après 3+ jours d'absence | 💪 |
 | Flamme éternelle | 30 jours consécutifs | 🌟 |
+
+Les deux badges *Première case révélée* et *Première multiplication maîtrisée* jalonnent la zone intermédiaire, entre les badges du tout début (Premier pas, Machine, Exploration) et la maîtrise complète d'une table : ils se déclenchent au moment précis où l'image mystère §5.1 change visiblement de finesse pour la 1ère fois.
 
 Sur l'écran *Badges*, **chaque vignette est cliquable** et ouvre une modale qui explicite le badge :
 - pour un badge **verrouillé** : la condition complète, et — quand c'est applicable — une **barre de progression** (jours consécutifs, faits découverts, faits dans la table en boîte 4+, etc.) avec un encouragement contextuel (« Plus que 3 ! Tu y es presque. »).
