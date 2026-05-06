@@ -42,7 +42,7 @@ export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
     id: `${BADGE_IDS.TABLE_PREFIX}${i + 2}`,
     name: `Table de ${i + 2}`,
     description: `Maîtriser la table de ${i + 2}`,
-    icon: '⭐',
+    icon: `${i + 2}️⃣`,
   })),
   { id: BADGE_IDS.GENIE_MATHS, name: 'Génie des maths', description: 'Tous les faits en boîte 5', icon: '🏆' },
   { id: BADGE_IDS.VELOCE, name: 'Véloce', description: '5 réponses < 2s de suite', icon: '🚀' },
