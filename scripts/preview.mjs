@@ -11,27 +11,11 @@ import http from 'node:http'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { MIME } from './mime.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
 const PORT = Number(process.env.PORT ?? 5175)
 const BASE = process.env.BASE ?? '/'
-
-const MIME = {
-  '.html':'text/html; charset=utf-8',
-  '.js':  'application/javascript; charset=utf-8',
-  '.mjs': 'application/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json':'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-  '.webp':'image/webp',
-  '.woff2':'font/woff2',
-  '.ico': 'image/x-icon',
-  '.mp3': 'audio/mpeg',
-  '.map': 'application/json',
-  '.webmanifest': 'application/manifest+json',
-}
 
 http.createServer(async (req, res) => {
   let p = decodeURIComponent(new URL(req.url, `http://x:${PORT}`).pathname)
