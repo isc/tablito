@@ -3,7 +3,7 @@ import type { UserProfile } from '../types';
 import BadgeComponent from '../components/Badge';
 import BadgeDetailModal from '../components/BadgeDetailModal';
 import BackChevron from '../components/BackChevron';
-import { ALL_BADGE_DEFINITIONS } from '../lib/badges';
+import { ALL_BADGE_DEFINITIONS, getBadgeDetail } from '../lib/badges';
 import './BadgesScreen.css';
 
 interface BadgesScreenProps {
@@ -40,12 +40,14 @@ export default function BadgesScreen({ profile, onBack }: BadgesScreenProps) {
       <div className="badges-grid">
         {ALL_BADGE_DEFINITIONS.map((def) => {
           const earned = earnedMap.get(def.id);
+          const progress = earned ? undefined : getBadgeDetail(def.id, profile).progress;
           return (
             <BadgeComponent
               key={def.id}
               badge={def}
               earned={!!earned}
               earnedDate={earned?.earnedDate}
+              progress={progress}
               onClick={() => setSelectedId(def.id)}
             />
           );

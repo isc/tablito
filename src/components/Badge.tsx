@@ -10,6 +10,7 @@ interface BadgeProps {
   };
   earned: boolean;
   earnedDate?: string;
+  progress?: { current: number; target: number };
   onClick?: () => void;
 }
 
@@ -22,11 +23,17 @@ function LockIcon() {
   );
 }
 
-export default function Badge({ badge, earned, earnedDate, onClick }: BadgeProps) {
+export default function Badge({ badge, earned, earnedDate, progress, onClick }: BadgeProps) {
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
+  const showProgress = !earned && progress && progress.target > 0;
+  const percent = showProgress
+    ? Math.min(100, Math.round((progress.current / progress.target) * 100))
+    : 0;
   const label = earned
     ? `${badge.name}, débloqué — voir les détails`
-    : `${badge.name}, verrouillé — voir comment le débloquer`;
+    : showProgress
+      ? `${badge.name}, verrouillé, progression ${percent}% — voir comment le débloquer`
+      : `${badge.name}, verrouillé — voir comment le débloquer`;
   return (
     <button
       type="button"
@@ -41,14 +48,25 @@ export default function Badge({ badge, earned, earnedDate, onClick }: BadgeProps
         {badge.icon}
       </div>
       <div className="badge-name">{badge.name}</div>
-      <div className="badge-date">
-        {earned && earnedDate
-          ? new Date(earnedDate).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'short',
-            })
-          : '—'}
-      </div>
+      {earned && earnedDate ? (
+        <div className="badge-date">
+          {new Date(earnedDate).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'short',
+          })}
+        </div>
+      ) : showProgress ? (
+        <div className="badge-progress" aria-hidden="true">
+          <div className="badge-progress-bar">
+            <div className="badge-progress-fill" style={{ width: `${percent}%` }} />
+          </div>
+          <div className="badge-progress-label">
+            {progress.current}/{progress.target}
+          </div>
+        </div>
+      ) : (
+        <div className="badge-date">—</div>
+      )}
       {!earned && <LockIcon />}
     </button>
   );
