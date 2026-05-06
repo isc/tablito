@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["lib/facts.ts"],
+  "sourcesContent": ["import type { MultiFact } from '../types';\n\n/**\n * Returns a normalized key for a multiplication fact.\n * Always uses the smaller operand first: \"2x3\" (never \"3x2\").\n */\nexport function getFactKey(a: number, b: number): string {\n  const lo = Math.min(a, b);\n  const hi = Math.max(a, b);\n  return `${lo}x${hi}`;\n}\n\n/**\n * Generates the 36 unique multiplication facts (a\u00D7b where 2 \u2264 a \u2264 b \u2264 9).\n * Each fact starts in box 1 with introduced=false.\n */\nexport function createInitialFacts(): MultiFact[] {\n  const facts: MultiFact[] = [];\n\n  for (let a = 2; a <= 9; a++) {\n    for (let b = a; b <= 9; b++) {\n      facts.push({\n        a,\n        b,\n        product: a * b,\n        box: 1,\n        lastSeen: '',\n        nextDue: '',\n        history: [],\n        introduced: false,\n      });\n    }\n  }\n\n  return facts;\n}\n"],
+  "mappings": "AAMO,SAASA,EAAWC,EAAWC,EAAmB,CACvD,MAAMC,EAAK,KAAK,IAAIF,EAAGC,CAAC,EAClBE,EAAK,KAAK,IAAIH,EAAGC,CAAC,EACxB,MAAO,GAAGC,CAAE,IAAIC,CAAE,EACpB,CAMO,SAASC,GAAkC,CAChD,MAAMC,EAAqB,CAAC,EAE5B,QAASL,EAAI,EAAGA,GAAK,EAAGA,IACtB,QAASC,EAAID,EAAGC,GAAK,EAAGA,IACtBI,EAAM,KAAK,CACT,EAAAL,EACA,EAAAC,EACA,QAASD,EAAIC,EACb,IAAK,EACL,SAAU,GACV,QAAS,GACT,QAAS,CAAC,EACV,WAAY,EACd,CAAC,EAIL,OAAOI,CACT",
+  "names": ["getFactKey", "a", "b", "lo", "hi", "createInitialFacts", "facts"]
+}
