@@ -10,7 +10,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260506074348"
+const CACHE = 'multiplix-' + "20260506080849"
 const BASE = "/multiplix/previews/claude-simplify-badges-progress-percent/"
 const ASSETS = [
   "/multiplix/previews/claude-simplify-badges-progress-percent/favicon.svg",
