@@ -139,6 +139,11 @@ export interface BadgeDetail {
   progress?: { current: number; target: number; unitLabel: string };
 }
 
+export function progressPercent(progress: { current: number; target: number }): number {
+  if (progress.target <= 0) return 0;
+  return Math.min(100, Math.round((progress.current / progress.target) * 100));
+}
+
 export function getBadgeDetail(badgeId: string, profile: UserProfile): BadgeDetail {
   if (badgeId === BADGE_IDS.PREMIER_PAS) {
     return {
