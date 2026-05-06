@@ -10,7 +10,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260506070204"
+const CACHE = 'multiplix-' + "20260506072616"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -23,6 +23,7 @@ const ASSETS = [
   "/multiplix/src/App.css",
   "/multiplix/src/App.css.js",
   "/multiplix/src/App.js",
+  "/multiplix/src/__tests__/badges.test.js",
   "/multiplix/src/__tests__/leitner.test.js",
   "/multiplix/src/__tests__/parseFrenchNumber.test.js",
   "/multiplix/src/__tests__/placement.test.js",
