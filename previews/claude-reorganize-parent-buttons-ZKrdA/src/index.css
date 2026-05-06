@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+
+:root {
+  /* Surfaces */
+  --cream: #FBF6EC;
+  --cream-deep: #F3EADB;
+  --paper: #FFFFFF;
+  --ink: #1E1A2E;
+  --ink-soft: #52495F;
+  --ink-muted: #8A8295;
+  --line: #E6DECE;
+  --line-soft: #EFE7D6;
+
+  /* Brand + semantic */
+  --indigo: #4F46BA;
+  --indigo-soft: #E8E6F7;
+  --indigo-ink: #2B2478;
+
+  --coral: #E8623D;
+  --coral-soft: #FBE4DA;
+
+  --honey: #D99A1F;
+  --honey-soft: #F7E9C4;
+  --honey-ink: #8C5A0A;
+
+  --sage: #3F9B7A;
+  --sage-soft: #D9EDE2;
+
+  --sky: #3E7EB6;
+  --sky-soft: #DDE9F4;
+
+  /* Leitner scale */
+  --box0: #E6DECE;
+  --box1: #E8623D;
+  --box2: #E8893D;
+  --box3: #D99A1F;
+  --box4: #7FAE6E;
+  --box5: #3F9B7A;
+
+  /* Typography */
+  --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Nunito', 'SF Pro Text', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(30, 26, 46, 0.04);
+  --shadow-md: 0 2px 4px rgba(62, 42, 16, 0.06), 0 8px 20px rgba(62, 42, 16, 0.06);
+
+  /* Legacy aliases — kept so any unmigrated screen still resolves. */
+  --primary: var(--indigo);
+  --primary-light: #6D64D1;
+  --primary-dark: var(--indigo-ink);
+  --secondary: var(--coral);
+  --secondary-light: #F2856A;
+  --success: var(--sage);
+  --success-light: #7FAE6E;
+  --warning: var(--honey);
+  --warning-light: #F1B856;
+  --background: var(--cream);
+  --surface: var(--paper);
+  --text: var(--ink);
+  --text-light: var(--ink-soft);
+  --text-muted: var(--ink-muted);
+  --border: var(--line);
+  --shadow: rgba(79, 70, 186, 0.15);
+
+  --box-gray: var(--box0);
+  --box-red: var(--box1);
+  --box-orange: var(--box2);
+  --box-yellow: var(--box3);
+  --box-lightgreen: var(--box4);
+  --box-green: var(--box5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+button {
+  font-family: var(--sans);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--indigo);
+  outline-offset: 2px;
+}
+
+input {
+  font-family: var(--sans);
+}
+
+/* Prevent zoom on iOS */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* Utility animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes flame {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  25% { transform: scaleY(1.1) scaleX(0.95); }
+  50% { transform: scaleY(0.95) scaleX(1.05); }
+  75% { transform: scaleY(1.05) scaleX(0.98); }
+}
+
+/* ---- Shared primitives ---- */
+
+.back-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+.back-btn:active {
+  background: var(--cream-deep);
+}
+
+.screen-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-muted);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background: var(--indigo);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 16px 28px;
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 2px 0 var(--indigo-ink), 0 6px 20px rgba(79, 70, 186, 0.3);
+  transition: transform 0.1s ease;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn-ghost {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn-ghost:active {
+  transform: translateY(1px);
+}
+
+.card {
+  background: var(--paper);
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+}

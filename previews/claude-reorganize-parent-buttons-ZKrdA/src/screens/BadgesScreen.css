@@ -1,0 +1,82 @@
+.badges-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  animation: fadeIn 0.3s ease;
+  padding-bottom: 20px;
+}
+
+.badges-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  gap: 10px;
+}
+
+.badges-back-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.badges-back-btn:active {
+  background: var(--cream-deep);
+}
+
+.badges-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.badges-banner {
+  margin: 0 20px 18px;
+  background: var(--ink);
+  color: var(--cream);
+  border-radius: 18px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.badges-banner-eyebrow {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--honey);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.badges-banner-count {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.badges-banner-count span {
+  opacity: 0.55;
+  font-size: 18px;
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 0 20px;
+}
