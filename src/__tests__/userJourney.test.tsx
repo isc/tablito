@@ -253,6 +253,8 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
 
       const badgeIds = new Set(final.badges.map((b) => b.id));
       expect(badgeIds.has(BADGE_IDS.PREMIER_PAS)).toBe(true);
+      expect(badgeIds.has(BADGE_IDS.PREMIERE_CASE)).toBe(true);
+      expect(badgeIds.has(BADGE_IDS.PREMIERE_MAITRISE)).toBe(true);
       expect(badgeIds.has(BADGE_IDS.EXPLORATION)).toBe(true);
       expect(badgeIds.has(BADGE_IDS.GENIE_MATHS)).toBe(true);
       for (let t = 2; t <= 9; t++) {

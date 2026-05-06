@@ -35,6 +35,8 @@ export interface BadgeDefinition {
 
 export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
   { id: BADGE_IDS.PREMIER_PAS, name: 'Premier pas', description: 'Terminer la première séance', icon: '🌱' },
+  { id: BADGE_IDS.PREMIERE_CASE, name: 'Première case révélée', description: 'Une multiplication presque maîtrisée', icon: '🖼️' },
+  { id: BADGE_IDS.PREMIERE_MAITRISE, name: 'Première multiplication maîtrisée', description: 'Une multiplication au top niveau', icon: '🥇' },
   { id: BADGE_IDS.REGULIER, name: 'Régularité', description: '7 jours consécutifs', icon: '🔥' },
   { id: BADGE_IDS.MACHINE, name: 'Machine', description: '10 bonnes réponses de suite', icon: '⚡' },
   { id: BADGE_IDS.EXPLORATION, name: 'Exploration', description: 'Avoir vu tous les faits', icon: '🗺️' },
@@ -76,6 +78,8 @@ export function checkBadges(
   if (profile.totalSessions >= 1) earn(BADGE_IDS.PREMIER_PAS);
   if (profile.currentStreak >= 7) earn(BADGE_IDS.REGULIER);
   if (profile.currentStreak >= 30) earn(BADGE_IDS.FLAMME_ETERNELLE);
+  if (profile.facts.some((f) => f.box >= 4)) earn(BADGE_IDS.PREMIERE_CASE);
+  if (profile.facts.some((f) => f.box === 5)) earn(BADGE_IDS.PREMIERE_MAITRISE);
   if (profile.facts.every((f) => f.introduced)) earn(BADGE_IDS.EXPLORATION);
   if (profile.facts.every((f) => f.box === 5)) earn(BADGE_IDS.GENIE_MATHS);
 
@@ -117,6 +121,8 @@ function hasConsecutiveFastAnswers(times: number[], count: number, thresholdMs: 
 
 export function medallionColorFor(id: string): string {
   if (id === BADGE_IDS.PREMIER_PAS) return 'var(--sage)';
+  if (id === BADGE_IDS.PREMIERE_CASE) return 'var(--sky)';
+  if (id === BADGE_IDS.PREMIERE_MAITRISE) return 'var(--honey)';
   if (id === BADGE_IDS.REGULIER) return 'var(--coral)';
   if (id === BADGE_IDS.MACHINE) return 'var(--honey)';
   if (id === BADGE_IDS.EXPLORATION) return 'var(--sky)';
@@ -138,6 +144,22 @@ export function getBadgeDetail(badgeId: string, profile: UserProfile): BadgeDeta
     return {
       conditionText: 'Termine ta toute première séance.',
       progress: { current: Math.min(profile.totalSessions, 1), target: 1, unitLabel: 'séance' },
+    };
+  }
+
+  if (badgeId === BADGE_IDS.PREMIERE_CASE) {
+    const ready = profile.facts.filter((f) => f.box >= 4).length;
+    return {
+      conditionText: 'Place ta toute première multiplication en boîte 4 — une case s’éclaircit sur ton image mystère !',
+      progress: { current: Math.min(ready, 1), target: 1, unitLabel: 'en boîte 4' },
+    };
+  }
+
+  if (badgeId === BADGE_IDS.PREMIERE_MAITRISE) {
+    const ready = profile.facts.filter((f) => f.box === 5).length;
+    return {
+      conditionText: 'Place ta toute première multiplication en boîte 5 — la case est complètement dévoilée !',
+      progress: { current: Math.min(ready, 1), target: 1, unitLabel: 'en boîte 5' },
     };
   }
 

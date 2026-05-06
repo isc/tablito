@@ -83,6 +83,8 @@ export interface SessionResult {
 // Badges IDs
 export const BADGE_IDS = {
   PREMIER_PAS: 'premier-pas',
+  PREMIERE_CASE: 'premiere-case',
+  PREMIERE_MAITRISE: 'premiere-maitrise',
   REGULIER: 'regulier',
   MACHINE: 'machine',
   EXPLORATION: 'exploration',

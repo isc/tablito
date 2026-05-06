@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-06',
+    items: [
+      "Deux nouveaux badges intermédiaires pour combler le « désert » entre les badges du début et la maîtrise complète d'une table : « Première case révélée » (1ère multiplication passée en boîte 4) et « Première multiplication maîtrisée » (1ère en boîte 5). Ils se débloquent au moment où l'image mystère change visiblement de finesse pour la première fois.",
+    ],
+  },
+  {
     date: '2026-05-01',
     items: [
       "Les badges « Table de N » tombent plus vite quand l'enfant a réussi le test de placement : un fait inféré à partir d'une réponse rapide démarre désormais en boîte 3 (et plus en boîte 2), reconnaissant la maîtrise déjà démontrée.",
