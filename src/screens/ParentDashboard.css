@@ -345,3 +345,13 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.parent-version {
+  margin-top: 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+  opacity: 0.35;
+  letter-spacing: 0.4px;
+}

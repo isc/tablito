@@ -43,7 +43,7 @@ const ENV_DEFINE = {
   'import.meta.env.MODE':                          '"development"',
   'import.meta.env.DEV':                           'true',
   'import.meta.env.PROD':                          'false',
-  'import.meta.env.VITE_APP_VERSION':              '"nobuild-poc"',
+  'import.meta.env.VITE_APP_VERSION':              '"dev"',
   'import.meta.env.VITE_BASE_PATH':                '"/"',
   // Strings vides en dev : `feedbackEnabled` retombe sur false sans crash.
   // À surcharger via .env.local + un mécanisme adhoc le jour où on reproduit
