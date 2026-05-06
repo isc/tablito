@@ -1,0 +1,108 @@
+.dot-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper);
+  border-radius: 22px;
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.dot-grid-label {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+
+.dot-grid-label span {
+  color: var(--indigo);
+  font-style: italic;
+}
+
+.dot-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dot-gap, 10px);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dot-grid.rotating {
+  transform: rotate(90deg);
+}
+
+.dot-grid-row {
+  display: flex;
+  gap: var(--dot-gap, 10px);
+  opacity: 0;
+  animation: rowAppear 0.4s ease forwards;
+}
+
+.dot-grid-row.hidden {
+  opacity: 0;
+  animation: none;
+}
+
+.dot-grid-row.no-animation {
+  opacity: 1;
+  animation: none;
+}
+
+@keyframes rowAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dot {
+  width: var(--dot-size, 18px);
+  height: var(--dot-size, 18px);
+  border-radius: 50%;
+  background: var(--indigo);
+  flex-shrink: 0;
+}
+
+.dot-grid-wrapper.small {
+  padding: 12px;
+}
+
+.dot-grid-wrapper.small .dot {
+  width: 12px;
+  height: 12px;
+}
+
+.dot-grid-wrapper.small .dot-grid-row {
+  gap: 6px;
+}
+
+.dot-grid-wrapper.small .dot-grid {
+  gap: 6px;
+}
+
+.dot-grid-result {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  letter-spacing: -0.3px;
+}
+
+.dot-grid-result.visible {
+  opacity: 1;
+}
+
+.dot-grid-result strong {
+  color: var(--indigo);
+  font-weight: 600;
+}

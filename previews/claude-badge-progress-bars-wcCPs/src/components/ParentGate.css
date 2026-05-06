@@ -1,0 +1,130 @@
+/* Le parent-gate veut être en haut de l'écran (le clavier mobile mange
+   la moitié basse). On surcharge l'alignement de l'overlay et la
+   max-width du card par rapport au défaut Modal. */
+.modal-overlay.parent-gate-overlay {
+  align-items: flex-start;
+  padding: 40px 20px 20px;
+  overflow-y: auto;
+}
+
+.modal-card.parent-gate-modal {
+  max-width: 380px;
+  padding: 24px 22px;
+}
+
+.parent-gate-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.parent-gate-subtitle {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 0 0 18px;
+  line-height: 1.4;
+}
+
+.parent-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.parent-gate-question {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--cream);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 10px;
+  letter-spacing: -0.5px;
+}
+
+.parent-gate-times,
+.parent-gate-equals {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.parent-gate-input {
+  width: 80px;
+  padding: 6px 8px;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--indigo);
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  text-align: center;
+  letter-spacing: -0.5px;
+  box-sizing: border-box;
+}
+
+.parent-gate-input:focus {
+  outline: none;
+  border-color: var(--indigo);
+}
+
+.parent-gate-error {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--coral);
+  background: var(--coral-soft);
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin: 0;
+  text-align: center;
+}
+
+.parent-gate-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.parent-gate-cancel,
+.parent-gate-submit {
+  flex: 1;
+  padding: 12px 16px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: transform 0.1s ease;
+}
+
+.parent-gate-cancel {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.parent-gate-submit {
+  background: var(--sage);
+  color: #fff;
+  border-color: var(--sage);
+}
+
+.parent-gate-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.parent-gate-submit:active:not(:disabled),
+.parent-gate-cancel:active {
+  transform: translateY(1px);
+}
