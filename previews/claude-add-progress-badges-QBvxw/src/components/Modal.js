@@ -1,0 +1,3 @@
+import{jsx as d}from"preact/jsx-runtime";import{useEffect as s}from"react";import"./Modal.css.js";function c({onClose:a,labelledBy:r,className:n,overlayClassName:i,disableClose:o,children:t}){return s(()=>{if(o)return;const e=l=>{l.key==="Escape"&&a()};return window.addEventListener("keydown",e),()=>window.removeEventListener("keydown",e)},[a,o]),d("div",{className:`modal-overlay ${i??""}`,onClick:o?void 0:a,children:d("div",{className:`modal-card ${n??""}`,onClick:e=>e.stopPropagation(),role:"dialog","aria-modal":"true","aria-labelledby":r,children:t})})}export{c as default};
+
+//# sourceMappingURL=Modal.js.map
