@@ -17,9 +17,9 @@
  */
 
 import { spawn } from 'node:child_process';
-import { execSync } from 'node:child_process';
-import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -46,19 +46,17 @@ const DEVICE_SCALE = 2;
 const SEED_TODAY = '2026-04-12';
 const SEED_YESTERDAY = '2026-04-11';
 
-// Cache-busting suffix for screenshot URLs. GitHub Pages serves PNGs with a
-// ~10 min default TTL, so without this query string a phone in UAT keeps
+// Cache-busting suffix per screenshot. GitHub Pages serves PNGs with a
+// ~10 min default TTL, so without a query string a phone in UAT keeps
 // showing yesterday's captures even though the new build is live.
-function computeAssetVersion() {
-  const fromCi = process.env.GITHUB_SHA;
-  if (fromCi) return fromCi.slice(0, 7);
-  try {
-    return execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
-  } catch {
-    return String(Date.now());
-  }
+//
+// We hash the PNG content (not the build SHA) so that only screenshots
+// whose pixels actually changed get a new URL — unchanged ones keep
+// their cache entry, avoiding a full re-download on every deploy.
+async function shotHash(name) {
+  const buf = await readFile(join(SHOTS_DIR, `${name}.png`));
+  return createHash('sha1').update(buf).digest('hex').slice(0, 8);
 }
-const ASSET_VERSION = computeAssetVersion();
 
 // --- Utilities --------------------------------------------------------------
 
@@ -749,7 +747,11 @@ const SECTIONS = [
   },
 ];
 
-function buildHtml({ generatedAt }) {
+async function buildHtml({ generatedAt }) {
+  const allShotFiles = [...new Set(SECTIONS.flatMap((s) => s.shots.map((sh) => sh.file)))];
+  const hashEntries = await Promise.all(allShotFiles.map(async (f) => [f, await shotHash(f)]));
+  const hashByFile = new Map(hashEntries);
+
   const sectionHtml = SECTIONS.map((s) => {
     const textContent = s.body
       ? s.body.trim()
@@ -770,7 +772,7 @@ function buildHtml({ generatedAt }) {
         // preventing layout shift while scrolling through the guide.
         (sh) => `
           <figure class="shot">
-            <img src="screenshots/${sh.file}.png?v=${ASSET_VERSION}" alt="${sh.caption.replace(/"/g, '&quot;')}" width="${VIEWPORT.width}" height="${VIEWPORT.height}" loading="lazy" />
+            <img src="screenshots/${sh.file}.png?v=${hashByFile.get(sh.file)}" alt="${sh.caption.replace(/"/g, '&quot;')}" width="${VIEWPORT.width}" height="${VIEWPORT.height}" loading="lazy" />
             <figcaption>${sh.caption}</figcaption>
           </figure>`,
       )
@@ -1134,7 +1136,7 @@ async function main() {
 
     await browser.close();
 
-    const html = buildHtml({
+    const html = await buildHtml({
       generatedAt: new Date().toISOString().slice(0, 10),
     });
     await writeFile(join(OUT_DIR, 'index.html'), html);
