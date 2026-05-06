@@ -383,6 +383,8 @@ export default function ParentDashboard({
       {showFeedback && (
         <FeedbackModal profile={profile} onClose={() => setShowFeedback(false)} />
       )}
+
+      <div className="parent-version" aria-label="Version de l'app">v{import.meta.env.VITE_APP_VERSION}</div>
     </div>
   );
 }
