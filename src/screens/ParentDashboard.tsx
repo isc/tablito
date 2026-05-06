@@ -318,48 +318,57 @@ export default function ParentDashboard({
       )}
 
       {/* Actions */}
-      <div className="parent-actions">
-        <button className="parent-action-btn" onClick={onExport}>
-          Exporter
-        </button>
-        <button
-          className="parent-action-btn"
-          onClick={() => setShowImport(!showImport)}
-        >
-          Importer
-        </button>
+      <div className="parent-section">
+        <h3>Sauvegarde</h3>
+        <div className="parent-actions">
+          <button className="parent-action-btn" onClick={onExport}>
+            Exporter
+          </button>
+          <button
+            className="parent-action-btn"
+            onClick={() => setShowImport(!showImport)}
+          >
+            Importer
+          </button>
+        </div>
       </div>
 
-      <div className="parent-actions">
-        <a
-          className="parent-action-btn"
-          href={`${import.meta.env.BASE_URL}guide/`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Guide utilisateur
-        </a>
-        <button
-          className="parent-action-btn"
-          onClick={() => setShowFeedback(true)}
-        >
-          Envoyer un avis
-        </button>
+      <div className="parent-section">
+        <h3>Aide & retours</h3>
+        <div className="parent-actions">
+          <a
+            className="parent-action-btn"
+            href={`${import.meta.env.BASE_URL}guide/`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Guide utilisateur
+          </a>
+          <button
+            className="parent-action-btn"
+            onClick={() => setShowFeedback(true)}
+          >
+            Envoyer un avis
+          </button>
+        </div>
       </div>
 
-      <div className="parent-actions">
-        <button
-          className="parent-action-btn"
-          onClick={onShowChangelog}
-        >
-          Nouveautés
-        </button>
-        <button
-          className="parent-action-btn"
-          onClick={onShowPrivacy}
-        >
-          Confidentialité
-        </button>
+      <div className="parent-section">
+        <h3>À propos</h3>
+        <div className="parent-actions">
+          <button
+            className="parent-action-btn"
+            onClick={onShowChangelog}
+          >
+            Nouveautés
+          </button>
+          <button
+            className="parent-action-btn"
+            onClick={onShowPrivacy}
+          >
+            Confidentialité
+          </button>
+        </div>
       </div>
 
       {showImport && (

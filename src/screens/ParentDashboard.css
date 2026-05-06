@@ -286,6 +286,11 @@
   margin-top: 18px;
 }
 
+.parent-section .parent-actions {
+  padding: 0;
+  margin-top: 0;
+}
+
 .parent-action-btn {
   flex: 1;
   padding: 12px 16px;
