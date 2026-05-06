@@ -1,5 +1,5 @@
 import type { BadgeDefinition } from '../lib/badges';
-import { getBadgeDetail, medallionColorFor } from '../lib/badges';
+import { getBadgeDetail, medallionColorFor, progressPercent } from '../lib/badges';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
 import './BadgeDetailModal.css';
@@ -30,9 +30,7 @@ export default function BadgeDetailModal({
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
   const progress = detail.progress;
   const showProgress = !earned && progress && progress.target > 0;
-  const percent = showProgress
-    ? Math.min(100, Math.round((progress.current / progress.target) * 100))
-    : 0;
+  const percent = showProgress ? progressPercent(progress) : 0;
   const remaining = progress ? Math.max(0, progress.target - progress.current) : 0;
 
   return (
