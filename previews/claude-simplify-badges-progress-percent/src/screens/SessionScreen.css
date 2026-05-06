@@ -1,0 +1,229 @@
+.session-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Header : barrettes de progression centrées */
+.session-header {
+  display: flex;
+  justify-content: center;
+  padding: 14px 20px 4px;
+}
+
+.session-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.session-progress-dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 4px;
+  background: var(--line-soft);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: 0;
+}
+
+.session-progress-dot.correct {
+  background: var(--sage);
+}
+
+.session-progress-dot.incorrect {
+  background: var(--coral);
+}
+
+.session-progress-dot.current {
+  width: 18px;
+  background: var(--indigo);
+}
+
+/* Phase d'introduction d'un fait nouveau */
+.session-intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px 24px 20px;
+  gap: 14px;
+  animation: slideUp 0.4s ease;
+  text-align: center;
+}
+
+.session-intro > .session-intro-btn {
+  margin-top: auto;
+}
+
+.session-intro-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--indigo);
+  letter-spacing: -0.5px;
+  margin-top: 4px;
+}
+
+.session-intro-formula {
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-top: 6px;
+}
+
+.session-intro-operator {
+  color: var(--indigo);
+  font-style: italic;
+  font-weight: 400;
+  margin: 0 8px;
+}
+
+.session-intro-result {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  margin-top: 6px;
+}
+
+.session-intro-result b {
+  color: var(--indigo);
+  font-weight: 600;
+}
+
+.session-intro-explanation {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.55;
+  max-width: 320px;
+}
+
+.session-intro-explanation strong {
+  color: var(--indigo);
+  font-weight: 800;
+}
+
+.session-intro-commutativity {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.55;
+}
+
+.session-intro-commutativity strong {
+  color: var(--indigo);
+  font-weight: 800;
+}
+
+.session-intro-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 18px 28px;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--cream);
+  background: var(--ink);
+  border: none;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
+  transition: transform 0.1s ease;
+  cursor: pointer;
+}
+
+.session-intro-btn:active {
+  transform: translateY(1px);
+}
+
+/* Phase question */
+.session-question {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 20px 0;
+  animation: slideUp 0.3s ease;
+}
+
+.session-question-text {
+  font-family: var(--serif);
+  font-size: 52px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 12px 0 14px;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  text-align: center;
+  width: 100%;
+}
+
+.session-question-text .operator {
+  color: var(--indigo);
+  font-style: italic;
+  font-weight: 400;
+  margin: 0 6px;
+}
+
+.session-question-text .equals {
+  color: var(--ink-muted);
+  font-style: italic;
+  font-weight: 400;
+  margin-left: 10px;
+}
+
+.session-question-text .placeholder {
+  color: var(--ink-muted);
+  font-style: italic;
+  font-weight: 400;
+  margin-left: 10px;
+}
+
+.session-numpad-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding-top: 4px;
+  gap: 8px;
+}
+
+.session-input-switch {
+  background: transparent;
+  border: none;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.session-input-switch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

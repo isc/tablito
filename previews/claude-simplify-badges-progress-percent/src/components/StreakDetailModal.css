@@ -1,0 +1,60 @@
+.streak-detail-modal {
+  text-align: center;
+}
+
+.streak-detail-flame {
+  display: flex;
+  justify-content: center;
+  margin: 4px auto 14px;
+  animation: streak-detail-flame 1.2s ease-in-out infinite;
+}
+
+.streak-detail-flame.is-muted {
+  animation: none;
+}
+
+@keyframes streak-detail-flame {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.streak-detail-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 10px;
+  letter-spacing: -0.3px;
+}
+
+.streak-detail-explanation {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
+.streak-detail-record {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--coral-soft);
+  border-radius: 999px;
+  padding: 8px 16px;
+  margin-bottom: 14px;
+}
+
+.streak-detail-record-label {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.streak-detail-record-value {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--coral);
+}

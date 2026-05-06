@@ -1,0 +1,130 @@
+.modal-card.feedback-modal {
+  max-width: 440px;
+  padding: 20px;
+}
+
+.feedback-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 14px;
+  letter-spacing: -0.3px;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback-label {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
+
+.feedback-textarea,
+.feedback-input {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  background: var(--cream);
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+.feedback-textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: var(--sans);
+}
+
+.feedback-textarea:focus,
+.feedback-input:focus {
+  outline: none;
+  border-color: var(--indigo);
+}
+
+.feedback-error {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--coral);
+  background: var(--coral-soft);
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin: 0;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.feedback-cancel-btn,
+.feedback-submit-btn {
+  flex: 1;
+  padding: 12px 16px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: transform 0.1s ease;
+}
+
+.feedback-cancel-btn {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.feedback-submit-btn {
+  background: var(--sage);
+  color: #fff;
+  border-color: var(--sage);
+}
+
+.feedback-submit-btn:disabled,
+.feedback-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-submit-btn:active:not(:disabled),
+.feedback-cancel-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.feedback-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0 4px;
+}
+
+.feedback-success-text {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sage);
+  margin: 0;
+  text-align: center;
+}
+
+.feedback-unavailable {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin: 8px 0 0;
+  text-align: center;
+}
