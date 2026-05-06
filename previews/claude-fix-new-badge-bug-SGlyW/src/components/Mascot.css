@@ -1,0 +1,151 @@
+.mascot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mascot-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ---- Palette ---- */
+
+.mascot-feet path,
+.mascot-tuft {
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.mascot-fill-body {
+  fill: #F0B43A;       /* chick body */
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.mascot-fill-belly {
+  fill: #FBD96C;       /* belly highlight */
+}
+
+.mascot-wing {
+  fill: #FBD96C;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  transform-origin: 30px 58px;  /* épaule — rotation autour de ce point */
+  transform-box: fill-box;
+}
+
+.mascot-eye-iris {
+  fill: var(--ink);
+}
+
+.mascot-eye-shine {
+  fill: #fff;
+}
+
+.mascot-eye {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.mascot-beak {
+  fill: #D9751F;
+  stroke: var(--ink);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+}
+
+.mascot-cheek {
+  fill: var(--coral);
+  opacity: 0.35;
+}
+
+/* ---- Animations ----
+   Les transformations s'appliquent aux sous-groupes (body, wing, eye) pour
+   rester indépendantes. transform-box: fill-box permet de centrer les
+   rotations sur l'élément SVG lui-même plutôt que sur l'origine du canvas. */
+
+/* Respiration idle — très légère, infinie. */
+.mascot-body {
+  animation: mascotBreathe 3.4s ease-in-out infinite;
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+
+@keyframes mascotBreathe {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50%      { transform: translateY(-1.5px) scale(1.015, 0.985); }
+}
+
+/* Clignement d'œil périodique. On joue sur scaleY(0) très brièvement. */
+.mascot-eye {
+  animation: mascotBlink 5s ease-in-out infinite;
+}
+
+.mascot-eye-right {
+  animation-delay: 0.08s;     /* très léger décalage pour un clignement naturel */
+}
+
+@keyframes mascotBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%, 97%      { transform: scaleY(0.1); }
+}
+
+/* Battement d'aile très discret même au repos. */
+.mascot-wing {
+  animation: mascotWingIdle 2.8s ease-in-out infinite;
+}
+
+@keyframes mascotWingIdle {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-4deg); }
+}
+
+/* ---- Humeurs ---- */
+
+/* Happy : petit rebond + battement d'aile plus marqué, non infini. */
+.mascot.happy .mascot-body {
+  animation:
+    mascotBreathe 3.4s ease-in-out infinite,
+    mascotHop 0.55s ease-in-out 2;
+}
+
+.mascot.happy .mascot-wing {
+  animation: mascotWingFlap 0.28s ease-in-out 4;
+}
+
+@keyframes mascotHop {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -10%; }
+}
+
+@keyframes mascotWingFlap {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-18deg); }
+}
+
+/* Celebrate : rebond plus ample + léger tangage, en boucle. */
+.mascot.celebrate .mascot-body {
+  animation:
+    mascotBreathe 3.4s ease-in-out infinite,
+    mascotCheer 0.7s ease-in-out infinite;
+}
+
+.mascot.celebrate .mascot-wing {
+  animation: mascotWingFlap 0.3s ease-in-out infinite;
+}
+
+@keyframes mascotCheer {
+  0%, 100% { translate: 0 0;      rotate: 0deg; }
+  25%      { translate: 0 -16%;   rotate: -6deg; }
+  50%      { translate: 0 0;      rotate: 0deg; }
+  75%      { translate: 0 -16%;   rotate: 6deg; }
+}

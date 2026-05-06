@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
+    <meta name="theme-color" content="#4F46BA" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+    <!-- Splash screens iOS (PWA) — un PNG par couple (taille × DPR).
+         Couvre iPhone 12/13/14/15/16 (standard, Pro, Pro Max) + iPad Pro 11".
+         Les autres appareils iOS auront un splash vide. Régénérer via
+         `npm run splash`. -->
+    <link rel="apple-touch-startup-image" href="splash/iphone-1170x2532.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="splash/iphone-1179x2556.png"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="splash/iphone-1290x2796.png"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="splash/ipad-1668x2388.png"
+          media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+
+    <title>Multiplix</title>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "preact":              "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/preact.module.js",
+        "preact/hooks":        "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/hooks.module.js",
+        "preact/compat":       "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/compat.module.js",
+        "preact/jsx-runtime":  "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/jsx-runtime.module.js",
+        "react":               "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/compat.module.js",
+        "react-dom":           "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/compat.module.js",
+        "react-dom/client":    "/multiplix/previews/claude-fix-new-badge-bug-SGlyW/vendor/preact/compat-client.mjs",
+        "virtual:pwa-register":"/multiplix/previews/claude-fix-new-badge-bug-SGlyW/pwa-register.js"
+      }
+    }
+    </script>
+      <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/App.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/Badge.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/BadgeDetailModal.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/DotGrid.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/ErrorBoundary.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/FeedbackModal.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/FeedbackOverlay.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/IOSInstallModal.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/Mascot.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/Modal.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/MysteryImage.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/NumPad.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/ParentGate.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/ProgressGrid.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/StrategyHint.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/StreakDetailModal.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/components/VoiceInput.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/index.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/BadgesScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/ChangelogScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/HomeScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/LandingScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/ParentDashboard.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/PrivacyScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/ProgressScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/RecapScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/RulesIntroScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/RulesScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/SessionScreen.css" />
+    <link rel="stylesheet" href="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/screens/WelcomeScreen.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/multiplix/previews/claude-fix-new-badge-bug-SGlyW/src/main.js"></script>
+  </body>
+</html>

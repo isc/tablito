@@ -1,0 +1,143 @@
+.progress-grid-container {
+  padding: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.progress-grid-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.progress-grid {
+  display: grid;
+  grid-template-columns: 32px repeat(8, 1fr);
+  grid-template-rows: 32px repeat(8, 1fr);
+  gap: 3px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.progress-grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.progress-grid-corner {
+  /* empty top-left corner */
+}
+
+.progress-grid-cell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  border: none;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+}
+
+.progress-grid-cell:active {
+  transform: scale(0.9);
+}
+
+.progress-grid-cell.box-0 {
+  background: var(--box-gray);
+  color: var(--text-muted);
+}
+
+.progress-grid-cell.box-1 {
+  background: var(--box-red);
+}
+
+.progress-grid-cell.box-2 {
+  background: var(--box-orange);
+}
+
+.progress-grid-cell.box-3 {
+  background: var(--box-yellow);
+  color: var(--text);
+}
+
+.progress-grid-cell.box-4 {
+  background: var(--box-lightgreen);
+}
+
+.progress-grid-cell.box-5 {
+  background: var(--box-green);
+}
+
+.progress-grid-star {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.progress-grid-cell.diagonal {
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Fact detail popup */
+.fact-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+  padding: 20px;
+}
+
+.fact-detail-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  animation: scaleIn 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.fact-detail-card h3 {
+  font-size: 1.8rem;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.fact-detail-card p {
+  color: var(--text-light);
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+.fact-detail-close {
+  margin-top: 16px;
+  padding: 10px 32px;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+}
