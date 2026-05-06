@@ -1,5 +1,6 @@
 import type { UserProfile } from '../types';
 import { MYSTERY_POOL } from '../types';
+import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { pickRandom, todayISO } from './utils';
@@ -94,6 +95,11 @@ function migrateProfile(profile: UserProfile): UserProfile {
   // du test de placement : si des faits restent non introduits alors qu'on
   // a une preuve de réussite sur des faits plus durs, on les introduit.
   inferIntroductionsFromKnowns(profile.facts, todayISO());
+  // Rétro-attribue les badges d'état déjà mérités mais absents du profil :
+  // sans ça, un nouveau badge ajouté après coup demande une séance de plus
+  // pour se débloquer. Les badges contextuels (MACHINE/VELOCE/PERSEVERANCE)
+  // ne se déclenchent pas ici, faute de stats de séance.
+  profile.badges = [...profile.badges, ...checkBadges(profile)];
   return profile;
 }
 
