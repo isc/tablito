@@ -1,4 +1,4 @@
-import { medallionColorFor } from '../lib/badges';
+import { medallionColorFor, progressPercent } from '../lib/badges';
 import './Badge.css';
 
 interface BadgeProps {
@@ -26,9 +26,7 @@ function LockIcon() {
 export default function Badge({ badge, earned, earnedDate, progress, onClick }: BadgeProps) {
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
   const showProgress = !earned && progress && progress.target > 0;
-  const percent = showProgress
-    ? Math.min(100, Math.round((progress.current / progress.target) * 100))
-    : 0;
+  const percent = showProgress ? progressPercent(progress) : 0;
   const label = earned
     ? `${badge.name}, débloqué — voir les détails`
     : showProgress
