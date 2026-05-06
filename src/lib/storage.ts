@@ -1,5 +1,6 @@
 import type { UserProfile } from '../types';
 import { MYSTERY_POOL } from '../types';
+import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { pickRandom, todayISO } from './utils';
@@ -94,6 +95,15 @@ function migrateProfile(profile: UserProfile): UserProfile {
   // du test de placement : si des faits restent non introduits alors qu'on
   // a une preuve de réussite sur des faits plus durs, on les introduit.
   inferIntroductionsFromKnowns(profile.facts, todayISO());
+  // Rétro-attribue les badges d'état dont le critère est déjà rempli mais
+  // que le profil n'a pas (cas typique : nouveau badge ajouté après coup —
+  // sans ça il faudrait finir une séance de plus pour le voir débloqué).
+  // Les badges qui dépendent du contexte de séance (MACHINE / VELOCE /
+  // PERSEVERANCE) ne se déclenchent pas ici, faute de stats.
+  const retroactive = checkBadges(profile);
+  if (retroactive.length > 0) {
+    profile.badges = [...profile.badges, ...retroactive];
+  }
   return profile;
 }
 

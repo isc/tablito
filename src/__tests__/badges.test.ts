@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { checkBadges, getBadgeDetail } from '../lib/badges';
 import { createInitialFacts } from '../lib/facts';
+import { importProfile } from '../lib/storage';
 import type { UserProfile } from '../types';
 import { BADGE_IDS } from '../types';
 
@@ -109,5 +110,41 @@ describe('badge "Première multiplication maîtrisée" (1er fait en boîte 5)', 
     profile.facts[1].box = 5;
     const detail = getBadgeDetail(BADGE_IDS.PREMIERE_MAITRISE, profile);
     expect(detail.progress).toEqual({ current: 1, target: 1, unitLabel: 'en boîte 5' });
+  });
+});
+
+describe('rétro-attribution des badges au chargement du profil', () => {
+  it('attribue un badge dont le critère est déjà rempli mais absent du profil (nouveau badge ajouté après coup)', () => {
+    const profile = makeProfile({ totalSessions: 3 });
+    profile.facts[0].box = 4;
+    profile.facts[1].box = 5;
+
+    const loaded = importProfile(JSON.stringify(profile))!;
+
+    const ids = new Set(loaded.badges.map((b) => b.id));
+    expect(ids.has(BADGE_IDS.PREMIER_PAS)).toBe(true);
+    expect(ids.has(BADGE_IDS.PREMIERE_CASE)).toBe(true);
+    expect(ids.has(BADGE_IDS.PREMIERE_MAITRISE)).toBe(true);
+  });
+
+  it('ne dédouble pas les badges déjà présents dans le profil', () => {
+    const profile = makeProfile({
+      totalSessions: 3,
+      badges: [
+        {
+          id: BADGE_IDS.PREMIER_PAS,
+          name: 'Premier pas',
+          description: 'Terminer la première séance',
+          earnedDate: '2026-01-02',
+          icon: '🌱',
+        },
+      ],
+    });
+    profile.facts[0].box = 4;
+
+    const loaded = importProfile(JSON.stringify(profile))!;
+
+    const premierPasCount = loaded.badges.filter((b) => b.id === BADGE_IDS.PREMIER_PAS).length;
+    expect(premierPasCount).toBe(1);
   });
 });
