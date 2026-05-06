@@ -17,6 +17,7 @@
  */
 
 import { spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -44,6 +45,20 @@ const DEVICE_SCALE = 2;
 // Anchor date for seed data — single source of truth for every capture.
 const SEED_TODAY = '2026-04-12';
 const SEED_YESTERDAY = '2026-04-11';
+
+// Cache-busting suffix for screenshot URLs. GitHub Pages serves PNGs with a
+// ~10 min default TTL, so without this query string a phone in UAT keeps
+// showing yesterday's captures even though the new build is live.
+function computeAssetVersion() {
+  const fromCi = process.env.GITHUB_SHA;
+  if (fromCi) return fromCi.slice(0, 7);
+  try {
+    return execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
+  } catch {
+    return String(Date.now());
+  }
+}
+const ASSET_VERSION = computeAssetVersion();
 
 // --- Utilities --------------------------------------------------------------
 
@@ -755,7 +770,7 @@ function buildHtml({ generatedAt }) {
         // preventing layout shift while scrolling through the guide.
         (sh) => `
           <figure class="shot">
-            <img src="screenshots/${sh.file}.png" alt="${sh.caption.replace(/"/g, '&quot;')}" width="${VIEWPORT.width}" height="${VIEWPORT.height}" loading="lazy" />
+            <img src="screenshots/${sh.file}.png?v=${ASSET_VERSION}" alt="${sh.caption.replace(/"/g, '&quot;')}" width="${VIEWPORT.width}" height="${VIEWPORT.height}" loading="lazy" />
             <figcaption>${sh.caption}</figcaption>
           </figure>`,
       )
