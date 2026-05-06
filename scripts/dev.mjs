@@ -16,28 +16,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import esbuild from 'esbuild'
+import { MIME } from './mime.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PORT = Number(process.env.PORT ?? 5174)
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js':   'application/javascript; charset=utf-8',
-  '.mjs':  'application/javascript; charset=utf-8',
-  '.css':  'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg':  'image/svg+xml',
-  '.png':  'image/png',
-  '.jpg':  'image/jpeg', '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.woff2':'font/woff2',
-  '.ico':  'image/x-icon',
-  '.mp3':  'audio/mpeg',
-  '.webmanifest': 'application/manifest+json',
-}
-
-// Substitutions pour `import.meta.env.X` côté POC. Les secrets restent
-// undefined (Supabase est désactivé sans clé, c'est le comportement attendu).
+// Substitutions pour `import.meta.env.X` côté dev. Les secrets restent vides
+// (Supabase est désactivé sans clé, c'est le comportement attendu).
 const ENV_DEFINE = {
   'import.meta.env.BASE_URL':                      '"/"',
   'import.meta.env.MODE':                          '"development"',
