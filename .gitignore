@@ -13,8 +13,10 @@ dist-ssr
 *.local
 CLAUDE.local.md
 
-# Claude Code tooling state (per-clone, not shared)
-.claude/
+# Claude Code runtime state (per-clone). Skills/commands/agents partagés
+# vivent aussi dans .claude/ — on ignore seulement les artefacts runtime.
+.claude/*.lock
+.claude/settings.local.json
 
 # Playwright tooling artifacts
 .playwright-mcp/
