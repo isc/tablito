@@ -18,6 +18,10 @@ App d'apprentissage des tables de multiplication pour enfants, basée sur la rec
 
 Captures d'écran de chaque écran de l'app : **https://isc.github.io/multiplix/guide/**
 
+## Stack
+
+Approche **nobuild** : ESM natif côté navigateur via import maps, Preact 10 vendoré, esbuild pour la transformation `.tsx → .js` (à la volée en dev, en pré-build pour la prod). Pas de bundler, pas de framework de routing, pas de backend. Les détails et la justification de chaque choix pédagogique sont dans [`specs-multiplix.md`](specs-multiplix.md).
+
 ## Licence
 
 [MIT](LICENSE)
