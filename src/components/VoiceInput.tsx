@@ -23,6 +23,16 @@ const MAX_PARSE_FAILS_BEFORE_KEYPAD = 3;
 // speaker→mic echo. Drop non-matching finals within this window so the echo
 // doesn't count as a wrong answer or push the user to the keypad fallback.
 const POST_TTS_GRACE_MS = 2000;
+// With the mic running continuously across questions, the trailing final of
+// utterance N (or a late interim) can arrive after the question has advanced
+// and get re-submitted as the answer to question N+1. We don't blanket-drop
+// in this window (would block a fast user chaining answers) — we only drop
+// events that echo the value we just submitted, which is the actual signature
+// of a same-utterance trailing event.
+const POST_SUBMIT_DEAF_MS = 800;
+// Safety net for the expectTrailingFinal flag: if for some reason the final
+// never arrives (recognizer error, abort), don't keep dropping events forever.
+const TRAILING_FINAL_TIMEOUT_MS = 5000;
 
 function pickBestNumber(primary: string, alternatives: string[]): number | null {
   const candidates = [primary, ...alternatives];
@@ -58,6 +68,13 @@ export default function VoiceInput({
   const disabledRef = useRef(disabled);
   const expectedRef = useRef(expectedValue);
   const lastSpeakEndRef = useRef<number>(0);
+  const lastSubmitAtRef = useRef<number>(0);
+  const lastSubmittedValueRef = useRef<number | null>(null);
+  // Set to true when a fast-path interim submit fires. With continuous=false,
+  // the recognizer will deliver exactly one final for that utterance — we
+  // drop it. The timeout is a safety net in case the final never arrives.
+  const expectTrailingFinalRef = useRef(false);
+  const trailingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     disabledRef.current = disabled;
@@ -77,21 +94,55 @@ export default function VoiceInput({
     setParseFails(0);
   }
 
+  const isEchoOfLastSubmit = useCallback((value: number | null) => {
+    if (value === null || value !== lastSubmittedValueRef.current) return false;
+    return Date.now() - lastSubmitAtRef.current < POST_SUBMIT_DEAF_MS;
+  }, []);
+
   const handleFinal = useCallback(
     (transcript: string, alternatives: string[]) => {
-      if (disabledRef.current) return;
-      const best = pickBestNumber(transcript, alternatives);
-      const withinGrace = Date.now() - lastSpeakEndRef.current < POST_TTS_GRACE_MS;
       const expected = expectedRef.current;
-      if (withinGrace && (best === null || best !== expected)) {
+      const best = pickBestNumber(transcript, alternatives);
+      const sinceSpeakEndMs = Date.now() - lastSpeakEndRef.current;
+      // Drop the trailing final from a fast-path-submitted utterance. With
+      // continuous=false, exactly one final follows the interim that triggered
+      // submit — and on iOS it can arrive 2-3 s later (TTS of the next question
+      // delays silence detection), well past any reasonable time window.
+      if (expectTrailingFinalRef.current) {
+        expectTrailingFinalRef.current = false;
+        if (trailingTimeoutRef.current) {
+          clearTimeout(trailingTimeoutRef.current);
+          trailingTimeoutRef.current = null;
+        }
+        return;
+      }
+      if (disabledRef.current) return;
+      // Heuristique "chiffre redoublé" : quand l'enfant répète son chiffre
+      // ("huit huit"), iOS fusionne souvent les digits en un seul nombre
+      // ("88"). Si expected est 1..9 et best vaut exactement 11×expected,
+      // on interprète comme une répétition de la bonne réponse.
+      let bestEffective = best;
+      if (
+        expected !== undefined
+        && expected >= 1 && expected <= 9
+        && best !== null
+        && best === expected * 11
+      ) {
+        bestEffective = expected;
+      }
+      if (isEchoOfLastSubmit(bestEffective)) return;
+      const withinGrace = sinceSpeakEndMs < POST_TTS_GRACE_MS;
+      if (withinGrace && (bestEffective === null || bestEffective !== expected)) {
         // Drop echo silently — don't count it as a user parse failure,
         // otherwise 3 consecutive echoes would flip us to the keypad.
         return;
       }
       setInterim('');
-      if (best !== null) {
+      if (bestEffective !== null) {
         setParseFails(0);
-        onSubmit(best);
+        lastSubmitAtRef.current = Date.now();
+        lastSubmittedValueRef.current = bestEffective;
+        onSubmit(bestEffective);
       } else {
         setParseFails((n) => {
           const next = n + 1;
@@ -102,23 +153,31 @@ export default function VoiceInput({
         });
       }
     },
-    [onSubmit],
+    [onSubmit, isEchoOfLastSubmit],
   );
 
   const handleInterim = useCallback(
     (text: string) => {
-      setInterim(text);
+      const parsed = parseFrenchAnswer(text);
       const expected = expectedRef.current;
+      if (isEchoOfLastSubmit(parsed)) return;
+      setInterim(text);
       if (expected === undefined || disabledRef.current) return;
-      // Fast path: validate instantly when the transcript matches the
-      // expected answer (directly or via trailing-token fallback).
-      if (parseFrenchAnswer(text) === expected) {
+      if (parsed === expected) {
         setInterim('');
         setParseFails(0);
+        lastSubmitAtRef.current = Date.now();
+        lastSubmittedValueRef.current = expected;
+        expectTrailingFinalRef.current = true;
+        if (trailingTimeoutRef.current) clearTimeout(trailingTimeoutRef.current);
+        trailingTimeoutRef.current = setTimeout(() => {
+          expectTrailingFinalRef.current = false;
+          trailingTimeoutRef.current = null;
+        }, TRAILING_FINAL_TIMEOUT_MS);
         onSubmit(expected);
       }
     },
-    [onSubmit],
+    [onSubmit, isEchoOfLastSubmit],
   );
 
   const { start, abort, isListening, error, isSupported } = useSpeechRecognition({
@@ -127,15 +186,26 @@ export default function VoiceInput({
     lang: 'fr-FR',
   });
 
+  // Keep the mic on for the whole session — don't restart between questions
+  // or pause during TTS. iOS plays a system "ding" on every recognition
+  // start/stop, so toggling per question makes a beep storm. Echoes from the
+  // TTS are dropped by the POST_TTS_GRACE_MS window, and the disabledRef
+  // guard in handleFinal prevents accidental submissions during feedback.
   useEffect(() => {
     if (!isSupported) return;
-    if (disabled || showKeypad || isSpeaking) {
+    if (showKeypad) {
       abort();
       return;
     }
     start();
-    return () => abort();
-  }, [questionToken, disabled, isSpeaking, showKeypad, isSupported, start, abort]);
+    return () => {
+      abort();
+      if (trailingTimeoutRef.current) {
+        clearTimeout(trailingTimeoutRef.current);
+        trailingTimeoutRef.current = null;
+      }
+    };
+  }, [isSupported, showKeypad, start, abort]);
 
   // If unsupported, fall through to the keypad.
   if (!isSupported) {

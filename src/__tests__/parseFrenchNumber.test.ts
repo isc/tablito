@@ -149,4 +149,22 @@ describe('parseFrenchAnswer', () => {
     expect(parseFrenchAnswer('6 fois 5 égale')).toBeNull();
     expect(parseFrenchAnswer('ça fait')).toBeNull();
   });
+
+  it('accepte le dernier nombre quand le préfixe est uniquement des nombres en chiffres', () => {
+    // Cas réel : iOS Safari accumule plusieurs tentatives dans un seul
+    // transcript ("37" puis "27" → "37 27") sans jamais finaliser. On veut
+    // tomber sur 27 (la dernière intention exprimée).
+    expect(parseFrenchAnswer('37 27')).toBe(27);
+    expect(parseFrenchAnswer('37 27 27')).toBe(27);
+    expect(parseFrenchAnswer('30 37 27')).toBe(27);
+    // Mais on rejette toujours l'écho de la question même en chiffres.
+    expect(parseFrenchAnswer('6 fois 5')).toBeNull();
+  });
+
+  it('reconnaît "vin"/"vint" comme "vingt" (t final muet)', () => {
+    expect(parseFrenchAnswer('vin')).toBe(20);
+    expect(parseFrenchAnswer('vint')).toBe(20);
+    expect(parseFrenchAnswer('vin et un')).toBe(21);
+    expect(parseFrenchAnswer('quatre vint')).toBe(80);
+  });
 });

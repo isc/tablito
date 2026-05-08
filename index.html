@@ -9,6 +9,19 @@
     <link rel="icon" type="image/png" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 
+    <!-- Fontes : chargement parallèle via <link> plutôt que @import dans le CSS,
+         pour éviter que le téléchargement attende le parsing du CSS principal. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" />
+
+    <!-- Anti-FOUC : couleur de fond + fonte fallback appliquées dès le premier
+         paint, avant que la feuille de styles principale ne soit injectée. -->
+    <style>
+      html, body { background: #FBF6EC; color: #1E1A2E; }
+      body { font-family: 'Nunito', 'SF Pro Text', system-ui, sans-serif; margin: 0; }
+    </style>
+
     <!-- Splash screens iOS (PWA) — un PNG par couple (taille × DPR).
          Couvre iPhone 12/13/14/15/16 (standard, Pro, Pro Max) + iPad Pro 11".
          Les autres appareils iOS auront un splash vide. Régénérer via

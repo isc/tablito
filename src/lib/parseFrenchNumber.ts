@@ -112,6 +112,10 @@ function normalize(s: string): string {
     .replace(/[-\u2010-\u2015]/g, ' ')
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
+    // Le STT entend souvent "vingt" comme "vin" / "vint" quand le t final
+    // est muet. On le remet en amont pour que toute la logique de compounds
+    // ("vin et un", "quatre vint", etc.) fonctionne sans cas particulier.
+    .replace(/\b(vin|vint)\b/g, 'vingt')
     .trim();
 }
 
@@ -137,6 +141,11 @@ export function parseFrenchNumber(input: string): number | null {
 // donc les bigrams comme "c est" / "ca fait" peuvent utiliser un espace littéral.
 const EQUALITY_MARKER_RE =
   /(?:^|\s)(?:egale|egales|egalent|egal|font|vaut|valent|c est|ca fait|ca donne|ca vaut)(?=\s|$)/g;
+
+// Marqueurs de multiplication dans un transcript : leur présence dans le
+// préfixe d'un trailing-token indique qu'on a affaire à un écho de la
+// question ("6 fois 5") plutôt qu'à des utterances accumulées ("37 27").
+const MULTIPLICATION_MARKERS = new Set(['fois', 'x']);
 
 function afterEqualityMarker(input: string): string | null {
   const s = normalize(input);
@@ -175,9 +184,18 @@ export function parseFrenchAnswer(input: string): number | null {
     const n = parseFrenchNumber(last);
     if (n === null || n < 0 || n > 100) return null;
     const prefix = tokens.slice(0, -1);
-    // Reject si un token du préfixe est déjà un nombre — sinon on masque un
-    // compound cassé en ne gardant que son dernier mot.
-    if (prefix.every((t) => parseFrenchNumber(t) === null)) return n;
+    // Accepter le dernier token nombre si chaque token du préfixe est soit
+    // non-nombre soit un nombre purement en chiffres, ET qu'aucun token
+    // n'est un marqueur de multiplication. Deux nombres en chiffres ne
+    // peuvent jamais former un compound français — on débloque "37 27"
+    // (utterances accumulées par le recognizer). Le marqueur "fois"/"x"
+    // garde le rejet de l'écho TTS pur ("6 fois 5" → null).
+    const safe = prefix.every(
+      (t) =>
+        !MULTIPLICATION_MARKERS.has(t)
+        && (parseFrenchNumber(t) === null || /^\d+$/.test(t)),
+    );
+    if (safe) return n;
   }
   return null;
 }
