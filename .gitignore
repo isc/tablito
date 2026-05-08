@@ -13,6 +13,9 @@ dist-ssr
 *.local
 CLAUDE.local.md
 
+# Claude Code tooling state (per-clone, not shared)
+.claude/
+
 # Playwright tooling artifacts
 .playwright-mcp/
 .playwright-cli/
