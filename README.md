@@ -17,3 +17,7 @@ App d'apprentissage des tables de multiplication pour enfants, basée sur la rec
 ## Guide utilisateur
 
 Captures d'écran de chaque écran de l'app : **https://isc.github.io/multiplix/guide/**
+
+## Licence
+
+[MIT](LICENSE)
