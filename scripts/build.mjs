@@ -33,8 +33,9 @@ const ENV_DEFINE = {
   'import.meta.env.PROD':                          'true',
   'import.meta.env.VITE_APP_VERSION':              JSON.stringify(VERSION),
   'import.meta.env.VITE_BASE_PATH':                JSON.stringify(BASE),
-  // Pour le moment l'envoi de feedback n'est pas branché côté nobuild ; les
-  // valeurs vides désactivent feedbackEnabled au runtime.
+  // VITE_SUPABASE_* viennent de .env via `node --env-file-if-exists=.env`
+  // dans package.json. Sans valeur → strings vides → feedbackEnabled retombe
+  // sur false au runtime, sans crash (cas d'un contributeur sans config).
   'import.meta.env.VITE_SUPABASE_URL':             JSON.stringify(process.env.VITE_SUPABASE_URL ?? ''),
   'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''),
 }
