@@ -514,6 +514,59 @@ async function captureSessionScreens(page) {
   await page.waitForSelector('.feedback-overlay', { state: 'detached', timeout: 3000 });
 }
 
+async function captureVoiceInput(page) {
+  // Stubbe l'API Web Speech (absente en headless Chromium) pour que
+  // `isSpeechRecognitionSupported()` renvoie true. start() déclenche onstart
+  // au tick suivant → l'UI passe en état « listening » (ring + « Je t'écoute »)
+  // pour la capture. Le stub ne reconnaît rien, on prend juste le screenshot.
+  await page.addInitScript(() => {
+    // Sans constructor explicite, Playwright headless instancie bien la
+    // classe mais la méthode start() ci-dessous ne s'exécute pas — l'écran
+    // reste bloqué sur l'état "tap pour parler" au lieu de "j'écoute". Le
+    // ctor explicite débloque le binding ; cause exacte non identifiée.
+    class FakeSpeechRecognition {
+      constructor() {}
+      start() { setTimeout(() => this.onstart && this.onstart(), 0); }
+      abort() { setTimeout(() => this.onend && this.onend(), 0); }
+      stop() { setTimeout(() => this.onend && this.onend(), 0); }
+    }
+    window.webkitSpeechRecognition = FakeSpeechRecognition;
+    window.SpeechRecognition = FakeSpeechRecognition;
+    localStorage.setItem('multiplix-input-mode', 'voice');
+  });
+
+  // Profil minimal : tout introduit, un fait dû pour atterrir directement
+  // sur une question (pas d'intro à cliquer).
+  const profile = buildSampleProfile();
+  const longAgo = '2026-04-05';
+  const future = '2026-04-20';
+  let dueSet = false;
+  for (const f of profile.facts) {
+    f.introduced = true;
+    if (f.box < 3) f.box = 3;
+    f.lastSeen = longAgo;
+    f.history = f.history.length
+      ? f.history.map((h) => ({ ...h, date: longAgo, correct: true }))
+      : [{ date: longAgo, correct: true, responseTimeMs: 2500, answeredWith: f.product }];
+    if (!dueSet && f.a === 5 && f.b === 7) {
+      f.box = 3;
+      f.nextDue = SEED_TODAY;
+      dueSet = true;
+    } else {
+      f.nextDue = future;
+    }
+  }
+  await seedProfile(page, profile);
+  await gotoHome(page);
+  await page.waitForSelector('.home-start-btn');
+  await page.click('.home-start-btn');
+  await page.waitForSelector('.session-screen');
+  await clickAllIntroSteps(page);
+  await page.waitForSelector('.voice-mic.listening', { timeout: 3000 });
+  await sleep(200);
+  await shot(page, '07b-session-voice');
+}
+
 async function captureRecap(page) {
   // Drive a complete (short-ish) session. We seed a profile where only a
   // handful of facts are due & introduced to keep the session short.
@@ -664,15 +717,18 @@ const SECTIONS = [
       qui montre la multiplication comme une addition répétée, la propriété de
       commutativité (3×5 = 5×3, sauf pour les carrés), et une astuce de
       dérivation adaptée au fait (par exemple « × 9 = × 10 moins une fois »).
-      Ensuite viennent les questions. Une bonne réponse rapide donne une étoile
-      dorée. En cas d'erreur, la bonne réponse est affichée avec la grille de
-      points et — tant que le fait est en début d'apprentissage — l'astuce de
-      dérivation est rappelée. Le fait est re-posé un peu plus loin dans la
-      séance.`,
+      Ensuite viennent les questions. L'enfant peut répondre au clavier ou
+      à la voix — un bouton sous le pavé numérique permet de basculer en
+      cours de séance, et le choix est mémorisé pour les séances suivantes.
+      Une bonne réponse rapide donne une étoile dorée. En cas d'erreur, la
+      bonne réponse est affichée avec la grille de points et — tant que le
+      fait est en début d'apprentissage — l'astuce de dérivation est rappelée.
+      Le fait est re-posé un peu plus loin dans la séance.`,
     shots: [
       { file: '06-session-intro', caption: 'Introduction d\'un nouveau fait — étape 1 : grille de points et addition répétée.' },
       { file: '06b-session-intro-strategy', caption: 'Introduction — étape 3 : astuce de dérivation pour mémoriser le fait.' },
       { file: '07-session-question', caption: 'Question standard et pavé numérique.' },
+      { file: '07b-session-voice', caption: 'Mode micro — l\'enfant énonce sa réponse à voix haute. Bascule possible à tout moment.' },
       { file: '08-session-feedback-correct', caption: 'Bonne réponse rapide — étoile dorée.' },
       { file: '09-session-feedback-incorrect', caption: 'Réponse incorrecte — grille de points et rappel de l\'astuce.' },
     ],
@@ -1086,8 +1142,7 @@ async function buildHtml({ generatedAt }) {
     <a href="https://github.com/isc/multiplix">code source</a>
   </p>
   <p>
-    Guide généré automatiquement le ${generatedAt} ·
-    Régénérable en local avec <code>npm run user-guide</code>.
+    Guide généré automatiquement le ${generatedAt}.
   </p>
 </footer>
 </body>
@@ -1135,6 +1190,11 @@ async function main() {
     await captureParentDashboard(page);
     await captureSessionScreens(page);
     await captureRecap(page);
+    // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
+    // the input mode to 'voice' via addInitScript, both of which would
+    // pollute any subsequent capture (especially captureRecap which drives
+    // a full session via keyboard).
+    await captureVoiceInput(page);
 
     await browser.close();
 
