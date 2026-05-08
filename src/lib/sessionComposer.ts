@@ -112,22 +112,50 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   const { facts } = profile;
   const today = now.slice(0, 10);
 
-  // Partition due facts by priority
+  // Intros choisies AVANT les révisions : sinon, avec ~33 faits introduits en
+  // B2/B3 (15+ dus/jour), les révisions remplissent les MAX_QUESTIONS slots et
+  // affament l'intro des derniers faits — 8×9 et 9×9 jamais posés malgré le
+  // mode tail de shouldIntroduceNew.
+  //
+  // Similarité 48h (specs §1.2) : on espace les *introductions*, pas les
+  // révisions actives — l'interférence joue à l'apprentissage. Faits sans
+  // history (dominés au placement) exclus : sinon une table en révision
+  // active bloquerait à jamais l'intro de ses derniers faits.
+  const recentlyIntroduced = facts.filter((f) => {
+    const introDate = f.history[0]?.date;
+    return f.introduced && introDate && daysBetween(introDate, today) < 2;
+  });
+
+  const newFacts: MultiFact[] = [];
+  if (shouldIntroduceNew(facts)) {
+    const notIntroduced = facts.filter((f) => !f.introduced);
+    const sorted = [...notIntroduced].sort(
+      (a, b) => factStage(a) - factStage(b) || a.product - b.product,
+    );
+
+    for (const fact of sorted) {
+      if (newFacts.length >= MAX_NEW_FACTS) break;
+
+      const hasSimilarRecent = recentlyIntroduced.some(
+        (recent) => computeSimilarity(recent, fact) !== 'none',
+      );
+      if (hasSimilarRecent) continue;
+
+      newFacts.push(fact);
+    }
+  }
+
+  const reviewBudget = MAX_QUESTIONS - newFacts.length;
+
   const dueFacts = facts.filter((f) => f.introduced && isDue(f, today));
   const box1 = shuffle(dueFacts.filter((f) => f.box === 1));
   const box23 = shuffle(dueFacts.filter((f) => f.box === 2 || f.box === 3));
   const box45 = shuffle(dueFacts.filter((f) => f.box === 4 || f.box === 5));
-
-  // Gather candidates in priority order
   const prioritized: MultiFact[] = [...box1, ...box23, ...box45];
 
-  // Select facts for the session, respecting the strong-similarity constraint.
-  // We use a greedy approach: add facts one by one, skipping any that have
-  // strong similarity with an already-selected fact.
   const selected: MultiFact[] = [];
-
   for (const fact of prioritized) {
-    if (selected.length >= MAX_QUESTIONS) break;
+    if (selected.length >= reviewBudget) break;
     const hasStrongConflict = selected.some(
       (s) => computeSimilarity(s, fact) === 'strong',
     );
@@ -136,43 +164,14 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
     }
   }
 
-  // If we still have room and can't fill with conflict-free facts, relax the constraint
-  if (selected.length < MIN_QUESTIONS) {
+  // Fallback : on relâche la contrainte de similarité forte plutôt que de
+  // livrer une séance sous MIN_QUESTIONS quand le pool dû ne suffit pas.
+  if (selected.length + newFacts.length < MIN_QUESTIONS) {
     for (const fact of prioritized) {
-      if (selected.length >= MAX_QUESTIONS) break;
+      if (selected.length >= reviewBudget) break;
       if (!selected.includes(fact)) {
         selected.push(fact);
       }
-    }
-  }
-
-  // Similarité 48h (specs §1.2) : on espace les *introductions*, pas les
-  // révisions actives — l'interférence joue à l'apprentissage. Faits sans
-  // history (dominés au placement) exclus : sinon une table en révision
-  // active bloquerait à jamais l'intro de ses derniers faits (8×9, 9×9).
-  const recentlyIntroduced = facts.filter((f) => {
-    const introDate = f.history[0]?.date;
-    return f.introduced && introDate && daysBetween(introDate, today) < 2;
-  });
-
-  const newFacts: MultiFact[] = [];
-  if (shouldIntroduceNew(facts) && selected.length < MAX_QUESTIONS) {
-    const notIntroduced = facts.filter((f) => !f.introduced);
-    const sorted = [...notIntroduced].sort(
-      (a, b) => factStage(a) - factStage(b) || a.product - b.product,
-    );
-
-    for (const fact of sorted) {
-      if (newFacts.length >= MAX_NEW_FACTS) break;
-      if (selected.length + newFacts.length >= MAX_QUESTIONS) break;
-
-      // Skip candidates similar to facts introduced within the last 48h
-      const hasSimilarRecent = recentlyIntroduced.some(
-        (recent) => computeSimilarity(recent, fact) !== 'none',
-      );
-      if (hasSimilarRecent) continue;
-
-      newFacts.push(fact);
     }
   }
 

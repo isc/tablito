@@ -91,6 +91,36 @@ describe('composeSession — introduction des derniers faits', () => {
     expect(introducedKeys.some((k) => candidates.includes(k))).toBe(true);
   });
 
+  it("introduit 8×9 / 9×9 même si ≥ MAX_QUESTIONS faits sont dus (mode tail)", () => {
+    // Cas réel observé sur un profil après ~13 séances : 33 faits introduits
+    // en B2/B3 avec lastSeen récent, 15+ faits dus chaque jour. La règle
+    // protectrice « max 2 intros par séance, comptées dans le budget de 15 »
+    // partageait les slots avec les révisions, qui gagnaient toujours →
+    // 8×9 et 9×9 bloqués indéfiniment malgré le mode tail de shouldIntroduceNew.
+    const facts = createInitialFacts();
+    const longAgo = addDays(TODAY, -30);
+    const yesterday = addDays(TODAY, -1);
+
+    for (const f of facts) {
+      if (
+        getFactKey(f.a, f.b) === getFactKey(8, 9) ||
+        getFactKey(f.a, f.b) === getFactKey(9, 9)
+      ) {
+        continue;
+      }
+      // Tous en B2 vus hier → tous dus aujourd'hui (33 faits dus, > MAX_QUESTIONS).
+      // Introduits il y a 30j, donc hors fenêtre 48h.
+      introduce(facts, f.a, f.b, 2, longAgo, yesterday);
+    }
+
+    const session = composeSession(profileWith(facts), TODAY);
+    const introducedKeys = session
+      .filter((q) => q.isIntroduction)
+      .map((q) => getFactKey(q.fact.a, q.fact.b));
+    const candidates = [getFactKey(8, 9), getFactKey(9, 9)];
+    expect(introducedKeys.some((k) => candidates.includes(k))).toBe(true);
+  });
+
   it("n'introduit pas un fait similaire à un fait introduit dans les 48h", () => {
     // Garde-fou pour la spec : 8×9 introduit hier → 9×9 ne doit pas être
     // introduit aujourd'hui (similarité forte, opérande 9 partagé).

@@ -12,6 +12,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-05-08',
     items: [
+      "Les deux derniers faits (8×9 et 9×9) ne sont plus bloqués par un planning de révision chargé : un slot leur est désormais réservé en fin de parcours, même quand 15+ révisions sont dues le même jour.",
       "Reconnaissance vocale plus fluide en séance : le micro reste actif toute la séance (moins de bips iOS).",
     ],
   },
