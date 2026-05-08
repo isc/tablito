@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-08',
+    items: [
+      "Reconnaissance vocale plus fluide en séance : le micro reste actif toute la séance (moins de bips iOS).",
+    ],
+  },
+  {
     date: '2026-05-06',
     items: [
       "Deux nouveaux badges intermédiaires pour combler le « désert » entre les badges du début et la maîtrise complète d'une table : « Première case révélée » (1ère multiplication passée en boîte 4) et « Première multiplication maîtrisée » (1ère en boîte 5). Ils se débloquent au moment où l'image mystère change visiblement de finesse pour la première fois.",
