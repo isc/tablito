@@ -10,7 +10,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260508193147"
+const CACHE = 'multiplix-' + "20260508193439"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -179,7 +179,14 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return
 
   // Navigation : essaie le réseau, sinon retombe sur le shell précaché.
+  // Exceptions (équivalent du navigateFallbackDenylist VitePWA) : le guide
+  // standalone vit sous son propre index.html, et les previews de PR vivent
+  // dans le scope du SW de prod mais ne doivent pas être masquées par le
+  // shell de prod en offline. On laisse le browser gérer.
   if (e.request.mode === 'navigate') {
+    if (url.pathname.includes('/guide/') || url.pathname.includes('/previews/')) {
+      return
+    }
     e.respondWith(
       fetch(e.request).catch(() => caches.match(BASE + 'index.html'))
     )
