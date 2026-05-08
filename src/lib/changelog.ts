@@ -13,7 +13,6 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-05-08',
     items: [
       "Les deux derniers faits (8×9 et 9×9) ne sont plus bloqués par un planning de révision chargé : un slot leur est désormais réservé en fin de parcours, même quand 15+ révisions sont dues le même jour.",
-      "Le formulaire « Envoyer un avis » remarche : il ne s'ouvrait plus sur le formulaire depuis le 3 mai, suite à un changement technique interne. Bouton et envoi à nouveau opérationnels.",
       "Reconnaissance vocale plus fluide en séance : le micro reste actif toute la séance (moins de bips iOS).",
     ],
   },
