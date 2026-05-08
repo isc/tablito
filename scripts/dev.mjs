@@ -21,8 +21,10 @@ import { MIME } from './mime.mjs'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PORT = Number(process.env.PORT ?? 5174)
 
-// Substitutions pour `import.meta.env.X` côté dev. Les secrets restent vides
-// (Supabase est désactivé sans clé, c'est le comportement attendu).
+// Substitutions pour `import.meta.env.X` côté dev. Les VITE_SUPABASE_* sont
+// chargés via `node --env-file-if-exists=.env.local --env-file-if-exists=.env`
+// dans package.json (.env.local surcharge .env). Sans valeur → strings vides
+// → feedbackEnabled retombe sur false sans crash.
 const ENV_DEFINE = {
   'import.meta.env.BASE_URL':                      '"/"',
   'import.meta.env.MODE':                          '"development"',
@@ -30,11 +32,8 @@ const ENV_DEFINE = {
   'import.meta.env.PROD':                          'false',
   'import.meta.env.VITE_APP_VERSION':              '"dev"',
   'import.meta.env.VITE_BASE_PATH':                '"/"',
-  // Strings vides en dev : `feedbackEnabled` retombe sur false sans crash.
-  // À surcharger via .env.local + un mécanisme adhoc le jour où on reproduit
-  // le feedback en local.
-  'import.meta.env.VITE_SUPABASE_URL':             '""',
-  'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': '""',
+  'import.meta.env.VITE_SUPABASE_URL':             JSON.stringify(process.env.VITE_SUPABASE_URL ?? ''),
+  'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''),
 }
 
 const TRANSFORM_EXT = new Set(['.ts', '.tsx', '.jsx'])

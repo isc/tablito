@@ -7,8 +7,8 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "node scripts/dev.mjs",
-    "build": "tsc -b && node scripts/build.mjs",
+    "dev": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/dev.mjs",
+    "build": "tsc -b && node --env-file-if-exists=.env scripts/build.mjs",
     "preview": "node scripts/preview.mjs",
     "vendor": "node scripts/vendor-preact.mjs",
     "lint": "eslint .",
