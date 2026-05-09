@@ -17,10 +17,15 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260509193831"
+const CACHE = 'multiplix-' + "20260509194652"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
+  "/multiplix/fonts/fonts.css",
+  "/multiplix/fonts/fraunces-italic-eQ7ZXk8g.woff2",
+  "/multiplix/fonts/fraunces-normal-TeP2Xz5c.woff2",
+  "/multiplix/fonts/jetbrains-mono-normal-k6OThhvA.woff2",
+  "/multiplix/fonts/nunito-normal-aBTMnFcQ.woff2",
   "/multiplix/icons/apple-touch-icon.png",
   "/multiplix/icons/icon-192.png",
   "/multiplix/icons/icon-512.png",
