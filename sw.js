@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260509203844"
+const CACHE = 'multiplix-' + "20260509211713"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -58,7 +58,6 @@ const ASSETS = [
   "/multiplix/src/components/FeedbackModal.js",
   "/multiplix/src/components/FeedbackOverlay.js",
   "/multiplix/src/components/FlameIcon.js",
-  "/multiplix/src/components/IOSInstallModal.js",
   "/multiplix/src/components/Mascot.js",
   "/multiplix/src/components/Modal.js",
   "/multiplix/src/components/MysteryImage.js",
@@ -71,7 +70,6 @@ const ASSETS = [
   "/multiplix/src/env.d.js",
   "/multiplix/src/hooks/useConfetti.js",
   "/multiplix/src/hooks/useInputMode.js",
-  "/multiplix/src/hooks/useInstallPrompt.js",
   "/multiplix/src/hooks/useSound.js",
   "/multiplix/src/hooks/useSpeechRecognition.js",
   "/multiplix/src/hooks/useTTS.js",
@@ -96,7 +94,6 @@ const ASSETS = [
   "/multiplix/src/screens/BadgesScreen.js",
   "/multiplix/src/screens/ChangelogScreen.js",
   "/multiplix/src/screens/HomeScreen.js",
-  "/multiplix/src/screens/LandingScreen.js",
   "/multiplix/src/screens/ParentDashboard.js",
   "/multiplix/src/screens/PrivacyScreen.js",
   "/multiplix/src/screens/ProgressScreen.js",
