@@ -20,7 +20,8 @@ interface ImportMeta {
 }
 
 declare module 'virtual:pwa-register' {
-  export function registerSW(options?: { immediate?: boolean }): () => Promise<void>
+  export function registerSW(): () => void
+  export function setBusy(busy: boolean): void
 }
 
 // Imports CSS à effet de bord (`import './Foo.css'`) : pas de valeur, juste

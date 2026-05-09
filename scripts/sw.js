@@ -7,6 +7,13 @@
 //    (pattern SPA standard, fait que toute URL marche offline).
 //  - autre GET : cache-first puis lazy-cache si succès réseau.
 //
+// Lifecycle : on ne fait PAS skipWaiting() automatiquement. Un nouveau
+// SW reste en `waiting` jusqu'à ce que la page envoie le message
+// `SKIP_WAITING` (= elle a décidé que c'était un bon moment, p.ex. on
+// est sur la home et pas en pleine séance). Voir scripts/pwa-register.js.
+// clients.claim() reste, indispensable pour que le reload qui suit
+// skipWaiting passe sous le nouveau SW.
+//
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
@@ -15,11 +22,7 @@ const BASE = __BASE__
 const ASSETS = __ASSETS__
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then((c) => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())
-  )
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)))
 })
 
 self.addEventListener('activate', (e) => {
@@ -28,6 +31,10 @@ self.addEventListener('activate', (e) => {
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   )
+})
+
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
 self.addEventListener('fetch', (e) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react';
+import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type { UserProfile, SessionQuestion, SessionResult, MultiFact, Badge, BoxLevel } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { processAnswer } from './lib/leitner';
@@ -107,6 +108,16 @@ export default function App() {
   useLayoutEffect(() => {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
+  }, [screen]);
+
+  // Signale au pwa-register si on est dans un écran "safe" pour appliquer
+  // une mise à jour SW (= reload). Seuls landing et home le sont : ailleurs,
+  // un reload casserait l'état mémoire en cours (séance, recap animations,
+  // navigation parent, etc.). Quand on revient sur landing/home, un éventuel
+  // SW en attente est appliqué automatiquement.
+  useEffect(() => {
+    const safe = screen === 'landing' || screen === 'home';
+    setSwBusy(!safe);
   }, [screen]);
 
   // Rafraîchir `today` quand l'app revient au premier plan : sans ça, un user
