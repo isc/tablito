@@ -10,11 +10,14 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
 
-    <!-- Fontes : chargement parallèle via <link> plutôt que @import dans le CSS,
-         pour éviter que le téléchargement attende le parsing du CSS principal. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" />
+    <!-- Fontes self-hostées (cf. scripts/vendor-fonts.mjs). Précachées par
+         le SW, donc 0 réseau dès la 2e visite et identité visuelle conservée
+         offline. Préchargement de la fonte la plus critique (Nunito normal,
+         body text + landing) pour aplatir le waterfall CSS → woff2 sur la
+         1re visite. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/fonts/nunito-normal-aBTMnFcQ.woff2" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
 
     <!-- Anti-FOUC : couleur de fond + fonte fallback appliquées dès le premier
          paint, avant que la feuille de styles principale ne soit injectée. -->

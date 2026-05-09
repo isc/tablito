@@ -11,6 +11,7 @@
     "build": "tsc -b && node --env-file-if-exists=.env scripts/build.mjs",
     "preview": "node scripts/preview.mjs",
     "vendor": "node scripts/vendor-preact.mjs",
+    "vendor:fonts": "node scripts/vendor-fonts.mjs",
     "lint": "eslint .",
     "check-node": "node scripts/check-node.mjs",
     "pretest": "npm run check-node",

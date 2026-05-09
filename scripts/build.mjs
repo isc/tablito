@@ -150,10 +150,19 @@ const linkTags = cssLinks
 html = html
   .replace(/\/vendor\//g, BASE + 'vendor/')
   .replace(/\/scripts\/pwa-register-noop\.js/g, BASE + 'pwa-register.js')
-  .replace(/(["'])\/(icons|splash)\//g, `$1${BASE}$2/`)
+  .replace(/(["'])\/(icons|splash|fonts)\//g, `$1${BASE}$2/`)
   .replace(/\/src\/main\.tsx/g, BASE + 'src/main.js')
   .replace(/(<\/head>)/, `${linkTags}\n  $1`)
 await fs.writeFile(path.join(OUT, 'index.html'), html)
+
+// 3.5) Réécrit les URLs dans dist/fonts/fonts.css (`url("/fonts/...")`)
+// pour respecter BASE — sinon en prod (BASE=/multiplix/) les @font-face
+// pointent sur /fonts/... et 404 sur GitHub Pages.
+const fontsCssPath = path.join(OUT, 'fonts', 'fonts.css')
+if (BASE !== '/') {
+  const fontsCss = await fs.readFile(fontsCssPath, 'utf8')
+  await fs.writeFile(fontsCssPath, fontsCss.replace(/(["'])\/fonts\//g, `$1${BASE}fonts/`))
+}
 
 // 4) Liste les assets pour le SW :
 //    - shell : tout ce qui est nécessaire pour le 1er render (HTML, JS, CSS,
