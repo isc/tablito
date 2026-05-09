@@ -12,11 +12,16 @@
 
     <!-- Fontes self-hostées (cf. scripts/vendor-fonts.mjs). Précachées par
          le SW, donc 0 réseau dès la 2e visite et identité visuelle conservée
-         offline. Préchargement de la fonte la plus critique (Nunito normal,
-         body text + landing) pour aplatir le waterfall CSS → woff2 sur la
-         1re visite. -->
+         offline. Préchargement des 2 fontes critiques (Nunito normal pour le
+         body, Fraunces normal pour le H1 LCP) pour aplatir le waterfall
+         CSS → woff2 sur la 1re visite. Les data-* sont lus par
+         vendor-fonts.mjs pour réécrire les hrefs si Google republie. -->
     <link rel="preload" as="font" type="font/woff2" crossorigin
+          data-family="Nunito" data-style="normal"
           href="/fonts/nunito-normal-aBTMnFcQ.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          data-family="Fraunces" data-style="normal"
+          href="/fonts/fraunces-normal-TeP2Xz5c.woff2" />
     <link rel="stylesheet" href="/fonts/fonts.css" />
 
     <!-- Anti-FOUC : couleur de fond + fonte fallback appliquées dès le premier

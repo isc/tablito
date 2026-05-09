@@ -24,10 +24,10 @@ const ROOT = path.resolve(import.meta.dirname, '..')
 const OUT = path.join(ROOT, 'public', 'fonts')
 const INDEX_HTML = path.join(ROOT, 'index.html')
 
-// La fonte préchargée dans index.html (1re fonte critique pour FCP/LCP).
-// Doit matcher le `font-family` exact d'un bloc latin retourné par Google.
-const PRELOADED_FAMILY = 'Nunito'
-const PRELOADED_STYLE = 'normal'
+// Les préloads `<link rel="preload">` dans index.html sont identifiés par
+// leurs attributs `data-family` et `data-style`. Ce script les réécrit si
+// Google republie les fontes (slugs upstream changent → href deviendraient
+// 404). Pas de constante en dur ici : on parse les `data-*` à l'exécution.
 
 // Même URL exacte que celle utilisée actuellement dans index.html.
 const CSS_URL =
@@ -123,29 +123,37 @@ const header =
 await fs.writeFile(path.join(OUT, 'fonts.css'), header + localBlocks.join('\n\n') + '\n')
 console.log(`[fonts] wrote ${path.relative(ROOT, path.join(OUT, 'fonts.css'))}`)
 
-// Met à jour le href du <link rel="preload"> dans index.html avec le slug
-// courant. Sans ça, si Google republie une font et que les slugs changent,
-// la preload pointerait sur un fichier qui n'existe plus → warning silencieux
-// + fonte critique non préchargée.
-const preloadedBlock = blocks.find(
-  (b) =>
-    new RegExp(`font-family:\\s*'${PRELOADED_FAMILY}'`).test(b) &&
-    new RegExp(`font-style:\\s*${PRELOADED_STYLE}`).test(b),
-)
-if (!preloadedBlock) {
-  throw new Error(`[fonts] no ${PRELOADED_FAMILY} ${PRELOADED_STYLE} block found — preload would 404`)
-}
-const preloadedUrl = preloadedBlock.match(/url\((https:\/\/[^)]+\.woff2)\)/)[1]
-const preloadedSlug = urlToSlug.get(preloadedUrl)
+// Met à jour le href de chaque <link rel="preload"> dans index.html avec
+// le slug courant. Sans ça, si Google republie une font et que les slugs
+// upstream changent, le preload pointerait sur un fichier orphelin → 404
+// silencieux + fonte critique non préchargée.
 const html = await fs.readFile(INDEX_HTML, 'utf8')
-const preloadRe = /(rel="preload"[^>]*href=")\/fonts\/[^"]+(")/
-if (!preloadRe.test(html)) {
-  throw new Error('[fonts] preload <link> not found in index.html — vendor-fonts can no longer maintain its href')
+const preloadRe = /<link\s+rel="preload"\s+as="font"[^>]*?data-family="([^"]+)"[^>]*?data-style="([^"]+)"[^>]*?href="\/fonts\/[^"]+"[^>]*?\/?>/g
+const matches = [...html.matchAll(preloadRe)]
+if (matches.length === 0) {
+  throw new Error('[fonts] no <link rel="preload" data-family="..." data-style="..."> in index.html — vendor-fonts can no longer maintain hrefs')
 }
-const updated = html.replace(preloadRe, `$1/fonts/${preloadedSlug}$2`)
+let updated = html
+for (const m of matches) {
+  const [tag, family, style] = m
+  const block = blocks.find(
+    (b) =>
+      new RegExp(`font-family:\\s*'${family}'`).test(b) &&
+      new RegExp(`font-style:\\s*${style}`).test(b),
+  )
+  if (!block) {
+    throw new Error(`[fonts] no ${family} ${style} block found — preload would 404`)
+  }
+  const url = block.match(/url\((https:\/\/[^)]+\.woff2)\)/)[1]
+  const slug = urlToSlug.get(url)
+  const fixedTag = tag.replace(/href="\/fonts\/[^"]+"/, `href="/fonts/${slug}"`)
+  if (fixedTag !== tag) {
+    updated = updated.replace(tag, fixedTag)
+    console.log(`[fonts] updated preload ${family} ${style} href → /fonts/${slug}`)
+  } else {
+    console.log(`[fonts] preload ${family} ${style} already on /fonts/${slug}`)
+  }
+}
 if (updated !== html) {
   await fs.writeFile(INDEX_HTML, updated)
-  console.log(`[fonts] updated preload href in index.html → /fonts/${preloadedSlug}`)
-} else {
-  console.log(`[fonts] preload href already on /fonts/${preloadedSlug}`)
 }
