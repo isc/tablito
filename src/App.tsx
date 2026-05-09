@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type { UserProfile, SessionQuestion, SessionResult, MultiFact, Badge, BoxLevel } from './types';
 import { composeSession } from './lib/sessionComposer';
@@ -12,18 +12,26 @@ import { todayISO, daysBetween } from './lib/utils';
 import { isStandalone, hasSkippedInstall, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { isVoiceMode } from './hooks/useInputMode';
+// Eager : parcours principal (onboarding + boucle quotidienne). Ces
+// écrans sont hit par tout utilisateur, souvent plusieurs fois par jour
+// (Session/Recap surtout) — pas de gain à les lazy-loader, et ça
+// garderait les tests synchrones du parcours utilisateur.
 import LandingScreen from './screens/LandingScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
+import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionScreen from './screens/SessionScreen';
 import RecapScreen from './screens/RecapScreen';
-import ProgressScreen from './screens/ProgressScreen';
-import BadgesScreen from './screens/BadgesScreen';
-import RulesScreen from './screens/RulesScreen';
-import RulesIntroScreen from './screens/RulesIntroScreen';
-import ParentDashboard from './screens/ParentDashboard';
-import PrivacyScreen from './screens/PrivacyScreen';
-import ChangelogScreen from './screens/ChangelogScreen';
+// Lazy : écrans secondaires (consultation, parent, infos) — ouverts
+// occasionnellement, leur coût parse/CPU au cold launch est gaspillé
+// pour la majorité des sessions. Précachés par le SW → cache hit
+// instantané quand l'utilisateur clique.
+const ProgressScreen   = lazy(() => import('./screens/ProgressScreen'));
+const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
+const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
+const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
+const PrivacyScreen    = lazy(() => import('./screens/PrivacyScreen'));
+const ChangelogScreen  = lazy(() => import('./screens/ChangelogScreen'));
 import './App.css';
 
 type Screen =
@@ -333,6 +341,11 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* Suspense pour les écrans lazy. Fallback à null : le SW précache
+          tous les chunks donc l'attente est imperceptible (cache hit), et
+          en 1re visite réseau, un écran vide bref vaut mieux qu'un spinner
+          qui flashe. */}
+      <Suspense fallback={null}>
       {screen === 'landing' && (
         <LandingScreen onSkip={handleLandingSkip} />
       )}
@@ -411,6 +424,7 @@ export default function App() {
       {screen === 'changelog' && (
         <ChangelogScreen onBack={() => setScreen('parent')} />
       )}
+      </Suspense>
     </div>
   );
 }

@@ -81,8 +81,12 @@ const cssShim = (basename) =>
   `const l=document.createElement('link');l.rel='stylesheet';l.href=new URL(${JSON.stringify('./' + basename)},import.meta.url).href;document.head.appendChild(l);\n`
 
 async function rewriteImports(code, sourceFile) {
-  // Capture les `from "..."` et `import "..."` (statiques) dont le path est relatif.
-  const re = /(from\s*|import\s*)["'](\.[^"']+)["']/g
+  // Capture les imports relatifs : `from "..."`, `import "..."` (statiques),
+  // ET `import("...")` (dynamiques, p.ex. via React.lazy → indispensable
+  // pour le code-splitting des écrans).
+  // L'ordre des alternatives est important : `import\s*\(\s*` doit
+  // précéder `import\s*` pour matcher la forme dynamique en premier.
+  const re = /(from\s*|import\s*\(\s*|import\s*)["'](\.[^"']+)["']/g
   const matches = [...code.matchAll(re)]
   for (const m of matches) {
     const resolved = await resolveImport(m[2], sourceFile)
