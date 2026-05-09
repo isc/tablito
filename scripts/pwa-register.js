@@ -48,11 +48,18 @@ function trackWaiting(reg) {
 export function registerSW() {
   if (!('serviceWorker' in navigator)) return () => {}
 
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return
-    refreshing = true
-    window.location.reload()
-  })
+  // Reload n'a de sens que sur un UPDATE d'un SW existant. Sur la
+  // première install, controllerchange est aussi déclenché par
+  // clients.claim() qui passe la page de "non contrôlée" à "contrôlée"
+  // — pas un update à appliquer, et reload en pleine 1re visite casse
+  // les scripts Playwright (cf. user-guide qui screenshote l'app).
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return
+      refreshing = true
+      window.location.reload()
+    })
+  }
 
   window.addEventListener('load', () => {
     navigator.serviceWorker
