@@ -261,6 +261,9 @@ try {
 } finally {
   baselineServer.kill('SIGTERM')
   candidateServer.kill('SIGTERM')
+  // Cleanup worktrees pour ne pas laisser traîner des refs détachées.
+  try { execSync(`git worktree remove --force ${BASELINE_WT}`, { cwd: ROOT, stdio: 'ignore' }) } catch {}
+  try { execSync(`git worktree remove --force ${CANDIDATE_WT}`, { cwd: ROOT, stdio: 'ignore' }) } catch {}
 }
 
 // --- Report ---------------------------------------------------------------
