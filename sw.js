@@ -3,8 +3,12 @@
 // Stratégie :
 //  - install : precache du shell (HTML, JS, CSS, vendor, icônes — pas
 //    les médias lourds qui sont chargés à la demande).
-//  - navigation : network-first puis fallback vers index.html cachée
-//    (pattern SPA standard, fait que toute URL marche offline).
+//  - navigation : cache-first sur le shell `index.html` (cold launch
+//    instantané, plus aucune attente réseau pour ouvrir l'app). Le
+//    fallback réseau couvre uniquement le cas pathologique où le shell
+//    n'est pas dans le cache (1re install pas terminée). Les mises à
+//    jour passent par le mécanisme SW (browser check de /sw.js + update
+//    explicite, cf. pwa-register.js), pas par cette navigation.
 //  - autre GET : cache-first puis lazy-cache si succès réseau.
 //
 // Lifecycle : on ne fait PAS skipWaiting() automatiquement. Un nouveau
@@ -17,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260509200457"
+const CACHE = 'multiplix-' + "20260509200843"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -190,17 +194,19 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url)
   if (url.origin !== self.location.origin) return
 
-  // Navigation : essaie le réseau, sinon retombe sur le shell précaché.
+  // Navigation : cache-first sur le shell. Sert le `index.html` précaché
+  // sans toucher au réseau → cold launch instantané. Les nouvelles versions
+  // arrivent par le mécanisme SW (cf. pwa-register.js).
   // Exceptions (équivalent du navigateFallbackDenylist VitePWA) : le guide
   // standalone vit sous son propre index.html, et les previews de PR vivent
   // dans le scope du SW de prod mais ne doivent pas être masquées par le
-  // shell de prod en offline. On laisse le browser gérer.
+  // shell de prod. On laisse le browser gérer.
   if (e.request.mode === 'navigate') {
     if (url.pathname.includes('/guide/') || url.pathname.includes('/previews/')) {
       return
     }
     e.respondWith(
-      fetch(e.request).catch(() => caches.match(BASE + 'index.html'))
+      caches.match(BASE + 'index.html').then((cached) => cached || fetch(e.request))
     )
     return
   }
