@@ -6,6 +6,12 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 
 - Approche **nobuild** : ESM natif côté navigateur via import maps.
   Pas de bundler. Voir `BASE=/multiplix/ npm run build`.
+- **Landing statique** : `index.html` contient directement le markup
+  HTML de la page d'accueil + un inline script qui boot l'app Preact
+  via `import('/src/main.tsx')` au clic ou si l'utilisateur est déjà
+  passé la landing (PWA installée, profil en localStorage, ou skip
+  flag). Aucun module JS de l'app chargé tant que l'utilisateur n'a
+  pas interagi — un visiteur qui repart paie 0 KB de JS app.
 - **Preact 10** vendoré dans `vendor/preact/` (fichiers ESM publiés tels
   quels sur npm, copiés par `npm run vendor`). Le code applicatif
   importe `react`/`react-dom` — l'import map (prod + dev + vitest)
@@ -13,8 +19,25 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 - **TypeScript** vérifié par `tsc -b` (noEmit). esbuild fait la
   transformation .tsx → .js (à la volée en dev, en pré-build pour
   prod). Aucune autre étape de transpilation.
-- **Service Worker** maison (`scripts/sw.js`, ~50 lignes) : précache
-  shell + lazy-cache média + navigation fallback offline.
+- **Lazy-loading** : les écrans secondaires (Progress, Badges, Rules,
+  ParentDashboard, Privacy, Changelog) sont chargés via `lazy()` +
+  `Suspense`. Les écrans du parcours principal (Welcome, RulesIntro,
+  Home, Session, Recap) restent eager pour préserver la fluidité de
+  la boucle quotidienne et la synchronicité des tests d'intégration.
+- **CSS concaténé** : les ~30 fichiers `.css` sources sont mergés en
+  un seul `dist/styles.css` au build (1 requête HTTP au lieu de 30).
+  En dev, le serveur sert chaque fichier individuellement. Le split
+  source = convention d'auteur, le browser voit toujours 1 fichier.
+- **Fontes self-hostées** dans `public/fonts/` (régénérées par
+  `npm run vendor:fonts` depuis Google Fonts, subset latin).
+  Précachées par le SW → 0 réseau dès la 2e visite, identité visuelle
+  conservée offline.
+- **Service Worker** maison (`scripts/sw.js`) : précache shell +
+  lazy-cache média + **cache-first** sur les navigations (cold launch
+  instantané). Pas de `skipWaiting()` automatique : un nouveau SW
+  reste en `waiting` jusqu'à ce que la page envoie `SKIP_WAITING` via
+  `pwa-register.js`/`setBusy` quand `App` est sur un écran "safe"
+  (`home` uniquement). Évite tout reload mid-séance.
 - localStorage pour la persistance (pas de backend).
 - Déploiement : GitHub Pages via GitHub Actions (`BASE=/multiplix/`).
 - Node minimum : 22.12+ (CI utilise Node 22).
@@ -23,11 +46,13 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 
 - `src/lib/` — logique métier (Leitner, sélection de questions, similarité, badges, stockage)
 - `src/components/` — composants UI réutilisables
-- `src/screens/` — écrans de l'app
+- `src/screens/` — écrans de l'app (pas de `LandingScreen` : la landing vit dans `index.html`)
 - `src/hooks/` — hooks custom (son, timer, streak, confetti)
-- `scripts/` — tooling (dev server, build, preview, vendor, SW templates)
+- `src/static-landing.css` — styles du markup statique de la landing dans `index.html`
+- `scripts/` — tooling (dev server, build, preview, vendor, SW templates, vendor-fonts, perf-audit, perf-compare)
 - `vendor/preact/` — Preact ESM vendoré (régénéré par `npm run vendor`)
-- `index.html` — entry avec import map
+- `public/fonts/` — fontes self-hostées (régénéré par `npm run vendor:fonts`)
+- `index.html` — entry avec import map ET la landing statique + bootstrap script inline
 - `specs-multiplix.md` — spécifications fonctionnelles complètes
 - `TODO.md` — évolutions techniques envisagées (pistes non tranchées)
 
@@ -37,6 +62,9 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 - `npm run build` — produit `dist/` statique (tsc -b + scripts/build.mjs)
 - `npm run preview` — sert `dist/` en local (port 5175)
 - `npm run vendor` — re-vendore Preact depuis `node_modules/`
+- `npm run vendor:fonts` — re-télécharge les fontes Google (latin) dans `public/fonts/`
+- `npm run perf:audit` — audit perf en place (Playwright + CDP : timing, Web Vitals, coverage JS/CSS)
+- `npm run perf:compare <baseline-ref> [candidate-ref=HEAD]` — compare 2 git refs (Lighthouse + warm-SW)
 - `npm test` — vitest (alias `react` → `preact/compat`)
 
 ## Guide utilisateur
