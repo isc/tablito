@@ -4,10 +4,14 @@
 //   npm run build                         → dist/ (BASE=/)
 //   BASE=/multiplix/ npm run build        → dist/ pour sous-chemin
 //
-// Pas de bundling : chaque .ts/.tsx devient un .js indépendant. Les
-// imports relatifs sont réécrits pour pointer vers les .js générés. Les
-// imports CSS deviennent `./X.css.js` (shim qui injecte un <link>) avec
-// le vrai .css copié à côté.
+// Pas de bundling JS : chaque .ts/.tsx devient un .js indépendant. Les
+// imports relatifs sont réécrits pour pointer vers les .js générés.
+//
+// CSS : les `import "./X.css"` sources sont strippés du JS au build, et
+// tous les .css sont concaténés en un seul `dist/styles.css` chargé via
+// un unique <link> dans index.html. Le split par composant est purement
+// une convention d'auteur (lisibilité) ; le browser n'a aucune raison
+// de recevoir 30 requêtes là où 1 suffit.
 
 import esbuild from 'esbuild'
 import fs from 'node:fs/promises'
@@ -68,7 +72,6 @@ async function resolveImport(importPath, fromFile) {
   const target = path.resolve(fromDir, importPath)
   const ext = path.extname(target)
 
-  if (ext === '.css') return importPath + '.js'
   if (['.js', '.mjs', '.json'].includes(ext)) return importPath
   if (SRC_EXTS.includes(ext)) return importPath.replace(new RegExp(ext.replace('.', '\\.') + '$'), '.js')
 
@@ -77,10 +80,12 @@ async function resolveImport(importPath, fromFile) {
   return importPath
 }
 
-const cssShim = (basename) =>
-  `const l=document.createElement('link');l.rel='stylesheet';l.href=new URL(${JSON.stringify('./' + basename)},import.meta.url).href;document.head.appendChild(l);\n`
-
 async function rewriteImports(code, sourceFile) {
+  // Strip les `import "./X.css"` : on concatène tous les CSS dans
+  // dist/styles.css au build et on les charge via un seul <link> dans
+  // index.html, donc ces imports sources sont à effet nul en prod.
+  code = code.replace(/import\s*["']\.[^"']+\.css["']\s*;?\r?\n?/g, '')
+
   // Capture les imports relatifs : `from "..."`, `import "..."` (statiques),
   // ET `import("...")` (dynamiques, p.ex. via React.lazy → indispensable
   // pour le code-splitting des écrans).
@@ -99,17 +104,16 @@ console.log(`Building into ${OUT} (BASE=${BASE}, VERSION=${VERSION})`)
 await fs.rm(OUT, { recursive: true, force: true })
 await ensureDir(OUT)
 
-// 1) Transforme/copie src/. On collecte aussi tous les .css pour les
-// pré-charger via <link> dans l'index.html (évite le FOUC : sinon chaque
-// import CSS attend que son shim JS s'exécute).
-const cssLinks = []
+// 1) Transforme/copie src/. Les .css sources sont collectés pour
+// concaténation en bundle unique (étape 1.5).
+const cssFiles = []
 for await (const file of walk(SRC)) {
   const rel = path.relative(SRC, file)
   const ext = path.extname(file)
   const outDir = path.join(OUT, 'src', path.dirname(rel))
-  await ensureDir(outDir)
 
   if (['.ts', '.tsx', '.jsx'].includes(ext)) {
+    await ensureDir(outDir)
     const source = await fs.readFile(file, 'utf8')
     const outName = path.basename(rel, ext) + '.js'
     const result = await esbuild.transform(source, {
@@ -129,34 +133,40 @@ for await (const file of walk(SRC)) {
     await fs.writeFile(path.join(outDir, outName), codeWithMap)
     await fs.writeFile(path.join(outDir, outName + '.map'), result.map)
   } else if (ext === '.css') {
-    const base = path.basename(rel)
-    await fs.copyFile(file, path.join(outDir, base))
-    // Shim no-op : le CSS est déjà chargé via <link> dans index.html. Un
-    // import './X.css' devient `import './X.css.js'` (vide), inoffensif.
-    await fs.writeFile(path.join(outDir, base + '.js'), '')
-    cssLinks.push(['src', ...rel.split(path.sep)].join('/'))
+    cssFiles.push({ rel, abs: file })
   } else {
+    await ensureDir(outDir)
     await fs.copyFile(file, path.join(outDir, path.basename(rel)))
   }
 }
+
+// 1.5) Concat tous les CSS sources en un seul dist/styles.css.
+// Économise 30 requêtes HTTP au cold load. L'ordre est alphabétique
+// pour la reproductibilité, donc index.css n'est pas en tête (c'est
+// `App.css` qui sort en premier). Sans impact pratique : les classnames
+// sont préfixés par composant (`.session-*`, `.parent-*`…) donc pas de
+// collision de spécificité, et les `var(--*)` se résolvent à
+// l'utilisation, pas au parse de leur définition.
+cssFiles.sort((a, b) => a.rel.localeCompare(b.rel))
+const concatenated = (await Promise.all(
+  cssFiles.map(async ({ rel, abs }) => `/* ===== ${rel} ===== */\n${await fs.readFile(abs, 'utf8')}`),
+)).join('\n')
+await fs.writeFile(path.join(OUT, 'styles.css'), concatenated)
 
 // 2) Vendor + public
 await copyTree(VENDOR, path.join(OUT, 'vendor'))
 await copyTree(PUBLIC, OUT)
 
 // 3) index.html avec import map, chemins absolus adaptés à BASE, et
-// <link> pour tous les CSS (évite le FOUC).
+// <link> unique vers le bundle styles.css concaténé en 1.5.
 let html = await fs.readFile(TEMPLATE, 'utf8')
-const linkTags = cssLinks
-  .sort()
-  .map((p) => `    <link rel="stylesheet" href="${BASE}${p}" />`)
-  .join('\n')
+const stylesLink = `    <link rel="stylesheet" href="${BASE}styles.css" />`
 html = html
   .replace(/\/vendor\//g, BASE + 'vendor/')
   .replace(/\/scripts\/pwa-register-noop\.js/g, BASE + 'pwa-register.js')
   .replace(/(["'])\/(icons|splash|fonts)\//g, `$1${BASE}$2/`)
   .replace(/\/src\/main\.tsx/g, BASE + 'src/main.js')
-  .replace(/(<\/head>)/, `${linkTags}\n  $1`)
+  .replace(/(<\/head>)/, `${stylesLink}\n  $1`)
 await fs.writeFile(path.join(OUT, 'index.html'), html)
 
 // 3.5) Réécrit les URLs dans dist/fonts/fonts.css (`url("/fonts/...")`)
