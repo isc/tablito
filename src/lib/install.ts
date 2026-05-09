@@ -2,6 +2,9 @@
 // d'installation PWA. Côté iOS Safari, l'utilisateur DOIT installer manuellement
 // via le menu de partage ; côté Android/Chromium, on capture beforeinstallprompt.
 
+// ⚠ Cette clé est aussi référencée en dur dans l'inline script de
+// index.html (pour décider si la landing statique doit s'afficher).
+// Si tu la renommes, mets à jour les deux.
 const SKIP_INSTALL_KEY = 'multiplix-skip-install';
 
 export function isStandalone(): boolean {

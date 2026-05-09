@@ -24,7 +24,28 @@
     <style>
       html, body { background: #FBF6EC; color: #1E1A2E; }
       body { font-family: 'Nunito', 'SF Pro Text', system-ui, sans-serif; margin: 0; }
+      /* Sur installation PWA / profil existant / "essayer dans le navigateur"
+         déjà cliqué : l'app va monter directement sur Home/Welcome, pas la
+         landing. On masque la landing statique pour éviter qu'elle flash. */
+      html.skip-static-landing #static-landing { display: none; }
     </style>
+
+    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée.
+         Inline + sync : tourne avant le rendu du <body>, donc pas de flash. -->
+    <script>
+      (function() {
+        try {
+          var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+            || window.navigator.standalone === true;
+          var profile = false, skipped = false;
+          try { profile = !!localStorage.getItem('multiplix-profile'); } catch (e) {}
+          try { skipped = localStorage.getItem('multiplix-skip-install') === '1'; } catch (e) {}
+          if (standalone || profile || skipped) {
+            document.documentElement.classList.add('skip-static-landing');
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Splash screens iOS (PWA) — un PNG par couple (taille × DPR).
          Couvre iPhone 12/13/14/15/16 (standard, Pro, Pro Max) + iPad Pro 11".
@@ -57,7 +78,154 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!--
+      Landing 100 % statique : approche "static-first" pour FCP/LCP rapide
+      (esprit DHH/Rails sur les apps no-bundle). Le contenu visible est
+      directement dans l'HTML, aucun module JS chargé tant que l'utilisateur
+      n'interagit pas — si on quitte la page sans cliquer, 0 KB de JS app
+      téléchargé.
+
+      Source de vérité : ce markup + l'inline script en bas de body. Pas de
+      version Preact équivalente dans src/. App.tsx reprend la main quand
+      l'utilisateur clique "Essayer dans le navigateur" ou quand la PWA est
+      déjà installée (cf. inline script `skip-static-landing` dans <head>).
+    -->
+    <div id="root">
+      <div id="static-landing" class="landing">
+        <div class="landing-hero">
+          <div class="landing-mascot">
+            <!-- ⚠ SVG dupliqué de src/components/Mascot.tsx (l'inliner ici
+                 permet à la landing de rester 100 % HTML, sans charger Preact
+                 pour afficher Piou). Si tu modifies le SVG, mets à jour les
+                 deux fichiers. Aucun outil ne le détectera automatiquement. -->
+            <div class="mascot happy" role="img" aria-label="Mascotte Piou, humeur: happy">
+              <svg viewBox="0 0 100 100" class="mascot-svg" xmlns="http://www.w3.org/2000/svg">
+                <g class="mascot-feet">
+                  <path d="M40 88 L 40 94 M 36 94 L 44 94" />
+                  <path d="M60 88 L 60 94 M 56 94 L 64 94" />
+                </g>
+                <g class="mascot-body">
+                  <ellipse cx="50" cy="60" rx="28" ry="28" class="mascot-fill-body" />
+                  <path d="M32 60 Q 50 82 68 60" class="mascot-fill-belly" />
+                  <path d="M30 58 Q 26 70 36 74 Q 40 68 38 60 Z" class="mascot-wing" />
+                  <g class="mascot-eye mascot-eye-left">
+                    <circle cx="43" cy="54" r="3" class="mascot-eye-iris" />
+                    <circle cx="44" cy="53" r="0.9" class="mascot-eye-shine" />
+                  </g>
+                  <g class="mascot-eye mascot-eye-right">
+                    <circle cx="57" cy="54" r="3" class="mascot-eye-iris" />
+                    <circle cx="58" cy="53" r="0.9" class="mascot-eye-shine" />
+                  </g>
+                  <path d="M46 63 L 54 63 L 50 68 Z" class="mascot-beak" />
+                  <circle cx="38" cy="62" r="2.5" class="mascot-cheek" />
+                  <circle cx="62" cy="62" r="2.5" class="mascot-cheek" />
+                  <path d="M48 34 L 50 28 L 52 34" class="mascot-tuft" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <h1 class="landing-title">Multiplix</h1>
+          <p class="landing-tagline">Apprendre les tables de multiplication, en douceur.</p>
+        </div>
+
+        <ul class="landing-principles">
+          <li>
+            <span class="landing-principle-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Méthode Leitner.</strong> Chaque multiplication revient juste avant que l'enfant l'oublie — la mémoire s'ancre durablement.</span>
+          </li>
+          <li>
+            <span class="landing-principle-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Pas de notes, pas de classement.</strong> On célèbre le progrès, pas la performance. Aucun message négatif.</span>
+          </li>
+          <li>
+            <span class="landing-principle-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M8 12l3 3 5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Hors-ligne, sans pub, sans compte.</strong> Une fois installé, plus besoin de connexion. Les données restent sur l'appareil.</span>
+          </li>
+        </ul>
+
+        <div class="landing-cta">
+          <button type="button" class="landing-install-btn">Installer Multiplix</button>
+          <p class="landing-install-hint">L'app s'installera comme n'importe quelle autre application.</p>
+          <button type="button" class="landing-skip-btn">Essayer dans le navigateur</button>
+          <p class="landing-skip-warning">Attention&nbsp;: si tu installes Multiplix plus tard sur iPhone ou iPad, la progression du navigateur ne sera pas conservée.</p>
+        </div>
+
+        <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif. -->
+        <div id="ios-install-help" class="ios-install-help">
+          <h2>Installer sur iPhone / iPad</h2>
+          <p>Ouvre cette page dans Safari, puis ajoute l'app à l'écran d'accueil&nbsp;:</p>
+          <ol>
+            <li>Touche le bouton <strong>•••</strong> en bas à droite de Safari (en mode compact, c'est lui qui cache le partage).</li>
+            <li>Choisis <strong>« Partager »</strong> dans le menu qui s'ouvre.</li>
+            <li>Touche <strong>« Plus »</strong> pour afficher toutes les actions.</li>
+            <li>Choisis <strong>« Sur l'écran d'accueil »</strong> puis touche <strong>« Ajouter »</strong>. L'icône Multiplix apparaît sur ton écran.</li>
+          </ol>
+          <p class="ios-install-note">Astuce&nbsp;: dans Chrome ou Firefox sur iOS, l'ajout n'est pas disponible — ouvre cette page dans Safari.</p>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      Bootstrap inline. Pas de <script type="module" src="..."> par défaut :
+      un visiteur qui ne fait que lire la landing ne télécharge PAS les
+      90+ modules ESM de l'app. Conforme à l'esprit "static-first".
+
+      Trois cas :
+      - skip-static-landing déjà posé (PWA installée, profil, skip flag) →
+        boot Preact immédiatement (l'utilisateur n'a pas besoin de la landing).
+      - Visiteur 1re fois → wire les boutons. Le boot Preact n'arrive qu'au
+        clic sur "Essayer dans le navigateur" ou "Installer".
+      - Capture beforeinstallprompt en amont pour pouvoir le réutiliser au
+        clic du bouton "Installer".
+    -->
+    <script>
+      (function() {
+        var deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          deferredPrompt = e;
+        });
+
+        function bootApp() {
+          // Le path .tsx est rewrité en .js par scripts/build.mjs pour la prod.
+          // En dev, dev.mjs sert le .tsx via esbuild.transform.
+          // createRoot remplace les enfants de #root, donc la landing statique
+          // disparaît automatiquement quand App mount — pas besoin de la
+          // remove manuellement (et ça garde le contenu visible jusqu'à ce
+          // que l'app soit prête, plutôt que d'afficher un écran blanc
+          // pendant le download de main.js sur réseau lent).
+          return import('/src/main.tsx').catch(function(err) {
+            console.error('[boot] failed to load app', err);
+          });
+        }
+
+        if (document.documentElement.classList.contains('skip-static-landing')) {
+          bootApp();
+          return;
+        }
+
+        document.querySelector('.landing-install-btn').addEventListener('click', function() {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+            return;
+          }
+          var help = document.getElementById('ios-install-help');
+          help.classList.add('visible');
+          help.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        document.querySelector('.landing-skip-btn').addEventListener('click', function() {
+          try { localStorage.setItem('multiplix-skip-install', '1'); } catch (e) {}
+          bootApp();
+        });
+      })();
+    </script>
   </body>
 </html>

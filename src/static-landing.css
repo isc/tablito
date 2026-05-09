@@ -142,3 +142,64 @@
   max-width: 320px;
   text-align: center;
 }
+
+/* === Section instructions iOS, montrée au clic "Installer" si pas de prompt natif disponible. === */
+
+.ios-install-help {
+  display: none;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 20px;
+  margin: 16px;
+  max-width: 460px;
+  width: calc(100% - 32px);
+  box-shadow: var(--shadow-md);
+  align-self: center;
+}
+
+.ios-install-help.visible {
+  display: block;
+}
+
+.ios-install-help h2 {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 12px;
+  letter-spacing: -0.2px;
+}
+
+.ios-install-help p {
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 12px;
+}
+
+.ios-install-help ol {
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  padding-left: 22px;
+  margin: 0 0 14px;
+}
+
+.ios-install-help ol li {
+  margin-bottom: 8px;
+}
+
+.ios-install-help ol li strong {
+  color: var(--indigo-ink);
+}
+
+.ios-install-note {
+  font-size: 12px;
+  color: var(--ink-muted);
+  border-top: 1px solid var(--line-soft);
+  padding-top: 10px;
+  margin: 0;
+}

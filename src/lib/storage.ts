@@ -5,6 +5,9 @@ import { createInitialFacts } from './facts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { pickRandom, todayISO } from './utils';
 
+// ⚠ Cette clé est aussi référencée en dur dans l'inline script de
+// index.html (pour décider si la landing statique doit s'afficher avant
+// que main.js ne charge). Si tu la renommes, mets à jour les deux.
 export const STORAGE_KEY = 'multiplix-profile';
 
 /**

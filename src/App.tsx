@@ -9,14 +9,18 @@ import { getFactKey } from './lib/facts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
 import { todayISO, daysBetween } from './lib/utils';
-import { isStandalone, hasSkippedInstall, clearInstallSkipped } from './lib/install';
+import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { isVoiceMode } from './hooks/useInputMode';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
 // écrans sont hit par tout utilisateur, souvent plusieurs fois par jour
 // (Session/Recap surtout) — pas de gain à les lazy-loader, et ça
 // garderait les tests synchrones du parcours utilisateur.
-import LandingScreen from './screens/LandingScreen';
+//
+// Note : pas d'écran "landing" dans App. La landing est servie en HTML
+// statique directement écrit dans index.html (#static-landing) ; ses
+// boutons sont wired par l'inline script à la fin de body. Quand App
+// monte, on est déjà passé la landing (skip flag, profil, ou standalone).
 import WelcomeScreen from './screens/WelcomeScreen';
 import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -35,7 +39,6 @@ const ChangelogScreen  = lazy(() => import('./screens/ChangelogScreen'));
 import './App.css';
 
 type Screen =
-  | 'landing'
   | 'welcome'
   | 'rulesIntro'
   | 'home'
@@ -49,10 +52,6 @@ type Screen =
   | 'changelog';
 
 function initialScreen(profile: UserProfile | null): Screen {
-  // Si l'app tourne en mode standalone (PWA installée), pas besoin de landing.
-  // Sinon, on montre la landing tant que l'utilisateur n'a pas dit "essayer
-  // dans le navigateur". Une fois standalone, on n'a plus rien à pousser.
-  if (!isStandalone() && !hasSkippedInstall() && !profile) return 'landing';
   if (!profile) return 'welcome';
   if (!profile.hasSeenRulesIntro) return 'rulesIntro';
   return 'home';
@@ -119,13 +118,12 @@ export default function App() {
   }, [screen]);
 
   // Signale au pwa-register si on est dans un écran "safe" pour appliquer
-  // une mise à jour SW (= reload). Seuls landing et home le sont : ailleurs,
-  // un reload casserait l'état mémoire en cours (séance, recap animations,
-  // navigation parent, etc.). Quand on revient sur landing/home, un éventuel
+  // une mise à jour SW (= reload). Seul `home` l'est ici : ailleurs, un
+  // reload casserait l'état mémoire en cours (séance, recap animations,
+  // navigation parent, etc.). Quand on revient sur home, un éventuel
   // SW en attente est appliqué automatiquement.
   useEffect(() => {
-    const safe = screen === 'landing' || screen === 'home';
-    setSwBusy(!safe);
+    setSwBusy(screen !== 'home');
   }, [screen]);
 
   // Rafraîchir `today` quand l'app revient au premier plan : sans ça, un user
@@ -143,10 +141,6 @@ export default function App() {
       window.removeEventListener('focus', refresh);
     };
   }, []);
-
-  const handleLandingSkip = useCallback(() => {
-    setScreen(profile ? 'home' : 'welcome');
-  }, [profile]);
 
   // Welcome: create new profile with optional placement test results
   const handleWelcomeComplete = useCallback((name: string, placementResults: PlacementResult[]) => {
@@ -346,10 +340,6 @@ export default function App() {
           en 1re visite réseau, un écran vide bref vaut mieux qu'un spinner
           qui flashe. */}
       <Suspense fallback={null}>
-      {screen === 'landing' && (
-        <LandingScreen onSkip={handleLandingSkip} />
-      )}
-
       {screen === 'welcome' && (
         <WelcomeScreen onComplete={handleWelcomeComplete} />
       )}
