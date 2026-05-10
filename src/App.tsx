@@ -102,6 +102,31 @@ export default function App() {
     if (isStandalone()) clearInstallSkipped();
   }, []);
 
+  // /mystery/* est exclu du précache SW (cf. scripts/build.mjs : install
+  // lourd). On warm-cache les 5 niveaux dès qu'on connaît le thème, sinon
+  // une carte qui passe en boîte 5 hors-ligne déclenche son 1er fetch et
+  // affiche un blanc. Différé après idle + SW ready, sans quoi les fetches
+  // partent avant l'activation du SW et n'atterrissent que dans le HTTP
+  // cache — perdues à la prochaine cold launch hors-ligne.
+  const theme = profile?.mysteryTheme;
+  useEffect(() => {
+    if (!theme) return;
+    const base = import.meta.env.BASE_URL;
+    const warmup = () => {
+      navigator.serviceWorker?.ready.finally(() => {
+        for (let level = 1; level <= 5; level++) {
+          fetch(`${base}mystery/${theme}/level-${level}.png`).catch(() => {});
+        }
+      });
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(warmup, { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(warmup, 1500);
+    return () => window.clearTimeout(id);
+  }, [theme]);
+
   // Reset le scroll à chaque changement d'écran. useLayoutEffect (synchrone,
   // pré-paint) plutôt que useEffect : avec useEffect, l'utilisateur voit
   // brièvement le nouvel écran avec l'ancien scroll, et si la nouvelle page
