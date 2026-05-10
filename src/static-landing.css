@@ -196,6 +196,14 @@
   color: var(--indigo-ink);
 }
 
+/* Par défaut on montre la variante "modern" (Safari iOS 26+, ~66 % des
+   iPhones en 2026). L'inline script du <head> pose `html.ios-classic`
+   pour iOS < 26 (Version/<26 dans l'UA Safari) — l'autre variante prend
+   la main alors. */
+.ios-install-help .ios-steps-classic { display: none; }
+html.ios-classic .ios-install-help .ios-steps-modern { display: none; }
+html.ios-classic .ios-install-help .ios-steps-classic { display: block; }
+
 .ios-install-note {
   font-size: 12px;
   color: var(--ink-muted);

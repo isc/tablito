@@ -35,8 +35,10 @@
       html.skip-static-landing #static-landing { display: none; }
     </style>
 
-    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée.
-         Inline + sync : tourne avant le rendu du <body>, donc pas de flash. -->
+    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée,
+         et quelle variante du flow d'install iOS afficher (Safari < 26 vs ≥ 26
+         où Apple a déplacé le bouton de partage derrière "•••"). Inline + sync
+         pour tourner avant le rendu du <body>. -->
     <script>
       (function() {
         try {
@@ -47,6 +49,16 @@
           try { skipped = localStorage.getItem('multiplix-skip-install') === '1'; } catch (e) {}
           if (standalone || profile || skipped) {
             document.documentElement.classList.add('skip-static-landing');
+          }
+          var ua = navigator.userAgent;
+          var isIOS = /iPhone|iPod|iPad/.test(ua)
+            || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          if (isIOS) {
+            var v = ua.match(/Version\/(\d+)/);
+            var major = v ? parseInt(v[1], 10) : 0;
+            if (major > 0 && major < 26) {
+              document.documentElement.classList.add('ios-classic');
+            }
           }
         } catch (e) {}
       })();
@@ -161,15 +173,22 @@
           <p class="landing-skip-warning">Attention&nbsp;: si tu installes Multiplix plus tard sur iPhone ou iPad, la progression du navigateur ne sera pas conservée.</p>
         </div>
 
-        <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif. -->
+        <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif.
+             Deux variantes selon la version Safari (cf. inline script en <head>
+             qui pose `html.ios-classic` pour iOS < 26). -->
         <div id="ios-install-help" class="ios-install-help">
           <h2>Installer sur iPhone / iPad</h2>
           <p>Ouvre cette page dans Safari, puis ajoute l'app à l'écran d'accueil&nbsp;:</p>
-          <ol>
+          <ol class="ios-steps-modern">
             <li>Touche le bouton <strong>•••</strong> en bas à droite de Safari (en mode compact, c'est lui qui cache le partage).</li>
             <li>Choisis <strong>« Partager »</strong> dans le menu qui s'ouvre.</li>
             <li>Touche <strong>« Plus »</strong> pour afficher toutes les actions.</li>
             <li>Choisis <strong>« Sur l'écran d'accueil »</strong> puis touche <strong>« Ajouter »</strong>. L'icône Multiplix apparaît sur ton écran.</li>
+          </ol>
+          <ol class="ios-steps-classic">
+            <li>Touche le bouton <strong>de partage</strong> en bas de l'écran (icône avec une flèche vers le haut).</li>
+            <li>Choisis <strong>« Sur l'écran d'accueil »</strong> dans la liste.</li>
+            <li>Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Multiplix apparaît sur ton écran d'accueil.</li>
           </ol>
           <p class="ios-install-note">Astuce&nbsp;: dans Chrome ou Firefox sur iOS, l'ajout n'est pas disponible — ouvre cette page dans Safari.</p>
         </div>
