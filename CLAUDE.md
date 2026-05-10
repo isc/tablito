@@ -53,7 +53,7 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 - `vendor/preact/` — Preact ESM vendoré (régénéré par `npm run vendor`)
 - `public/fonts/` — fontes self-hostées (régénéré par `npm run vendor:fonts`)
 - `index.html` — entry avec import map ET la landing statique + bootstrap script inline
-- `specs-multiplix.md` — spécifications fonctionnelles complètes
+- `public/specs/index.html` — spécifications fonctionnelles complètes (déployées en `/specs/` via le `copyTree(PUBLIC, OUT)` du build, dans le thème du site). HTML écrit à la main : éditable directement, plus de `specs-multiplix.md`.
 - `TODO.md` — évolutions techniques envisagées (pistes non tranchées)
 
 ## Commandes principales

@@ -675,8 +675,8 @@ const SECTIONS = [
           <span class="cite">Butler (1988) ; Hattie &amp; Timperley (2007)</span>
         </li>
       </ul>
-      <p class="principles-footer">Détails et justifications dans
-      <a href="https://github.com/isc/multiplix/blob/main/specs-multiplix.md"><code>specs-multiplix.md</code></a>.</p>
+      <p class="principles-footer">Détails et justifications dans les
+      <a href="../specs/">spécifications fonctionnelles</a>.</p>
     `,
     shots: [],
   },
@@ -1138,7 +1138,7 @@ async function buildHtml({ generatedAt }) {
 <footer>
   <p>
     Pour aller plus loin :
-    <a href="https://github.com/isc/multiplix/blob/main/specs-multiplix.md">spécifications fonctionnelles</a> ·
+    <a href="../specs/">spécifications fonctionnelles</a> ·
     <a href="https://github.com/isc/multiplix">code source</a>
   </p>
   <p>
