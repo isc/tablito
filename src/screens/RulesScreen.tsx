@@ -13,14 +13,12 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
         <button className="rules-back-btn" onClick={onBack} aria-label="Retour">
           <BackChevron />
         </button>
-        <div className="rules-title">{showRule11 ? 'Mes règles' : 'Mes deux règles'}</div>
+        <div className="rules-title">Mes règles</div>
       </div>
 
       <div className="rules-content">
         <div className="rules-intro">
-          {showRule11
-            ? 'Tes raccourcis à connaître par cœur. Après, ce sera facile !'
-            : 'Deux raccourcis à connaître par cœur. Après, ce sera facile !'}
+          Tes raccourcis à connaître par cœur. Après, ce sera facile&nbsp;!
         </div>
 
         {/* Règle ×1 */}
