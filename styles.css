@@ -984,15 +984,14 @@
   background-repeat: no-repeat;
   transition: background 0.5s ease;
   -webkit-tap-highlight-color: transparent;
+  /* Couvre les trous d'arrondi sous-pixel entre cellules de la grille
+     (sinon le fond clair du parent transparaît en lignes de 1px). */
+  transform: scale(1.02);
 }
 
 .mystery-cell.mystery-level-0 {
   background: linear-gradient(135deg, var(--line-soft) 0%, var(--line) 100%);
   cursor: default;
-}
-
-.mystery-cell.mystery-diagonal.mystery-level-5 {
-  box-shadow: inset 0 0 0 2px rgba(217, 154, 31, 0.55);
 }
 
 .mystery-detail-overlay {
