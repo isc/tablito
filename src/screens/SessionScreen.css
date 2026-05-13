@@ -89,7 +89,6 @@
 
 .session-intro-operator {
   color: var(--indigo);
-  font-style: italic;
   font-weight: 400;
   margin: 0 8px;
 }
@@ -180,14 +179,12 @@
 
 .session-question-text .operator {
   color: var(--indigo);
-  font-style: italic;
   font-weight: 400;
   margin: 0 6px;
 }
 
 .session-question-text .equals {
   color: var(--ink-muted);
-  font-style: italic;
   font-weight: 400;
   margin-left: 10px;
 }
