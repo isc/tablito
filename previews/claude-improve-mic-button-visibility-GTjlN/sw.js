@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260513183053"
+const CACHE = 'multiplix-' + "20260513183358"
 const BASE = "/multiplix/previews/claude-improve-mic-button-visibility-GTjlN/"
 const ASSETS = [
   "/multiplix/previews/claude-improve-mic-button-visibility-GTjlN/favicon.svg",

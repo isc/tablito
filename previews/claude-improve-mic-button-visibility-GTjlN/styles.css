@@ -4005,7 +4005,6 @@ input, select, textarea {
 
 .session-input-switch:active:not(:disabled) {
   transform: translateY(1px);
-  background: #DAD6F0;
 }
 
 .session-input-switch:disabled {
