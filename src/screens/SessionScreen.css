@@ -194,7 +194,6 @@
 
 .session-question-text .placeholder {
   color: var(--ink-muted);
-  font-style: italic;
   font-weight: 400;
   margin-left: 10px;
 }
