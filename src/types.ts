@@ -43,6 +43,11 @@ export interface UserProfile {
   badges: Badge[];
   sessionHistory: SessionResult[];
   hasSeenRulesIntro: boolean;
+  // Vrai dès que l'enfant a ouvert l'écran Règles APRÈS le déblocage de la
+  // règle bonus ×11 (cf. lib/badges.ts:isRule11Unlocked). Sert uniquement
+  // à éteindre la pastille « Nouveau » sur le bouton Règles — la carte
+  // elle-même reste visible dès le déblocage.
+  hasSeenRule11: boolean;
   mysteryTheme: MysteryTheme;
 }
 

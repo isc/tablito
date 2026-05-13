@@ -783,7 +783,11 @@ const SECTIONS = [
       alléger la charge mnésique : multiplier par 1 (le nombre ne change pas)
       et multiplier par 10 (les chiffres glissent d'une place vers la gauche,
       un 0 prend la place des unités). Ces tables ne font donc pas partie
-      des 36 faits appris.`,
+      des 36 faits appris.
+      Une troisième règle « bonus » ×11 (il suffit de répéter le chiffre :
+      3×11 = 33, 7×11 = 77…) apparaît plus tard, quand toutes les tables
+      de 2 à 9 sont maîtrisées — signalée par une pastille « Nouveau »
+      discrète sur le bouton Règles.`,
     shots: [
       { file: '12-rules', caption: 'Règles pour ×1 et ×10.' },
     ],

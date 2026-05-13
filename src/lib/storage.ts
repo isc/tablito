@@ -71,6 +71,7 @@ export function createNewProfile(name: string): UserProfile {
     badges: [],
     sessionHistory: [],
     hasSeenRulesIntro: false,
+    hasSeenRule11: false,
     mysteryTheme: pickRandom(MYSTERY_POOL),
   };
 }
@@ -85,6 +86,12 @@ function migrateProfile(profile: UserProfile): UserProfile {
   }
   if (typeof profile.hasSeenRulesIntro !== 'boolean') {
     profile.hasSeenRulesIntro = true;
+  }
+  if (typeof profile.hasSeenRule11 !== 'boolean') {
+    // Profils existants : laisser à false. Si l'enfant a déjà débloqué la
+    // règle (toutes les tables maîtrisées), il verra la pastille « Nouveau »
+    // à sa prochaine visite — c'est ce qu'on veut.
+    profile.hasSeenRule11 = false;
   }
   // `village` est accepté tel quel (guide utilisateur) ; sinon le thème
   // doit appartenir au pool, et à défaut on en retire un au hasard.
