@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Multiplix — Spécifications fonctionnelles</title>
+<link rel="icon" href="../favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" />
+<style>
+  :root {
+    --cream: #FBF6EC;
+    --cream-deep: #F3EADB;
+    --paper: #FFFFFF;
+    --ink: #1E1A2E;
+    --ink-soft: #52495F;
+    --ink-muted: #8A8295;
+    --line: #E6DECE;
+    --line-soft: #EFE7D6;
+    --indigo: #4F46BA;
+    --indigo-soft: #E8E6F7;
+    --indigo-ink: #2B2478;
+    --coral: #E8623D;
+    --honey: #D99A1F;
+    --honey-soft: #F7E9C4;
+    --sage: #3F9B7A;
+    --sage-soft: #D9EDE2;
+    --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --sans: 'Nunito', 'SF Pro Text', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  header.page-header {
+    background: var(--cream);
+    color: var(--ink);
+    padding: 56px 24px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  header.page-header .eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header.page-header h1 {
+    margin: 0 0 12px;
+    font-family: var(--serif);
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--ink);
+  }
+  header.page-header h1 em {
+    color: var(--indigo);
+    font-style: italic;
+  }
+  header.page-header .lede {
+    margin: 0 auto;
+    max-width: 56ch;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+  header.page-header .target {
+    margin: 14px 0 0;
+    color: var(--ink-muted);
+    font-size: 14px;
+    font-style: italic;
+  }
+  header.page-header .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--indigo);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    transition: background 0.15s;
+  }
+  header.page-header .back-link:hover { background: var(--cream-deep); }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 24px; }
+
+  nav.toc {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 22px;
+    padding: 22px 26px;
+    margin-bottom: 36px;
+  }
+  nav.toc .toc-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink-muted);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  nav.toc ol {
+    margin: 0;
+    padding: 0 0 0 4px;
+    columns: 2;
+    list-style: none;
+    counter-reset: toc;
+  }
+  nav.toc li {
+    margin: 6px 0;
+    break-inside: avoid;
+    padding-left: 28px;
+    position: relative;
+    counter-increment: toc;
+  }
+  nav.toc li::before {
+    content: counter(toc);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--ink-muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    width: 22px;
+    text-align: right;
+  }
+  nav.toc a {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.2px;
+  }
+  nav.toc a:hover { color: var(--indigo); }
+
+  article { background: var(--paper); border: 1.5px solid var(--line); border-radius: 22px; padding: 40px 48px; }
+  section.chapter + section.chapter { margin-top: 48px; padding-top: 36px; border-top: 1px solid var(--line-soft); }
+
+  h2 {
+    margin: 0 0 18px;
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  h2 .num {
+    display: inline-block;
+    margin-right: 10px;
+    color: var(--indigo);
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    vertical-align: 4px;
+  }
+  h3 {
+    margin: 32px 0 12px;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--ink);
+  }
+  h3 .num {
+    margin-right: 8px;
+    color: var(--honey);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    vertical-align: 2px;
+  }
+  h4 {
+    margin: 24px 0 10px;
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  p { margin: 0 0 14px; color: var(--ink-soft); font-size: 15.5px; }
+  article p strong { color: var(--ink); font-weight: 700; }
+  article p em { color: var(--ink); }
+  ul, ol { margin: 0 0 16px; padding-left: 22px; color: var(--ink-soft); font-size: 15.5px; }
+  ul li, ol li { margin: 4px 0; }
+  ul li::marker { color: var(--honey); }
+
+  a { color: var(--indigo); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--cream); border: 1px solid var(--line); padding: 1px 6px; border-radius: 4px; color: var(--indigo-ink); }
+  pre {
+    margin: 16px 0 20px;
+    padding: 18px 20px;
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  pre code { background: transparent; border: 0; padding: 0; color: inherit; font-size: inherit; }
+
+  blockquote.note {
+    margin: 16px 0;
+    padding: 12px 18px;
+    background: var(--honey-soft);
+    border-left: 4px solid var(--honey);
+    border-radius: 8px;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+  }
+  blockquote.note p { margin: 0; color: inherit; font-size: inherit; }
+  blockquote.note p + p { margin-top: 8px; }
+
+  .source {
+    margin: 0 0 14px;
+    color: var(--ink-muted);
+    font-size: 14px;
+    font-style: italic;
+  }
+  .source strong { color: var(--ink-soft); font-style: normal; font-weight: 700; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px;
+    font-size: 14.5px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  thead th {
+    background: var(--cream-deep);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1.5px solid var(--line);
+  }
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--ink-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody td:first-child { color: var(--ink); font-weight: 600; }
+
+  hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+
+  .references {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ref;
+  }
+  .references li {
+    margin: 0 0 14px;
+    padding-left: 32px;
+    position: relative;
+    counter-increment: ref;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .references li::before {
+    content: counter(ref);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--indigo);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    width: 24px;
+    text-align: right;
+  }
+
+  footer.page-footer {
+    text-align: center;
+    color: var(--ink-muted);
+    padding: 32px 24px;
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    margin-top: 32px;
+  }
+  footer.page-footer p { margin: 0 0 6px; color: var(--ink-muted); }
+  footer.page-footer a { color: var(--indigo); font-weight: 700; }
+
+  @media (max-width: 800px) {
+    header.page-header { padding: 36px 20px 28px; }
+    header.page-header h1 { font-size: 32px; }
+    main { padding: 20px 16px; }
+    article { padding: 24px 20px; border-radius: 18px; }
+    nav.toc ol { columns: 1; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 19px; }
+    table { font-size: 13.5px; }
+    thead th, tbody td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="eyebrow">Spécifications fonctionnelles</div>
+  <h1>Multiplix<em>.</em></h1>
+  <p class="lede">Application d'apprentissage des tables de multiplication basée sur la recherche en sciences cognitives.</p>
+  <p class="target">Utilisatrice cible : Zoé, 8 ans, CE2 — Tables de 1 à 10</p>
+  <a class="back-link" href="../">← Retour à l'application</a>
+</header>
+
+<main>
+
+<nav class="toc" aria-label="Sommaire">
+  <div class="toc-label">Sommaire</div>
+  <ol>
+    <li><a href="#principes">Principes scientifiques fondateurs</a></li>
+    <li><a href="#architecture">Architecture de l'application</a></li>
+    <li><a href="#parcours">Parcours utilisateur</a></li>
+    <li><a href="#gamification">Gamification</a></li>
+    <li><a href="#progression">Suivi de progression</a></li>
+    <li><a href="#algorithme">Algorithme de sélection des questions</a></li>
+    <li><a href="#interface">Interface utilisateur</a></li>
+    <li><a href="#pwa">Fonctionnalités PWA / hors-ligne</a></li>
+    <li><a href="#perimetre">Périmètre — ce que l'app ne fait PAS</a></li>
+    <li><a href="#metriques">Métriques de succès</a></li>
+    <li><a href="#evolutions">Évolutions possibles (V2)</a></li>
+    <li><a href="#references">Références</a></li>
+  </ol>
+</nav>
+
+<article>
+
+<section class="chapter" id="principes">
+  <h2><span class="num">1</span>Principes scientifiques fondateurs</h2>
+  <p>L'application repose sur quatre piliers issus de la littérature en psychologie cognitive et en didactique des mathématiques :</p>
+
+  <h3 id="principes-spaced"><span class="num">1.1</span>Répétition espacée (Spaced Repetition)</h3>
+  <p class="source"><strong>Source :</strong> Kang (2016), Cepeda et al. (2008), Rea &amp; Modigliani (1985)</p>
+  <p>Chaque fait multiplicatif possède un état de maîtrise individuel. L'intervalle entre deux présentations d'un même fait augmente avec les succès consécutifs et se réduit en cas d'erreur. L'algorithme s'inspire du système de Leitner à 5 boîtes, adapté pour des enfants.</p>
+  <table>
+    <thead><tr><th>Boîte</th><th>Intervalle de révision</th><th>Signification</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Chaque séance</td><td>Nouveau ou échoué récemment</td></tr>
+      <tr><td>2</td><td>1 jour</td><td>Répondu correctement 1 fois</td></tr>
+      <tr><td>3</td><td>3 jours</td><td>Répondu correctement 2 fois consécutives</td></tr>
+      <tr><td>4</td><td>7 jours</td><td>Répondu correctement 3 fois consécutives</td></tr>
+      <tr><td>5</td><td>21 jours</td><td>Maîtrisé (révision de consolidation)</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Règles :</strong></p>
+  <ul>
+    <li>Un succès fait monter le fait d'une boîte.</li>
+    <li>Un échec renvoie le fait en boîte 1.</li>
+    <li>Un fait est considéré « acquis » quand il atteint la boîte 5 et y est confirmé.</li>
+    <li>Le temps de réponse est enregistré. Un succès lent (&gt; 5 secondes) ne fait pas monter de boîte — l'objectif est le rappel automatique, pas le calcul mental.</li>
+  </ul>
+
+  <h3 id="principes-interference"><span class="num">1.2</span>Regroupement par faible similarité (Low-Interference Training)</h3>
+  <p class="source"><strong>Source :</strong> Dotan &amp; Zviran-Ginat (2022), <em>Cognitive Research: Principles and Implications</em></p>
+  <p>Les faits similaires (ex : 6×8=48 et 8×8=64) créent de l'interférence en mémoire lorsqu'ils sont présentés dans la même séance. L'application regroupe les faits de sorte qu'une séance ne contienne que des faits dissemblables entre eux.</p>
+  <p><strong>Commutativité :</strong> a×b et b×a (ex : 6×7 et 7×6) sont traités comme un seul et même fait. L'application ne stocke qu'une entrée (avec a ≤ b par convention) mais pose la question dans les deux ordres.</p>
+  <p><strong>Critères de similarité entre deux faits a×b=c et d×e=f :</strong></p>
+  <ul>
+    <li>Opérande partagé (ex : 7×6 et 7×8) → similarité forte</li>
+    <li>Résultat proche ou même dizaine (ex : 6×7=42 et 6×8=48) → similarité moyenne</li>
+    <li>Chiffre partagé dans le résultat (ex : 8×8=64 et 8×6=48, tous deux avec un 8 en opérande et un 4 dans le résultat) → similarité moyenne</li>
+  </ul>
+  <blockquote class="note">
+    <p><strong>Note sur la métrique :</strong> Dotan &amp; Zviran-Ginat utilisent une métrique différente dans leur étude : le nombre de paires de chiffres communes entre deux faits (opérandes et chiffres du résultat confondus, positions ignorées). Leur métrique est continue et ne distingue pas le rôle du chiffre (opérande vs. résultat). Notre métrique catégorielle (forte/moyenne/nulle) est plus conservatrice — elle classe comme « similarité forte » tout partage d'opérande, même quand la métrique du papier donnerait un score de 0 (ex : 8×7=56 et 8×3=24 ne partagent qu'un seul chiffre, donc 0 paires, mais partagent l'opérande 8). Ce choix est aligné avec la littérature plus large sur les erreurs de récupération en multiplication (Campbell, 1987), qui identifie le partage d'opérande comme la première source de confusion.</p>
+  </blockquote>
+  <p><strong>Règle de séance :</strong> Dans une séance donnée, deux faits ayant une similarité forte ne sont jamais présentés dans la même série de questions. Deux <strong>introductions</strong> de faits similaires sont espacées d'au moins 48h — l'interférence vise l'apprentissage de paires similaires (Dotan &amp; Zviran-Ginat 2022), pas la révision active. Une fois un fait appris (en boîte ≥ 2 et revu régulièrement), le revoir ne bloque pas l'introduction d'un fait similaire.</p>
+
+  <h3 id="principes-interleaving"><span class="num">1.3</span>Entrelacement (Interleaving)</h3>
+  <p class="source"><strong>Source :</strong> Rohrer &amp; Taylor (2007), Rohrer, Dedrick &amp; Burgess (2014)</p>
+  <p>Au sein d'une séance, les questions alternent entre différentes tables plutôt que de travailler une seule table en bloc. L'entrelacement force la discrimination active et améliore les performances d'environ 30% par rapport à la pratique bloquée.</p>
+  <p><strong>Implémentation :</strong> Chaque séance pioche dans les faits éligibles (selon l'algorithme de répétition espacée) et les mélange. Jamais deux questions consécutives de la même table.</p>
+
+  <h3 id="principes-comprehension"><span class="num">1.4</span>Compréhension conceptuelle avant mémorisation</h3>
+  <p class="source"><strong>Source :</strong> Cowan et al. (2011), Brendefur et al. (2015)</p>
+  <p>Avant de demander un rappel pur, chaque nouveau fait est d'abord introduit visuellement (array/grille de points, lien avec l'addition répétée, commutativité). L'application ne demande jamais de mémoriser un fait qui n'a pas été conceptuellement présenté.</p>
+</section>
+
+<section class="chapter" id="architecture">
+  <h2><span class="num">2</span>Architecture de l'application</h2>
+
+  <h3 id="archi-stack"><span class="num">2.1</span>Stack technique</h3>
+  <table>
+    <thead><tr><th>Composant</th><th>Choix</th><th>Justification</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>React (JSX, single-file artifact ou PWA)</td><td>Interactivité riche, animations</td></tr>
+      <tr><td>Stockage</td><td>localStorage + export/import JSON</td><td>Persistance entre séances, pas de backend</td></tr>
+      <tr><td>Animations</td><td>CSS transitions + Framer Motion ou CSS keyframes</td><td>Feedback visuel motivant</td></tr>
+      <tr><td>PWA</td><td>Service Worker + manifest.json</td><td>Installable, fonctionne hors-ligne</td></tr>
+      <tr><td>Hébergement</td><td>GitHub Pages (repo <code>isc/multiplix</code>)</td><td>Gratuit, simple</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="archi-data"><span class="num">2.2</span>Structure des données</h3>
+<pre><code>interface MultiFact {
+  a: number;           // premier opérande (2-10)
+  b: number;           // second opérande (2-10), toujours a ≤ b (commutativité)
+  product: number;     // résultat
+  box: 1 | 2 | 3 | 4 | 5;  // boîte Leitner
+  lastSeen: string;    // ISO date de dernière présentation
+  nextDue: string;     // ISO date de prochaine révision
+  history: Attempt[];  // historique des tentatives
+  introduced: boolean; // le fait a-t-il été présenté conceptuellement ?
+}
+
+interface Attempt {
+  date: string;
+  correct: boolean;
+  responseTimeMs: number;
+  answeredWith: number | null;  // ce que l'enfant a répondu
+}
+
+interface UserProfile {
+  name: string;
+  startDate: string;
+  facts: MultiFact[];
+  totalSessions: number;
+  currentStreak: number;     // jours consécutifs
+  longestStreak: number;
+  badges: Badge[];
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  earnedDate: string;
+  icon: string;
+}</code></pre>
+
+  <h3 id="archi-inventaire"><span class="num">2.3</span>Inventaire des faits</h3>
+  <p>En exploitant la commutativité (a×b = b×a), on réduit les 100 faits (1-10 × 1-10) aux faits uniques :</p>
+  <ul>
+    <li>Tables de 1 et 10 : triviaux → traités à part (règle, pas mémorisation)</li>
+    <li>Carrés : 2×2, 3×3, …, 9×9 → 8 faits</li>
+    <li>Faits non-carrés (a &lt; b, 2 ≤ a ≤ 9, a &lt; b ≤ 9) → 28 faits</li>
+    <li><strong>Total à mémoriser : 36 faits</strong> (après exclusion des ×1 et ×10)</li>
+  </ul>
+  <p>Les faits ×1 et ×10 sont enseignés comme des <strong>règles</strong> (pas de la mémorisation) lors de la phase d'introduction.</p>
+
+  <h4>Formulation pédagogique des règles</h4>
+  <ul>
+    <li><strong>×1</strong> : « Tout nombre multiplié par 1 reste le même. »</li>
+    <li><strong>×10</strong> : « Les chiffres glissent d'une place vers la gauche : un 0 vient prendre la place des unités. »</li>
+  </ul>
+  <p>La formulation classique « on ajoute un zéro » est volontairement évitée : le verbe « ajouter » prête à confusion avec l'addition, et la règle devient fausse dès l'introduction des nombres décimaux (1,2 × 10 = 12, et non 1,20). Le principe du « glisse-nombre » — décalage des chiffres dans le tableau de numération (unités → dizaines, dizaines → centaines, etc.) — est la formulation recommandée par plusieurs sources pédagogiques françaises :</p>
+
+  <h4>Règle bonus ×11 (révélation différée)</h4>
+  <p>La table de 11 n'est pas au programme officiel français de l'école primaire, mais présente un motif particulièrement régulier de 1 à 9 : <strong>« il suffit de répéter le chiffre »</strong> (3×11 = 33, 7×11 = 77…). On la traite donc comme une <strong>règle bonus</strong>, jamais comme un fait à mémoriser dans le Leitner — aucune carte 11×N n'est ajoutée au profil.</p>
+  <p>Contrairement aux règles ×1 et ×10 qui sont des <strong>prérequis culturels</strong> introduits dès le premier lancement, la règle ×11 est révélée <strong>tardivement</strong> : elle apparaît dans l'écran <code>RulesScreen</code> uniquement quand l'enfant a obtenu les 8 badges « Table de N » (n=2..9), cf. <code>isRule11Unlocked</code>. Le critère est volontairement basé sur les badges et non sur les boîtes en direct : les badges sont permanents, donc la révélation est définitive — une mauvaise journée qui fait régresser quelques faits ne « reprend » pas la découverte. Le but est de préserver le <em>wow-effect</em> de la découverte d'un motif élégant — l'introduire à J1 noierait ce moment dans un onboarding déjà chargé pour un CE1 qui galère encore avec 7×8.</p>
+  <p>La découverte est signalée par une pastille « Nouveau » discrète sur le bouton Règles de l'écran d'accueil (pas de modale interruptive, cohérent avec la philosophie low-intrusion de l'app). La pastille s'éteint dès la première ouverture de l'écran Règles après le déblocage, via <code>UserProfile.hasSeenRule11</code>.</p>
+  <ul>
+    <li><a href="https://eugenedelacroix.arsene76.fr/matieres-enseignees/mathematiques/le-glisse-nombre-ou-comment-comprendre-la-multiplication-par-10--2939.htm">Le glisse-nombre — Collège Eugène Delacroix</a></li>
+    <li><a href="https://maitrelucas.fr/lecons/multiplier-par-10-100-1000/">Multiplier par 10, 100, 1000 — Maître Lucas</a></li>
+    <li><a href="https://maitrelucas.fr/lecons/la-table-de-10/">La table de 10 — Maître Lucas</a></li>
+    <li><a href="https://mathsansbosse.fr/content/erreurs-de-multiplication-et-division">Erreurs de multiplication et division — Mathsansbosse</a></li>
+    <li><a href="https://www.schoolmouv.fr/cours/multiplier-par-10-100-ou-1000/fiche-de-cours">Multiplier par 10, 100 ou 1000 — SchoolMouv</a></li>
+    <li><a href="https://www.neoprofs.org/t131596-decalage-a-gauche-ou-a-droite">Décalage à gauche ou à droite ? — Neoprofs</a></li>
+  </ul>
+</section>
+
+<section class="chapter" id="parcours">
+  <h2><span class="num">3</span>Parcours utilisateur</h2>
+
+  <h3 id="parcours-premier"><span class="num">3.1</span>Premier lancement</h3>
+  <ol>
+    <li>Écran d'accueil avec le personnage mascotte (voir §4)</li>
+    <li>Saisie du prénom → « Salut Zoé ! »</li>
+    <li>Explication ludique : « Je suis [Mascotte]. On va apprendre les multiplications ensemble, 5 minutes par jour ! »</li>
+    <li>
+      Test de positionnement rapide (optionnel) : 15 faits mélangés, pas de timer visible → détermine quels faits sont déjà connus pour démarrer à la bonne boîte. Un bouton <strong>« Je ne sais pas »</strong> permet de passer une question sans forcer une réponse au hasard ; c'est traité comme une erreur (placement en boîte 1), ce qui évite de polluer le diagnostic avec des bonnes réponses devinées. Une voix d'intro (<code>placement-intro</code>) annonce l'option au démarrage du test.
+      <p><strong>Inférence par dominance</strong> : les 21 faits non testés sont ensuite inférés à partir des résultats du placement. Un fait <code>(a, b)</code> est marqué introduit en boîte 2 s'il existe un fait testé <code>(a', b')</code> correctement résolu avec <code>a' ≥ a ET b' ≥ b</code> (avec normalisation min/max) — l'idée étant qu'un enfant qui sait <code>6×9</code> sait aussi <code>2×3</code>. Sans ça, l'image mystère cacherait les cases « faciles » et la règle boîte≥2 (§3.4bis) bloquerait l'introduction de 2×2 et 2×3. Les faits non dominés (typiquement 8×9, 9×9) restent à introduire via le rythme normal.</p>
+    </li>
+    <li>Introduction des règles ×1 et ×10 (écran <code>RulesIntroScreen</code>) — affiché une fois, juste après le test de positionnement. Trois étapes : accueil (« Deux règles toutes simples »), règle ×1 avec exemples, règle ×10 avec visuel du « glisse-nombre » (animation : un chiffre glisse de la colonne des unités vers celle des dizaines, un 0 apparaît aux unités). Le passage est persisté via <code>UserProfile.hasSeenRulesIntro</code> pour ne pas le rejouer.</li>
+    <li>Première séance avec les 2 premiers faits (les plus simples : 2×2 et 2×3). Le plafond de 2 nouveaux faits par séance (§3.4bis) s'applique dès la première séance — 2×4 et 2×5 sont introduits aux séances suivantes quand 2×2 et 2×3 sont en boîte 2+.</li>
+  </ol>
+  <p><strong>Rappel contextuel de la règle ×10 dans l'intro des faits ×9 :</strong></p>
+  <p>La stratégie des faits ×9 étant « n × 9 = n × 10 − n » (voir §4 et <code>lib/strategies.ts</code>), le composant <code>StrategyHint</code> affiche un rappel discret de la règle ×10 sous l'astuce quand la variante est <code>intro</code> et que la stratégie est <code>near-ten</code>. Cela réactive la règle au seul moment de la session où elle est effectivement mobilisée — puisque les faits ×1 et ×10 eux-mêmes ne sont jamais posés en question.</p>
+
+  <h3 id="parcours-seance"><span class="num">3.2</span>Séance quotidienne (5 minutes)</h3>
+  <p><strong>Structure d'une séance :</strong></p>
+<pre><code>[Accueil]          → Personnage + rappel de la streak + badge du jour si applicable
+    ↓
+[Intro]            → Si nouveaux faits à introduire (max 2 par séance) :
+                     affichage visuel (grille de points), explication,
+                     puis première question immédiate
+    ↓
+[Pratique]         → Jusqu'à 12-15 questions (mix de révisions dues + faits récents)
+                     Entrelacement automatique, pas de chrono visible
+                     Feedback immédiat après chaque réponse
+                     Note : si moins de faits sont disponibles, la séance est
+                     plus courte — pas de répétition de remplissage (voir §6.2)
+    ↓
+[Récap]            → Bilan orienté progrès (faits appris, faits promus,
+                     progression vers la maîtrise globale), badge éventuel,
+                     message chaleureux constant (pas conditionné au score)
+    ↓
+[Fin]              → "À demain !" + mascotte</code></pre>
+  <p><strong>Durée cible :</strong> 4-6 minutes. L'application ne coupe pas en plein milieu d'une question mais affiche un indicateur de progression (barre ou étoiles à remplir).</p>
+  <p><strong>Justification du choix de durée.</strong> La littérature ne fixe pas de minute optimale unique : ce qui est étayé empiriquement, c'est la <em>forme</em> (séances courtes, fréquentes, distribuées), pas un chiffre précis. Les études d'intervention sur la fluence des faits arithmétiques s'étalent typiquement entre <strong>5 et 20 min/séance</strong>, avec un cluster autour de <strong>10-15 min</strong> dans les contextes scolaires de remédiation (Codding, Burns &amp; Lukito 2011 ; Burns, Kanive &amp; DeGrande 2012). La méta-analyse de Codding et al. (2011) traite d'ailleurs la dose comme un produit <code>sessions × semaines</code> plutôt qu'en minutes/séance — autrement dit, <strong>la régularité quotidienne pèse plus que la longueur de chaque séance</strong>. Notre cible de 4-6 minutes est donc volontairement au bas de la fourchette evidence-based : elle privilégie la consistance quotidienne (compatible avec un usage à la maison, sans supervision) plutôt que la dose par séance, et reste dans la zone confortable d'attention pour des enfants de 7-9 ans avant l'apparition de fatigue cognitive sur ce type de tâche répétitive.</p>
+
+  <h3 id="parcours-question"><span class="num">3.3</span>Déroulement d'une question</h3>
+  <ol>
+    <li>Affichage de la question : « 6 × 7 = ? »
+      <ul>
+        <li>Les opérandes peuvent être présentés dans les deux ordres (6×7 ou 7×6) même si le fait est stocké une seule fois</li>
+        <li>La question est aussi énoncée à voix haute (« six fois sept ») — canal auditif supplémentaire pour les lecteurs hésitants (cf. §3.6)</li>
+      </ul>
+    </li>
+    <li>L'enfant tape sa réponse sur un pavé numérique intégré (gros boutons tactiles)</li>
+    <li>Validation automatique à 2 chiffres, ou bouton « OK » pour les résultats &lt; 10</li>
+    <li><strong>Feedback immédiat :</strong>
+      <ul>
+        <li><strong>Correct + rapide (&lt; 3s) :</strong> Animation joyeuse, son positif, +1 étoile dorée, montée de boîte</li>
+        <li><strong>Correct + normal (3-5s) :</strong> « Bravo ! », montée de boîte</li>
+        <li><strong>Correct + lent (&gt; 5s) :</strong> « Bravo ! », pas de montée de boîte (le retour est positif côté enfant ; la lenteur n'est jamais verbalisée — cf. §7.2 sur le feedback orienté progrès et l'absence de chrono visible)</li>
+        <li><strong>Incorrect :</strong> Pas de son négatif, la bonne réponse s'affiche avec la grille de points, puis re-pose la question 2-3 questions plus tard dans la même séance</li>
+      </ul>
+    </li>
+  </ol>
+  <blockquote class="note">
+    <p><strong>Note sur les seuils :</strong> ces seuils tiennent compte du surcoût moteur du pavé numérique (~1-1,5s) par rapport à une réponse orale. Dans la littérature, le rappel automatique est typiquement mesuré sous 1-2s à l'oral. Nos 5s correspondent à environ 3-4s de réflexion + 1-1,5s de manipulation tactile. Si l'application évolue vers une interface vocale (voir audit), les seuils devront être abaissés pour s'aligner avec les mesures de la recherche.</p>
+  </blockquote>
+
+  <h3 id="parcours-intro"><span class="num">3.4</span>Introduction d'un nouveau fait</h3>
+  <p>Quand l'algorithme décide d'introduire un nouveau fait :</p>
+  <ol>
+    <li><strong>Affichage visuel :</strong> Grille de points (array) animée — ex : 3 rangées de 7 points qui apparaissent une par une</li>
+    <li><strong>Lien avec l'addition :</strong> « 3 × 7, c'est 7 + 7 + 7 = 21 »</li>
+    <li><strong>Commutativité :</strong> La grille pivote de 90° → « 7 × 3, c'est pareil ! C'est aussi 21 »</li>
+    <li><strong>Stratégie de dérivation :</strong> Lorsqu'une astuce existe pour le fait (cf. §3.4bis), on montre la dérivation : « × 9, c'est × 10 moins une fois » avec les étapes du calcul.</li>
+    <li><strong>Première question :</strong> Posée immédiatement après l'introduction</li>
+    <li><strong>Re-test :</strong> Posée à nouveau 2-3 questions plus tard dans la séance</li>
+  </ol>
+  <p>Chaque étape est accompagnée d'un audio pré-enregistré (<code>intro-A-B</code>, <code>comm-A-B</code>, <code>strategy-A-B</code>) — cf. §3.6.</p>
+
+  <h3 id="parcours-strategies"><span class="num">3.4bis</span>Stratégies de dérivation</h3>
+  <p class="source"><strong>Sources :</strong></p>
+  <ul>
+    <li>Brendefur, J., Strother, S., Thiede, K., Lane, C., &amp; Surges-Prokop, M. J. (2015). <em>A Professional Development Program to Improve Math Skills Among Preschool Children in Head Start.</em> Boise State ScholarWorks. <a href="https://scholarworks.boisestate.edu/cifs_facpubs/150/">scholarworks.boisestate.edu/cifs_facpubs/150</a></li>
+    <li>Wichita Public Schools (2014). <em>Multiplication Fact Strategies</em> (Van de Walle / DMT framework). <a href="https://teachers.stjohns.k12.fl.us/ford-t/files/2021/09/Multiplication-Fact-Strategies.pdf">Multiplication-Fact-Strategies.pdf</a></li>
+    <li>DMT Institute. <em>Drills vs. Strategies: Building Flexible Thinking with Multiplication Facts.</em> <a href="https://mathsuccess.dmtinstitute.com/p/drills-vs-strategies-building-flexible">mathsuccess.dmtinstitute.com</a></li>
+  </ul>
+  <p>La mémorisation par cœur pure est moins robuste que la <strong>pratique stratégique</strong>, où l'enfant dérive le résultat à partir de faits plus simples (anchor facts). Avec la répétition, la dérivation s'automatise et la trace mnésique se consolide — et si l'enfant oublie, il conserve un filet de secours.</p>
+  <p>Les stratégies sont affichées :</p>
+  <ul>
+    <li><strong>à l'introduction</strong> (étape 4 ci-dessus) — pour installer l'idée qu'on peut dériver,</li>
+    <li><strong>en cas d'erreur, uniquement pour les faits en boîte ≤ 2</strong> — au-delà, on vise le rappel direct, la grille suffit comme rappel conceptuel.</li>
+  </ul>
+  <p>L'astuce est également énoncée à voix haute aux deux moments (<code>strategy-A-B</code>, cf. §3.6).</p>
+
+  <h4>Séquence canonique d'introduction (Van de Walle / Wichita 2014)</h4>
+  <p>Les nouveaux faits sont introduits dans cet ordre (anchor facts d'abord, dérivés ensuite) :</p>
+  <ol>
+    <li><strong>Doubles</strong> (×2) — addition répétée, fondation pour ×3 et ×4</li>
+    <li><strong>Fives</strong> (×5) — skip counting, fondation pour ×6 et ×7</li>
+    <li><strong>Nines</strong> (×9) — astuce ×10 − n, anchor visuel fort</li>
+    <li><strong>Squares</strong> (n × n) — anchors mémorables, appui pour les voisins (×6, ×7, ×8)</li>
+    <li><strong>Derived</strong> — le reste (3×4, 3×6, 3×7, 3×8, 4×6, 4×7, 4×8, 6×7, 6×8, 7×8)</li>
+  </ol>
+  <p>Implémenté dans <code>factStage()</code> (<code>src/lib/sessionComposer.ts</code>).</p>
+
+  <h4>Stratégies utilisées (par ordre de priorité quand plusieurs s'appliquent)</h4>
+  <table>
+    <thead><tr><th>Pivot</th><th>Astuce</th><th>Exemple</th></tr></thead>
+    <tbody>
+      <tr><td>× 9</td><td>near-ten : × 10 moins une fois</td><td>7 × 9 = 7 × 10 − 7 = 63</td></tr>
+      <tr><td>× 5</td><td>skip-count : compter par 5</td><td>4 × 5 = 5 + 5 + 5 + 5 = 20 (on compte : 5 → 10 → 15 → 20)</td></tr>
+      <tr><td>× 3</td><td>double-add : × 2 plus une fois</td><td>7 × 3 = 7 × 2 + 7 = 21</td></tr>
+      <tr><td>× 4</td><td>double-double : doubler le double</td><td>6 × 4 = (6 × 2) × 2 = 24</td></tr>
+      <tr><td>× 6</td><td>five-plus-one : × 5 plus une fois</td><td>7 × 6 = 7 × 5 + 7 = 42</td></tr>
+      <tr><td>× 7</td><td>five-plus-two : × 5 plus × 2</td><td>8 × 7 = 8 × 5 + 8 × 2 = 56</td></tr>
+      <tr><td>× 8</td><td>double-double-double : doubler trois fois (8 = 2³)</td><td>7 × 8 = 7 × 2 × 2 × 2 = 14 × 2 × 2 = 28 × 2 = 56</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Notes sur les choix :</strong></p>
+  <ul>
+    <li>×5 utilise le skip counting plutôt que « moitié de × 10 », conformément à la séquence canonique : compter par 5 est l'anchor naturel et intuitif (les multiples de 5 se terminent par 0 ou 5).</li>
+    <li>×8 utilise le doublement triple plutôt que « × 10 − × 2 », car il s'appuie directement sur l'anchor des doubles (déjà maîtrisé en stage 1) et exploite la structure 8 = 2³.</li>
+  </ul>
+  <p>Faits de base sans stratégie (grille + addition répétée suffisent) : table de 2, 3 × 3.</p>
+  <p><strong>Rythme d'introduction :</strong> Maximum 2 nouveaux faits par séance. Un nouveau fait n'est introduit que si les faits précédemment introduits sont au moins en boîte 2.</p>
+  <p><strong>Exception phase finale :</strong> quand il ne reste que ≤ 2 faits à introduire (typiquement 8×9 et 9×9 après le seeding par dominance du placement, qui ne peuvent être inférés par aucun fait du set placement), la règle boîte≥2 est levée. Sinon un seul fait raté en boîte 1 bloquerait indéfiniment l'introduction des derniers faits — alors que l'enfant maîtrise déjà la quasi-totalité, la règle protectrice n'a plus d'utilité.</p>
+
+  <h3 id="parcours-recap"><span class="num">3.5</span>Récap de séance</h3>
+  <p class="source"><strong>Source :</strong> Butler (1988), Hattie &amp; Timperley (2007)</p>
+  <p>L'écran de récap ne doit jamais afficher de score brut (ex : « 8/12 bonnes réponses ») ni d'indicateur de performance comparative (étoiles conditionnées au ratio de réussite). Ce type de feedback ego-involving réduit la motivation intrinsèque et oriente l'enfant vers des objectifs de performance plutôt que de maîtrise.</p>
+  <p><strong>Ce qui est affiché :</strong></p>
+  <ul>
+    <li><strong>Message chaleureux constant</strong> — identique quel que soit le résultat de la séance. L'enfant a fait sa séance, c'est l'essentiel.</li>
+    <li><strong>Nouveaux faits</strong> — nombre de faits introduits dans la séance</li>
+    <li><strong>Invitation à l'image mystère</strong> — bouton vers l'écran de progression (§5.1). Libellé neutre <em>« Voir mon image »</em> par défaut ; libellé valorisant <em>« Ton image a changé ! Viens la voir »</em> uniquement quand au moins un fait a réellement monté de boîte dans la séance (comparaison boîte initiale → boîte finale, pas un simple compteur de bonnes réponses). Le nombre exact de faits promus n'est pas affiché : la métaphore visuelle suffit, et chiffrer la progression risquerait de réintroduire un signal ego-involving.</li>
+    <li><strong>Progression globale</strong> — avancement vers la maîtrise complète (ex : « Tu connais 18 faits sur 36 » ou jauge de progression)</li>
+    <li><strong>Badges éventuels</strong> — récompenses orientées effort et maîtrise</li>
+    <li><strong>Tables complétées</strong> — avec célébration (confettis)</li>
+  </ul>
+  <p><strong>Ce qui n'est PAS affiché à l'enfant :</strong></p>
+  <ul>
+    <li>Score brut (correct/total)</li>
+    <li>Étoiles ou notes conditionnées au ratio de réussite</li>
+    <li>Messages d'encouragement dont le ton varie selon le score</li>
+    <li>Nombre d'erreurs</li>
+  </ul>
+  <p><em>Le score brut, le taux de réussite et le temps de réponse moyen sont disponibles dans le tableau de bord parent (§5.2).</em></p>
+
+  <h3 id="parcours-audio"><span class="num">3.6</span>Audio (text-to-speech)</h3>
+  <p>L'application lit à voix haute les étapes-clés d'une séance — canal auditif supplémentaire, utile aux lecteurs hésitants et aux enfants qui automatisent mieux à l'oral.</p>
+  <p><strong>Fichiers pré-générés</strong> (voix française <em>Marie – Curious</em>, Mistral Voxtral TTS) stockés dans <code>public/audio/tts/</code> :</p>
+  <table>
+    <thead><tr><th>Clé</th><th>Contenu</th><th>Nombre</th></tr></thead>
+    <tbody>
+      <tr><td><code>q-A-B</code></td><td>« A fois B » — énoncé de la question</td><td>64</td></tr>
+      <tr><td><code>intro-A-B</code></td><td>« Nouveau ! A fois B, c'est B + B + … = P »</td><td>36</td></tr>
+      <tr><td><code>comm-A-B</code></td><td>« B fois A, c'est pareil ! C'est aussi P »</td><td>28</td></tr>
+      <tr><td><code>strategy-A-B</code></td><td>Astuce de dérivation parlée (cf. §3.4bis)</td><td>27</td></tr>
+      <tr><td><code>welcome-*</code>, <code>recap-done</code></td><td>Phrases statiques du parcours de bienvenue et du récap</td><td>4</td></tr>
+    </tbody>
+  </table>
+  <p>Génération : <code>MISTRAL_API_KEY=… node scripts/generate-tts.mjs</code> (idempotent — skip les fichiers déjà présents). Les mêmes fichiers sont servis offline via le precache de la PWA.</p>
+  <p>Coupure son : bouton mute global qui persiste l'état dans <code>localStorage</code>.</p>
+
+  <h3 id="parcours-voix"><span class="num">3.6bis</span>Entrée vocale (mode optionnel)</h3>
+  <p>En complément du pavé numérique, un mode vocal permet à l'enfant de répondre à voix haute (Web Speech API, <code>SpeechRecognition</code>). Utile pour les enfants qui ont déjà automatisé le fait mais sont ralentis par la manipulation tactile, ou pour soulager la charge motrice sur une longue séance.</p>
+  <p><strong>Activation :</strong> toggle dans la barre supérieure de l'écran d'accueil (icône micro ↔ clavier). Le toggle n'apparaît que si <code>SpeechRecognition</code> est supportée par le navigateur. Le choix est persisté dans <code>localStorage</code> pour survivre aux rechargements.</p>
+  <p><strong>Seuils de temps ajustés :</strong> en mode vocal, les seuils « rapide » et « lent » sont abaissés à 2 s et 3 s (contre 3 s et 5 s en mode clavier). Cela aligne les seuils avec les mesures d'automatisation à l'oral dans la littérature (§3.3) en retirant le surcoût moteur du pavé numérique.</p>
+  <p><strong>Robustesse :</strong> le module <code>parseFrenchAnswer</code> normalise les réponses parlées (nombres en lettres, variations régionales — « soixante-douze », « septante-deux ») et filtre l'écho du TTS quand la question est énoncée juste avant la réponse.</p>
+</section>
+
+<section class="chapter" id="gamification">
+  <h2><span class="num">4</span>Gamification</h2>
+
+  <h3 id="gam-mascotte"><span class="num">4.1</span>Personnage mascotte</h3>
+  <p>Un petit personnage <strong>stable</strong> qui accompagne l'enfant tout au long du parcours. La mascotte ne porte pas la progression (ce rôle revient à l'image mystère, §5.1) : elle est un <strong>compagnon affectif</strong>, pas une récompense à faire évoluer.</p>
+  <p><strong>Rôles :</strong></p>
+  <ul>
+    <li>Présence sur l'écran d'accueil (animations d'idle)</li>
+    <li>Feedback immédiat pendant la séance : réactions joyeuses aux bonnes réponses, encouragements neutres et positifs aux erreurs (<strong>jamais de moue, jamais de déception</strong>)</li>
+    <li>Ritualisation : bienvenue en début de séance, « à demain ! » en fin</li>
+    <li>Identité visuelle de l'app (icône, écran de lancement)</li>
+  </ul>
+  <p><strong>Principe :</strong> la mascotte n'évolue pas, ne « grandit » pas, n'a pas de niveau. Elle est le même visage familier à chaque séance, du premier jour au dernier fait maîtrisé. Ce choix évite :</p>
+  <ul>
+    <li>le doublon avec la progression de l'image mystère (deux métaphores de progression qui se parasitent),</li>
+    <li>la logique « œuf → adulte » qui, une fois terminée, ne peut plus motiver,</li>
+    <li>toute forme de jugement (« faire la moue ») qui contredirait le principe <em>un fait oublié revient sans notion d'échec</em> (§1.1).</li>
+  </ul>
+
+  <h3 id="gam-badges"><span class="num">4.2</span>Badges</h3>
+  <table>
+    <thead><tr><th>Badge</th><th>Condition</th><th>Icône</th></tr></thead>
+    <tbody>
+      <tr><td>Premier pas</td><td>Terminer la 1ère séance</td><td>🌱</td></tr>
+      <tr><td>Première case révélée</td><td>Premier fait passé en boîte 4 (1ère case quasi-nette sur l'image mystère)</td><td>🖼️</td></tr>
+      <tr><td>Première multiplication maîtrisée</td><td>Premier fait passé en boîte 5 (1ère case entièrement dévoilée)</td><td>🥇</td></tr>
+      <tr><td>Régularité</td><td>7 jours consécutifs</td><td>🔥</td></tr>
+      <tr><td>Machine</td><td>10 réponses correctes d'affilée dans une séance</td><td>⚡</td></tr>
+      <tr><td>Exploration</td><td>Avoir vu tous les faits au moins une fois</td><td>🗺️</td></tr>
+      <tr><td>Table de [N]</td><td>Maîtriser tous les faits d'une table</td><td>⭐</td></tr>
+      <tr><td>Génie des maths</td><td>Tous les faits en boîte 5</td><td>🏆</td></tr>
+      <tr><td>Véloce</td><td>5 réponses &lt; 2s d'affilée</td><td>🚀</td></tr>
+      <tr><td>Persévérance</td><td>Revenir après 3+ jours d'absence</td><td>💪</td></tr>
+      <tr><td>Flamme éternelle</td><td>30 jours consécutifs</td><td>🌟</td></tr>
+    </tbody>
+  </table>
+  <p>Les deux badges <em>Première case révélée</em> et <em>Première multiplication maîtrisée</em> jalonnent la zone intermédiaire, entre les badges du tout début (Premier pas, Machine, Exploration) et la maîtrise complète d'une table : ils se déclenchent au moment précis où l'image mystère §5.1 change visiblement de finesse pour la 1ère fois.</p>
+  <p>Sur l'écran <em>Badges</em>, <strong>chaque vignette est cliquable</strong> et ouvre une modale qui explicite le badge :</p>
+  <ul>
+    <li>pour un badge <strong>verrouillé</strong> : la condition complète, et — quand c'est applicable — une <strong>barre de progression</strong> (jours consécutifs, faits découverts, faits dans la table en boîte 4+, etc.) avec un encouragement contextuel (« Plus que 3 ! Tu y es presque. »).</li>
+    <li>pour un badge <strong>débloqué</strong> : la condition rappelée, et la <strong>date d'obtention</strong>.</li>
+  </ul>
+  <p>Cette modale est essentielle pour un enfant qui découvre la gamification : sans elle, l'icône et le nom seuls ne permettent pas de comprendre comment décrocher le badge.</p>
+
+  <h3 id="gam-streak"><span class="num">4.3</span>Streak (série de jours)</h3>
+  <ul>
+    <li>Compteur de jours consécutifs affiché sur l'écran d'accueil</li>
+    <li>Animation de flamme qui grandit avec la streak</li>
+    <li>Si l'enfant manque un jour : message bienveillant (« Tu m'as manqué ! On s'y remet ? »), pas de punition, la streak repart de 1 mais les progrès sur les faits sont conservés</li>
+  </ul>
+
+  <h3 id="gam-table"><span class="num">4.4</span>Célébration de table complète</h3>
+  <p>Quand tous les faits d'une table passent en boîte 4+ :</p>
+  <ul>
+    <li>Animation spéciale (feu d'artifice, confettis)</li>
+    <li>La ligne et la colonne correspondantes s'illuminent brièvement sur l'image mystère</li>
+    <li>Badge spécifique</li>
+  </ul>
+</section>
+
+<section class="chapter" id="progression">
+  <h2><span class="num">5</span>Suivi de progression</h2>
+
+  <h3 id="prog-image"><span class="num">5.1</span>Vue enfant : l'image mystère</h3>
+  <p>La progression de l'enfant se matérialise par <strong>une image unique qui se révèle au fil des séances</strong>. La grille 8×8 (tables 2 à 9, les ×1 et ×10 étant traités comme règles §3.1 et donc non représentés) constitue le support : chaque case affiche un <strong>fragment</strong> de l'image globale, et la finesse de chaque fragment reflète la boîte Leitner du fait correspondant.</p>
+  <p><strong>Cinq niveaux de finesse (alignés sur les 5 boîtes Leitner) :</strong></p>
+  <table>
+    <thead><tr><th>État du fait</th><th>État visuel du fragment</th></tr></thead>
+    <tbody>
+      <tr><td>Non introduit</td><td>Case opaque (fragment masqué)</td></tr>
+      <tr><td>Boîte 1</td><td>Silhouette floue</td></tr>
+      <tr><td>Boîte 2</td><td>Aplat simple, forme reconnaissable</td></tr>
+      <tr><td>Boîte 3</td><td>Couleurs principales</td></tr>
+      <tr><td>Boîte 4</td><td>Ombres et volumes</td></tr>
+      <tr><td>Boîte 5</td><td>Détails fins, fragment complet</td></tr>
+    </tbody>
+  </table>
+  <p>À mesure que les faits progressent, la scène globale se compose. Un fait qui redescend de boîte (oubli) fait redescendre sa case d'un cran en finesse — pas d'échec, juste la brume qui revient. Ce comportement est le miroir visuel strict de l'algorithme Leitner (§1.1).</p>
+  <p><strong>Commutativité visible :</strong> comme (a,b) et (b,a) sont un seul et même fait (§1.2), les deux cases miroir se révèlent <strong>en synchrone</strong>. Elles affichent des fragments différents de l'image globale, mais évoluent toujours ensemble à chaque maîtrise ou oubli. Ce parallélisme visuel renforce pédagogiquement le principe de commutativité.</p>
+  <p><strong>Fin de parcours :</strong> quand les 36 faits sont en boîte 5, l'image est entièrement révélée. Une <strong>brève animation</strong> (un clin d'œil, un léger mouvement) marque la complétion, sans pop-up ni célébration envahissante. L'image reste ensuite affichée comme témoin de la réussite ; pendant la phase de maintenance (révisions tous les 21 jours), si un fait retombe, sa case se re-floute en miroir de l'algo et se re-révèle à la révision suivante réussie.</p>
+  <p><strong>Interaction :</strong> en tapant sur une case, l'enfant voit le fait sous-jacent et la grille de points associée.</p>
+  <p><strong>Choix de l'image :</strong> une scène riche, non genrée, sans texte, au style cohérent sur toute la grille. L'image a une valeur symbolique forte — c'est <strong>l'image de la réussite</strong>, pas une vignette interchangeable dans une collection. Production envisagée : une image vectorielle maître, dont les 5 niveaux de finesse sont générés algorithmiquement (flou progressif + simplification des chemins), ou un pixel-art avec résolutions croissantes par case.</p>
+  <p><strong>Périmètre v1 :</strong> chaque profil démarre avec <strong>une seule image</strong> pour l'ensemble du parcours, tirée aléatoirement d'un petit pool de thèmes visuels à la création du profil (actuellement <code>market</code> et <code>ocean</code> — voir <code>MYSTERY_POOL</code> dans <code>src/types.ts</code> ; un thème <code>village</code> est réservé au guide utilisateur pour ne pas spoiler les thèmes réels). L'image suit l'enfant du premier jour au dernier fait maîtrisé — pas de rotation, pas d'album à collectionner. L'objectif de l'app est d'apprendre les tables ; une fois l'image révélée, l'app a rempli son rôle. Si le périmètre s'étend un jour à d'autres matières (divisions, conjugaisons…), chaque matière pourra avoir sa propre image dédiée.</p>
+
+  <h3 id="prog-parent"><span class="num">5.2</span>Vue parent : tableau de bord</h3>
+  <p>Accessible depuis l'écran d'accueil via l'icône engrenage. Un tap ouvre une <strong>multiplication-gate</strong> : un petit modal qui demande de résoudre une multiplication à deux opérandes — un entre 11 et 19, l'autre entre 3 et 9 (ex : <code>14 × 7</code>). Trivial pour un adulte, hors de portée d'un enfant qui travaille encore les tables 2-9. Le dashboard s'ouvre sur bonne réponse ; une mauvaise réponse génère une nouvelle question sans verrouillage ni compteur d'essais.</p>
+  <p><strong>Indicateurs :</strong></p>
+  <ul>
+    <li>Nombre de faits par boîte (histogramme)</li>
+    <li><strong>Grille Leitner colorée</strong> 8×8 (une couleur par boîte) — vue diagnostique brute, complémentaire à l'image mystère côté enfant</li>
+    <li>Faits les plus difficiles (boîte 1 depuis le plus longtemps, ou le plus d'erreurs)</li>
+    <li>Temps de réponse moyen par table</li>
+    <li>Historique des séances (date, durée, score)</li>
+    <li>Streak actuelle et plus longue</li>
+    <li>Graphe d'évolution : nombre de faits maîtrisés (boîte 4+) au fil du temps</li>
+  </ul>
+  <p><strong>Actions parent :</strong></p>
+  <ul>
+    <li>Exporter les données (JSON)</li>
+    <li>Importer les données (pour changer de téléphone)</li>
+    <li><strong>Guide utilisateur</strong> : ouvre <code>/multiplix/guide/</code> dans un nouvel onglet (page statique servie depuis la même origine, générée par <code>scripts/generate-user-guide.mjs</code>)</li>
+    <li><strong>Envoyer un avis</strong> : formulaire texte libre + email optionnel. Les envois atterrissent dans une table Supabase (policy RLS insert-only via la publishable key). Un contexte anonyme (user-agent, viewport, stats agrégées du profil — nombre de séances, faits maîtrisés, streak) est joint pour faciliter le triage. Lecture réservée au propriétaire de l'app via la secret key (stockée en local, hors du repo)</li>
+  </ul>
+  <blockquote class="note">
+    <p><em>Note : les paramètres (nombre de questions par séance, seuil de vitesse) ne sont pas exposés car leurs valeurs par défaut sont issues de la littérature scientifique (§1.1) et ne devraient pas être modifiées sans expertise.</em></p>
+  </blockquote>
+</section>
+
+<section class="chapter" id="algorithme">
+  <h2><span class="num">6</span>Algorithme de sélection des questions</h2>
+
+  <h3 id="algo-priorite"><span class="num">6.1</span>Priorité de sélection pour une séance</h3>
+  <p>À chaque séance, l'algorithme compose la liste de questions ainsi :</p>
+<pre><code>1. Faits en boîte 1 dont nextDue ≤ maintenant        (priorité haute)
+2. Faits en boîte 2-3 dont nextDue ≤ maintenant       (priorité moyenne)
+3. Faits en boîte 4-5 dont nextDue ≤ maintenant       (priorité basse)
+4. Nouveaux faits à introduire (max 2)                 (si rien d'urgent)</code></pre>
+
+  <h3 id="algo-contraintes"><span class="num">6.2</span>Contraintes de composition</h3>
+  <ul>
+    <li><strong>Anti-interférence :</strong> Deux faits partageant un opérande ne sont jamais adjacents dans la file de questions (quand c'est possible)</li>
+    <li><strong>Entrelacement :</strong> Jamais deux questions de la même table d'affilée</li>
+    <li><strong>Équilibre :</strong> Si &gt; 15 faits sont éligibles, on priorise les boîtes basses</li>
+    <li><strong>Réintroduction après erreur :</strong> Un fait raté est re-posé 2-3 questions plus tard dans la même séance (et revient en boîte 1 pour les séances suivantes)</li>
+    <li><strong>Borne dure de la séance :</strong> La séance est plafonnée à <strong>20 questions</strong> au total, retries de réintroduction inclus. Sans cette borne, une chaîne d'erreurs (typiquement en mode vocal où la reconnaissance peut rater) insère retry sur retry et rend la séance interminable alors que les points de progression sont déjà tous remplis. Au-delà du cap, les nouvelles erreurs continuent à rétrograder en boîte 1 (effet Leitner préservé) mais ne déclenchent plus de retry intra-séance.</li>
+    <li><strong>Variation d'ordre :</strong> Un même fait est parfois posé comme a×b, parfois comme b×a</li>
+    <li><strong>Pas de répétition de remplissage :</strong> Le nombre 12-15 est un objectif, pas un minimum absolu. Il dérive de la durée cible de 5 minutes (~20-30 s par question avec feedback). Si le nombre de faits distincts disponibles est inférieur à 12, la séance est plus courte plutôt que de répéter les mêmes faits en boucle. La littérature (Cepeda et al. 2008, Rea &amp; Modigliani 1985) montre que c'est la régularité des sessions et les intervalles de révision qui comptent, pas le nombre de questions par session. La répétition massive (massed practice) dans une même séance est contre-productive.</li>
+    <li><strong>Révision bonus :</strong> Quand aucun fait n'est dû et qu'aucun nouveau fait ne peut être introduit (contrainte de similarité 48h), la séance est complétée avec des révisions bonus piochées parmi tous les faits introduits, en priorisant les boîtes les plus basses puis les dates de révision les plus proches. Les révisions bonus donnent un feedback normal (son, mascotte, score) mais <strong>ne modifient pas l'état Leitner</strong> (boîte, nextDue, lastSeen, historique). Cela garantit une séance chaque jour sans perturber le calendrier de répétition espacée.</li>
+  </ul>
+
+  <h3 id="algo-nextdue"><span class="num">6.3</span>Calcul de nextDue</h3>
+<pre><code>function computeNextDue(box, lastSeen) {
+  const intervals = {
+    1: 0,      // immédiat (prochaine séance)
+    2: 1,      // 1 jour
+    3: 3,      // 3 jours
+    4: 7,      // 1 semaine
+    5: 21      // 3 semaines
+  };
+  return addDays(lastSeen, intervals[box]);
+}</code></pre>
+</section>
+
+<section class="chapter" id="interface">
+  <h2><span class="num">7</span>Interface utilisateur</h2>
+
+  <h3 id="ui-ecrans"><span class="num">7.1</span>Écrans</h3>
+  <table>
+    <thead><tr><th>Écran</th><th>Contenu</th></tr></thead>
+    <tbody>
+      <tr><td>Accueil</td><td>Mascotte (animations d'idle), prénom, streak, bouton « C'est parti ! »</td></tr>
+      <tr><td>Séance — Intro</td><td>Grille de points animée pour un nouveau fait</td></tr>
+      <tr><td>Séance — Question</td><td>Question en gros, pavé numérique, barre de progression</td></tr>
+      <tr><td>Séance — Feedback correct</td><td>Animation joyeuse, mascotte enthousiaste</td></tr>
+      <tr><td>Séance — Feedback incorrect</td><td>Bonne réponse affichée avec grille, ton bienveillant (mascotte neutre, jamais déçue)</td></tr>
+      <tr><td>Récap séance</td><td>Bilan progrès (faits promus, progression globale), badge éventuel, bouton « À demain »</td></tr>
+      <tr><td>Progression</td><td>Image mystère (vue enfant, §5.1) ; grille Leitner colorée réservée au dashboard parent (§5.2)</td></tr>
+      <tr><td>Badges</td><td>Collection de badges obtenus</td></tr>
+      <tr><td>Parent</td><td>Dashboard détaillé (accès protégé)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="ui-principes"><span class="num">7.2</span>Principes d'interface</h3>
+  <ul>
+    <li><strong>Mobile-first :</strong> Conçu pour un écran de téléphone tenu verticalement</li>
+    <li><strong>Gros boutons :</strong> Zone de tap minimum 48×48px, pavé numérique avec touches de 60×60px minimum</li>
+    <li><strong>Pas de chrono visible :</strong> Le temps est mesuré en arrière-plan mais jamais montré à l'enfant (éviter l'anxiété)</li>
+    <li><strong>Palette éditoriale cream/indigo :</strong> fond cream (<code>#FBF6EC</code>), indigo pour les éléments principaux, accents coral / sage / honey. Pas de couleurs agressives, mode clair uniquement.</li>
+    <li><strong>Typographie :</strong> paire <strong>Fraunces</strong> (serif éditorial pour les titres) + <strong>Nunito</strong> (sans-serif pour le corps de texte et les éléments UI). Choisie pour donner une signature graphique distinctive sans sacrifier la lisibilité.</li>
+    <li><strong>Encouragements systématiques :</strong> Aucun message négatif. Les erreurs sont traitées comme des opportunités d'apprentissage</li>
+    <li><strong>Feedback orienté progrès, pas performance :</strong> L'application ne montre jamais de score brut (ex : « 8/12 ») ni de note à l'enfant. Les métriques visibles sont orientées vers la maîtrise et le progrès (faits appris, faits promus, progression globale). Ce choix s'appuie sur Butler (1988) et Hattie &amp; Timperley (2007), qui montrent que le feedback de type « note/score » (ego-involving) réduit la motivation intrinsèque et les performances par rapport au feedback orienté processus/progrès (task-involving). Le score brut est réservé au tableau de bord parent (§5.2).</li>
+    <li><strong>Pas de publicité, pas d'intégration tierce de tracking.</strong> Les seuls liens sortants côté enfant sont inexistants. Côté parent, le tableau de bord peut ouvrir le guide utilisateur interne (même origine) dans un nouvel onglet, et le formulaire « Envoyer un avis » pousse sur Supabase — il n'y a aucun lien vers un service externe visible pour l'enfant.</li>
+  </ul>
+
+  <h3 id="ui-sons"><span class="num">7.3</span>Sons</h3>
+  <ul>
+    <li>Réponse correcte : son court et joyeux (type xylophone montant)</li>
+    <li>Réponse incorrecte : son neutre et doux (pas de buzzer)</li>
+    <li>Badge obtenu : fanfare courte</li>
+    <li>Image mystère complétée (tous les faits en boîte 5) : mélodie de complétion</li>
+    <li><strong>Option de couper le son</strong> toujours accessible</li>
+  </ul>
+</section>
+
+<section class="chapter" id="pwa">
+  <h2><span class="num">8</span>Fonctionnalités PWA / hors-ligne</h2>
+  <ul>
+    <li><strong>Service Worker</strong> pour le fonctionnement offline complet</li>
+    <li><strong>manifest.json</strong> pour l'installation sur l'écran d'accueil</li>
+    <li>Icône d'app avec la mascotte</li>
+    <li>Toutes les données en localStorage, aucune dépendance réseau</li>
+    <li>Export/import JSON pour la sauvegarde et le transfert</li>
+  </ul>
+</section>
+
+<section class="chapter" id="perimetre">
+  <h2><span class="num">9</span>Périmètre — Ce que l'application ne fait PAS</h2>
+  <ul>
+    <li>Pas de division, addition ou soustraction (focus unique)</li>
+    <li>Pas de comptes utilisateurs / backend / authentification</li>
+    <li>Pas de classement entre enfants (pas de compétition)</li>
+    <li>Pas de mode examen chronométré</li>
+    <li>Pas de récompenses payantes</li>
+    <li>Pas de collecte de données personnelles</li>
+  </ul>
+</section>
+
+<section class="chapter" id="metriques">
+  <h2><span class="num">10</span>Métriques de succès</h2>
+  <p>L'application est considérée comme ayant atteint son objectif quand :</p>
+  <table>
+    <thead><tr><th>Métrique</th><th>Cible</th></tr></thead>
+    <tbody>
+      <tr><td>Faits en boîte 4+</td><td>36/36</td></tr>
+      <tr><td>Temps de réponse moyen</td><td>&lt; 3 secondes</td></tr>
+      <tr><td>Taux de bonne réponse (boîte 4+)</td><td>&gt; 95%</td></tr>
+      <tr><td>Durée estimée pour atteindre l'objectif</td><td>6-10 semaines à raison de 5 séances/semaine</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="chapter" id="evolutions">
+  <h2><span class="num">11</span>Évolutions possibles (V2)</h2>
+  <ul>
+    <li>Mode défi : séance bonus optionnelle le week-end</li>
+    <li>Personnalisation de la mascotte (couleurs, accessoires choisis par l'enfant — sans logique de déblocage, pour ne pas réintroduire une couche de progression parasite)</li>
+    <li>Intégration Strava-like : partage de la streak avec un parent</li>
+    <li>Mode multi-enfant (plusieurs profils sur le même appareil)</li>
+    <li>Lien division : une fois un fait maîtrisé en multiplication, introduction du fait de division associé</li>
+  </ul>
+</section>
+
+<section class="chapter" id="references">
+  <h2><span class="num">12</span>Références</h2>
+  <ol class="references">
+    <li>Brendefur, J., Strother, S., Thiede, K., &amp; Appleton, S. (2015). Developing multiplication fact fluency. <em>Advances in Social Sciences Research Journal, 2</em>(8). <a href="https://doi.org/10.14738/assrj.28.1396">doi:10.14738/assrj.28.1396</a></li>
+    <li>Burns, M. K., Kanive, R., &amp; DeGrande, M. (2012). Effect of a computer-delivered math fact intervention as a supplemental intervention for math in third and fourth grades. <em>Remedial and Special Education, 33</em>(3), 184–191. <a href="https://doi.org/10.1177/0741932510381652">doi:10.1177/0741932510381652</a></li>
+    <li>Butler, R. (1988). Enhancing and undermining intrinsic motivation: The effects of task-involving and ego-involving evaluation on interest and performance. <em>British Journal of Educational Psychology, 58</em>(1), 1–14. <a href="https://doi.org/10.1111/j.2044-8279.1988.tb00874.x">doi:10.1111/j.2044-8279.1988.tb00874.x</a></li>
+    <li>Cepeda, N. J., Vul, E., Rohrer, D., Wixted, J. T., &amp; Pashler, H. (2008). Spacing effects in learning: A temporal ridgeline of optimal retention. <em>Psychological Science, 19</em>(11), 1095–1102. <a href="https://doi.org/10.1111/j.1467-9280.2008.02209.x">doi:10.1111/j.1467-9280.2008.02209.x</a></li>
+    <li>Codding, R. S., Burns, M. K., &amp; Lukito, G. (2011). Meta-analysis of mathematic basic-fact fluency interventions: A component analysis. <em>Learning Disabilities Research &amp; Practice, 26</em>(1), 36–47. <a href="https://doi.org/10.1111/j.1540-5826.2010.00323.x">doi:10.1111/j.1540-5826.2010.00323.x</a></li>
+    <li>Cowan, R., Donlan, C., Shepherd, D.-L., Cole-Fletcher, R., Saxton, M., &amp; Hurry, J. (2011). Basic calculation proficiency and mathematics achievement in elementary school children. <em>Journal of Educational Psychology, 103</em>(4), 786–803. <a href="https://doi.org/10.1037/a0024556">doi:10.1037/a0024556</a></li>
+    <li>Dotan, D., &amp; Zviran-Ginat, S. (2022). Elementary math in elementary school: The effect of interference on learning the multiplication table. <em>Cognitive Research: Principles and Implications, 7</em>, 101. <a href="https://doi.org/10.1186/s41235-022-00451-0">doi:10.1186/s41235-022-00451-0</a></li>
+    <li>Hattie, J., &amp; Timperley, H. (2007). The power of feedback. <em>Review of Educational Research, 77</em>(1), 81–112. <a href="https://doi.org/10.3102/003465430298487">doi:10.3102/003465430298487</a></li>
+    <li>Kang, S. H. K. (2016). Spaced repetition promotes efficient and effective learning. <em>Policy Insights from the Behavioral and Brain Sciences, 3</em>(1), 12–19. <a href="https://doi.org/10.1177/2372732215624708">doi:10.1177/2372732215624708</a></li>
+    <li>Rea, C. P., &amp; Modigliani, V. (1985). The effect of expanded versus massed practice on the retention of multiplication facts and spelling lists. <em>Human Learning, 4</em>, 11–18.</li>
+    <li>Rohrer, D., Dedrick, R. F., &amp; Burgess, K. (2014). The benefit of interleaved mathematics practice is not limited to superficially similar kinds of problems. <em>Psychonomic Bulletin &amp; Review, 21</em>(5), 1323–1330. <a href="https://doi.org/10.3758/s13423-014-0588-3">doi:10.3758/s13423-014-0588-3</a></li>
+    <li>Rohrer, D., &amp; Taylor, K. (2007). The shuffling of mathematics problems improves learning. <em>Instructional Science, 35</em>, 481–498. <a href="https://doi.org/10.1007/s11251-007-9015-8">doi:10.1007/s11251-007-9015-8</a></li>
+  </ol>
+</section>
+
+</article>
+</main>
+
+<footer class="page-footer">
+  <p>Document de spécifications — v1.0 — Avril 2026</p>
+  <p><a href="https://github.com/isc/multiplix">Code source sur GitHub</a></p>
+</footer>
+
+</body>
+</html>
