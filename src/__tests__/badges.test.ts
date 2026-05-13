@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { checkBadges, getBadgeDetail } from '../lib/badges';
+import { checkBadges, getBadgeDetail, isRule11Unlocked } from '../lib/badges';
 import { createInitialFacts } from '../lib/facts';
 import { importProfile } from '../lib/storage';
 import type { UserProfile } from '../types';
@@ -147,5 +147,45 @@ describe('rétro-attribution des badges au chargement du profil', () => {
 
     const premierPasCount = loaded.badges.filter((b) => b.id === BADGE_IDS.PREMIER_PAS).length;
     expect(premierPasCount).toBe(1);
+  });
+});
+
+describe('isRule11Unlocked (règle bonus ×11)', () => {
+  it('renvoie false sur un profil neuf (faits en boîte 1)', () => {
+    expect(isRule11Unlocked(makeProfile())).toBe(false);
+  });
+
+  it("renvoie false tant qu'un seul fait est encore en boîte ≤ 3", () => {
+    const profile = makeProfile();
+    profile.facts.forEach((f) => { f.box = 4; });
+    profile.facts[0].box = 3;
+    expect(isRule11Unlocked(profile)).toBe(false);
+  });
+
+  it('renvoie true dès que tous les faits sont en boîte ≥ 4', () => {
+    const profile = makeProfile();
+    profile.facts.forEach((f) => { f.box = 4; });
+    expect(isRule11Unlocked(profile)).toBe(true);
+  });
+
+  it('renvoie true aussi avec un mix boîtes 4 et 5', () => {
+    const profile = makeProfile();
+    profile.facts.forEach((f, i) => { f.box = i % 2 === 0 ? 4 : 5; });
+    expect(isRule11Unlocked(profile)).toBe(true);
+  });
+});
+
+describe('migration UserProfile.hasSeenRule11', () => {
+  it('défaut à false pour un profil legacy sans le champ', () => {
+    const legacy = makeProfile() as Partial<UserProfile>;
+    delete legacy.hasSeenRule11;
+    const loaded = importProfile(JSON.stringify(legacy))!;
+    expect(loaded.hasSeenRule11).toBe(false);
+  });
+
+  it('préserve true si le profil l\'a déjà à true', () => {
+    const profile = makeProfile({ hasSeenRule11: true });
+    const loaded = importProfile(JSON.stringify(profile))!;
+    expect(loaded.hasSeenRule11).toBe(true);
   });
 });
