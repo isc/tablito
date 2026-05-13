@@ -49,8 +49,8 @@ export default function RecapScreen({
   onFinish,
   onShowProgress,
 }: RecapScreenProps) {
-  const { isMuted, playBadge, playTableComplete, playImageComplete } = useSound();
-  const { speak } = useTTS(isMuted);
+  const { playBadge, playTableComplete, playImageComplete } = useSound();
+  const { speak } = useTTS();
   const { triggerConfetti } = useConfetti();
   const hasPlayedRef = useRef(false);
 

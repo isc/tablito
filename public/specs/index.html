@@ -642,7 +642,6 @@ interface Badge {
     </tbody>
   </table>
   <p>Génération : <code>MISTRAL_API_KEY=… node scripts/generate-tts.mjs</code> (idempotent — skip les fichiers déjà présents). Les mêmes fichiers sont servis offline via le precache de la PWA.</p>
-  <p>Coupure son : bouton mute global qui persiste l'état dans <code>localStorage</code>.</p>
 
   <h3 id="parcours-voix"><span class="num">3.6bis</span>Entrée vocale (mode optionnel)</h3>
   <p>En complément du pavé numérique, un mode vocal permet à l'enfant de répondre à voix haute (Web Speech API, <code>SpeechRecognition</code>). Utile pour les enfants qui ont déjà automatisé le fait mais sont ralentis par la manipulation tactile, ou pour soulager la charge motrice sur une longue séance.</p>
@@ -831,7 +830,6 @@ interface Badge {
     <li>Réponse incorrecte : son neutre et doux (pas de buzzer)</li>
     <li>Badge obtenu : fanfare courte</li>
     <li>Image mystère complétée (tous les faits en boîte 5) : mélodie de complétion</li>
-    <li><strong>Option de couper le son</strong> toujours accessible</li>
   </ul>
 </section>
 

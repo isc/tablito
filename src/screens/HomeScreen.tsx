@@ -4,7 +4,6 @@ import Mascot from '../components/Mascot';
 import ParentGate from '../components/ParentGate';
 import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
-import { useSound } from '../hooks/useSound';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 import './HomeScreen.css';
@@ -18,24 +17,6 @@ interface HomeScreenProps {
   onShowBadges: () => void;
   onShowRules: () => void;
   onShowParent: () => void;
-}
-
-function IconSoundOn() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 10v4h3l5 4V6L7 10H4z" fill="currentColor" />
-      <path d="M16 8c1.5 1 2.5 2.5 2.5 4s-1 3-2.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
-
-function IconSoundOff() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 10v4h3l5 4V6L7 10H4z" fill="currentColor" />
-      <path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 function IconGear() {
@@ -89,7 +70,6 @@ export default function HomeScreen({
   onShowRules,
   onShowParent,
 }: HomeScreenProps) {
-  const { isMuted, toggleMute } = useSound();
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
 
@@ -126,13 +106,6 @@ export default function HomeScreen({
           )}
         </div>
         <div className="home-top-bar-right">
-          <button
-            className="home-chrome-btn"
-            onClick={toggleMute}
-            aria-label={isMuted ? 'Activer le son' : 'Couper le son'}
-          >
-            {isMuted ? <IconSoundOff /> : <IconSoundOn />}
-          </button>
           <button
             className="home-chrome-btn home-parent-btn"
             onClick={() => setShowParentGate(true)}

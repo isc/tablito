@@ -70,8 +70,8 @@ export default function SessionScreen({
   // évaluée en synchrone, à reset à chaque changement de question.
   const submittingRef = useRef(false);
 
-  const { isMuted, playCorrect, playIncorrect } = useSound();
-  const { speak, stop: stopSpeech, isSpeaking } = useTTS(isMuted);
+  const { playCorrect, playIncorrect } = useSound();
+  const { speak, stop: stopSpeech, isSpeaking } = useTTS();
   const { inputMode, setInputMode } = useInputMode();
   useWakeLock(true);
 
