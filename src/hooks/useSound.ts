@@ -1,7 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { getAudioContext } from '../lib/audioContext';
-
-const STORAGE_KEY = 'multiplix-muted';
 
 // Note frequencies (Hz)
 const NOTE = {
@@ -14,17 +12,7 @@ const NOTE = {
   E6: 1318.51,
 } as const;
 
-function getInitialMuted(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
 export function useSound() {
-  const [isMuted, setIsMuted] = useState(getInitialMuted);
-
   const playNote = useCallback(
     (
       ctx: AudioContext,
@@ -56,7 +44,6 @@ export function useSound() {
   );
 
   const playCorrect = useCallback(() => {
-    if (isMuted) return;
     const ctx = getAudioContext();
     const now = ctx.currentTime;
     const noteDuration = 0.1;
@@ -66,19 +53,17 @@ export function useSound() {
     playNote(ctx, NOTE.C5, now, noteDuration, volume, 'triangle');
     playNote(ctx, NOTE.E5, now + noteDuration, noteDuration, volume, 'triangle');
     playNote(ctx, NOTE.G5, now + noteDuration * 2, noteDuration * 1.5, volume, 'triangle');
-  }, [isMuted, playNote]);
+  }, [playNote]);
 
   const playIncorrect = useCallback(() => {
-    if (isMuted) return;
     const ctx = getAudioContext();
     const now = ctx.currentTime;
 
     // Single soft low tone: C4, 200ms, low volume -- gentle, not a buzzer
     playNote(ctx, NOTE.C4, now, 0.2, 0.08, 'sine');
-  }, [isMuted, playNote]);
+  }, [playNote]);
 
   const playBadge = useCallback(() => {
-    if (isMuted) return;
     const ctx = getAudioContext();
     const now = ctx.currentTime;
     const noteDuration = 0.1;
@@ -89,10 +74,9 @@ export function useSound() {
     playNote(ctx, NOTE.E5, now + noteDuration, noteDuration, volume, 'triangle');
     playNote(ctx, NOTE.G5, now + noteDuration * 2, noteDuration, volume, 'triangle');
     playNote(ctx, NOTE.C6, now + noteDuration * 3, noteDuration * 2, volume, 'triangle');
-  }, [isMuted, playNote]);
+  }, [playNote]);
 
   const playTableComplete = useCallback(() => {
-    if (isMuted) return;
     const ctx = getAudioContext();
     const now = ctx.currentTime;
     const noteDuration = 0.12;
@@ -105,13 +89,12 @@ export function useSound() {
       const dur = isLast ? noteDuration * 3 : noteDuration;
       playNote(ctx, freq, now + i * noteDuration, dur, volume, 'triangle');
     });
-  }, [isMuted, playNote]);
+  }, [playNote]);
 
   // Fuller completion melody for when the whole mystery image is revealed
   // (all 36 facts reach box 5). Played on the final table-complete event
   // that flips the last fact, via the RecapScreen.
   const playImageComplete = useCallback(() => {
-    if (isMuted) return;
     const ctx = getAudioContext();
     const now = ctx.currentTime;
     const noteDuration = 0.15;
@@ -127,23 +110,9 @@ export function useSound() {
       const dur = isLast ? noteDuration * 4 : noteDuration;
       playNote(ctx, freq, now + i * noteDuration, dur, volume, 'triangle');
     });
-  }, [isMuted, playNote]);
-
-  const toggleMute = useCallback(() => {
-    setIsMuted((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(STORAGE_KEY, String(next));
-      } catch {
-        // localStorage might be full or unavailable
-      }
-      return next;
-    });
-  }, []);
+  }, [playNote]);
 
   return {
-    isMuted,
-    toggleMute,
     playCorrect,
     playIncorrect,
     playBadge,

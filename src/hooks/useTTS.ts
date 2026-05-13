@@ -46,9 +46,8 @@ interface ActiveSource {
 // et passe via le canal média qui ignore le mute switch — deux comportements
 // indésirables ici. Web Audio joue via le canal système, sans MediaSession,
 // et respecte le silent switch comme un son d'app classique.
-export function useTTS(isMuted: boolean) {
+export function useTTS() {
   const activeRef = useRef<ActiveSource | null>(null);
-  const mutedRef = useRef(isMuted);
   // Compteur de génération : chaque appel de speak/stop incrémente. Une
   // tâche async qui voit son `gen` périmé après un await sait qu'un autre
   // speak() (ou un stop()) est passé entre-temps et abandonne sans toucher
@@ -56,16 +55,7 @@ export function useTTS(isMuted: boolean) {
   const callGenRef = useRef(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  useEffect(() => {
-    mutedRef.current = isMuted;
-    if (isMuted && activeRef.current) {
-      activeRef.current.stopped = true;
-      try { activeRef.current.source.stop(); } catch { /* ignore */ }
-    }
-  }, [isMuted]);
-
   const speak = useCallback((key: string, onEnd?: () => void) => {
-    if (mutedRef.current) return;
     const myGen = ++callGenRef.current;
 
     if (activeRef.current) {
@@ -81,7 +71,7 @@ export function useTTS(isMuted: boolean) {
       const buffer = await loadBuffer(key, ctx);
       // Périmé : un speak() ou stop() plus récent a pris le relais.
       if (callGenRef.current !== myGen) return;
-      if (!buffer || mutedRef.current) {
+      if (!buffer) {
         activeRef.current = null;
         setIsSpeaking(false);
         return;

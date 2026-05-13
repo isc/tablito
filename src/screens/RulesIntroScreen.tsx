@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import Mascot from '../components/Mascot';
-import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import './RulesIntroScreen.css';
 
@@ -12,8 +11,7 @@ interface RulesIntroScreenProps {
 export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenProps) {
   const [step, setStep] = useState(0);
 
-  const { isMuted } = useSound();
-  const { speak } = useTTS(isMuted);
+  const { speak } = useTTS();
 
   useEffect(() => {
     if (step === 0) speak('rules-intro-welcome');

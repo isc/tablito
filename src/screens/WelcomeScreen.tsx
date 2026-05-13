@@ -3,7 +3,6 @@ import Mascot from '../components/Mascot';
 import NumPad from '../components/NumPad';
 import { shuffle } from '../lib/utils';
 import { PLACEMENT_FACTS, type PlacementResult } from '../lib/placement';
-import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import './WelcomeScreen.css';
 
@@ -17,8 +16,7 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
 
-  const { isMuted } = useSound();
-  const { speak, stop: stopSpeech } = useTTS(isMuted);
+  const { speak, stop: stopSpeech } = useTTS();
 
   // Placement test state
   const [testFacts] = useState(() => shuffle([...PLACEMENT_FACTS]));
