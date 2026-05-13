@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260513190101"
+const CACHE = 'multiplix-' + "20260513190843"
 const BASE = "/multiplix/previews/claude-research-multiplication-tables-1tXFO/"
 const ASSETS = [
   "/multiplix/previews/claude-research-multiplication-tables-1tXFO/favicon.svg",
