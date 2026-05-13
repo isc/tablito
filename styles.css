@@ -2362,6 +2362,19 @@ input, select, textarea {
   cursor: pointer;
   transition: transform 0.1s ease, background 0.1s ease;
   color: var(--ink);
+  position: relative;
+}
+
+.home-nav-btn-dot {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--coral);
 }
 
 .home-nav-btn:active {
@@ -3611,6 +3624,10 @@ input, select, textarea {
   animation-delay: 0.1s;
 }
 
+.rule-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
 .rule-card-head {
   display: flex;
   align-items: center;
@@ -3640,6 +3657,11 @@ input, select, textarea {
 .rule-card-coral .rule-card-badge {
   background: var(--coral-soft);
   color: var(--coral);
+}
+
+.rule-card-honey .rule-card-badge {
+  background: var(--honey-soft);
+  color: var(--honey-ink, var(--honey));
 }
 
 .rule-card-eyebrow {
@@ -3716,6 +3738,28 @@ input, select, textarea {
   border-color: var(--coral);
 }
 
+.rule-slot-honey {
+  color: var(--honey-ink);
+  border-color: var(--honey);
+}
+
+.rule-slot-echo {
+  background: var(--honey-soft);
+  animation: ruleEcho 0.6s ease-out 0.3s both;
+}
+
+@keyframes ruleEcho {
+  0%   { opacity: 0; transform: translateX(-8px) scale(0.7); }
+  60%  { opacity: 1; transform: translateX(0) scale(1.08); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rule-slot-echo {
+    animation: none;
+  }
+}
+
 .rule-glisse-arrow {
   margin: 0 6px;
   font-family: var(--sans);
@@ -3761,6 +3805,10 @@ input, select, textarea {
 
 .rule-card-coral .rule-example-highlight {
   color: var(--coral);
+}
+
+.rule-card-honey .rule-example-highlight {
+  color: var(--honey-ink);
 }
 
 .rule-card-tip {
