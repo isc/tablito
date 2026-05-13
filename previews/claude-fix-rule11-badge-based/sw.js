@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260513191648"
+const CACHE = 'multiplix-' + "20260513191907"
 const BASE = "/multiplix/previews/claude-fix-rule11-badge-based/"
 const ASSETS = [
   "/multiplix/previews/claude-fix-rule11-badge-based/favicon.svg",
