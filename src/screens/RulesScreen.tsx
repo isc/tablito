@@ -99,6 +99,15 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
             <div className="rule-card-message">
               De 1 à 9, il suffit de <b>répéter le chiffre</b>&nbsp;!
             </div>
+            <div className="rule-glisse">
+              <div className="rule-glisse-row">
+                <span className="rule-slot rule-slot-digit rule-slot-honey">7</span>
+                <span className="rule-glisse-arrow">→</span>
+                <span className="rule-slot rule-slot-digit rule-slot-honey">7</span>
+                <span className="rule-slot rule-slot-digit rule-slot-honey rule-slot-echo">7</span>
+              </div>
+              <div className="rule-glisse-caption">7 {'×'} 11 = 77</div>
+            </div>
             <div className="rule-examples">
               <div className="rule-example">3 {'×'} 11 = <span className="rule-example-highlight">33</span></div>
               <div className="rule-example">5 {'×'} 11 = <span className="rule-example-highlight">55</span></div>
