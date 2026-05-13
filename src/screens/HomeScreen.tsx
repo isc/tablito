@@ -12,6 +12,7 @@ import './HomeScreen.css';
 interface HomeScreenProps {
   profile: UserProfile;
   hasSessionAvailable: boolean;
+  hasNewRule: boolean;
   onStart: () => void;
   onShowProgress: () => void;
   onShowBadges: () => void;
@@ -81,6 +82,7 @@ function IconRuler() {
 export default function HomeScreen({
   profile,
   hasSessionAvailable,
+  hasNewRule,
   onStart,
   onShowProgress,
   onShowBadges,
@@ -171,9 +173,14 @@ export default function HomeScreen({
             <span className="home-nav-btn-icon"><IconBadge /></span>
             <span className="home-nav-btn-label">Badges</span>
           </button>
-          <button className="home-nav-btn" onClick={onShowRules}>
+          <button
+            className="home-nav-btn"
+            onClick={onShowRules}
+            aria-label={hasNewRule ? 'Règles — nouvelle règle débloquée' : 'Règles'}
+          >
             <span className="home-nav-btn-icon"><IconRuler /></span>
             <span className="home-nav-btn-label">Règles</span>
+            {hasNewRule && <span className="home-nav-btn-dot" aria-hidden="true" />}
           </button>
         </div>
       </div>

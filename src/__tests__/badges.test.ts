@@ -18,6 +18,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     badges: [],
     sessionHistory: [],
     hasSeenRulesIntro: true,
+    hasSeenRule11: false,
     mysteryTheme: 'market',
     ...overrides,
   };

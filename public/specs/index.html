@@ -469,6 +469,11 @@ interface Badge {
     <li><strong>×10</strong> : « Les chiffres glissent d'une place vers la gauche : un 0 vient prendre la place des unités. »</li>
   </ul>
   <p>La formulation classique « on ajoute un zéro » est volontairement évitée : le verbe « ajouter » prête à confusion avec l'addition, et la règle devient fausse dès l'introduction des nombres décimaux (1,2 × 10 = 12, et non 1,20). Le principe du « glisse-nombre » — décalage des chiffres dans le tableau de numération (unités → dizaines, dizaines → centaines, etc.) — est la formulation recommandée par plusieurs sources pédagogiques françaises :</p>
+
+  <h4>Règle bonus ×11 (révélation différée)</h4>
+  <p>La table de 11 n'est pas au programme officiel français de l'école primaire, mais présente un motif particulièrement régulier de 1 à 9 : <strong>« il suffit de répéter le chiffre »</strong> (3×11 = 33, 7×11 = 77…). On la traite donc comme une <strong>règle bonus</strong>, jamais comme un fait à mémoriser dans le Leitner — aucune carte 11×N n'est ajoutée au profil.</p>
+  <p>Contrairement aux règles ×1 et ×10 qui sont des <strong>prérequis culturels</strong> introduits dès le premier lancement, la règle ×11 est révélée <strong>tardivement</strong> : elle apparaît dans l'écran <code>RulesScreen</code> uniquement quand l'enfant a obtenu les 8 badges « Table de N » (n=2..9), c'est-à-dire quand tous les faits sont en boîte ≥ 4 (cf. <code>isRule11Unlocked</code>). Le but est de préserver le <em>wow-effect</em> de la découverte d'un motif élégant — l'introduire à J1 noierait ce moment dans un onboarding déjà chargé pour un CE1 qui galère encore avec 7×8.</p>
+  <p>La découverte est signalée par une pastille « Nouveau » discrète sur le bouton Règles de l'écran d'accueil (pas de modale interruptive, cohérent avec la philosophie low-intrusion de l'app). La pastille s'éteint dès la première ouverture de l'écran Règles après le déblocage, via <code>UserProfile.hasSeenRule11</code>.</p>
   <ul>
     <li><a href="https://eugenedelacroix.arsene76.fr/matieres-enseignees/mathematiques/le-glisse-nombre-ou-comment-comprendre-la-multiplication-par-10--2939.htm">Le glisse-nombre — Collège Eugène Delacroix</a></li>
     <li><a href="https://maitrelucas.fr/lecons/multiplier-par-10-100-1000/">Multiplier par 10, 100, 1000 — Maître Lucas</a></li>
@@ -870,7 +875,7 @@ interface Badge {
 <section class="chapter" id="evolutions">
   <h2><span class="num">11</span>Évolutions possibles (V2)</h2>
   <ul>
-    <li>Extension aux tables de 11 et 12</li>
+    <li>Extension à la table de 12 (avec drill Leitner — la table de 11 est déjà traitée comme règle bonus, cf. §2.3)</li>
     <li>Mode défi : séance bonus optionnelle le week-end</li>
     <li>Personnalisation de la mascotte (couleurs, accessoires choisis par l'enfant — sans logique de déblocage, pour ne pas réintroduire une couche de progression parasite)</li>
     <li>Intégration Strava-like : partage de la streak avec un parent</li>

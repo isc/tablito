@@ -3,7 +3,7 @@ import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type { UserProfile, SessionQuestion, SessionResult, MultiFact, Badge, BoxLevel } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { processAnswer } from './lib/leitner';
-import { checkBadges, getCompletedTables } from './lib/badges';
+import { checkBadges, getCompletedTables, isRule11Unlocked } from './lib/badges';
 import { loadProfile, saveProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
 import { seedFromPlacement } from './lib/placement';
@@ -178,6 +178,21 @@ export default function App() {
   const handleRulesIntroComplete = useCallback(() => {
     setProfile((prev) => (prev ? { ...prev, hasSeenRulesIntro: true } : prev));
     setScreen('home');
+  }, []);
+
+  // Règle bonus ×11 : on calcule l'état "débloqué" depuis le profil, et la
+  // pastille "Nouveau" s'éteint dès la première visite de l'écran Règles
+  // après le déblocage.
+  const rule11Unlocked = profile ? isRule11Unlocked(profile) : false;
+  const hasNewRule = rule11Unlocked && profile !== null && !profile.hasSeenRule11;
+
+  const handleShowRules = useCallback(() => {
+    setProfile((prev) => {
+      if (!prev) return prev;
+      if (!isRule11Unlocked(prev) || prev.hasSeenRule11) return prev;
+      return { ...prev, hasSeenRule11: true };
+    });
+    setScreen('rules');
   }, []);
 
   // Pre-compute the next session so we can check availability without re-running
@@ -377,10 +392,11 @@ export default function App() {
         <HomeScreen
           profile={profile}
           hasSessionAvailable={pendingSession.length > 0}
+          hasNewRule={hasNewRule}
           onStart={handleStartSession}
           onShowProgress={() => setScreen('progress')}
           onShowBadges={() => setScreen('badges')}
-          onShowRules={() => setScreen('rules')}
+          onShowRules={handleShowRules}
           onShowParent={() => setScreen('parent')}
         />
       )}
@@ -418,7 +434,7 @@ export default function App() {
       )}
 
       {screen === 'rules' && (
-        <RulesScreen onBack={() => setScreen('home')} />
+        <RulesScreen onBack={() => setScreen('home')} showRule11={rule11Unlocked} />
       )}
 
       {screen === 'parent' && profile && (

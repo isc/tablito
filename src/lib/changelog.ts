@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-13',
+    items: [
+      "Nouvelle règle bonus « ×11 » dans l'écran Règles : quand toutes les tables de 2 à 9 sont maîtrisées, l'enfant découvre l'astuce « il suffit de répéter le chiffre » (3×11 = 33, 7×11 = 77…). Pastille « Nouveau » discrète sur le bouton Règles le jour du déblocage.",
+    ],
+  },
+  {
     date: '2026-05-08',
     items: [
       "Les deux derniers faits (8×9 et 9×9) ne sont plus bloqués par un planning de révision chargé : un slot leur est désormais réservé en fin de parcours, même quand 15+ révisions sont dues le même jour.",

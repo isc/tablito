@@ -25,6 +25,17 @@ export function getCompletedTables(facts: MultiFact[]): Set<number> {
   return completed;
 }
 
+/**
+ * Vrai quand l'enfant a obtenu les 8 badges « Table de N » (n=2..9), i.e.
+ * tous les faits sont en boîte ≥ 4. Critère utilisé pour révéler la règle
+ * bonus ×11 dans l'écran Règles. On vérifie via les faits plutôt que via
+ * la liste de badges : c'est équivalent (même condition que checkBadges)
+ * et ça évite une dépendance sur l'ordre d'attribution.
+ */
+export function isRule11Unlocked(profile: UserProfile): boolean {
+  return profile.facts.length > 0 && profile.facts.every((f) => f.box >= 4);
+}
+
 // Single source of truth for all badge metadata
 export interface BadgeDefinition {
   id: string;
