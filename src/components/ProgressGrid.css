@@ -81,14 +81,6 @@
   background: var(--box-green);
 }
 
-.progress-grid-star {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  font-size: 0.55rem;
-  line-height: 1;
-}
-
 .progress-grid-cell.diagonal {
   border: 2px solid rgba(255, 255, 255, 0.4);
 }

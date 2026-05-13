@@ -51,11 +51,7 @@ export default function ProgressGrid({ facts }: ProgressGridProps) {
                   className={`progress-grid-cell ${boxClass} ${isDiagonal ? 'diagonal' : ''}`}
                   onClick={() => fact && fact.introduced && setSelectedFact(fact)}
                   aria-label={`${row} fois ${col} = ${row * col}`}
-                >
-                  {fact && fact.introduced && fact.box === 5 && (
-                    <span className="progress-grid-star">&#11088;</span>
-                  )}
-                </button>
+                />
               );
             })}
           </Fragment>
