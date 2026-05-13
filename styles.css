@@ -256,7 +256,6 @@
 
 .dot-grid-label span {
   color: var(--indigo);
-  font-style: italic;
 }
 
 .dot-grid {
@@ -2297,7 +2296,6 @@ input, select, textarea {
 
 .home-greeting span {
   color: var(--indigo);
-  font-style: italic;
 }
 
 .home-start-btn {
@@ -3903,7 +3901,6 @@ input, select, textarea {
 
 .session-intro-operator {
   color: var(--indigo);
-  font-style: italic;
   font-weight: 400;
   margin: 0 8px;
 }
@@ -3994,14 +3991,12 @@ input, select, textarea {
 
 .session-question-text .operator {
   color: var(--indigo);
-  font-style: italic;
   font-weight: 400;
   margin: 0 6px;
 }
 
 .session-question-text .equals {
   color: var(--ink-muted);
-  font-style: italic;
   font-weight: 400;
   margin-left: 10px;
 }
@@ -4241,7 +4236,6 @@ input, select, textarea {
 
 .welcome-test-operator {
   color: var(--indigo);
-  font-style: italic;
   font-weight: 400;
   margin: 0 6px;
 }
@@ -4249,14 +4243,12 @@ input, select, textarea {
 .welcome-test-equals {
   color: var(--ink-muted);
   margin-left: 10px;
-  font-style: italic;
   font-weight: 400;
 }
 
 .welcome-test-placeholder {
   color: var(--ink-muted);
   margin-left: 10px;
-  font-style: italic;
   font-weight: 400;
 }
 
