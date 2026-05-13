@@ -207,3 +207,34 @@ describe('migration UserProfile.hasSeenRule11', () => {
     expect(loaded.hasSeenRule11).toBe(true);
   });
 });
+
+describe('intégration : profil legacy déjà au top niveau débloque ×11', () => {
+  // Scénario : un utilisateur existant (avant cette feature) a tous ses faits
+  // en boîte 4+ ET a déjà les 8 badges TABLE_N dans son profil. Au prochain
+  // lancement, la règle bonus doit être révélée immédiatement.
+  it('badges déjà présents → isRule11Unlocked true au chargement', () => {
+    const badges = [2, 3, 4, 5, 6, 7, 8, 9].map(tableBadge);
+    const legacy = makeProfile({ badges }) as Partial<UserProfile>;
+    delete legacy.hasSeenRule11;
+    const loaded = importProfile(JSON.stringify(legacy))!;
+    expect(isRule11Unlocked(loaded)).toBe(true);
+    expect(loaded.hasSeenRule11).toBe(false); // pastille à montrer au prochain Home
+  });
+
+  // Scénario plus subtil : un profil dont les faits sont tous en box 4+ mais
+  // dont la liste de badges est incomplète (ex : profil créé avant l'ajout
+  // d'un des badges). Le filet de sécurité de migrateProfile (rétro-attribution
+  // via checkBadges) doit combler le trou et débloquer la règle.
+  it('faits en box 4+ mais badges manquants → retro-attribution puis déblocage', () => {
+    const legacy = makeProfile() as Partial<UserProfile>;
+    legacy.facts!.forEach((f) => { f.box = 4; });
+    legacy.badges = []; // aucun badge dans le profil
+    delete legacy.hasSeenRule11;
+
+    const loaded = importProfile(JSON.stringify(legacy))!;
+
+    const tableBadges = loaded.badges.filter((b) => b.id.startsWith(BADGE_IDS.TABLE_PREFIX));
+    expect(tableBadges.length).toBe(8);
+    expect(isRule11Unlocked(loaded)).toBe(true);
+  });
+});

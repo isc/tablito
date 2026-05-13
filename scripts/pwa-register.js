@@ -17,10 +17,21 @@
 //  3. `controllerchange` → `window.location.reload()`. Avec (2), cet
 //     event ne se déclenche QUE quand on a explicitement décidé de
 //     basculer sur le nouveau SW.
+//
+//  4. `reg.update()` sur `visibilitychange` : sans ça, une session
+//     longue (onglet/PWA gardé ouvert plusieurs heures) ne récupère
+//     jamais les nouveaux déploiements — `register()` ne tourne qu'au
+//     `load`. Avec, dès que l'utilisateur revient sur l'app, on poll
+//     `/sw.js` (cooldown 1 min pour éviter le spam sur les bascules
+//     rapides). La détection d'un waiting SW déclenche ensuite le flow
+//     normal (trackWaiting → SKIP_WAITING quand safe).
 
 let waitingWorker = null
 let busy = false
 let refreshing = false
+let currentRegistration = null
+let lastUpdateCheck = 0
+const UPDATE_CHECK_COOLDOWN_MS = 60_000
 
 function maybeUpdate() {
   if (waitingWorker && !busy && !refreshing) {
@@ -29,6 +40,7 @@ function maybeUpdate() {
 }
 
 function trackWaiting(reg) {
+  currentRegistration = reg
   if (reg.waiting && navigator.serviceWorker.controller) {
     waitingWorker = reg.waiting
     maybeUpdate()
@@ -42,6 +54,16 @@ function trackWaiting(reg) {
         maybeUpdate()
       }
     })
+  })
+}
+
+function checkForUpdate() {
+  if (!currentRegistration) return
+  const now = Date.now()
+  if (now - lastUpdateCheck < UPDATE_CHECK_COOLDOWN_MS) return
+  lastUpdateCheck = now
+  currentRegistration.update().catch((e) => {
+    console.warn('[pwa] SW update check failed', e)
   })
 }
 
@@ -68,6 +90,10 @@ export function registerSW() {
       .catch((e) => {
         console.warn('[pwa] SW registration failed', e)
       })
+  })
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkForUpdate()
   })
 
   return () => {}
