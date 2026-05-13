@@ -150,28 +150,46 @@ describe('rétro-attribution des badges au chargement du profil', () => {
   });
 });
 
+function tableBadge(n: number) {
+  return {
+    id: `${BADGE_IDS.TABLE_PREFIX}${n}`,
+    name: `Table de ${n}`,
+    description: `Maîtriser la table de ${n}`,
+    earnedDate: '2026-01-01',
+    icon: `${n}️⃣`,
+  };
+}
+
 describe('isRule11Unlocked (règle bonus ×11)', () => {
-  it('renvoie false sur un profil neuf (faits en boîte 1)', () => {
+  it('renvoie false sur un profil neuf (aucun badge)', () => {
     expect(isRule11Unlocked(makeProfile())).toBe(false);
   });
 
-  it("renvoie false tant qu'un seul fait est encore en boîte ≤ 3", () => {
-    const profile = makeProfile();
-    profile.facts.forEach((f) => { f.box = 4; });
-    profile.facts[0].box = 3;
-    expect(isRule11Unlocked(profile)).toBe(false);
+  it('renvoie false tant qu\'il manque au moins un badge TABLE_N', () => {
+    const badges = [2, 3, 4, 5, 6, 7, 8].map(tableBadge); // 7 sur 8
+    expect(isRule11Unlocked(makeProfile({ badges }))).toBe(false);
   });
 
-  it('renvoie true dès que tous les faits sont en boîte ≥ 4', () => {
-    const profile = makeProfile();
-    profile.facts.forEach((f) => { f.box = 4; });
+  it('renvoie true dès que les 8 badges TABLE_N sont obtenus', () => {
+    const badges = [2, 3, 4, 5, 6, 7, 8, 9].map(tableBadge);
+    expect(isRule11Unlocked(makeProfile({ badges }))).toBe(true);
+  });
+
+  it('reste true même si des faits régressent (badges permanents)', () => {
+    const badges = [2, 3, 4, 5, 6, 7, 8, 9].map(tableBadge);
+    const profile = makeProfile({ badges });
+    // Faits ramenés à box 1 — la règle ne doit pas disparaître pour autant.
+    profile.facts.forEach((f) => { f.box = 1; });
     expect(isRule11Unlocked(profile)).toBe(true);
   });
 
-  it('renvoie true aussi avec un mix boîtes 4 et 5', () => {
-    const profile = makeProfile();
-    profile.facts.forEach((f, i) => { f.box = i % 2 === 0 ? 4 : 5; });
-    expect(isRule11Unlocked(profile)).toBe(true);
+  it('ignore les badges non-TABLE_N dans le compte', () => {
+    const badges = [
+      ...[2, 3, 4, 5, 6, 7, 8, 9].map(tableBadge),
+      { id: BADGE_IDS.PREMIER_PAS, name: 'Premier pas', description: '', earnedDate: '2026-01-01', icon: '🌱' },
+      { id: BADGE_IDS.GENIE_MATHS, name: 'Génie', description: '', earnedDate: '2026-01-01', icon: '🏆' },
+    ];
+    expect(isRule11Unlocked(makeProfile({ badges }))).toBe(true);
   });
 });
 
