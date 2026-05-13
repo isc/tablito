@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260513194431"
+const CACHE = 'multiplix-' + "20260513194852"
 const BASE = "/multiplix/previews/claude-pwa-update-on-visibility/"
 const ASSETS = [
   "/multiplix/previews/claude-pwa-update-on-visibility/favicon.svg",

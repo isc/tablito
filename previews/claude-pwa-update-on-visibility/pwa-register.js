@@ -62,7 +62,9 @@ function checkForUpdate() {
   const now = Date.now()
   if (now - lastUpdateCheck < UPDATE_CHECK_COOLDOWN_MS) return
   lastUpdateCheck = now
-  currentRegistration.update().catch(() => {})
+  currentRegistration.update().catch((e) => {
+    console.warn('[pwa] SW update check failed', e)
+  })
 }
 
 export function registerSW() {
