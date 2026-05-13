@@ -26,14 +26,19 @@ export function getCompletedTables(facts: MultiFact[]): Set<number> {
 }
 
 /**
- * Vrai quand l'enfant a obtenu les 8 badges « Table de N » (n=2..9), i.e.
- * tous les faits sont en boîte ≥ 4. Critère utilisé pour révéler la règle
- * bonus ×11 dans l'écran Règles. On vérifie via les faits plutôt que via
- * la liste de badges : c'est équivalent (même condition que checkBadges)
- * et ça évite une dépendance sur l'ordre d'attribution.
+ * Vrai quand l'enfant a obtenu les 8 badges « Table de N » (n=2..9).
+ * Critère utilisé pour révéler la règle bonus ×11 dans l'écran Règles.
+ *
+ * On compte les badges plutôt que de re-vérifier `facts.every(box >= 4)` :
+ * les badges sont permanents (jamais retirés du profil), donc la règle
+ * reste révélée même si des faits régressent ensuite. Si on testait les
+ * boîtes en direct, une mauvaise journée ferait disparaître la carte de
+ * l'écran Règles — ce qui contredirait la nature "découverte one-shot"
+ * de la révélation.
  */
 export function isRule11Unlocked(profile: UserProfile): boolean {
-  return profile.facts.length > 0 && profile.facts.every((f) => f.box >= 4);
+  const tableBadges = profile.badges.filter((b) => b.id.startsWith(BADGE_IDS.TABLE_PREFIX));
+  return tableBadges.length === 8;
 }
 
 // Single source of truth for all badge metadata
