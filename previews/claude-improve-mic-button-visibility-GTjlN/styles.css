@@ -3982,7 +3982,7 @@ input, select, textarea {
   justify-content: flex-start;
   width: 100%;
   padding-top: 4px;
-  gap: 14px;
+  gap: 28px;
 }
 
 .session-input-switch {
