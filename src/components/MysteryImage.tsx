@@ -43,7 +43,6 @@ export default function MysteryImage({ facts, theme }: MysteryImageProps) {
               const fact = factMap.get(`${a},${b}`);
               const level = getLevel(fact);
               const introduced = fact?.introduced ?? false;
-              const isDiagonal = row === col;
 
               const style =
                 level > 0
@@ -57,7 +56,7 @@ export default function MysteryImage({ facts, theme }: MysteryImageProps) {
               return (
                 <button
                   key={`${row}-${col}`}
-                  className={`mystery-cell mystery-level-${level}${isDiagonal ? ' mystery-diagonal' : ''}`}
+                  className={`mystery-cell mystery-level-${level}`}
                   style={style}
                   onClick={() => introduced && fact && setSelectedFact(fact)}
                   aria-label={`${row} fois ${col} = ${row * col}`}
