@@ -14,6 +14,11 @@ export function factsForTable(facts: MultiFact[], table: number): MultiFact[] {
   return facts.filter((f) => f.a === table || f.b === table);
 }
 
+// Tables 2..9 ⇒ 8 badges TABLE_N possibles. Source de vérité partagée
+// entre la génération des badges (ALL_BADGE_DEFINITIONS) et le critère
+// de déblocage de la règle bonus ×11.
+const NUM_TABLE_BADGES = 8;
+
 export function getCompletedTables(facts: MultiFact[]): Set<number> {
   const completed = new Set<number>();
   for (let t = 2; t <= 9; t++) {
@@ -26,19 +31,15 @@ export function getCompletedTables(facts: MultiFact[]): Set<number> {
 }
 
 /**
- * Vrai quand l'enfant a obtenu les 8 badges « Table de N » (n=2..9).
- * Critère utilisé pour révéler la règle bonus ×11 dans l'écran Règles.
+ * Vrai quand les 8 badges « Table de N » (n=2..9) ont été obtenus.
  *
- * On compte les badges plutôt que de re-vérifier `facts.every(box >= 4)` :
- * les badges sont permanents (jamais retirés du profil), donc la règle
- * reste révélée même si des faits régressent ensuite. Si on testait les
- * boîtes en direct, une mauvaise journée ferait disparaître la carte de
- * l'écran Règles — ce qui contredirait la nature "découverte one-shot"
- * de la révélation.
+ * On compte les badges plutôt que de tester `facts.every(box >= 4)` :
+ * les badges sont permanents, donc la révélation persiste même si des
+ * faits régressent ensuite — la « découverte » reste un événement one-shot.
  */
 export function isRule11Unlocked(profile: UserProfile): boolean {
   const tableBadges = profile.badges.filter((b) => b.id.startsWith(BADGE_IDS.TABLE_PREFIX));
-  return tableBadges.length === 8;
+  return tableBadges.length === NUM_TABLE_BADGES;
 }
 
 // Single source of truth for all badge metadata
@@ -116,7 +117,7 @@ export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
       unitLabel: 'découvertes',
     }),
   },
-  ...Array.from({ length: 8 }, (_, i) => {
+  ...Array.from({ length: NUM_TABLE_BADGES }, (_, i) => {
     const n = i + 2;
     return {
       id: `${BADGE_IDS.TABLE_PREFIX}${n}`,
