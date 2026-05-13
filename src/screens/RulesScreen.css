@@ -197,6 +197,12 @@
   100% { opacity: 1; transform: translateX(0) scale(1); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .rule-slot-echo {
+    animation: none;
+  }
+}
+
 .rule-glisse-arrow {
   margin: 0 6px;
   font-family: var(--sans);

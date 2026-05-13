@@ -183,8 +183,11 @@ export default function App() {
   // Règle bonus ×11 : on calcule l'état "débloqué" depuis le profil, et la
   // pastille "Nouveau" s'éteint dès la première visite de l'écran Règles
   // après le déblocage.
-  const rule11Unlocked = profile ? isRule11Unlocked(profile) : false;
-  const hasNewRule = rule11Unlocked && profile !== null && !profile.hasSeenRule11;
+  const rule11Unlocked = useMemo(
+    () => (profile ? isRule11Unlocked(profile) : false),
+    [profile],
+  );
+  const hasNewRule = !!profile && rule11Unlocked && !profile.hasSeenRule11;
 
   const handleShowRules = useCallback(() => {
     setProfile((prev) => {
