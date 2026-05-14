@@ -233,6 +233,54 @@
   font-weight: 800;
 }
 
+/* ===== components/Button.css ===== */
+/* Boutons pleine largeur du parcours principal (CTAs). Deux variantes de
+   couleur — ink (parcours d'onboarding/intro) et indigo (CTA principale
+   sur Home). Les overrides spécifiques (max-width, margin, padding) restent
+   au point d'appel via une classe d'écran. */
+
+.btn {
+  width: 100%;
+  padding: 18px 32px;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn--ink {
+  color: var(--cream);
+  background: var(--ink);
+  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
+}
+
+.btn--ink:disabled {
+  box-shadow: none;
+}
+
+.btn--indigo {
+  color: #fff;
+  background: var(--indigo);
+  box-shadow: 0 2px 0 var(--indigo-ink), 0 6px 20px rgba(79, 70, 186, 0.3);
+}
+
+.btn--indigo:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
+}
+
 /* ===== components/DotGrid.css ===== */
 .dot-grid-wrapper {
   display: flex;
@@ -1423,53 +1471,22 @@
   border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
-/* Fact detail popup */
-.fact-detail-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease;
-  padding: 20px;
-}
-
-.fact-detail-card {
-  background: var(--surface);
-  border-radius: 20px;
-  padding: 24px;
-  text-align: center;
+.fact-detail {
   max-width: 320px;
-  width: 100%;
-  animation: scaleIn 0.2s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  text-align: center;
 }
 
-.fact-detail-card h3 {
+.fact-detail-title {
+  font-family: var(--serif);
   font-size: 1.8rem;
-  color: var(--primary);
+  color: var(--indigo);
   margin-bottom: 8px;
 }
 
-.fact-detail-card p {
-  color: var(--text-light);
+.fact-detail-line {
+  color: var(--ink-soft);
   margin-bottom: 4px;
   font-size: 0.95rem;
-}
-
-.fact-detail-close {
-  margin-top: 16px;
-  padding: 10px 32px;
-  background: var(--primary);
-  color: white;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 700;
 }
 
 /* ===== components/StrategyHint.css ===== */
@@ -2327,24 +2344,7 @@ input, select, textarea {
 }
 
 .home-start-btn {
-  width: 100%;
   padding: 18px 28px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-  background: var(--indigo);
-  border: none;
-  border-radius: 999px;
-  box-shadow: 0 2px 0 var(--indigo-ink), 0 6px 20px rgba(79, 70, 186, 0.3);
-  transition: transform 0.1s ease;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-}
-
-.home-start-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
 }
 
 .home-done-msg {
@@ -3394,30 +3394,8 @@ input, select, textarea {
 }
 
 .rules-intro-btn {
-  padding: 18px 32px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--cream);
-  background: var(--ink);
-  border: none;
-  border-radius: 999px;
-  transition: transform 0.1s ease;
   margin-top: 8px;
-  width: 100%;
   max-width: 320px;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-}
-
-.rules-intro-btn:active {
-  transform: translateY(1px);
-}
-
-.rules-intro-btn-primary {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
 }
 
 .rules-intro-dots {
@@ -3975,24 +3953,8 @@ input, select, textarea {
 }
 
 .session-intro-btn {
-  width: 100%;
   max-width: 320px;
   padding: 18px 28px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--cream);
-  background: var(--ink);
-  border: none;
-  border-radius: 999px;
-  letter-spacing: 0.2px;
-  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
-  transition: transform 0.1s ease;
-  cursor: pointer;
-}
-
-.session-intro-btn:active {
-  transform: translateY(1px);
 }
 
 /* Phase question */
@@ -4141,49 +4103,22 @@ input, select, textarea {
 }
 
 .welcome-btn {
-  padding: 18px 32px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--cream);
-  background: var(--ink);
-  border: none;
-  border-radius: 999px;
-  transition: transform 0.1s ease;
-  width: 100%;
   max-width: 320px;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-}
-
-.welcome-btn:active {
-  transform: translateY(1px);
-}
-
-.welcome-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.welcome-btn-primary {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
-}
-
-.welcome-btn-primary:disabled {
-  box-shadow: none;
 }
 
 .welcome-btn-skip {
-  background: transparent;
-  color: var(--ink-soft);
+  width: 100%;
+  padding: 10px 20px;
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 700;
-  padding: 10px 20px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
   text-decoration: underline;
   text-underline-offset: 3px;
-  box-shadow: none;
+  letter-spacing: 0.2px;
+  cursor: pointer;
 }
 
 .welcome-btn-skip:active:not(:disabled) {
@@ -4191,10 +4126,8 @@ input, select, textarea {
 }
 
 .welcome-btn-skip:disabled {
-  background: transparent;
   opacity: 0.4;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 /* Placement test */
