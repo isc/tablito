@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260514150103"
+const CACHE = 'multiplix-' + "20260514162114"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -137,11 +137,11 @@ self.addEventListener('fetch', (e) => {
   // sans toucher au réseau → cold launch instantané. Les nouvelles versions
   // arrivent par le mécanisme SW (cf. pwa-register.js).
   // Exceptions (équivalent du navigateFallbackDenylist VitePWA) : le guide
-  // standalone vit sous son propre index.html, et les previews de PR vivent
-  // dans le scope du SW de prod mais ne doivent pas être masquées par le
-  // shell de prod. On laisse le browser gérer.
+  // et les specs vivent sous leur propre index.html, et les previews de PR
+  // vivent dans le scope du SW de prod mais ne doivent pas être masquées
+  // par le shell de prod. On laisse le browser gérer.
   if (e.request.mode === 'navigate') {
-    if (url.pathname.includes('/guide/') || url.pathname.includes('/previews/')) {
+    if (url.pathname.includes('/guide/') || url.pathname.includes('/specs/') || url.pathname.includes('/previews/')) {
       return
     }
     e.respondWith(
