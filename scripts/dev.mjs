@@ -5,11 +5,13 @@
 //
 // Ce qui est géré :
 //  - .ts/.tsx/.jsx → transformés à la volée (esbuild.transform, format ESM)
-//  - imports CSS (`import './Foo.css'`) → réécrits vers une URL `?as=link`
-//    qui renvoie un petit bout de JS injectant un <link rel="stylesheet">
 //  - imports sans extension → résolus en .tsx/.ts/.jsx/.js puis index.*
 //  - import.meta.env.* → remplacés via esbuild `define`
 //  - virtual:pwa-register → no-op via import map (pas de SW en dev)
+//
+// CSS : tous les .css sous src/ sont auto-découverts et pré-injectés via
+// <link> dans index.html (cf. listSrcCssFiles plus bas). Pas d'import CSS
+// dans le source — la concaténation au build et l'injection en dev font foi.
 
 import http from 'node:http'
 import fs from 'node:fs/promises'
@@ -102,16 +104,6 @@ const server = http.createServer(async (req, res) => {
       return res.end(html)
     }
 
-    // Helper "import './foo.css?as=link'" : renvoie un JS qui injecte un
-    // <link>. Inutile maintenant que tous les CSS sont pré-chargés via
-    // index.html, mais on le garde pour ne pas avoir à modifier le
-    // transform (qui rewrites les imports CSS vers ce shim).
-    if (pathname.endsWith('.css') && u.searchParams.get('as') === 'link') {
-      // No-op : le CSS est déjà chargé.
-      res.writeHead(200, { 'Content-Type': MIME['.js'] })
-      return res.end('')
-    }
-
     const filePath = await resolveUrl(pathname)
     if (!filePath) {
       res.writeHead(404)
@@ -134,12 +126,8 @@ const server = http.createServer(async (req, res) => {
         sourcefile: pathname,
         define: ENV_DEFINE,
       })
-      // Réécriture des imports CSS pour passer par le helper d'injection.
-      const code = result.code
-        .replace(/from\s*["']([^"']+\.css)["']/g, (_, p) => `from "${p}?as=link"`)
-        .replace(/import\s*["']([^"']+\.css)["']/g, (_, p) => `import "${p}?as=link"`)
       res.writeHead(200, { 'Content-Type': MIME['.js'] })
-      return res.end(code)
+      return res.end(result.code)
     }
 
     const buf = await fs.readFile(filePath)

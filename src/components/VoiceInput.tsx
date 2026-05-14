@@ -3,7 +3,6 @@ import NumPad from './NumPad';
 import { parseFrenchAnswer, parseFrenchNumber } from '../lib/parseFrenchNumber';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useInputMode } from '../hooks/useInputMode';
-import './VoiceInput.css';
 
 interface VoiceInputProps {
   onSubmit: (value: number) => void;

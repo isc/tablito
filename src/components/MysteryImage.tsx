@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { MultiFact, MysteryTheme } from '../types';
 import DotGrid from './DotGrid';
-import './MysteryImage.css';
 
 interface MysteryImageProps {
   facts: MultiFact[];

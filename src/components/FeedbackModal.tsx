@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { submitFeedback, buildContext, feedbackEnabled } from '../lib/feedback';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
-import './FeedbackModal.css';
 
 interface FeedbackModalProps {
   profile: UserProfile | null;

@@ -4,8 +4,6 @@ import NumPad from '../components/NumPad';
 import { shuffle } from '../lib/utils';
 import { PLACEMENT_FACTS, type PlacementResult } from '../lib/placement';
 import { useTTS } from '../hooks/useTTS';
-import '../components/Formula.css';
-import './WelcomeScreen.css';
 
 export type { PlacementResult };
 

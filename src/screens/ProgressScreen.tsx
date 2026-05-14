@@ -1,7 +1,6 @@
 import type { UserProfile } from '../types';
 import MysteryImage from '../components/MysteryImage';
 import BackChevron from '../components/BackChevron';
-import './ProgressScreen.css';
 
 interface ProgressScreenProps {
   profile: UserProfile;

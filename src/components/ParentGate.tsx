@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from './Modal';
-import './ParentGate.css';
 
 interface ParentGateProps {
   onSuccess: () => void;

@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import './NumPad.css';
 
 interface NumPadProps {
   onSubmit: (value: number) => void;

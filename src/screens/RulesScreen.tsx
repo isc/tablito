@@ -1,5 +1,4 @@
 import BackChevron from '../components/BackChevron';
-import './RulesScreen.css';
 
 interface RulesScreenProps {
   onBack: () => void;

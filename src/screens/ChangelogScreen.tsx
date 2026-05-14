@@ -1,6 +1,5 @@
 import BackChevron from '../components/BackChevron';
 import { CHANGELOG } from '../lib/changelog';
-import './ChangelogScreen.css';
 
 interface ChangelogScreenProps {
   onBack: () => void;

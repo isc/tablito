@@ -1,5 +1,4 @@
 import type { Strategy } from '../lib/strategies';
-import './StrategyHint.css';
 
 interface StrategyHintProps {
   strategy: Strategy;

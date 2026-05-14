@@ -3,7 +3,6 @@ import FlameIcon from './FlameIcon';
 import Modal from './Modal';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
-import './StreakDetailModal.css';
 
 interface StreakDetailModalProps {
   profile: UserProfile;

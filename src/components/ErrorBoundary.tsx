@@ -1,6 +1,5 @@
 import { Component, type ReactNode } from 'react';
 import { STORAGE_KEY } from '../lib/storage';
-import './ErrorBoundary.css';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

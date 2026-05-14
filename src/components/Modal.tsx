@@ -1,5 +1,4 @@
 import { useEffect, type ReactNode } from 'react';
-import './Modal.css';
 
 interface ModalProps {
   onClose: () => void;

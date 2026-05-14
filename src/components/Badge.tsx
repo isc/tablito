@@ -1,5 +1,4 @@
 import { medallionColorFor, progressPercent } from '../lib/badges';
-import './Badge.css';
 
 interface BadgeProps {
   badge: {

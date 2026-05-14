@@ -1,5 +1,4 @@
 import BackChevron from '../components/BackChevron';
-import './PrivacyScreen.css';
 
 interface PrivacyScreenProps {
   onBack: () => void;

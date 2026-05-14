@@ -4,7 +4,6 @@ import StrategyHint from './StrategyHint';
 import { getStrategy } from '../lib/strategies';
 import { pickRandom } from '../lib/utils';
 import type { BoxLevel } from '../types';
-import './FeedbackOverlay.css';
 
 interface FeedbackOverlayProps {
   correct: boolean;

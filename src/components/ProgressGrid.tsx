@@ -1,6 +1,5 @@
 import { useState, useMemo, Fragment } from 'react';
 import type { MultiFact } from '../types';
-import './ProgressGrid.css';
 
 interface ProgressGridProps {
   facts: MultiFact[];

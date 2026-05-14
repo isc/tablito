@@ -36,7 +36,6 @@ const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
 const PrivacyScreen    = lazy(() => import('./screens/PrivacyScreen'));
 const ChangelogScreen  = lazy(() => import('./screens/ChangelogScreen'));
-import './App.css';
 
 type Screen =
   | 'welcome'

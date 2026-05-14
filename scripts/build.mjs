@@ -7,11 +7,10 @@
 // Pas de bundling JS : chaque .ts/.tsx devient un .js indépendant. Les
 // imports relatifs sont réécrits pour pointer vers les .js générés.
 //
-// CSS : les `import "./X.css"` sources sont strippés du JS au build, et
-// tous les .css sont concaténés en un seul `dist/styles.css` chargé via
-// un unique <link> dans index.html. Le split par composant est purement
-// une convention d'auteur (lisibilité) ; le browser n'a aucune raison
-// de recevoir 30 requêtes là où 1 suffit.
+// CSS : tous les .css sources sont concaténés en un seul `dist/styles.css`
+// chargé via un unique <link> dans index.html. Le split par composant est
+// purement une convention d'auteur (lisibilité) ; le browser n'a aucune
+// raison de recevoir 30 requêtes là où 1 suffit.
 
 import esbuild from 'esbuild'
 import fs from 'node:fs/promises'
@@ -81,11 +80,6 @@ async function resolveImport(importPath, fromFile) {
 }
 
 async function rewriteImports(code, sourceFile) {
-  // Strip les `import "./X.css"` : on concatène tous les CSS dans
-  // dist/styles.css au build et on les charge via un seul <link> dans
-  // index.html, donc ces imports sources sont à effet nul en prod.
-  code = code.replace(/import\s*["']\.[^"']+\.css["']\s*;?\r?\n?/g, '')
-
   // Capture les imports relatifs : `from "..."`, `import "..."` (statiques),
   // ET `import("...")` (dynamiques, p.ex. via React.lazy → indispensable
   // pour le code-splitting des écrans).

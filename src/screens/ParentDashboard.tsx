@@ -6,7 +6,6 @@ import { todayISO } from '../lib/utils';
 import ProgressGrid from '../components/ProgressGrid';
 import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
-import './ParentDashboard.css';
 
 const Y_TICKS = [0, 25, 50, 75, 100];
 

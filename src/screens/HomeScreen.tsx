@@ -6,7 +6,6 @@ import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
-import './HomeScreen.css';
 
 interface HomeScreenProps {
   profile: UserProfile;

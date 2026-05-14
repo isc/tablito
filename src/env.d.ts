@@ -23,7 +23,3 @@ declare module 'virtual:pwa-register' {
   export function registerSW(): () => void
   export function setBusy(busy: boolean): void
 }
-
-// Imports CSS à effet de bord (`import './Foo.css'`) : pas de valeur, juste
-// un side-effect côté runtime (le build génère un shim qui injecte un <link>).
-declare module '*.css'

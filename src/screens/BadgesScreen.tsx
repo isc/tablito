@@ -4,7 +4,6 @@ import BadgeComponent from '../components/Badge';
 import BadgeDetailModal from '../components/BadgeDetailModal';
 import BackChevron from '../components/BackChevron';
 import { ALL_BADGE_DEFINITIONS, getBadgeDetail } from '../lib/badges';
-import './BadgesScreen.css';
 
 interface BadgesScreenProps {
   profile: UserProfile;

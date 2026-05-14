@@ -14,8 +14,6 @@ import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { useWakeLock } from '../hooks/useWakeLock';
-import '../components/Formula.css';
-import './SessionScreen.css';
 
 // Voice mode: lower threshold for the "fast" reward (étoile dorée) since oral
 // recall is faster than typing. Leitner promotion still uses RESPONSE_TIME.SLOW.

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './DotGrid.css';
 
 interface DotGridProps {
   a: number;

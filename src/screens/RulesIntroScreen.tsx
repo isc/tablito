@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Mascot from '../components/Mascot';
 import { useTTS } from '../hooks/useTTS';
-import './RulesIntroScreen.css';
 
 interface RulesIntroScreenProps {
   name: string;

@@ -5,7 +5,6 @@ import Mascot from '../components/Mascot';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useConfetti } from '../hooks/useConfetti';
-import './RecapScreen.css';
 
 interface RecapScreenProps {
   name: string;

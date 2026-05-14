@@ -1,4 +1,3 @@
-import './Mascot.css';
 
 interface MascotProps {
   mood: 'happy' | 'idle' | 'celebrate';

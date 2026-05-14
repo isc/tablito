@@ -2,7 +2,6 @@ import type { BadgeDefinition } from '../lib/badges';
 import { getBadgeDetail, medallionColorFor, progressPercent } from '../lib/badges';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
-import './BadgeDetailModal.css';
 
 interface BadgeDetailModalProps {
   badge: BadgeDefinition;
