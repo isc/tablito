@@ -85,51 +85,20 @@
   border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
-/* Fact detail popup */
-.fact-detail-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease;
-  padding: 20px;
-}
-
-.fact-detail-card {
-  background: var(--surface);
-  border-radius: 20px;
-  padding: 24px;
-  text-align: center;
+.fact-detail {
   max-width: 320px;
-  width: 100%;
-  animation: scaleIn 0.2s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  text-align: center;
 }
 
-.fact-detail-card h3 {
+.fact-detail-title {
+  font-family: var(--serif);
   font-size: 1.8rem;
-  color: var(--primary);
+  color: var(--indigo);
   margin-bottom: 8px;
 }
 
-.fact-detail-card p {
-  color: var(--text-light);
+.fact-detail-line {
+  color: var(--ink-soft);
   margin-bottom: 4px;
   font-size: 0.95rem;
-}
-
-.fact-detail-close {
-  margin-top: 16px;
-  padding: 10px 32px;
-  background: var(--primary);
-  color: white;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 700;
 }

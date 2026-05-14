@@ -322,7 +322,7 @@ export default function SessionScreen({
                 = <strong>{currentQuestion.fact.product}</strong>
               </div>
               <button
-                className="session-intro-btn"
+                className="btn btn--ink session-intro-btn"
                 onClick={handleIntroNext}
               >
                 Suivant →
@@ -345,7 +345,7 @@ export default function SessionScreen({
                 <strong>{currentQuestion.fact.product}</strong>
               </div>
               <button
-                className="session-intro-btn"
+                className="btn btn--ink session-intro-btn"
                 onClick={handleIntroNext}
               >
                 Suivant →
@@ -358,7 +358,7 @@ export default function SessionScreen({
                 Une petite astuce pour s'en souvenir&nbsp;!
               </div>
               <button
-                className="session-intro-btn"
+                className="btn btn--ink session-intro-btn"
                 onClick={handleIntroNext}
               >
                 J'ai compris&nbsp;!

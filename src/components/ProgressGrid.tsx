@@ -1,5 +1,6 @@
 import { useState, useMemo, Fragment } from 'react';
 import type { MultiFact } from '../types';
+import Modal from './Modal';
 
 interface ProgressGridProps {
   facts: MultiFact[];
@@ -58,38 +59,30 @@ export default function ProgressGrid({ facts }: ProgressGridProps) {
       </div>
 
       {selectedFact && (
-        <div
-          className="fact-detail-overlay"
-          onClick={() => setSelectedFact(null)}
-        >
-          <div
-            className="fact-detail-card"
-            onClick={(e) => e.stopPropagation()}
+        <Modal onClose={() => setSelectedFact(null)} className="fact-detail">
+          <h3 className="fact-detail-title">
+            {selectedFact.a} {'\u00D7'} {selectedFact.b} = {selectedFact.product}
+          </h3>
+          <p className="fact-detail-line">
+            Niveau :{' '}
+            {selectedFact.box === 1
+              ? 'En apprentissage'
+              : selectedFact.box === 5
+                ? 'Maîtrisé !'
+                : `Boîte ${selectedFact.box}/5`}
+          </p>
+          <p className="fact-detail-line">
+            {selectedFact.history.length > 0
+              ? `${selectedFact.history.filter((h) => h.correct).length}/${selectedFact.history.length} bonnes réponses`
+              : 'Pas encore pratiqué'}
+          </p>
+          <button
+            className="modal-close-btn"
+            onClick={() => setSelectedFact(null)}
           >
-            <h3>
-              {selectedFact.a} {'\u00D7'} {selectedFact.b} = {selectedFact.product}
-            </h3>
-            <p>
-              Niveau :{' '}
-              {selectedFact.box === 1
-                ? 'En apprentissage'
-                : selectedFact.box === 5
-                  ? 'Maîtrisé !'
-                  : `Boîte ${selectedFact.box}/5`}
-            </p>
-            <p>
-              {selectedFact.history.length > 0
-                ? `${selectedFact.history.filter((h) => h.correct).length}/${selectedFact.history.length} bonnes réponses`
-                : 'Pas encore pratiqué'}
-            </p>
-            <button
-              className="fact-detail-close"
-              onClick={() => setSelectedFact(null)}
-            >
-              Fermer
-            </button>
-          </div>
-        </div>
+            Fermer
+          </button>
+        </Modal>
       )}
     </div>
   );

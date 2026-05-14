@@ -128,7 +128,7 @@ export default function HomeScreen({
 
         <div className="home-cta-wrap">
           {hasSessionAvailable ? (
-            <button className="home-start-btn" onClick={onStart}>
+            <button className="btn btn--indigo home-start-btn" onClick={onStart}>
               {'▶'} C'est parti&nbsp;!
             </button>
           ) : (

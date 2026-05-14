@@ -90,49 +90,22 @@
 }
 
 .welcome-btn {
-  padding: 18px 32px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--cream);
-  background: var(--ink);
-  border: none;
-  border-radius: 999px;
-  transition: transform 0.1s ease;
-  width: 100%;
   max-width: 320px;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-}
-
-.welcome-btn:active {
-  transform: translateY(1px);
-}
-
-.welcome-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.welcome-btn-primary {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
-}
-
-.welcome-btn-primary:disabled {
-  box-shadow: none;
 }
 
 .welcome-btn-skip {
-  background: transparent;
-  color: var(--ink-soft);
+  width: 100%;
+  padding: 10px 20px;
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 700;
-  padding: 10px 20px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
   text-decoration: underline;
   text-underline-offset: 3px;
-  box-shadow: none;
+  letter-spacing: 0.2px;
+  cursor: pointer;
 }
 
 .welcome-btn-skip:active:not(:disabled) {
@@ -140,10 +113,8 @@
 }
 
 .welcome-btn-skip:disabled {
-  background: transparent;
   opacity: 0.4;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 /* Placement test */
