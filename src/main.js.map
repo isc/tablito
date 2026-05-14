@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["main.tsx"],
-  "sourcesContent": ["import { StrictMode } from 'react'\nimport { createRoot } from 'react-dom/client'\nimport { registerSW } from 'virtual:pwa-register'\nimport './index.css'\nimport App from './App.tsx'\nimport ErrorBoundary from './components/ErrorBoundary'\n\nregisterSW()\n\ncreateRoot(document.getElementById('root')!).render(\n  <StrictMode>\n    <ErrorBoundary>\n      <App />\n    </ErrorBoundary>\n  </StrictMode>,\n)\n"],
-  "mappings": "AAYM,cAAAA,MAAA,qBAZN,OAAS,cAAAC,MAAkB,QAC3B,OAAS,cAAAC,MAAkB,mBAC3B,OAAS,cAAAC,MAAkB,uBAC3B,MAAO,cACP,OAAOC,MAAS,YAChB,OAAOC,MAAmB,6BAE1BF,EAAW,EAEXD,EAAW,SAAS,eAAe,MAAM,CAAE,EAAE,OAC3CF,EAACC,EAAA,CACC,SAAAD,EAACK,EAAA,CACC,SAAAL,EAACI,EAAA,EAAI,EACP,EACF,CACF",
+  "sourcesContent": ["import { StrictMode } from 'react'\nimport { createRoot } from 'react-dom/client'\nimport { registerSW } from 'virtual:pwa-register'\nimport App from './App.tsx'\nimport ErrorBoundary from './components/ErrorBoundary'\n\nregisterSW()\n\ncreateRoot(document.getElementById('root')!).render(\n  <StrictMode>\n    <ErrorBoundary>\n      <App />\n    </ErrorBoundary>\n  </StrictMode>,\n)\n"],
+  "mappings": "AAWM,cAAAA,MAAA,qBAXN,OAAS,cAAAC,MAAkB,QAC3B,OAAS,cAAAC,MAAkB,mBAC3B,OAAS,cAAAC,MAAkB,uBAC3B,OAAOC,MAAS,YAChB,OAAOC,MAAmB,6BAE1BF,EAAW,EAEXD,EAAW,SAAS,eAAe,MAAM,CAAE,EAAE,OAC3CF,EAACC,EAAA,CACC,SAAAD,EAACK,EAAA,CACC,SAAAL,EAACI,EAAA,EAAI,EACP,EACF,CACF",
   "names": ["jsx", "StrictMode", "createRoot", "registerSW", "App", "ErrorBoundary"]
 }
