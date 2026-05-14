@@ -166,33 +166,8 @@
 }
 
 .session-question-text {
-  font-family: var(--serif);
-  font-size: 52px;
-  font-weight: 500;
-  color: var(--ink);
   padding: 12px 0 14px;
-  letter-spacing: -1.5px;
-  line-height: 1;
-  text-align: center;
   width: 100%;
-}
-
-.session-question-text .operator {
-  color: var(--indigo);
-  font-weight: 400;
-  margin: 0 6px;
-}
-
-.session-question-text .equals {
-  color: var(--ink-muted);
-  font-weight: 400;
-  margin-left: 10px;
-}
-
-.session-question-text .placeholder {
-  color: var(--ink-muted);
-  font-weight: 400;
-  margin-left: 10px;
 }
 
 .session-numpad-area {

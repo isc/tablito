@@ -175,33 +175,8 @@
 }
 
 .welcome-test-question {
-  font-family: var(--serif);
-  font-size: 52px;
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -1.5px;
-  line-height: 1;
   margin-top: 12px;
   margin-bottom: 6px;
-  text-align: center;
-}
-
-.welcome-test-operator {
-  color: var(--indigo);
-  font-weight: 400;
-  margin: 0 6px;
-}
-
-.welcome-test-equals {
-  color: var(--ink-muted);
-  margin-left: 10px;
-  font-weight: 400;
-}
-
-.welcome-test-placeholder {
-  color: var(--ink-muted);
-  margin-left: 10px;
-  font-weight: 400;
 }
 
 .welcome-test-answer {

@@ -14,6 +14,7 @@ import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { useWakeLock } from '../hooks/useWakeLock';
+import '../components/Formula.css';
 import './SessionScreen.css';
 
 // Voice mode: lower threshold for the "fast" reward (étoile dorée) since oral
@@ -372,12 +373,12 @@ export default function SessionScreen({
       {/* Question phase */}
       {!showIntro && (
         <div className="session-question">
-          <div className="session-question-text">
+          <div className="formula-text session-question-text">
             {currentQuestion.displayA}
-            <span className="operator">{'\u00D7'}</span>
+            <span className="formula-operator">{'\u00D7'}</span>
             {currentQuestion.displayB}
-            <span className="equals">=</span>
-            <span className="placeholder">?</span>
+            <span className="formula-equals">=</span>
+            <span className="formula-placeholder">?</span>
           </div>
           <div className="session-numpad-area">
             {inputMode === 'voice' ? (

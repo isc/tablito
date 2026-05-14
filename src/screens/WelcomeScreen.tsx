@@ -4,6 +4,7 @@ import NumPad from '../components/NumPad';
 import { shuffle } from '../lib/utils';
 import { PLACEMENT_FACTS, type PlacementResult } from '../lib/placement';
 import { useTTS } from '../hooks/useTTS';
+import '../components/Formula.css';
 import './WelcomeScreen.css';
 
 export type { PlacementResult };
@@ -149,15 +150,15 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
               <div key={i} className={`welcome-test-progress-dot ${status}`} />
             ))}
           </div>
-          <div className="welcome-test-question">
+          <div className="formula-text welcome-test-question">
             {displayA}
-            <span className="welcome-test-operator">{'\u00D7'}</span>
+            <span className="formula-operator">{'\u00D7'}</span>
             {displayB}
-            <span className="welcome-test-equals">=</span>
+            <span className="formula-equals">=</span>
             {lastAnswer != null ? (
               <span className="welcome-test-answer">{lastAnswer}</span>
             ) : (
-              <span className="welcome-test-placeholder">?</span>
+              <span className="formula-placeholder">?</span>
             )}
           </div>
           {feedback && (
