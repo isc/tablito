@@ -143,24 +143,7 @@
 }
 
 .home-start-btn {
-  width: 100%;
   padding: 18px 28px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-  background: var(--indigo);
-  border: none;
-  border-radius: 999px;
-  box-shadow: 0 2px 0 var(--indigo-ink), 0 6px 20px rgba(79, 70, 186, 0.3);
-  transition: transform 0.1s ease;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-}
-
-.home-start-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
 }
 
 .home-done-msg {

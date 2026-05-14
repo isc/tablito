@@ -196,7 +196,7 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
             <br />
             On va apprendre les tables de multiplication ensemble&nbsp;!
           </div>
-          <button className="welcome-btn welcome-btn-primary" onClick={handleNext}>
+          <button className="btn btn--ink welcome-btn" onClick={handleNext}>
             Suivant →
           </button>
         </div>
@@ -217,7 +217,7 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
             maxLength={20}
           />
           <button
-            className="welcome-btn welcome-btn-primary"
+            className="btn btn--ink welcome-btn"
             onClick={handleNext}
             disabled={!name.trim()}
           >
@@ -239,10 +239,10 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
             <br />
             Pas de stress : si tu ne sais pas, tape sur «&nbsp;Je ne sais pas&nbsp;».
           </div>
-          <button className="welcome-btn welcome-btn-primary" onClick={handleNext}>
+          <button className="btn btn--ink welcome-btn" onClick={handleNext}>
             C'est parti&nbsp;! →
           </button>
-          <button className="welcome-btn welcome-btn-skip" onClick={handleSkipTest}>
+          <button className="welcome-btn-skip" onClick={handleSkipTest}>
             Passer le test
           </button>
         </div>

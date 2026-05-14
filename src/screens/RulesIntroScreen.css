@@ -117,30 +117,8 @@
 }
 
 .rules-intro-btn {
-  padding: 18px 32px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--cream);
-  background: var(--ink);
-  border: none;
-  border-radius: 999px;
-  transition: transform 0.1s ease;
   margin-top: 8px;
-  width: 100%;
   max-width: 320px;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-}
-
-.rules-intro-btn:active {
-  transform: translateY(1px);
-}
-
-.rules-intro-btn-primary {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
 }
 
 .rules-intro-dots {

@@ -42,7 +42,7 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
             <br />
             Pas besoin de les apprendre par cœur : tu vas comprendre comment elles marchent&nbsp;!
           </div>
-          <button className="rules-intro-btn rules-intro-btn-primary" onClick={handleNext}>
+          <button className="btn btn--ink rules-intro-btn" onClick={handleNext}>
             C'est parti&nbsp;!
           </button>
         </div>
@@ -66,7 +66,7 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
           <div className="rules-intro-tip">
             Facile, non&nbsp;?
           </div>
-          <button className="rules-intro-btn rules-intro-btn-primary" onClick={handleNext}>
+          <button className="btn btn--ink rules-intro-btn" onClick={handleNext}>
             Suivant
           </button>
         </div>
@@ -124,7 +124,7 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
           <div className="rules-intro-tip">
             Astuce : tous les résultats de la table de 10 se terminent par 0&nbsp;!
           </div>
-          <button className="rules-intro-btn rules-intro-btn-primary" onClick={handleNext}>
+          <button className="btn btn--ink rules-intro-btn" onClick={handleNext}>
             J'ai compris&nbsp;!
           </button>
         </div>

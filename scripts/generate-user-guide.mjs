@@ -292,18 +292,18 @@ async function captureWelcomeScreens(page) {
   await page.waitForSelector('.welcome-screen');
   await shot(page, '01-welcome-intro');
 
-  await page.click('.welcome-btn-primary');
+  await page.click('.welcome-btn');
   await page.waitForSelector('.welcome-input');
   await shot(page, '02-welcome-name');
 
   await page.fill('.welcome-input', 'Léa');
-  await page.click('.welcome-btn-primary');
+  await page.click('.welcome-btn');
   // Step 2: "Salut Léa"
   await page.waitForSelector('.welcome-title:has-text("Salut")');
   await shot(page, '03-welcome-ready');
 
   // Placement test
-  await page.click('.welcome-btn-primary');
+  await page.click('.welcome-btn');
   await page.waitForSelector('.welcome-test-question');
   await shot(page, '04-welcome-test');
 }

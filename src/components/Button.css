@@ -1,0 +1,46 @@
+/* Boutons pleine largeur du parcours principal (CTAs). Deux variantes de
+   couleur — ink (parcours d'onboarding/intro) et indigo (CTA principale
+   sur Home). Les overrides spécifiques (max-width, margin, padding) restent
+   au point d'appel via une classe d'écran. */
+
+.btn {
+  width: 100%;
+  padding: 18px 32px;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn--ink {
+  color: var(--cream);
+  background: var(--ink);
+  box-shadow: 0 2px 0 #000, 0 6px 20px rgba(30, 26, 46, 0.25);
+}
+
+.btn--ink:disabled {
+  box-shadow: none;
+}
+
+.btn--indigo {
+  color: #fff;
+  background: var(--indigo);
+  box-shadow: 0 2px 0 var(--indigo-ink), 0 6px 20px rgba(79, 70, 186, 0.3);
+}
+
+.btn--indigo:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
+}
