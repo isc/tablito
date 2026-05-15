@@ -26,10 +26,13 @@ export default function Mascot({ mood }: MascotProps) {
         className="mascot-svg"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* pattes */}
+        {/* pattes — top à y=78 (caché derrière le corps qui descend
+            jusqu'à y=88), toes à y=94. Pendant le hop/cheer le corps
+            monte de ~6 à 9 unités : le haut de patte reste à l'intérieur
+            du corps, donc les pattes restent visuellement attachées. */}
         <g className="mascot-feet">
-          <path d="M40 88 L 40 94 M 36 94 L 44 94" />
-          <path d="M60 88 L 60 94 M 56 94 L 64 94" />
+          <path d="M40 78 L 40 94 M 36 94 L 44 94" />
+          <path d="M60 78 L 60 94 M 56 94 L 64 94" />
         </g>
 
         <g className="mascot-body">
@@ -37,11 +40,6 @@ export default function Mascot({ mood }: MascotProps) {
           <ellipse cx="50" cy="60" rx="28" ry="28" className="mascot-fill-body" />
           {/* ventre */}
           <path d="M32 60 Q 50 82 68 60" className="mascot-fill-belly" />
-          {/* aile gauche — anime sur happy/celebrate */}
-          <path
-            d="M30 58 Q 26 70 36 74 Q 40 68 38 60 Z"
-            className="mascot-wing"
-          />
           {/* œil gauche */}
           <g className="mascot-eye mascot-eye-left">
             <circle cx="43" cy="54" r="3" className="mascot-eye-iris" />
@@ -57,6 +55,12 @@ export default function Mascot({ mood }: MascotProps) {
           {/* joues */}
           <circle cx="38" cy="62" r="2.5" className="mascot-cheek" />
           <circle cx="62" cy="62" r="2.5" className="mascot-cheek" />
+          {/* aile gauche — rendue après les joues pour masquer la joue
+              gauche qui transparaissait derrière. Anime sur happy/celebrate. */}
+          <path
+            d="M30 58 Q 26 70 36 74 Q 40 68 38 60 Z"
+            className="mascot-wing"
+          />
           {/* houppette */}
           <path d="M48 34 L 50 28 L 52 34" className="mascot-tuft" />
         </g>
