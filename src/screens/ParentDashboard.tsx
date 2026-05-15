@@ -149,10 +149,8 @@ export default function ParentDashboard({
 
       {/* Box histogram */}
       <div className="parent-section">
-        <h3>Répartition par boîte</h3>
-        <p className="parent-section-subtitle">
-          Combien de multiplications dans chaque boîte de révision (B1 = à
-          réviser souvent, B5 = bien ancrées).
+        <h3>
+          Répartition par boîte
           <a
             className="parent-section-help"
             href={`${import.meta.env.BASE_URL}guide/#principes`}
@@ -162,6 +160,10 @@ export default function ParentDashboard({
           >
             ?
           </a>
+        </h3>
+        <p className="parent-section-subtitle">
+          Combien de multiplications dans chaque boîte de révision (B1 = à
+          réviser souvent, B5 = bien ancrées).
         </p>
         <div className="parent-histogram">
           {boxCounts.map((count, i) => (
@@ -183,10 +185,8 @@ export default function ParentDashboard({
       {/* Leitner color grid (diagnostic view — complements the child's
           mystery image in §5.1 by showing the raw box state per fact) */}
       <div className="parent-section">
-        <h3>Grille Leitner</h3>
-        <p className="parent-section-subtitle">
-          Une case par multiplication, colorée selon sa boîte. Le rouge signale
-          les faits récents ou en difficulté, le vert ceux bien ancrés.
+        <h3>
+          Grille Leitner
           <a
             className="parent-section-help"
             href={`${import.meta.env.BASE_URL}guide/#principes`}
@@ -196,6 +196,10 @@ export default function ParentDashboard({
           >
             ?
           </a>
+        </h3>
+        <p className="parent-section-subtitle">
+          Une case par multiplication, colorée selon sa boîte. Le rouge signale
+          les faits récents ou en difficulté, le vert ceux bien ancrés.
         </p>
         <ProgressGrid facts={profile.facts} />
       </div>
