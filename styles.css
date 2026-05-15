@@ -1059,9 +1059,6 @@
   background-repeat: no-repeat;
   transition: background 0.5s ease;
   -webkit-tap-highlight-color: transparent;
-  /* Couvre les trous d'arrondi sous-pixel entre cellules de la grille
-     (sinon le fond clair du parent transparaît en lignes de 1px). */
-  transform: scale(1.02);
 }
 
 .mystery-cell.mystery-level-0 {
