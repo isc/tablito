@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["lib/streak.ts"],
+  "sourcesContent": ["import type { UserProfile } from '../types';\nimport { daysBetween } from './utils';\n\n// Renvoie la s\u00E9rie affichable \u00E0 `today`. La valeur stock\u00E9e\n// (`profile.currentStreak`) est fig\u00E9e \u00E0 la derni\u00E8re s\u00E9ance compl\u00E9t\u00E9e et ne\n// d\u00E9cro\u00EEt pas toute seule \u2014 sans cette d\u00E9rivation, un utilisateur qui rate\n// plusieurs jours voit toujours sa vieille s\u00E9rie affich\u00E9e jusqu'\u00E0 ce qu'une\n// nouvelle s\u00E9ance se termine. La s\u00E9rie n'est \u00AB active \u00BB que si la derni\u00E8re\n// s\u00E9ance compl\u00E9t\u00E9e date d'aujourd'hui ou d'hier.\nexport function getActiveStreak(profile: UserProfile, today: string): number {\n  if (!profile.lastSessionDate) return 0;\n  return daysBetween(profile.lastSessionDate, today) <= 1\n    ? profile.currentStreak\n    : 0;\n}\n"],
+  "mappings": "AACA,OAAS,eAAAA,MAAmB,UAQrB,SAASC,EAAgBC,EAAsBC,EAAuB,CAC3E,OAAKD,EAAQ,iBACNF,EAAYE,EAAQ,gBAAiBC,CAAK,GAAK,EAClDD,EAAQ,cAFyB,CAIvC",
+  "names": ["daysBetween", "getActiveStreak", "profile", "today"]
+}
