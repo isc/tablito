@@ -5,6 +5,7 @@ import Mascot from '../components/Mascot';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useConfetti } from '../hooks/useConfetti';
+import { pluralize } from '../lib/utils';
 
 interface RecapScreenProps {
   name: string;
@@ -27,6 +28,18 @@ function ImageCardIcon() {
       <circle cx="8.5" cy="10" r="1.6" fill="var(--sage)" />
       <path d="M4 17 L 10 11 L 14 14 L 20 9" stroke="var(--sage)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
+  );
+}
+
+function FreezeCard({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="recap-card recap-freeze">
+      <div className="recap-freeze-icon" aria-hidden="true">❄️</div>
+      <div className="recap-freeze-text">
+        <div className="recap-freeze-title">{title}</div>
+        <div className="recap-freeze-subtitle">{subtitle}</div>
+      </div>
+    </div>
   );
 }
 
@@ -116,27 +129,17 @@ export default function RecapScreen({
       )}
 
       {freezeJustUsed && (
-        <div className="recap-card recap-freeze recap-freeze-used">
-          <div className="recap-freeze-icon" aria-hidden="true">❄️</div>
-          <div className="recap-freeze-text">
-            <div className="recap-freeze-title">Ton gel a sauvé ta série&nbsp;!</div>
-            <div className="recap-freeze-subtitle">
-              Tu n'as pas joué hier, mais ta série de {currentStreak} {currentStreak === 1 ? 'jour' : 'jours'} continue.
-            </div>
-          </div>
-        </div>
+        <FreezeCard
+          title="Ton gel a sauvé ta série !"
+          subtitle={`Tu n'as pas joué hier, mais ta série de ${currentStreak} ${pluralize(currentStreak, 'jour')} continue.`}
+        />
       )}
 
       {freezeJustEarned && (
-        <div className="recap-card recap-freeze recap-freeze-earned">
-          <div className="recap-freeze-icon" aria-hidden="true">❄️</div>
-          <div className="recap-freeze-text">
-            <div className="recap-freeze-title">Tu as gagné un gel de série&nbsp;!</div>
-            <div className="recap-freeze-subtitle">
-              Il te protégera la prochaine fois que tu manqueras un jour.
-            </div>
-          </div>
-        </div>
+        <FreezeCard
+          title="Tu as gagné un gel de série !"
+          subtitle="Il te protégera la prochaine fois que tu manqueras un jour."
+        />
       )}
 
       {imageChanged && (

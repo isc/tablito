@@ -6,7 +6,7 @@ import {
   isStreakProtectedByFreeze,
   STREAK_FREEZE_INTERVAL,
 } from '../lib/streak';
-import { todayISO } from '../lib/utils';
+import { todayISO, pluralize } from '../lib/utils';
 
 interface StreakDetailModalProps {
   profile: UserProfile;
@@ -24,7 +24,7 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
   const protectedByFreeze = isStreakProtectedByFreeze(profile, today);
 
   const title = active
-    ? `${streak} ${streak === 1 ? 'jour' : 'jours'} d’affilée`
+    ? `${streak} ${pluralize(streak, 'jour')} d’affilée`
     : 'Lance une nouvelle série !';
 
   let explanation: string;
@@ -54,7 +54,7 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
         <div className="streak-detail-record">
           <span className="streak-detail-record-label">Ton record</span>
           <span className="streak-detail-record-value">
-            {record} {record === 1 ? 'jour' : 'jours'}
+            {record} {pluralize(record, 'jour')}
           </span>
         </div>
       )}
@@ -65,7 +65,7 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
           <span className="streak-detail-freezes-label">
             {freezes === 0
               ? 'Aucun gel pour le moment'
-              : `${freezes} gel${freezes > 1 ? 's' : ''} de série`}
+              : `${freezes} ${pluralize(freezes, 'gel')} de série`}
           </span>
         </div>
         <p className="streak-detail-freezes-explanation">

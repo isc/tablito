@@ -7,7 +7,7 @@ import {
   STREAK_FREEZE_INTERVAL,
   STREAK_FREEZE_MAX,
 } from '../lib/streak';
-import { createNewProfile } from '../lib/storage';
+import { createNewProfile, importProfile } from '../lib/storage';
 import type { UserProfile } from '../types';
 
 function makeProfile(overrides: Partial<UserProfile>): UserProfile {
@@ -171,5 +171,28 @@ describe('applyStreakUpdate', () => {
 
   it(`STREAK_FREEZE_INTERVAL vaut 7 (vérifie le contrat documenté)`, () => {
     expect(STREAK_FREEZE_INTERVAL).toBe(7);
+  });
+});
+
+describe('migration : rétro-attribution des gels selon la série en cours', () => {
+  function importLegacyProfile(currentStreak: number): UserProfile {
+    const base = createNewProfile('Test');
+    const { streakFreezes: _omit, ...rest } = base;
+    return importProfile(JSON.stringify({ ...rest, currentStreak }))!;
+  }
+
+  it('série < 7 → aucun gel rétro-attribué', () => {
+    expect(importLegacyProfile(0).streakFreezes).toBe(0);
+    expect(importLegacyProfile(6).streakFreezes).toBe(0);
+  });
+
+  it('série 7..13 → 1 gel rétro-attribué', () => {
+    expect(importLegacyProfile(7).streakFreezes).toBe(1);
+    expect(importLegacyProfile(13).streakFreezes).toBe(1);
+  });
+
+  it('série 14+ → cap à 2 gels', () => {
+    expect(importLegacyProfile(14).streakFreezes).toBe(2);
+    expect(importLegacyProfile(30).streakFreezes).toBe(STREAK_FREEZE_MAX);
   });
 });

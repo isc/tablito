@@ -64,8 +64,6 @@ export default function App() {
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
-  // Effets de la dernière séance sur le système de gels — affichés sur le
-  // récap (« gel utilisé / gagné »). Réinitialisés à la sortie du récap.
   const [freezeJustUsed, setFreezeJustUsed] = useState(false);
   const [freezeJustEarned, setFreezeJustEarned] = useState(false);
   // Tracked in state so a date rollover (app left open past minuit) re-déclenche
