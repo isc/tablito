@@ -4,7 +4,7 @@ import Mascot from '../components/Mascot';
 import ParentGate from '../components/ParentGate';
 import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
-import { getActiveStreak } from '../lib/streak';
+import { getActiveStreak, isStreakProtectedByFreeze } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 
 interface HomeScreenProps {
@@ -72,11 +72,17 @@ export default function HomeScreen({
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
 
-  const activeStreak = getActiveStreak(profile, todayISO());
+  const today = todayISO();
+  const activeStreak = getActiveStreak(profile, today);
   const streakActive = activeStreak > 0;
+  const protectedByFreeze = isStreakProtectedByFreeze(profile, today);
+  const freezes = profile.streakFreezes;
   const showStreakPill = streakActive || profile.totalSessions > 0;
+  const showFreezeBadge = streakActive && freezes > 0;
   const streakLabel = streakActive
-    ? `Série de ${activeStreak} ${activeStreak === 1 ? 'jour' : 'jours'} — voir les détails`
+    ? protectedByFreeze
+      ? `Série de ${activeStreak} ${activeStreak === 1 ? 'jour' : 'jours'} protégée par un gel — voir les détails`
+      : `Série de ${activeStreak} ${activeStreak === 1 ? 'jour' : 'jours'}${freezes > 0 ? `, ${freezes} gel${freezes > 1 ? 's' : ''} en réserve` : ''} — voir les détails`
     : 'Série interrompue — voir les détails';
 
   return (
@@ -97,6 +103,12 @@ export default function HomeScreen({
                   <span className="home-streak-pill-label">
                     {activeStreak === 1 ? 'jour' : 'jours'}
                   </span>
+                  {showFreezeBadge && (
+                    <span className="home-streak-pill-freeze" aria-hidden="true">
+                      <span className="home-streak-pill-freeze-icon">❄️</span>
+                      {freezes > 1 && <span className="home-streak-pill-freeze-count">{freezes}</span>}
+                    </span>
+                  )}
                 </>
               ) : (
                 <span className="home-streak-pill-prompt">On s'y remet&nbsp;?</span>

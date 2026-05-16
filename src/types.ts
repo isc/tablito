@@ -40,6 +40,11 @@ export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
   lastSessionDate: string | null;
+  // Gels de série : sauvent la série quand l'enfant manque 1 jour. Gagnés
+  // tous les 7 jours de série (cap dur, cf. STREAK_FREEZE_* dans
+  // lib/streak.ts). Consommés silencieusement à la séance qui suit le
+  // jour manqué — l'enfant voit le message dans le récap.
+  streakFreezes: number;
   badges: Badge[];
   sessionHistory: SessionResult[];
   hasSeenRulesIntro: boolean;

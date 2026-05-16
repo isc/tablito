@@ -1,7 +1,11 @@
 import type { UserProfile } from '../types';
 import FlameIcon from './FlameIcon';
 import Modal from './Modal';
-import { getActiveStreak } from '../lib/streak';
+import {
+  getActiveStreak,
+  isStreakProtectedByFreeze,
+  STREAK_FREEZE_INTERVAL,
+} from '../lib/streak';
 import { todayISO } from '../lib/utils';
 
 interface StreakDetailModalProps {
@@ -16,6 +20,8 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
   const active = streak > 0;
   const doneToday = profile.lastSessionDate === today;
   const showRecord = record > streak;
+  const freezes = profile.streakFreezes;
+  const protectedByFreeze = isStreakProtectedByFreeze(profile, today);
 
   const title = active
     ? `${streak} ${streak === 1 ? 'jour' : 'jours'} d’affilée`
@@ -24,6 +30,8 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
   let explanation: string;
   if (!active) {
     explanation = 'Ta série de jours d’affilée est à zéro. Tes progrès sur les multiplications sont conservés : joue aujourd’hui pour repartir.';
+  } else if (protectedByFreeze) {
+    explanation = 'Tu n’as pas joué hier, mais un de tes gels protège ta série. Joue aujourd’hui pour le consommer et la prolonger.';
   } else if (doneToday) {
     explanation = 'Bravo, ta séance d’aujourd’hui est faite ! Reviens demain pour faire +1.';
   } else {
@@ -50,6 +58,20 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
           </span>
         </div>
       )}
+
+      <div className="streak-detail-freezes">
+        <div className="streak-detail-freezes-row">
+          <span className="streak-detail-freezes-icon" aria-hidden="true">❄️</span>
+          <span className="streak-detail-freezes-label">
+            {freezes === 0
+              ? 'Aucun gel pour le moment'
+              : `${freezes} gel${freezes > 1 ? 's' : ''} de série`}
+          </span>
+        </div>
+        <p className="streak-detail-freezes-explanation">
+          Un gel sauve ta série si tu manques un jour. Tu en gagnes un tous les {STREAK_FREEZE_INTERVAL} jours d’affilée.
+        </p>
+      </div>
 
       <button type="button" className="modal-close-btn" onClick={onClose}>
         Fermer

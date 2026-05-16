@@ -11,6 +11,9 @@ interface RecapScreenProps {
   result: SessionResult;
   newBadges: BadgeType[];
   newlyCompletedTables: number[];
+  currentStreak: number;
+  freezeJustUsed: boolean;
+  freezeJustEarned: boolean;
   knownFactsCount: number;
   totalFacts: number;
   onFinish: () => void;
@@ -43,6 +46,9 @@ export default function RecapScreen({
   result,
   newBadges,
   newlyCompletedTables,
+  currentStreak,
+  freezeJustUsed,
+  freezeJustEarned,
   knownFactsCount,
   totalFacts,
   onFinish,
@@ -105,6 +111,30 @@ export default function RecapScreen({
           </div>
           <div className="recap-table-complete-subtitle">
             Toutes les multiplications sont en boîte 5.
+          </div>
+        </div>
+      )}
+
+      {freezeJustUsed && (
+        <div className="recap-card recap-freeze recap-freeze-used">
+          <div className="recap-freeze-icon" aria-hidden="true">❄️</div>
+          <div className="recap-freeze-text">
+            <div className="recap-freeze-title">Ton gel a sauvé ta série&nbsp;!</div>
+            <div className="recap-freeze-subtitle">
+              Tu n'as pas joué hier, mais ta série de {currentStreak} {currentStreak === 1 ? 'jour' : 'jours'} continue.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {freezeJustEarned && (
+        <div className="recap-card recap-freeze recap-freeze-earned">
+          <div className="recap-freeze-icon" aria-hidden="true">❄️</div>
+          <div className="recap-freeze-text">
+            <div className="recap-freeze-title">Tu as gagné un gel de série&nbsp;!</div>
+            <div className="recap-freeze-subtitle">
+              Il te protégera la prochaine fois que tu manqueras un jour.
+            </div>
           </div>
         </div>
       )}

@@ -68,6 +68,7 @@ export function createNewProfile(name: string): UserProfile {
     currentStreak: 0,
     longestStreak: 0,
     lastSessionDate: null,
+    streakFreezes: 0,
     badges: [],
     sessionHistory: [],
     hasSeenRulesIntro: false,
@@ -92,6 +93,13 @@ function migrateProfile(profile: UserProfile): UserProfile {
     // règle (toutes les tables maîtrisées), il verra la pastille « Nouveau »
     // à sa prochaine visite — c'est ce qu'on veut.
     profile.hasSeenRule11 = false;
+  }
+  if (typeof profile.streakFreezes !== 'number' || profile.streakFreezes < 0) {
+    // Profils créés avant l'introduction des gels : on démarre à 0. Pas de
+    // rétro-attribution (1 par tranche de 7 jours déjà faits) pour rester
+    // simple — l'enfant gagnera son premier gel à la prochaine semaine
+    // complète.
+    profile.streakFreezes = 0;
   }
   // `village` est accepté tel quel (guide utilisateur) ; sinon le thème
   // doit appartenir au pool, et à défaut on en retire un au hasard.

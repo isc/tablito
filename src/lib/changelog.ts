@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-16',
+    items: [
+      "Gels de série : l'enfant gagne automatiquement un gel (❄️) tous les 7 jours d'affilée (2 max en réserve). Quand il manque un jour, le gel sauve la série en silence à la séance suivante — le récap célèbre l'événement. Plus de gros zéro après une seule journée d'absence.",
+    ],
+  },
+  {
     date: '2026-05-13',
     items: [
       "Nouvelle règle bonus « ×11 » dans l'écran Règles : quand toutes les tables de 2 à 9 sont maîtrisées, l'enfant découvre l'astuce « il suffit de répéter le chiffre » (3×11 = 33, 7×11 = 77…). Pastille « Nouveau » discrète sur le bouton Règles le jour du déblocage.",

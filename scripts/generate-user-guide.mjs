@@ -158,6 +158,7 @@ function buildSampleProfile({ sessionAvailable = true } = {}) {
     currentStreak: 5,
     longestStreak: 7,
     lastSessionDate: sessionAvailable ? yesterday : today,
+    streakFreezes: 0,
     badges: [
       { id: 'premier-pas', name: 'Premier pas', description: 'Terminer la première séance', earnedDate: '2026-03-15', icon: '🌱' },
       { id: 'premiere-case', name: 'Première case révélée', description: 'Une multiplication presque maîtrisée', earnedDate: '2026-03-20', icon: '🖼️' },

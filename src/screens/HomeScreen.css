@@ -77,6 +77,27 @@
   color: var(--ink-soft);
 }
 
+.home-streak-pill-freeze {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+
+.home-streak-pill-freeze-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.home-streak-pill-freeze-count {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--sky);
+}
+
 .home-body {
   flex: 1;
   display: flex;
