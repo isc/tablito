@@ -84,6 +84,42 @@
   margin-top: 4px;
 }
 
+/* Gel de série (utilisé / gagné) */
+.recap-freeze {
+  background: var(--sky-soft);
+  border-color: var(--sky);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.recap-freeze-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.recap-freeze-text {
+  flex: 1;
+}
+
+.recap-freeze-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.recap-freeze-subtitle {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
 /* Image changed CTA */
 .recap-image-link {
   background: var(--sage-soft);

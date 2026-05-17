@@ -58,3 +58,37 @@
   font-weight: 800;
   color: var(--coral);
 }
+
+.streak-detail-freezes {
+  margin: 6px 0 14px;
+  padding: 12px 14px;
+  background: var(--sky-soft);
+  border-radius: 14px;
+  text-align: left;
+}
+
+.streak-detail-freezes-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.streak-detail-freezes-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.streak-detail-freezes-label {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.streak-detail-freezes-explanation {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  margin: 6px 0 0;
+}

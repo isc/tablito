@@ -15,6 +15,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     currentStreak: 0,
     longestStreak: 0,
     lastSessionDate: null,
+    streakFreezes: 0,
     badges: [],
     sessionHistory: [],
     hasSeenRulesIntro: true,

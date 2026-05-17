@@ -4,8 +4,8 @@ import Mascot from '../components/Mascot';
 import ParentGate from '../components/ParentGate';
 import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
-import { getActiveStreak } from '../lib/streak';
-import { todayISO } from '../lib/utils';
+import { getActiveStreak, isStreakProtectedByFreeze } from '../lib/streak';
+import { todayISO, pluralize } from '../lib/utils';
 
 interface HomeScreenProps {
   profile: UserProfile;
@@ -50,6 +50,14 @@ function IconBadge() {
   );
 }
 
+function buildStreakLabel(activeStreak: number, protectedByFreeze: boolean, freezes: number): string {
+  if (activeStreak === 0) return 'Série interrompue — voir les détails';
+  const days = `${activeStreak} ${pluralize(activeStreak, 'jour')}`;
+  if (protectedByFreeze) return `Série de ${days} protégée par un gel — voir les détails`;
+  const reserve = freezes > 0 ? `, ${freezes} ${pluralize(freezes, 'gel')} en réserve` : '';
+  return `Série de ${days}${reserve} — voir les détails`;
+}
+
 function IconRuler() {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -72,12 +80,14 @@ export default function HomeScreen({
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
 
-  const activeStreak = getActiveStreak(profile, todayISO());
+  const today = todayISO();
+  const activeStreak = getActiveStreak(profile, today);
   const streakActive = activeStreak > 0;
+  const protectedByFreeze = isStreakProtectedByFreeze(profile, today);
+  const freezes = profile.streakFreezes;
   const showStreakPill = streakActive || profile.totalSessions > 0;
-  const streakLabel = streakActive
-    ? `Série de ${activeStreak} ${activeStreak === 1 ? 'jour' : 'jours'} — voir les détails`
-    : 'Série interrompue — voir les détails';
+  const showFreezeBadge = streakActive && freezes > 0;
+  const streakLabel = buildStreakLabel(activeStreak, protectedByFreeze, freezes);
 
   return (
     <div className="home-screen">
@@ -95,8 +105,14 @@ export default function HomeScreen({
                 <>
                   <span className="home-streak-pill-count">{activeStreak}</span>
                   <span className="home-streak-pill-label">
-                    {activeStreak === 1 ? 'jour' : 'jours'}
+                    {pluralize(activeStreak, 'jour')}
                   </span>
+                  {showFreezeBadge && (
+                    <span className="home-streak-pill-freeze" aria-hidden="true">
+                      <span className="home-streak-pill-freeze-icon">❄️</span>
+                      {freezes > 1 && <span className="home-streak-pill-freeze-count">{freezes}</span>}
+                    </span>
+                  )}
                 </>
               ) : (
                 <span className="home-streak-pill-prompt">On s'y remet&nbsp;?</span>

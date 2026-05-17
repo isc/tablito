@@ -8,7 +8,8 @@ import { loadProfile, saveProfile, createNewProfile, exportProfile, importProfil
 import { getFactKey } from './lib/facts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
-import { todayISO, daysBetween } from './lib/utils';
+import { todayISO } from './lib/utils';
+import { applyStreakUpdate } from './lib/streak';
 import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { isVoiceMode } from './hooks/useInputMode';
@@ -63,6 +64,8 @@ export default function App() {
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
+  const [freezeJustUsed, setFreezeJustUsed] = useState(false);
+  const [freezeJustEarned, setFreezeJustEarned] = useState(false);
   // Tracked in state so a date rollover (app left open past minuit) re-déclenche
   // les memos qui dépendent du jour courant (ex: disponibilité de la séance).
   const [today, setToday] = useState<string>(() => todayISO());
@@ -295,20 +298,8 @@ export default function App() {
       const today = todayISO();
       const previousLastSessionDate = profile.lastSessionDate;
 
-      // Update streak
-      let currentStreak = profile.currentStreak;
-      if (previousLastSessionDate) {
-        const diff = daysBetween(previousLastSessionDate, today);
-        if (diff === 1) {
-          currentStreak += 1;
-        } else if (diff !== 0) {
-          currentStreak = 1;
-        }
-      } else {
-        currentStreak = 1;
-      }
-
-      const longestStreak = Math.max(profile.longestStreak, currentStreak);
+      const streakUpdate = applyStreakUpdate(profile, today);
+      const longestStreak = Math.max(profile.longestStreak, streakUpdate.currentStreak);
 
       // Append session result to history, capped at 50
       const previousHistory = profile.sessionHistory;
@@ -317,9 +308,10 @@ export default function App() {
       const updatedProfile: UserProfile = {
         ...profile,
         totalSessions: profile.totalSessions + 1,
-        currentStreak,
+        currentStreak: streakUpdate.currentStreak,
         longestStreak,
         lastSessionDate: today,
+        streakFreezes: streakUpdate.streakFreezes,
         sessionHistory,
       };
 
@@ -342,6 +334,8 @@ export default function App() {
       setSessionResult(result);
       setNewBadges(brandNewBadges);
       setNewlyCompletedTables(completedNow);
+      setFreezeJustUsed(streakUpdate.freezeJustUsed);
+      setFreezeJustEarned(streakUpdate.freezeJustEarned);
       setScreen('recap');
     },
     [profile],
@@ -351,6 +345,8 @@ export default function App() {
     setSessionResult(null);
     setNewBadges([]);
     setNewlyCompletedTables([]);
+    setFreezeJustUsed(false);
+    setFreezeJustEarned(false);
     setScreen(next);
   }, []);
 
@@ -417,6 +413,9 @@ export default function App() {
           result={sessionResult}
           newBadges={newBadges}
           newlyCompletedTables={newlyCompletedTables}
+          currentStreak={profile.currentStreak}
+          freezeJustUsed={freezeJustUsed}
+          freezeJustEarned={freezeJustEarned}
           knownFactsCount={profile.facts.filter((f) => f.box >= 3).length}
           totalFacts={profile.facts.length}
           onFinish={handleRecapFinish}

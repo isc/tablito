@@ -5,12 +5,16 @@ import Mascot from '../components/Mascot';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useConfetti } from '../hooks/useConfetti';
+import { pluralize } from '../lib/utils';
 
 interface RecapScreenProps {
   name: string;
   result: SessionResult;
   newBadges: BadgeType[];
   newlyCompletedTables: number[];
+  currentStreak: number;
+  freezeJustUsed: boolean;
+  freezeJustEarned: boolean;
   knownFactsCount: number;
   totalFacts: number;
   onFinish: () => void;
@@ -24,6 +28,18 @@ function ImageCardIcon() {
       <circle cx="8.5" cy="10" r="1.6" fill="var(--sage)" />
       <path d="M4 17 L 10 11 L 14 14 L 20 9" stroke="var(--sage)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
+  );
+}
+
+function FreezeCard({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="recap-card recap-freeze">
+      <div className="recap-freeze-icon" aria-hidden="true">❄️</div>
+      <div className="recap-freeze-text">
+        <div className="recap-freeze-title">{title}</div>
+        <div className="recap-freeze-subtitle">{subtitle}</div>
+      </div>
+    </div>
   );
 }
 
@@ -43,6 +59,9 @@ export default function RecapScreen({
   result,
   newBadges,
   newlyCompletedTables,
+  currentStreak,
+  freezeJustUsed,
+  freezeJustEarned,
   knownFactsCount,
   totalFacts,
   onFinish,
@@ -107,6 +126,20 @@ export default function RecapScreen({
             Toutes les multiplications sont en boîte 5.
           </div>
         </div>
+      )}
+
+      {freezeJustUsed && (
+        <FreezeCard
+          title="Ton gel a sauvé ta série !"
+          subtitle={`Tu n'as pas joué hier, mais ta série de ${currentStreak} ${pluralize(currentStreak, 'jour')} continue.`}
+        />
+      )}
+
+      {freezeJustEarned && (
+        <FreezeCard
+          title="Tu as gagné un gel de série !"
+          subtitle="Il te protégera la prochaine fois que tu manqueras un jour."
+        />
       )}
 
       {imageChanged && (

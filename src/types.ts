@@ -40,6 +40,9 @@ export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
   lastSessionDate: string | null;
+  // Gels de série en réserve, consommés automatiquement quand l'enfant manque
+  // 1 jour. Cf. STREAK_FREEZE_* et applyStreakUpdate dans lib/streak.ts.
+  streakFreezes: number;
   badges: Badge[];
   sessionHistory: SessionResult[];
   hasSeenRulesIntro: boolean;

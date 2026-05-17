@@ -442,6 +442,7 @@ interface UserProfile {
   totalSessions: number;
   currentStreak: number;     // jours consécutifs
   longestStreak: number;
+  streakFreezes: number;     // gels en réserve (cap 2), §4.3
   badges: Badge[];
 }
 
@@ -698,7 +699,16 @@ interface Badge {
   <ul>
     <li>Compteur de jours consécutifs affiché sur l'écran d'accueil</li>
     <li>Animation de flamme qui grandit avec la streak</li>
-    <li>Si l'enfant manque un jour : message bienveillant (« Tu m'as manqué ! On s'y remet ? »), pas de punition, la streak repart de 1 mais les progrès sur les faits sont conservés</li>
+    <li>Si l'enfant manque un jour sans gel disponible : message bienveillant (« Tu m'as manqué ! On s'y remet ? »), pas de punition, la streak repart de 1 mais les progrès sur les faits sont conservés</li>
+  </ul>
+
+  <h4>Gels de série</h4>
+  <p>Pour ne pas punir une absence isolée, l'enfant accumule des <strong>gels de série</strong> (❄️) qui sauvent la streak d'un jour manqué :</p>
+  <ul>
+    <li><strong>Acquisition :</strong> 1 gel gagné automatiquement à chaque palier de 7 jours d'affilée (jour 7, 14, 21…). Plafond : <strong>2 gels en réserve</strong> — au-delà, les paliers supplémentaires ne donnent rien (le feature reste borné et lisible).</li>
+    <li><strong>Couverture :</strong> 1 gel = <strong>1 jour d'absence</strong>. Au-delà de 2 jours manqués, la série casse même avec plusieurs gels en réserve. Choix pédagogique : encourager le retour rapide plutôt que la longue interruption.</li>
+    <li><strong>Consommation :</strong> automatique et silencieuse à la première séance qui suit un jour manqué. Quand un gel est disponible, la pill d'accueil affiche un ❄️ et reste active (« série protégée ») le jour de l'absence pour éviter à l'enfant de croire sa série perdue. Le récap de la séance célèbre l'événement (« Ton gel a sauvé ta série ! »).</li>
+    <li><strong>Reset :</strong> quand la série tombe vraiment à 1, les gels en réserve sont <strong>conservés</strong> — l'enfant ne perd pas son acquis.</li>
   </ul>
 
   <h3 id="gam-table"><span class="num">4.4</span>Célébration de table complète</h3>

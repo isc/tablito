@@ -3,6 +3,7 @@ import { MYSTERY_POOL } from '../types';
 import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { inferIntroductionsFromKnowns } from './placement';
+import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
 
 // ⚠ Cette clé est aussi référencée en dur dans l'inline script de
@@ -68,6 +69,7 @@ export function createNewProfile(name: string): UserProfile {
     currentStreak: 0,
     longestStreak: 0,
     lastSessionDate: null,
+    streakFreezes: 0,
     badges: [],
     sessionHistory: [],
     hasSeenRulesIntro: false,
@@ -92,6 +94,16 @@ function migrateProfile(profile: UserProfile): UserProfile {
     // règle (toutes les tables maîtrisées), il verra la pastille « Nouveau »
     // à sa prochaine visite — c'est ce qu'on veut.
     profile.hasSeenRule11 = false;
+  }
+  if (typeof profile.streakFreezes !== 'number') {
+    // Rétro-attribution : on crédite l'équivalent de ce que l'enfant aurait
+    // gagné depuis le début de sa série actuelle (1 gel par tranche de 7 jours,
+    // plafonné). Sans ça, un enfant qui a fait 30 jours d'affilée découvre le
+    // feature en partant à zéro — frustrant.
+    profile.streakFreezes = Math.min(
+      Math.floor(profile.currentStreak / STREAK_FREEZE_INTERVAL),
+      STREAK_FREEZE_MAX,
+    );
   }
   // `village` est accepté tel quel (guide utilisateur) ; sinon le thème
   // doit appartenir au pool, et à défaut on en retire un au hasard.
