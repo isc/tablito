@@ -93,9 +93,11 @@ export default function HomeScreen({
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
   const [mascotMood, setMascotMood] = useState<MascotMood>('idle');
-  const [hiddenUntil, setHiddenUntil] = useState(easterHiddenUntil);
+  const [hiddenUntil, setHiddenUntil] = useState(() =>
+    easterHiddenUntil > Date.now() ? easterHiddenUntil : 0,
+  );
   const tickleTimerRef = useRef<number | null>(null);
-  const isHidden = hiddenUntil > Date.now();
+  const isHidden = hiddenUntil > 0;
 
   useEffect(() => {
     return () => {
@@ -104,7 +106,7 @@ export default function HomeScreen({
   }, []);
 
   useEffect(() => {
-    if (hiddenUntil <= Date.now()) return;
+    if (hiddenUntil === 0) return;
     const t = window.setTimeout(() => {
       easterHiddenUntil = 0;
       easterTickleCount = 0;
