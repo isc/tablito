@@ -21,7 +21,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260518065358"
+const CACHE = 'multiplix-' + "20260518065609"
 const BASE = "/multiplix/previews/claude-mascot-easter-egg-UVCPF/"
 const ASSETS = [
   "/multiplix/previews/claude-mascot-easter-egg-UVCPF/favicon.svg",
