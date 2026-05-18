@@ -26,13 +26,14 @@ export default function Mascot({ mood }: MascotProps) {
         className="mascot-svg"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* pattes — top à y=78 (caché derrière le corps qui descend
-            jusqu'à y=88), toes à y=94. Pendant le hop/cheer le corps
-            monte de ~6 à 9 unités : le haut de patte reste à l'intérieur
-            du corps, donc les pattes restent visuellement attachées. */}
+        {/* pattes — top à y=68 (caché derrière le corps qui descend
+            jusqu'à y=88), toes à y=94. Pendant le cheer le corps monte
+            de ~9 unités ET tilte de ±6° : à l'extrémité tiltée le bas
+            du corps remonte à ~y=76, donc le haut de patte doit rester
+            au-dessus pour ne pas exposer un trou. */}
         <g className="mascot-feet">
-          <path d="M40 78 L 40 94 M 36 94 L 44 94" />
-          <path d="M60 78 L 60 94 M 56 94 L 64 94" />
+          <path d="M40 68 L 40 94 M 36 94 L 44 94" />
+          <path d="M60 68 L 60 94 M 56 94 L 64 94" />
         </g>
 
         <g className="mascot-body">
