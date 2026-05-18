@@ -2,21 +2,26 @@
 //
 // Stratégie :
 //  - install : precache du shell (HTML, JS, CSS, vendor, icônes — pas
-//    les médias lourds qui sont chargés à la demande).
+//    les médias lourds qui sont chargés à la demande), puis skipWaiting()
+//    pour activer immédiatement. La protection "ne pas reloader pendant
+//    une séance" est gérée page-side (pwa-register.js diffère le reload
+//    tant que `busy=true`).
+//  - activate : suppression des caches périmés + clients.claim(), pour
+//    que les pages déjà ouvertes reçoivent un `controllerchange` (qui
+//    déclenche le reload côté page).
 //  - navigation : cache-first sur le shell `index.html` (cold launch
 //    instantané, plus aucune attente réseau pour ouvrir l'app). Le
 //    fallback réseau couvre uniquement le cas pathologique où le shell
-//    n'est pas dans le cache (1re install pas terminée). Les mises à
-//    jour passent par le mécanisme SW (browser check de /sw.js + update
-//    explicite, cf. pwa-register.js), pas par cette navigation.
+//    n'est pas dans le cache (1re install pas terminée).
 //  - autre GET : cache-first puis lazy-cache si succès réseau.
 //
-// Lifecycle : on ne fait PAS skipWaiting() automatiquement. Un nouveau
-// SW reste en `waiting` jusqu'à ce que la page envoie le message
-// `SKIP_WAITING` (= elle a décidé que c'était un bon moment, p.ex. on
-// est sur la home et pas en pleine séance). Voir scripts/pwa-register.js.
-// clients.claim() reste, indispensable pour que le reload qui suit
-// skipWaiting passe sous le nouveau SW.
+// Historique : avant, le SW attendait un message SKIP_WAITING du page-side
+// pour skipWaiting. Ça dépendait d'un `pwa-register.js` qui s'exécutait
+// correctement. Si pour une raison X le page-side ne pouvait pas envoyer
+// le message (bug, ancienne version cachée), les SWs s'accumulaient en
+// `waiting` indéfiniment et aucune mise à jour ne se propageait. Le fait
+// que la décision soit prise SW-side la rend robuste à n'importe quel
+// état dégradé du code page.
 //
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
@@ -26,7 +31,11 @@ const BASE = __BASE__
 const ASSETS = __ASSETS__
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)))
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())
+  )
 })
 
 self.addEventListener('activate', (e) => {
@@ -35,10 +44,6 @@ self.addEventListener('activate', (e) => {
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   )
-})
-
-self.addEventListener('message', (e) => {
-  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
 self.addEventListener('fetch', (e) => {
