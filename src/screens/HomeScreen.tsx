@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { UserProfile } from '../types';
 import Mascot from '../components/Mascot';
+import Feather from '../components/Feather';
 import ParentGate from '../components/ParentGate';
 import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
@@ -58,6 +59,18 @@ function buildStreakLabel(activeStreak: number, protectedByFreeze: boolean, free
   return `Série de ${days}${reserve} — voir les détails`;
 }
 
+// Easter egg : chatouiller Piou 4 fois sur la home le fait s'envoler. Il
+// laisse une plume au sol et revient au bout de 15 min. État au niveau
+// module pour survivre aux unmounts de HomeScreen pendant la navigation,
+// mais pas persisté : un reload de l'app réarme l'easter egg.
+type MascotMood = 'idle' | 'happy' | 'celebrate' | 'flyaway';
+const TICKLE_MOODS: MascotMood[] = ['happy', 'celebrate', 'happy', 'flyaway'];
+const HIDDEN_DURATION_MS = 15 * 60 * 1000;
+const FLYAWAY_ANIMATION_MS = 900;
+const MOOD_RESET_MS = 1500;
+let easterTickleCount = 0;
+let easterHiddenUntil = 0;
+
 function IconRuler() {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -79,6 +92,49 @@ export default function HomeScreen({
 }: HomeScreenProps) {
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
+  const [mascotMood, setMascotMood] = useState<MascotMood>('idle');
+  const [hiddenUntil, setHiddenUntil] = useState(() =>
+    easterHiddenUntil > Date.now() ? easterHiddenUntil : 0,
+  );
+  const tickleTimerRef = useRef<number | null>(null);
+  const isHidden = hiddenUntil > 0;
+
+  useEffect(() => {
+    return () => {
+      if (tickleTimerRef.current) clearTimeout(tickleTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (hiddenUntil === 0) return;
+    const t = window.setTimeout(() => {
+      easterHiddenUntil = 0;
+      easterTickleCount = 0;
+      setHiddenUntil(0);
+      setMascotMood('idle');
+    }, hiddenUntil - Date.now());
+    return () => clearTimeout(t);
+  }, [hiddenUntil]);
+
+  function handleMascotTickle() {
+    if (isHidden || mascotMood === 'flyaway') return;
+    easterTickleCount += 1;
+    const next = TICKLE_MOODS[Math.min(easterTickleCount - 1, TICKLE_MOODS.length - 1)];
+    if (tickleTimerRef.current) clearTimeout(tickleTimerRef.current);
+    setMascotMood(next);
+    if (next === 'flyaway') {
+      tickleTimerRef.current = window.setTimeout(() => {
+        easterHiddenUntil = Date.now() + HIDDEN_DURATION_MS;
+        setHiddenUntil(easterHiddenUntil);
+        tickleTimerRef.current = null;
+      }, FLYAWAY_ANIMATION_MS);
+      return;
+    }
+    tickleTimerRef.current = window.setTimeout(() => {
+      setMascotMood('idle');
+      tickleTimerRef.current = null;
+    }, MOOD_RESET_MS);
+  }
 
   const today = todayISO();
   const activeStreak = getActiveStreak(profile, today);
@@ -134,8 +190,23 @@ export default function HomeScreen({
       <div className="home-body">
         <div className="home-mascot-section">
           <div className="home-mascot-wrap">
-            <div className="home-mascot-halo" />
-            <Mascot mood="idle" />
+            {isHidden ? (
+              <div className="home-mascot-empty" aria-hidden="true">
+                <Feather />
+              </div>
+            ) : (
+              <>
+                <div className="home-mascot-halo" />
+                <button
+                  type="button"
+                  className="home-mascot-tickle"
+                  onClick={handleMascotTickle}
+                  aria-label="Chatouiller la mascotte"
+                >
+                  <Mascot mood={mascotMood} />
+                </button>
+              </>
+            )}
             <div className="home-greeting">
               Salut <span>{profile.name}</span>&nbsp;!
             </div>
