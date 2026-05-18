@@ -39,21 +39,26 @@ function maybeUpdate() {
   }
 }
 
+function watchInstalling(sw) {
+  sw.addEventListener('statechange', () => {
+    if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+      waitingWorker = sw
+      maybeUpdate()
+    }
+  })
+}
+
 function trackWaiting(reg) {
   currentRegistration = reg
   if (reg.waiting && navigator.serviceWorker.controller) {
     waitingWorker = reg.waiting
     maybeUpdate()
   }
+  // `updatefound` ne fire que pour les futurs changements. Si une install
+  // est déjà en cours au register (race cold boot), il faut l'attraper aussi.
+  if (reg.installing) watchInstalling(reg.installing)
   reg.addEventListener('updatefound', () => {
-    const sw = reg.installing
-    if (!sw) return
-    sw.addEventListener('statechange', () => {
-      if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-        waitingWorker = sw
-        maybeUpdate()
-      }
-    })
+    if (reg.installing) watchInstalling(reg.installing)
   })
 }
 
@@ -83,14 +88,24 @@ export function registerSW() {
     })
   }
 
-  window.addEventListener('load', () => {
+  const startRegistration = () => {
     navigator.serviceWorker
       .register("/multiplix/sw.js", { updateViaCache: 'none' })
       .then(trackWaiting)
       .catch((e) => {
         console.warn('[pwa] SW registration failed', e)
       })
-  })
+  }
+
+  // `load` a presque toujours déjà fire quand on arrive ici (main.tsx est
+  // chargé via dynamic import depuis index.html, qui ne bloque pas `load`).
+  // Attacher un listener à un évènement passé ne déclencherait jamais le
+  // register → aucune mise à jour ne se propagerait.
+  if (document.readyState === 'complete') {
+    startRegistration()
+  } else {
+    window.addEventListener('load', startRegistration, { once: true })
+  }
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') checkForUpdate()
