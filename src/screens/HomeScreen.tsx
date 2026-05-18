@@ -94,52 +94,43 @@ export default function HomeScreen({
   const [showStreakDetail, setShowStreakDetail] = useState(false);
   const [mascotMood, setMascotMood] = useState<MascotMood>('idle');
   const [hiddenUntil, setHiddenUntil] = useState(easterHiddenUntil);
-  const moodTimerRef = useRef<number | null>(null);
-  const flyawayTimerRef = useRef<number | null>(null);
-
-  const now = Date.now();
-  const isHidden = hiddenUntil > now;
+  const tickleTimerRef = useRef<number | null>(null);
+  const isHidden = hiddenUntil > Date.now();
 
   useEffect(() => {
     return () => {
-      if (moodTimerRef.current) clearTimeout(moodTimerRef.current);
-      if (flyawayTimerRef.current) clearTimeout(flyawayTimerRef.current);
+      if (tickleTimerRef.current) clearTimeout(tickleTimerRef.current);
     };
   }, []);
 
   useEffect(() => {
-    if (!isHidden) return;
-    const remaining = Math.max(0, hiddenUntil - Date.now());
+    if (hiddenUntil <= Date.now()) return;
     const t = window.setTimeout(() => {
       easterHiddenUntil = 0;
       easterTickleCount = 0;
       setHiddenUntil(0);
       setMascotMood('idle');
-    }, remaining);
+    }, hiddenUntil - Date.now());
     return () => clearTimeout(t);
-  }, [hiddenUntil, isHidden]);
+  }, [hiddenUntil]);
 
   function handleMascotTickle() {
     if (isHidden || mascotMood === 'flyaway') return;
-    const newCount = easterTickleCount + 1;
-    easterTickleCount = newCount;
-    const next = TICKLE_MOODS[Math.min(newCount, TICKLE_MOODS.length) - 1];
-    if (moodTimerRef.current) {
-      clearTimeout(moodTimerRef.current);
-      moodTimerRef.current = null;
-    }
+    easterTickleCount += 1;
+    const next = TICKLE_MOODS[Math.min(easterTickleCount - 1, TICKLE_MOODS.length - 1)];
+    if (tickleTimerRef.current) clearTimeout(tickleTimerRef.current);
     setMascotMood(next);
     if (next === 'flyaway') {
-      flyawayTimerRef.current = window.setTimeout(() => {
+      tickleTimerRef.current = window.setTimeout(() => {
         easterHiddenUntil = Date.now() + HIDDEN_DURATION_MS;
         setHiddenUntil(easterHiddenUntil);
-        flyawayTimerRef.current = null;
+        tickleTimerRef.current = null;
       }, FLYAWAY_ANIMATION_MS);
       return;
     }
-    moodTimerRef.current = window.setTimeout(() => {
+    tickleTimerRef.current = window.setTimeout(() => {
       setMascotMood('idle');
-      moodTimerRef.current = null;
+      tickleTimerRef.current = null;
     }, MOOD_RESET_MS);
   }
 

@@ -1,6 +1,3 @@
-// Petite plume orange laissée par Piou quand il s'envole. Apparaît à
-// l'endroit où il était. SVG inline, tailles et palette alignées sur le
-// mascot (corps #F0B43A, plume légèrement plus saturée).
 export default function Feather() {
   return (
     <svg

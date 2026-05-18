@@ -151,26 +151,15 @@
 
 .home-mascot-tickle {
   background: none;
-  border: none;
   padding: 0;
-  margin: 0;
-  cursor: pointer;
   position: relative;
   z-index: 1;
   display: inline-flex;
-  -webkit-tap-highlight-color: transparent;
-  font: inherit;
-  color: inherit;
-}
-
-.home-mascot-tickle:focus {
-  outline: none;
+  border-radius: 50%;
 }
 
 .home-mascot-tickle:focus-visible {
-  outline: 2px solid var(--indigo);
   outline-offset: 6px;
-  border-radius: 50%;
 }
 
 .home-mascot-empty {
