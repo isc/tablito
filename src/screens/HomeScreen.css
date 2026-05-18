@@ -149,6 +149,59 @@
   z-index: 1;
 }
 
+.home-mascot-tickle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  -webkit-tap-highlight-color: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+.home-mascot-tickle:focus {
+  outline: none;
+}
+
+.home-mascot-tickle:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 6px;
+  border-radius: 50%;
+}
+
+.home-mascot-empty {
+  width: 140px;
+  height: 140px;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.feather-svg {
+  width: 72%;
+  height: 72%;
+  display: block;
+  transform: rotate(28deg);
+  animation: featherDrift 4.2s ease-in-out infinite;
+}
+
+@keyframes featherDrift {
+  0%, 100% { transform: rotate(28deg) translateY(0); }
+  50%      { transform: rotate(26deg) translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feather-svg {
+    animation: none;
+  }
+}
+
 .home-greeting {
   font-family: var(--serif);
   font-size: 34px;

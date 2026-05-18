@@ -1,6 +1,6 @@
 
 interface MascotProps {
-  mood: 'happy' | 'idle' | 'celebrate';
+  mood: 'happy' | 'idle' | 'celebrate' | 'flyaway';
 }
 
 // Piou — mascotte stable : stage unique, taille unique. Seule l'humeur

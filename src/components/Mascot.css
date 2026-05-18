@@ -149,3 +149,27 @@
   50%      { translate: 0 0;      rotate: 0deg; }
   75%      { translate: 0 -16%;   rotate: 6deg; }
 }
+
+/* Flyaway : Piou s'envole hors écran après s'être fait chatouiller. Easter
+   egg de la home — on coupe la respiration idle et on glisse le mascot
+   entier vers le haut/droite avec un fade-out. Le wing flap accélère
+   pendant la fuite. forwards garde l'état final (transparent, hors champ)
+   le temps que le parent retire le mascot du DOM. */
+.mascot.flyaway {
+  animation: mascotFlyAway 0.9s ease-in forwards;
+  pointer-events: none;
+}
+
+.mascot.flyaway .mascot-body {
+  animation: none;
+}
+
+.mascot.flyaway .mascot-wing {
+  animation: mascotWingFlap 0.12s ease-in-out infinite;
+}
+
+@keyframes mascotFlyAway {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  15%  { transform: translate(0, -12px) rotate(-4deg); opacity: 1; }
+  100% { transform: translate(60vw, -110vh) rotate(18deg); opacity: 0; }
+}
