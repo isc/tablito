@@ -38,10 +38,9 @@ export default function ParentDashboard({
       else counts[fact.box]++;
     }
 
-    // Fenêtre temporelle : on ne regarde que les erreurs sur les
-    // HARD_FACTS_WINDOW dernières séances pour refléter la difficulté
-    // *actuelle*. Sans fenêtre, un fait galéré il y a 6 mois mais désormais
-    // en boîte 5 resterait dans le top.
+    // Sans fenêtre, un fait galéré il y a longtemps mais désormais en
+    // boîte 5 resterait dans le top — la boîte reflète l'état courant,
+    // pas le compteur d'erreurs.
     const sessions = profile.sessionHistory;
     const cutoff =
       sessions.length > HARD_FACTS_WINDOW
