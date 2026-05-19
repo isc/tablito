@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260519073325"
+const CACHE = 'multiplix-' + "20260519073641"
 const BASE = "/multiplix/previews/claude-review-effect-calculations-8XVVh/"
 const ASSETS = [
   "/multiplix/previews/claude-review-effect-calculations-8XVVh/favicon.svg",
