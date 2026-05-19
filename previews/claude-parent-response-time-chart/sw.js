@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260519132120"
+const CACHE = 'multiplix-' + "20260519140704"
 const BASE = "/multiplix/previews/claude-parent-response-time-chart/"
 const ASSETS = [
   "/multiplix/previews/claude-parent-response-time-chart/favicon.svg",
