@@ -340,4 +340,29 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
       expect(sessionsPlayed).toBeGreaterThan(0);
     },
   );
+
+  it("arrête le test de placement après 3 ratés consécutifs", () => {
+    render(<App />);
+
+    fireEvent.click(findButton(/^Suivant/)!);
+    const nameInput = document.querySelector<HTMLInputElement>('input.welcome-input')!;
+    fireEvent.change(nameInput, { target: { value: 'Zoe' } });
+    fireEvent.click(findButton(/^C'est moi/)!);
+    fireEvent.click(findButton(/C'est parti/)!);
+
+    // 3 « Je ne sais pas » consécutifs dès le début du test.
+    for (let i = 0; i < 3; i++) {
+      const dontKnow = findButton(/Je ne sais pas/);
+      expect(dontKnow, `« Je ne sais pas » introuvable à la question ${i + 1}`).not.toBeNull();
+      fireEvent.click(dontKnow!);
+      act(() => {
+        vi.advanceTimersByTime(1200);
+      });
+    }
+
+    // Le test doit s'être arrêté → on est passé sur RulesIntroScreen
+    // (3 étapes : accueil, règle ×1, règle ×10).
+    expect(findButton(/C'est parti/)).not.toBeNull();
+    expect(document.querySelector('.welcome-test-question')).toBeNull();
+  });
 });

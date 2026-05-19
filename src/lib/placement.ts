@@ -11,13 +11,15 @@ export interface PlacementResult {
   timeMs: number;
 }
 
-// 15 faits bien répartis pour le test de placement (mix facile/difficile).
-// Tous a ≤ b. Source unique consommée par WelcomeScreen et les tests.
+// Ordre progressif (facile → difficile). Combiné à MAX_CONSECUTIVE_FAILURES,
+// évite d'épuiser un enfant sur les ×7/×8/×9 inconnus. Voir specs §3.1.
 export const PLACEMENT_FACTS: ReadonlyArray<readonly [number, number]> = [
-  [2, 5], [3, 4], [5, 5], [2, 8], [3, 6],
-  [4, 7], [6, 6], [5, 8], [3, 9], [7, 7],
-  [4, 9], [6, 8], [7, 9], [8, 8], [6, 9],
+  [2, 5], [2, 8], [3, 4], [5, 5], [3, 6],
+  [5, 8], [3, 9], [4, 7], [6, 6],
+  [7, 7], [4, 9], [6, 8], [7, 9], [8, 8], [6, 9],
 ];
+
+export const MAX_CONSECUTIVE_FAILURES = 3;
 
 // Boîte de placement pour un fait correctement résolu. Les faits ratés ou
 // « Je ne sais pas » ne sont pas placés du tout (cf. seedFromPlacement).

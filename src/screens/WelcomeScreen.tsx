@@ -1,8 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Mascot from '../components/Mascot';
 import NumPad from '../components/NumPad';
-import { shuffle } from '../lib/utils';
-import { PLACEMENT_FACTS, type PlacementResult } from '../lib/placement';
+import {
+  PLACEMENT_FACTS,
+  MAX_CONSECUTIVE_FAILURES,
+  type PlacementResult,
+} from '../lib/placement';
 import { useTTS } from '../hooks/useTTS';
 
 export type { PlacementResult };
@@ -17,10 +20,9 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 
   const { speak, stop: stopSpeech } = useTTS();
 
-  // Placement test state
-  const [testFacts] = useState(() => shuffle([...PLACEMENT_FACTS]));
   const [testIndex, setTestIndex] = useState(0);
   const [testResults, setTestResults] = useState<PlacementResult[]>([]);
+  const [consecutiveFailures, setConsecutiveFailures] = useState(0);
   const [numpadDisabled, setNumpadDisabled] = useState(false);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [lastAnswer, setLastAnswer] = useState<number | null>(null);
@@ -59,7 +61,7 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
       setNumpadDisabled(true);
       stopSpeech();
 
-      const fact = testFacts[testIndex];
+      const fact = PLACEMENT_FACTS[testIndex];
       const [a, b] = fact;
       const timeMs = Date.now() - questionStartTime.current;
 
@@ -73,6 +75,9 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
       const updatedResults = [...testResults, result];
       setTestResults(updatedResults);
 
+      const updatedFailures = correct ? 0 : consecutiveFailures + 1;
+      setConsecutiveFailures(updatedFailures);
+
       // Brief feedback
       setFeedback(correct ? 'correct' : 'incorrect');
 
@@ -81,8 +86,9 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
         setNumpadDisabled(false);
         setLastAnswer(null);
 
-        if (testIndex + 1 >= testFacts.length) {
-          // Test complete
+        const isLastQuestion = testIndex + 1 >= PLACEMENT_FACTS.length;
+        const hitFailureCap = updatedFailures >= MAX_CONSECUTIVE_FAILURES;
+        if (isLastQuestion || hitFailureCap) {
           onComplete(name.trim(), updatedResults);
         } else {
           setTestIndex(testIndex + 1);
@@ -90,16 +96,16 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
         }
       }, correct ? 600 : 1200);
     },
-    [numpadDisabled, testFacts, testIndex, testResults, name, onComplete, stopSpeech],
+    [numpadDisabled, testIndex, testResults, consecutiveFailures, name, onComplete, stopSpeech],
   );
 
   const handleTestAnswer = useCallback(
     (value: number) => {
-      const [a, b] = testFacts[testIndex];
+      const [a, b] = PLACEMENT_FACTS[testIndex];
       setLastAnswer(value);
       recordTestResult(value === a * b);
     },
-    [testFacts, testIndex, recordTestResult],
+    [testIndex, recordTestResult],
   );
 
   const handleDontKnow = useCallback(() => {
@@ -114,7 +120,7 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 
   // Pre-compute display orders once per test (stable across re-renders)
   const [displayOrders] = useState(
-    () => testFacts.map(([a, b]) => (Math.random() > 0.5 ? [a, b] : [b, a])),
+    () => PLACEMENT_FACTS.map(([a, b]) => (Math.random() > 0.5 ? [a, b] : [b, a])),
   );
 
   useEffect(() => {
@@ -130,11 +136,11 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 
   // Placement test screen
   if (step === 3) {
-    const fact = testFacts[testIndex];
+    const fact = PLACEMENT_FACTS[testIndex];
     const [a, b] = fact;
     const [displayA, displayB] = displayOrders[testIndex];
 
-    const progressDots = Array.from({ length: testFacts.length }, (_, i) => {
+    const progressDots = Array.from({ length: PLACEMENT_FACTS.length }, (_, i) => {
       if (i < testIndex) return 'done';
       if (i === testIndex) return 'current';
       return 'pending';
