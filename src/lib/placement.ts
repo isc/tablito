@@ -19,8 +19,9 @@ export const PLACEMENT_FACTS: ReadonlyArray<readonly [number, number]> = [
   [4, 9], [6, 8], [7, 9], [8, 8], [6, 9],
 ];
 
+// Boîte de placement pour un fait correctement résolu. Les faits ratés ou
+// « Je ne sais pas » ne sont pas placés du tout (cf. seedFromPlacement).
 function boxFromResult(result: PlacementResult): BoxLevel {
-  if (!result.correct) return 1;
   if (result.timeMs < RESPONSE_TIME.FAST) return 3;
   if (result.timeMs < RESPONSE_TIME.SLOW) return 2;
   return 1;
@@ -74,7 +75,13 @@ export function seedFromPlacement(
   // par le filtre 48h de sessionComposer et bloqueraient l'intro de leurs
   // voisins (ex : 8×9, 9×9 bloqués dès la 1ʳᵉ séance par tous les faits
   // avec un 8 ou un 9 testés au placement).
+  //
+  // Seuls les faits correctement résolus sont placés. Un raté (faux ou
+  // « Je ne sais pas ») reste introduced=false : le placement diagnostique
+  // un plancher, il ne charge pas box 1. Les faits non maîtrisés seront
+  // proposés via le curriculum naturel (§3.4bis).
   for (const result of results) {
+    if (!result.correct) continue;
     const fact = facts.find((f) => f.a === result.a && f.b === result.b);
     if (!fact) continue;
     const box = boxFromResult(result);

@@ -48,15 +48,16 @@ describe('seedFromPlacement', () => {
     expect(findFact(facts, 6, 9).box).toBe(2);
   });
 
-  it('place un fait raté en boîte 1 (introduit quand même)', () => {
+  it('n\'introduit PAS un fait raté (réponse fausse ou « Je ne sais pas »)', () => {
     const facts = createInitialFacts();
     const results: PlacementResult[] = [
       { a: 7, b: 8, correct: false, timeMs: 6000 },
     ];
     seedFromPlacement(facts, results, TODAY);
     const f = findFact(facts, 7, 8);
-    expect(f.introduced).toBe(true);
+    expect(f.introduced).toBe(false);
     expect(f.box).toBe(1);
+    expect(f.lastSeen).toBe('');
   });
 
   it('infère 2×3 en boîte 3 si dominé par un correct rapide (< 3s)', () => {
@@ -122,6 +123,28 @@ describe('seedFromPlacement', () => {
     // 5×8 testé lent → box 2. Sans la priorité au direct, il aurait été
     // inféré en box 3 par la dominance forte de 6×9 rapide.
     expect(findFact(facts, 5, 8).box).toBe(2);
+  });
+
+  it("un enfant qui ne connaît que 2/3/5 ne place aucun fait raté en box 1", () => {
+    const facts = createInitialFacts();
+    const knows = (a: number, b: number) =>
+      a === 2 || b === 2 || a === 3 || b === 3 || a === 5 || b === 5;
+    const results: PlacementResult[] = PLACEMENT_FACTS.map(([a, b]) => ({
+      a,
+      b,
+      correct: knows(a, b),
+      timeMs: knows(a, b) ? 2000 : 5000,
+    }));
+    seedFromPlacement(facts, results, TODAY);
+
+    expect(facts.filter((f) => f.introduced && f.box === 1)).toEqual([]);
+
+    // Faits ratés non dominés par un correct : restent à introduire via le
+    // curriculum naturel (factStage), pas par le placement.
+    const nonDominated = [[7, 7], [7, 9], [8, 8], [6, 9], [4, 9], [6, 6], [6, 8]] as const;
+    for (const [a, b] of nonDominated) {
+      expect(findFact(facts, a, b).introduced, `${a}×${b}`).toBe(false);
+    }
   });
 
   it('le placement complet d\'un enfant qui aces tout introduit 34 faits sur 36', () => {
