@@ -750,7 +750,7 @@ interface Badge {
   <ul>
     <li>Nombre de faits par boîte (histogramme)</li>
     <li><strong>Grille Leitner colorée</strong> 8×8 (une couleur par boîte) — vue diagnostique brute, complémentaire à l'image mystère côté enfant</li>
-    <li>Faits les plus difficiles (boîte 1 depuis le plus longtemps, ou le plus d'erreurs)</li>
+    <li>Faits les plus difficiles : top 5 par nombre d'erreurs <strong>sur les 10 dernières séances</strong> (fenêtre glissante, pour refléter la difficulté actuelle et pas l'historique cumulé : un fait galéré il y a longtemps mais désormais maîtrisé n'apparaît plus). Si l'enfant a moins de 10 séances au compteur, toutes les séances sont prises en compte. En cas d'égalité, on départage par boîte la plus basse.</li>
     <li>Temps de réponse moyen par table</li>
     <li>Historique des séances (date, durée, score)</li>
     <li>Streak actuelle et plus longue</li>
