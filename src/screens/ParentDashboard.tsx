@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo } from 'react';
 import type { UserProfile } from '../types';
 import { getFactKey } from '../lib/facts';
 import { getActiveStreak } from '../lib/streak';
@@ -6,9 +6,10 @@ import { todayISO } from '../lib/utils';
 import ProgressGrid from '../components/ProgressGrid';
 import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
+import EvolutionChart from '../components/EvolutionChart';
 
-const Y_TICKS = [0, 25, 50, 75, 100];
 const HARD_FACTS_WINDOW = 10;
+const EVOLUTION_WINDOW = 20;
 
 interface ParentDashboardProps {
   profile: UserProfile;
@@ -71,40 +72,28 @@ export default function ParentDashboard({
     [profile.sessionHistory],
   );
 
-  const evolutionChart = useMemo(() => {
-    const sessions = profile.sessionHistory.slice(-20);
+  const evolution = useMemo(() => {
+    const sessions = profile.sessionHistory.slice(-EVOLUTION_WINDOW);
     if (sessions.length < 2) return null;
 
-    const data = sessions.map((s) => ({
-      date: new Date(s.date).toLocaleDateString('fr-FR', {
+    const accuracy: Array<{ date: string; value: number }> = [];
+    const time: Array<{ date: string; value: number }> = [];
+    for (const s of sessions) {
+      const date = new Date(s.date).toLocaleDateString('fr-FR', {
         day: 'numeric',
         month: 'short',
-      }),
-      pct: Math.round((s.correctCount / s.questionsCount) * 100),
-    }));
+      });
+      accuracy.push({
+        date,
+        value: Math.round((s.correctCount / s.questionsCount) * 100),
+      });
+      time.push({ date, value: s.averageTimeMs / 1000 });
+    }
+    // Au moins 4s d'amplitude pour éviter qu'une variation de 0,2s ne paraisse
+    // dramatique sur un enfant déjà rapide.
+    const timeYMax = Math.max(Math.ceil(Math.max(...time.map((t) => t.value))), 4);
 
-    const padding = { top: 20, right: 15, bottom: 40, left: 38 };
-    const svgW = 400;
-    const svgH = 200;
-    const chartW = svgW - padding.left - padding.right;
-    const chartH = svgH - padding.top - padding.bottom;
-    const n = data.length;
-    const xStep = chartW / (n - 1);
-
-    const pts = data.map((d, i) => ({
-      x: padding.left + i * xStep,
-      y: padding.top + chartH - (d.pct / 100) * chartH,
-      pct: d.pct,
-      date: d.date,
-    }));
-
-    const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-    const areaPath = `${linePath} L${pts[pts.length - 1].x},${padding.top + chartH} L${pts[0].x},${padding.top + chartH} Z`;
-
-    const maxLabels = 6;
-    const labelInterval = n <= maxLabels ? 1 : Math.ceil(n / maxLabels);
-
-    return { padding, svgW, svgH, chartW, chartH, pts, linePath, areaPath, labelInterval };
+    return { accuracy, time, timeYMax };
   }, [profile.sessionHistory]);
 
   const boxColors = [
@@ -216,74 +205,32 @@ export default function ParentDashboard({
         <ProgressGrid facts={profile.facts} />
       </div>
 
-      {/* Evolution graph */}
-      {evolutionChart && (
-        <div className="parent-section">
-          <h3>Évolution</h3>
-          <div className="parent-evolution-chart">
-            <svg viewBox={`0 0 ${evolutionChart.svgW} ${evolutionChart.svgH}`} preserveAspectRatio="xMidYMid meet">
-              {Y_TICKS.map((tick) => {
-                const y = evolutionChart.padding.top + evolutionChart.chartH - (tick / 100) * evolutionChart.chartH;
-                return (
-                  <Fragment key={`y-${tick}`}>
-                    <line
-                      x1={evolutionChart.padding.left}
-                      y1={y}
-                      x2={evolutionChart.padding.left + evolutionChart.chartW}
-                      y2={y}
-                      stroke="var(--border)"
-                      strokeWidth="1"
-                    />
-                    <text
-                      x={evolutionChart.padding.left - 6}
-                      y={y + 1}
-                      textAnchor="end"
-                      dominantBaseline="middle"
-                      fontSize="10"
-                      fill="var(--text-muted)"
-                      fontFamily="Nunito, sans-serif"
-                    >
-                      {tick}%
-                    </text>
-                  </Fragment>
-                );
-              })}
-              <path d={evolutionChart.areaPath} fill="var(--primary)" opacity="0.1" />
-              <path
-                d={evolutionChart.linePath}
-                fill="none"
-                stroke="var(--primary)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {evolutionChart.pts.map((p, i) => (
-                <Fragment key={i}>
-                  <circle
-                    cx={p.x}
-                    cy={p.y}
-                    r="4"
-                    fill="var(--surface)"
-                    stroke="var(--primary)"
-                    strokeWidth="2"
-                  />
-                  {i % evolutionChart.labelInterval === 0 && (
-                    <text
-                      x={p.x}
-                      y={evolutionChart.padding.top + evolutionChart.chartH + 16}
-                      textAnchor="middle"
-                      fontSize="9"
-                      fill="var(--text-light)"
-                      fontFamily="Nunito, sans-serif"
-                    >
-                      {p.date}
-                    </text>
-                  )}
-                </Fragment>
-              ))}
-            </svg>
+      {/* Evolution: accuracy + response time */}
+      {evolution && (
+        <>
+          <div className="parent-section">
+            <h3>Taux de bonnes réponses</h3>
+            <EvolutionChart
+              data={evolution.accuracy}
+              yMin={0}
+              yMax={100}
+              yTicks={[0, 25, 50, 75, 100]}
+              formatY={(v) => `${v}%`}
+              color="var(--primary)"
+            />
           </div>
-        </div>
+          <div className="parent-section">
+            <h3>Temps de réponse moyen</h3>
+            <EvolutionChart
+              data={evolution.time}
+              yMin={0}
+              yMax={evolution.timeYMax}
+              yTicks={[0, evolution.timeYMax / 2, evolution.timeYMax]}
+              formatY={(v) => `${v.toFixed(1)}s`}
+              color="var(--sage)"
+            />
+          </div>
+        </>
       )}
 
       {/* Hardest facts */}
