@@ -8,6 +8,7 @@ import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
 
 const Y_TICKS = [0, 25, 50, 75, 100];
+const HARD_FACTS_WINDOW = 10;
 
 interface ParentDashboardProps {
   profile: UserProfile;
@@ -37,11 +38,23 @@ export default function ParentDashboard({
       else counts[fact.box]++;
     }
 
+    // Fenêtre temporelle : on ne regarde que les erreurs sur les
+    // HARD_FACTS_WINDOW dernières séances pour refléter la difficulté
+    // *actuelle*. Sans fenêtre, un fait galéré il y a 6 mois mais désormais
+    // en boîte 5 resterait dans le top.
+    const sessions = profile.sessionHistory;
+    const cutoff =
+      sessions.length > HARD_FACTS_WINDOW
+        ? sessions[sessions.length - HARD_FACTS_WINDOW].date
+        : null;
+
     const hard = profile.facts
       .filter((f) => f.introduced)
       .map((f) => ({
         ...f,
-        errorCount: f.history.filter((h) => !h.correct).length,
+        errorCount: f.history.filter(
+          (h) => !h.correct && (cutoff === null || h.date >= cutoff),
+        ).length,
       }))
       .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
       .slice(0, 5)
@@ -52,7 +65,7 @@ export default function ParentDashboard({
       maxBoxCount: Math.max(...counts, 1),
       hardFacts: hard,
     };
-  }, [profile.facts]);
+  }, [profile.facts, profile.sessionHistory]);
 
   const recentSessions = useMemo(
     () => [...profile.sessionHistory].reverse().slice(0, 10),
@@ -278,6 +291,9 @@ export default function ParentDashboard({
       {hardFacts.length > 0 && (
         <div className="parent-section">
           <h3>Faits les plus difficiles</h3>
+          <p className="parent-section-subtitle">
+            Sur les {HARD_FACTS_WINDOW} dernières séances.
+          </p>
           <div className="parent-hard-facts">
             {hardFacts.map((f) => (
               <div key={getFactKey(f.a, f.b)} className="parent-hard-fact">
