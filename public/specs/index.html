@@ -751,10 +751,10 @@ interface Badge {
     <li>Nombre de faits par boîte (histogramme)</li>
     <li><strong>Grille Leitner colorée</strong> 8×8 (une couleur par boîte) — vue diagnostique brute, complémentaire à l'image mystère côté enfant</li>
     <li>Faits les plus difficiles : top 5 par nombre d'erreurs <strong>sur les 10 dernières séances</strong> (fenêtre glissante, pour refléter la difficulté actuelle et pas l'historique cumulé : un fait galéré il y a longtemps mais désormais maîtrisé n'apparaît plus). Si l'enfant a moins de 10 séances au compteur, toutes les séances sont prises en compte. En cas d'égalité, on départage par boîte la plus basse.</li>
-    <li>Temps de réponse moyen par table</li>
     <li>Historique des séances (date, durée, score)</li>
     <li>Streak actuelle et plus longue</li>
-    <li>Graphe d'évolution : nombre de faits maîtrisés (boîte 4+) au fil du temps</li>
+    <li>Graphe d'évolution du <strong>taux de bonnes réponses</strong> (% correct par séance, fenêtre des 20 dernières séances). Une fois que l'enfant plafonne autour de 100 %, la courbe devient peu informative — d'où le graphe complémentaire ci-dessous.</li>
+    <li>Graphe d'évolution du <strong>temps de réponse moyen</strong> (secondes par question, même fenêtre de 20 séances). Donne un signal de fluence qui reste vivant longtemps après que la précision plafonne : un enfant qui passe de 4 s à 2,5 s a clairement progressé, même si son taux de bonnes réponses n'a pas bougé. L'échelle Y est dynamique (min 0, max = plafond entier des données ou 4 s, le plus grand des deux) pour éviter qu'une variation de 0,2 s ne paraisse dramatique.</li>
   </ul>
   <p><strong>Actions parent :</strong></p>
   <ul>
