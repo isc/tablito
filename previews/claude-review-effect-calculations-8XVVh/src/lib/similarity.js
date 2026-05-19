@@ -1,0 +1,3 @@
+function o(t){return Math.floor(t/10)}function u(t){const e=new Set,n=String(t);for(const r of n)e.add(Number(r));return e}function i(t,e){for(const n of t)if(e.has(n))return!0;return!1}function c(t,e){const n=new Set([t.a,t.b]),r=new Set([e.a,e.b]);if(i(n,r))return"strong";if(o(t.product)===o(e.product))return"medium";const s=u(t.product),m=u(e.product);return i(s,m)?"medium":"none"}function l(t){for(let e=0;e<t.length;e++)for(let n=e+1;n<t.length;n++)if(c(t[e],t[n])==="strong")return!1;return!0}export{l as areCompatibleInSession,c as computeSimilarity};
+
+//# sourceMappingURL=similarity.js.map
