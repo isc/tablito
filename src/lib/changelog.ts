@@ -10,6 +10,13 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-19',
+    items: [
+      "Test de placement plus juste : les questions sont posées de la plus facile à la plus difficile, et le test s'arrête après 3 ratés consécutifs (« Je ne sais pas » compris). Un enfant qui maîtrise les tables faciles n'est plus mis à l'épreuve sur les ×7/×8/×9 inconnus, et les premières séances ne sont plus saturées de multiplications hors de son niveau.",
+      "Nouveau bouton « Réinitialiser le profil » dans l'espace parent : efface les données et relance le test de placement. Utile pour recommencer à zéro ou changer d'enfant.",
+    ],
+  },
+  {
     date: '2026-05-16',
     items: [
       "Gels de série : l'enfant gagne automatiquement un gel (❄️) tous les 7 jours d'affilée (2 max en réserve). Quand il manque un jour, le gel sauve la série en silence à la séance suivante — le récap célèbre l'événement. Plus de gros zéro après une seule journée d'absence.",

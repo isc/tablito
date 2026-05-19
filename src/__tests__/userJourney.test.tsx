@@ -5,6 +5,9 @@ import App from '../App';
 import { getCompletedTables } from '../lib/badges';
 import { loadProfile } from '../lib/storage';
 import { BADGE_IDS } from '../types';
+// Préchauffe le chunk de ParentDashboard pour que le React.lazy() côté App.tsx
+// se résolve en synchrone dans les tests qui ouvrent le dashboard.
+import '../screens/ParentDashboard';
 
 // ---------------------------------------------------------------------------
 // Test d'intégration « bout en bout » qui monte le vrai composant <App />
@@ -144,6 +147,30 @@ function playSessionAndDismissRecap(opts: { shouldErr?: (answerIdx: number) => b
   }
 
   throw new Error('playSession: MAX_ITERS dépassé — boucle probable');
+}
+
+// Ouvre le dashboard parent depuis Home : clique l'icône engrenage, résout
+// la multiplication aléatoire du ParentGate, puis attend le chunk lazy.
+async function openParentDashboard(): Promise<void> {
+  fireEvent.click(document.querySelector<HTMLButtonElement>('.home-parent-btn')!);
+  const question = document.querySelector('.parent-gate-question');
+  if (!question) throw new Error('ParentGate non affiché');
+  const operands = Array.from(question.querySelectorAll('span'))
+    .map((s) => parseInt(s.textContent ?? '', 10))
+    .filter((n) => Number.isFinite(n));
+  if (operands.length < 2) throw new Error('Opérandes du ParentGate introuvables');
+  const product = operands[0] * operands[1];
+  const input = document.querySelector<HTMLInputElement>('.parent-gate-input')!;
+  fireEvent.change(input, { target: { value: String(product) } });
+  fireEvent.click(findButton('Valider')!);
+  // ParentDashboard est chargé via React.lazy → on flushe plusieurs ticks
+  // microtask pour que le chunk dynamique se résolve et que la Suspense
+  // rende. `act(async)` seul ne suffit pas avec les fake timers.
+  for (let i = 0; i < 10; i++) {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  }
 }
 
 describe('Parcours utilisateur de bout en bout (DOM)', () => {
@@ -340,6 +367,52 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
       expect(sessionsPlayed).toBeGreaterThan(0);
     },
   );
+
+  it("le bouton « Réinitialiser le profil » efface le profil et relance le test de placement", async () => {
+    render(<App />);
+
+    // Setup minimal : on crée un profil en sautant le test de placement.
+    fireEvent.click(findButton(/^Suivant/)!);
+    const nameInput = document.querySelector<HTMLInputElement>('input.welcome-input')!;
+    fireEvent.change(nameInput, { target: { value: 'Zoe' } });
+    fireEvent.click(findButton(/^C'est moi/)!);
+    fireEvent.click(findButton('Passer le test')!);
+    fireEvent.click(findButton(/C'est parti/)!);
+    fireEvent.click(findButton(/Suivant/)!);
+    fireEvent.click(findButton(/J'ai compris/)!);
+    expect(loadProfile()).not.toBeNull();
+
+    await openParentDashboard();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fireEvent.click(findButton('Réinitialiser le profil')!);
+    confirmSpy.mockRestore();
+
+    expect(loadProfile()).toBeNull();
+    // On est revenu sur WelcomeScreen (saisie du prénom à nouveau possible).
+    expect(findButton(/^Suivant/)).not.toBeNull();
+  });
+
+  it("annuler la confirmation n'efface PAS le profil", async () => {
+    render(<App />);
+
+    fireEvent.click(findButton(/^Suivant/)!);
+    const nameInput = document.querySelector<HTMLInputElement>('input.welcome-input')!;
+    fireEvent.change(nameInput, { target: { value: 'Zoe' } });
+    fireEvent.click(findButton(/^C'est moi/)!);
+    fireEvent.click(findButton('Passer le test')!);
+    fireEvent.click(findButton(/C'est parti/)!);
+    fireEvent.click(findButton(/Suivant/)!);
+    fireEvent.click(findButton(/J'ai compris/)!);
+    const before = loadProfile();
+    expect(before).not.toBeNull();
+
+    await openParentDashboard();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    fireEvent.click(findButton('Réinitialiser le profil')!);
+    confirmSpy.mockRestore();
+
+    expect(loadProfile()?.name).toBe(before!.name);
+  });
 
   it("arrête le test de placement après 3 ratés consécutifs", () => {
     render(<App />);

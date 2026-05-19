@@ -4,7 +4,7 @@ import type { UserProfile, SessionQuestion, SessionResult, MultiFact, Badge, Box
 import { composeSession } from './lib/sessionComposer';
 import { processAnswer } from './lib/leitner';
 import { checkBadges, getCompletedTables, isRule11Unlocked } from './lib/badges';
-import { loadProfile, saveProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
+import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
@@ -371,6 +371,16 @@ export default function App() {
     }
   }, []);
 
+  const handleResetProfile = useCallback(() => {
+    const ok = window.confirm(
+      'Réinitialiser le profil ?\n\nLe prénom, les séances, les badges, la série et le test de placement seront effacés. Cette action est irréversible.',
+    );
+    if (!ok) return;
+    clearStoredProfile();
+    setProfile(null);
+    setScreen('welcome');
+  }, []);
+
   return (
     <div className="app">
       {/* Suspense pour les écrans lazy. Fallback à null : le SW précache
@@ -444,6 +454,7 @@ export default function App() {
           onBack={() => setScreen('home')}
           onExport={handleExport}
           onImport={handleImport}
+          onResetProfile={handleResetProfile}
           onShowPrivacy={() => setScreen('privacy')}
           onShowChangelog={() => setScreen('changelog')}
         />

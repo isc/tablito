@@ -16,6 +16,7 @@ interface ParentDashboardProps {
   onBack: () => void;
   onExport: () => void;
   onImport: (json: string) => void;
+  onResetProfile: () => void;
   onShowPrivacy: () => void;
   onShowChangelog: () => void;
 }
@@ -25,6 +26,7 @@ export default function ParentDashboard({
   onBack,
   onExport,
   onImport,
+  onResetProfile,
   onShowPrivacy,
   onShowChangelog,
 }: ParentDashboardProps) {
@@ -332,6 +334,22 @@ export default function ParentDashboard({
             onClick={onShowPrivacy}
           >
             Confidentialité
+          </button>
+        </div>
+      </div>
+
+      <div className="parent-section">
+        <h3>Réinitialisation</h3>
+        <p className="parent-section-subtitle">
+          Efface le profil et relance le test de placement. Utile pour
+          recommencer à zéro ou changer d'enfant.
+        </p>
+        <div className="parent-actions">
+          <button
+            className="parent-action-btn parent-action-btn--danger"
+            onClick={onResetProfile}
+          >
+            Réinitialiser le profil
           </button>
         </div>
       </div>

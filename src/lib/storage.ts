@@ -34,6 +34,17 @@ export function saveProfile(profile: UserProfile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
 }
 
+// Best-effort : localStorage indisponible (mode privé strict) ne doit pas
+// faire planter le reset — l'appelant repassera de toute façon par
+// WelcomeScreen via setProfile(null).
+export function clearStoredProfile(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * Exports a profile as a JSON string (for backup / transfer).
  */
