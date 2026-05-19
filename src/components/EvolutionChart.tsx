@@ -17,8 +17,6 @@ export default function EvolutionChart({
   formatY,
   color,
 }: EvolutionChartProps) {
-  if (data.length < 2) return null;
-
   const padding = { top: 20, right: 15, bottom: 40, left: 38 };
   const svgW = 400;
   const svgH = 200;

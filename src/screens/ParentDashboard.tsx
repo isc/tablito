@@ -72,31 +72,28 @@ export default function ParentDashboard({
     [profile.sessionHistory],
   );
 
-  const { accuracyData, timeData, timeYMax } = useMemo(() => {
+  const evolution = useMemo(() => {
     const sessions = profile.sessionHistory.slice(-EVOLUTION_WINDOW);
-    if (sessions.length < 2) {
-      return { accuracyData: null, timeData: null, timeYMax: 0 };
-    }
+    if (sessions.length < 2) return null;
 
-    const labels = sessions.map((s) =>
-      new Date(s.date).toLocaleDateString('fr-FR', {
+    const accuracy: Array<{ date: string; value: number }> = [];
+    const time: Array<{ date: string; value: number }> = [];
+    for (const s of sessions) {
+      const date = new Date(s.date).toLocaleDateString('fr-FR', {
         day: 'numeric',
         month: 'short',
-      }),
-    );
-    const accuracy = sessions.map((s, i) => ({
-      date: labels[i],
-      value: Math.round((s.correctCount / s.questionsCount) * 100),
-    }));
-    const time = sessions.map((s, i) => ({
-      date: labels[i],
-      value: s.averageTimeMs / 1000,
-    }));
+      });
+      accuracy.push({
+        date,
+        value: Math.round((s.correctCount / s.questionsCount) * 100),
+      });
+      time.push({ date, value: s.averageTimeMs / 1000 });
+    }
     // Au moins 4s d'amplitude pour éviter qu'une variation de 0,2s ne paraisse
     // dramatique sur un enfant déjà rapide.
-    const yMax = Math.max(Math.ceil(Math.max(...time.map((t) => t.value))), 4);
+    const timeYMax = Math.max(Math.ceil(Math.max(...time.map((t) => t.value))), 4);
 
-    return { accuracyData: accuracy, timeData: time, timeYMax: yMax };
+    return { accuracy, time, timeYMax };
   }, [profile.sessionHistory]);
 
   const boxColors = [
@@ -208,38 +205,36 @@ export default function ParentDashboard({
         <ProgressGrid facts={profile.facts} />
       </div>
 
-      {/* Evolution: accuracy */}
-      {accuracyData && (
-        <div className="parent-section">
-          <h3>Taux de bonnes réponses</h3>
-          <EvolutionChart
-            data={accuracyData}
-            yMin={0}
-            yMax={100}
-            yTicks={[0, 25, 50, 75, 100]}
-            formatY={(v) => `${v}%`}
-            color="var(--primary)"
-          />
-        </div>
-      )}
-
-      {/* Evolution: response time */}
-      {timeData && (
-        <div className="parent-section">
-          <h3>Temps de réponse moyen</h3>
-          <p className="parent-section-subtitle">
-            Secondes par question. Une courbe qui descend = enfant qui gagne en
-            fluence.
-          </p>
-          <EvolutionChart
-            data={timeData}
-            yMin={0}
-            yMax={timeYMax}
-            yTicks={[0, timeYMax / 2, timeYMax]}
-            formatY={(v) => `${v.toFixed(1)}s`}
-            color="var(--sage)"
-          />
-        </div>
+      {/* Evolution: accuracy + response time */}
+      {evolution && (
+        <>
+          <div className="parent-section">
+            <h3>Taux de bonnes réponses</h3>
+            <EvolutionChart
+              data={evolution.accuracy}
+              yMin={0}
+              yMax={100}
+              yTicks={[0, 25, 50, 75, 100]}
+              formatY={(v) => `${v}%`}
+              color="var(--primary)"
+            />
+          </div>
+          <div className="parent-section">
+            <h3>Temps de réponse moyen</h3>
+            <p className="parent-section-subtitle">
+              Secondes par question. Une courbe qui descend = enfant qui gagne
+              en fluence.
+            </p>
+            <EvolutionChart
+              data={evolution.time}
+              yMin={0}
+              yMax={evolution.timeYMax}
+              yTicks={[0, evolution.timeYMax / 2, evolution.timeYMax]}
+              formatY={(v) => `${v.toFixed(1)}s`}
+              color="var(--sage)"
+            />
+          </div>
+        </>
       )}
 
       {/* Hardest facts */}
