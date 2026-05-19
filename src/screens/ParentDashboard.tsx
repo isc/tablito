@@ -221,10 +221,6 @@ export default function ParentDashboard({
           </div>
           <div className="parent-section">
             <h3>Temps de réponse moyen</h3>
-            <p className="parent-section-subtitle">
-              Secondes par question. Une courbe qui descend = enfant qui gagne
-              en fluence.
-            </p>
             <EvolutionChart
               data={evolution.time}
               yMin={0}
