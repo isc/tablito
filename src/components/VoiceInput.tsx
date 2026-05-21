@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import NumPad from './NumPad';
-import { parseFrenchAnswer, parseFrenchNumber } from '../lib/parseFrenchNumber';
+import { parseFrenchAnswer } from '../lib/parseFrenchNumber';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useInputMode } from '../hooks/useInputMode';
 
@@ -42,16 +42,6 @@ function pickBestNumber(primary: string, alternatives: string[]): number | null 
   return null;
 }
 
-// Only display something if the transcript parses as a valid number answer.
-// Raw text like "6 x 530" is never what the user meant — it's noise or echo.
-function displayTranscript(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) return '';
-  const n = parseFrenchNumber(trimmed);
-  if (n !== null && n >= 0 && n <= 100) return String(n);
-  return '';
-}
-
 export default function VoiceInput({
   onSubmit,
   disabled = false,
@@ -59,7 +49,6 @@ export default function VoiceInput({
   questionToken,
   expectedValue,
 }: VoiceInputProps) {
-  const [interim, setInterim] = useState('');
   const [showKeypad, setShowKeypad] = useState(false);
   const [, setParseFails] = useState(0);
   const { setInputMode } = useInputMode();
@@ -89,7 +78,6 @@ export default function VoiceInput({
 
   if (questionToken !== prevQuestionToken) {
     setPrevQuestionToken(questionToken);
-    setInterim('');
     setParseFails(0);
   }
 
@@ -136,7 +124,6 @@ export default function VoiceInput({
         // otherwise 3 consecutive echoes would flip us to the keypad.
         return;
       }
-      setInterim('');
       if (bestEffective !== null) {
         setParseFails(0);
         lastSubmitAtRef.current = Date.now();
@@ -160,10 +147,12 @@ export default function VoiceInput({
       const parsed = parseFrenchAnswer(text);
       const expected = expectedRef.current;
       if (isEchoOfLastSubmit(parsed)) return;
-      setInterim(text);
+      // We deliberately don't display interim transcripts to the user:
+      // showing "40" while they're still saying "quarante-deux" → 42 is
+      // confusing. We still parse interims here for the fast-path submit
+      // below — feedback comes from the session UI once the answer is in.
       if (expected === undefined || disabledRef.current) return;
       if (parsed === expected) {
-        setInterim('');
         setParseFails(0);
         lastSubmitAtRef.current = Date.now();
         lastSubmittedValueRef.current = expected;
@@ -235,7 +224,6 @@ export default function VoiceInput({
 
   const permissionBlocked = error === 'not-allowed' || error === 'service-not-allowed';
   const networkError = error === 'network';
-  const transcriptNumber = displayTranscript(interim);
 
   return (
     <div className="voice-input">
@@ -256,11 +244,7 @@ export default function VoiceInput({
       </button>
 
       <div className="voice-transcript" aria-live="polite">
-        {transcriptNumber ? (
-          <span className="voice-transcript-number">{transcriptNumber}</span>
-        ) : (
-          isListening ? 'Je t\'écoute…' : 'Appuie pour parler'
-        )}
+        {isListening ? 'Je t\'écoute…' : 'Appuie pour parler'}
       </div>
 
       {permissionBlocked && (
