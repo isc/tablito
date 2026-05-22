@@ -736,6 +736,18 @@
   text-align: center;
 }
 
+.feedback-user-answer {
+  font-family: var(--sans);
+  font-size: 17px;
+  color: var(--coral);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.feedback-user-answer b {
+  font-weight: 800;
+}
+
 .feedback-answer {
   font-family: var(--serif);
   font-size: 30px;
