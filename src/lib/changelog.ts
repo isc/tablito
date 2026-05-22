@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-22',
+    items: [
+      "Test de placement : les multiplications ratées (mauvaise réponse ou « Je ne sais pas ») ne sont plus introduites en douce via les autres résultats. Quand l'enfant rate 4×7 mais réussit 5×8, l'appli n'en déduit plus qu'il connaît 4×7 — ce fait sera proposé plus tard, avec son écran d'astuce, plutôt que de surgir sans préavis dans une séance.",
+    ],
+  },
+  {
     date: '2026-05-19',
     items: [
       "Test de placement plus juste : les questions sont posées de la plus facile à la plus difficile, et le test s'arrête après 3 ratés consécutifs (« Je ne sais pas » compris). Un enfant qui maîtrise les tables faciles n'est plus mis à l'épreuve sur les ×7/×8/×9 inconnus, et les premières séances ne sont plus saturées de multiplications hors de son niveau.",

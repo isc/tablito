@@ -104,6 +104,24 @@ describe('seedFromPlacement', () => {
     expect(stillNotIntroduced.map((f) => getFactKey(f.a, f.b))).toEqual(['8x9', '9x9']);
   });
 
+  it("ne marque PAS un fait testé directement et raté, même s'il est dominé par un correct plus dur", () => {
+    // Cas réel : enfant rate 4×7 directement (« Je ne sais pas »), mais
+    // réussit 5×8 quelques questions avant. Sans cette protection, 5×8
+    // dominait 4×7 (5≥4, 8≥7) et le marquait introduit en boîte 3 → en
+    // séance, 4×7 sortait en bonus review sans intro pédagogique, alors que
+    // l'enfant vient explicitement de dire qu'il ne le connaît pas.
+    const facts = createInitialFacts();
+    const results: PlacementResult[] = [
+      { a: 5, b: 8, correct: true, timeMs: 1500 },
+      { a: 4, b: 7, correct: false, timeMs: 6000 },
+    ];
+    seedFromPlacement(facts, results, TODAY);
+    expect(findFact(facts, 4, 7).introduced).toBe(false);
+    // En revanche, les faits dominés non testés directement sont bien
+    // inférés à partir de [5,8] (ex : 4×6).
+    expect(findFact(facts, 4, 6).introduced).toBe(true);
+  });
+
   it('n\'infère PAS à partir d\'un test raté', () => {
     const facts = createInitialFacts();
     const results: PlacementResult[] = [

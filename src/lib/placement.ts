@@ -1,6 +1,7 @@
 import type { MultiFact, BoxLevel } from '../types';
 import { RESPONSE_TIME } from '../types';
 import { computeNextDue } from './leitner';
+import { getFactKey } from './facts';
 
 // `a` et `b` sont normalisés (a ≤ b) — même invariant que `MultiFact`,
 // nécessaire pour la comparaison de dominance ci-dessous.
@@ -43,9 +44,11 @@ function markDominated(
   facts: MultiFact[],
   evidence: DominanceEvidence[],
   today: string,
+  excludeKeys: ReadonlySet<string> = new Set(),
 ): void {
   for (const fact of facts) {
     if (fact.introduced) continue;
+    if (excludeKeys.has(getFactKey(fact.a, fact.b))) continue;
     const dominators = evidence.filter((e) => e.a >= fact.a && e.b >= fact.b);
     if (dominators.length === 0) continue;
     const box: BoxLevel = dominators.some((d) => d.isFast) ? 3 : 2;
@@ -93,10 +96,17 @@ export function seedFromPlacement(
     fact.nextDue = computeNextDue(box, today);
   }
 
+  // Un fait testé directement et raté ne doit PAS être « sauvé » par la
+  // dominance d'un correct sur un fait plus dur. L'enfant vient de dire
+  // qu'il ne le connaît pas — l'introduire en boîte 2/3 le ferait apparaître
+  // en bonus review (sans écran d'intro pédagogique). Voir specs §3.1.
+  const testedKeys: ReadonlySet<string> = new Set(
+    results.map((r) => getFactKey(r.a, r.b)),
+  );
   const evidence: DominanceEvidence[] = results
     .filter((r) => r.correct)
     .map((r) => ({ a: r.a, b: r.b, isFast: r.timeMs < RESPONSE_TIME.FAST }));
-  markDominated(facts, evidence, today);
+  markDominated(facts, evidence, today, testedKeys);
 }
 
 // Migration : pour les profils créés avant l'ajout de la 2ᵉ passe de
