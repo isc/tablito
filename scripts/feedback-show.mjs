@@ -19,24 +19,35 @@ if (!prefix) {
   process.exit(1);
 }
 
-const endpoint = `${url}/rest/v1/feedback?select=*&id=like.${prefix}*&limit=2`;
-const res = await fetch(endpoint, {
-  headers: { apikey: secret, Authorization: `Bearer ${secret}` },
-});
+const headers = { apikey: secret, Authorization: `Bearer ${secret}` };
 
-if (!res.ok) {
-  console.error(`Erreur ${res.status}: ${await res.text()}`);
+// Résolution client-side du préfixe : `id` est un UUID, Postgres refuse LIKE
+// dessus sans cast explicite. On récupère les ids récents et on filtre.
+const listRes = await fetch(
+  `${url}/rest/v1/feedback?select=id&order=created_at.desc&limit=200`,
+  { headers },
+);
+if (!listRes.ok) {
+  console.error(`Erreur ${listRes.status}: ${await listRes.text()}`);
   process.exit(1);
 }
-
-const rows = await res.json();
-if (rows.length === 0) {
+const candidates = (await listRes.json()).filter((r) => r.id.startsWith(prefix));
+if (candidates.length === 0) {
   console.error(`Aucun feedback trouvé pour le préfixe « ${prefix} ».`);
   process.exit(1);
 }
-if (rows.length > 1) {
-  console.error(`Préfixe ambigu (${rows.length} résultats). Utilise un préfixe plus long.`);
+if (candidates.length > 1) {
+  console.error(`Préfixe ambigu (${candidates.length} résultats). Utilise un préfixe plus long.`);
   process.exit(1);
 }
 
-console.log(JSON.stringify(rows[0], null, 2));
+const rowRes = await fetch(
+  `${url}/rest/v1/feedback?select=*&id=eq.${candidates[0].id}`,
+  { headers },
+);
+if (!rowRes.ok) {
+  console.error(`Erreur ${rowRes.status}: ${await rowRes.text()}`);
+  process.exit(1);
+}
+const [row] = await rowRes.json();
+console.log(JSON.stringify(row, null, 2));
