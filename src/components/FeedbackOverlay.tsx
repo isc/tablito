@@ -9,6 +9,10 @@ interface FeedbackOverlayProps {
   correct: boolean;
   fast: boolean;
   correctAnswer: number;
+  // The value the user actually entered/said — shown on the wrong-answer
+  // path so they (or a parent looking over their shoulder) can tell apart
+  // "I gave a wrong answer" from "the mic misheard me".
+  submittedValue: number;
   fact: { a: number; b: number };
   factBox: BoxLevel;
   onDismiss: () => void;
@@ -25,14 +29,15 @@ const CORRECT_MESSAGES = [
 ];
 
 const INCORRECT_MESSAGES = [
-  'Presque ! La bonne réponse est :',
-  'Pas tout à fait, regarde :',
+  'Presque !',
+  'Pas tout à fait…',
 ];
 
 export default function FeedbackOverlay({
   correct,
   fast,
   correctAnswer,
+  submittedValue,
   fact,
   factBox,
   onDismiss,
@@ -96,6 +101,9 @@ export default function FeedbackOverlay({
     <div className="feedback-overlay incorrect">
       <div className="feedback-card">
         <div className="feedback-message incorrect">{message}</div>
+        <div className="feedback-user-answer">
+          Tu as répondu <b>{submittedValue}</b>
+        </div>
         <div className="feedback-answer">
           {fact.a} {'×'} {fact.b} = <b>{correctAnswer}</b>
         </div>

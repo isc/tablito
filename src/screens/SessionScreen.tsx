@@ -59,6 +59,7 @@ export default function SessionScreen({
     correct: boolean;
     fast: boolean;
     correctAnswer: number;
+    submittedValue: number;
     fact: { a: number; b: number };
     factBox: BoxLevel;
   } | null>(null);
@@ -196,6 +197,7 @@ export default function SessionScreen({
         correct,
         fast,
         correctAnswer: currentQuestion.fact.product,
+        submittedValue: value,
         fact: {
           a: currentQuestion.displayA,
           b: currentQuestion.displayB,
@@ -412,6 +414,7 @@ export default function SessionScreen({
           correct={feedback.correct}
           fast={feedback.fast}
           correctAnswer={feedback.correctAnswer}
+          submittedValue={feedback.submittedValue}
           fact={feedback.fact}
           factBox={feedback.factBox}
           onDismiss={handleFeedbackDismiss}
