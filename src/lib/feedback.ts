@@ -17,9 +17,17 @@ export interface FeedbackContext {
     current_streak: number;
     days_since_start: number;
   };
+  // Snapshot du profil (boîtes, historique des réponses, séances), anonymisé
+  // côté client : le prénom est retiré, le reste sert au débogage de cas
+  // précis (« il a eu telle question alors qu'il ne maîtrise pas »).
+  // Opt-in via la case à cocher du formulaire.
+  profile_snapshot?: Omit<UserProfile, 'name'>;
 }
 
-export function buildContext(profile: UserProfile | null): FeedbackContext {
+export function buildContext(
+  profile: UserProfile | null,
+  includeFullProfile = false,
+): FeedbackContext {
   const ctx: FeedbackContext = {
     app_version: import.meta.env.VITE_APP_VERSION ?? 'dev',
     user_agent: navigator.userAgent,
@@ -37,6 +45,10 @@ export function buildContext(profile: UserProfile | null): FeedbackContext {
       current_streak: profile.currentStreak,
       days_since_start: days,
     };
+    if (includeFullProfile) {
+      const { name: _name, ...rest } = profile;
+      ctx.profile_snapshot = rest;
+    }
   }
   return ctx;
 }

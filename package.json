@@ -23,6 +23,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "splash": "node scripts/generate-splash.mjs",
     "feedback:list": "node --env-file=.env.local scripts/feedback-list.mjs",
+    "feedback:show": "node --env-file=.env.local scripts/feedback-show.mjs",
     "feedback:treat": "node --env-file=.env.local scripts/feedback-treat.mjs"
   },
   "dependencies": {

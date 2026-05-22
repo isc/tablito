@@ -13,6 +13,7 @@ type Status = 'idle' | 'sending' | 'success' | 'error';
 export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) {
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
+  const [includeProfile, setIncludeProfile] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -25,7 +26,7 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
       await submitFeedback({
         message: message.trim(),
         email: email.trim() || undefined,
-        context: buildContext(profile),
+        context: buildContext(profile, includeProfile),
       });
       setStatus('success');
     } catch (err) {
@@ -87,6 +88,25 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
             maxLength={320}
             disabled={status === 'sending'}
           />
+
+          {profile && (
+            <label className="feedback-checkbox">
+              <input
+                type="checkbox"
+                checked={includeProfile}
+                onChange={(e) => setIncludeProfile(e.currentTarget.checked)}
+                disabled={status === 'sending'}
+              />
+              <span>
+                <strong>Joindre l'historique détaillé du profil</strong>
+                <span className="feedback-checkbox-hint">
+                  Si vous signalez un bug précis, ça aide à reproduire. Inclut
+                  les multiplications posées et les réponses données — pas le
+                  prénom.
+                </span>
+              </span>
+            </label>
+          )}
 
           {status === 'error' && (
             <p className="feedback-error">Erreur : {errorMsg}</p>

@@ -46,10 +46,11 @@ for (const row of rows) {
   const stats = ctx.stats
     ? ` | ${ctx.stats.total_sessions} séances, ${ctx.stats.facts_mastered}/${ctx.stats.facts_total} maîtrisés`
     : '';
+  const snapshotTag = ctx.profile_snapshot ? ' [📎 profil joint]' : '';
   const shortId = row.id.slice(0, 8);
   const statusTag = showAll ? ` [${row.status}]` : '';
   console.log('---');
-  console.log(`${shortId}${statusTag} [${date}] ${row.email ?? '(sans email)'}${stats}`);
+  console.log(`${shortId}${statusTag}${snapshotTag} [${date}] ${row.email ?? '(sans email)'}${stats}`);
   console.log(`UA: ${ctx.user_agent ?? '?'} | ${ctx.viewport?.w ?? '?'}x${ctx.viewport?.h ?? '?'}`);
   console.log('');
   console.log(row.message);
