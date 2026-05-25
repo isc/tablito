@@ -36,6 +36,7 @@ interface SessionScreenProps {
     timeMs: number,
     answered: number | null,
     isBonusReview: boolean,
+    inputMode: 'keypad' | 'voice',
   ) => void;
 }
 
@@ -169,7 +170,7 @@ export default function SessionScreen({
       else playIncorrect();
 
       // Notify parent (App) to update Leitner state
-      onAnswer(currentQuestion.fact, correct, timeMs, value, currentQuestion.isBonusReview);
+      onAnswer(currentQuestion.fact, correct, timeMs, value, currentQuestion.isBonusReview, inputMode);
 
       // If incorrect, insert a retry 2-3 questions later (capped to keep
       // sessions from running away when answers chain wrong — see MAX_SESSION_LENGTH).

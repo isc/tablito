@@ -79,6 +79,21 @@ export interface SessionQuestion {
   isBonusReview: boolean; // révision bonus (pas de changement de boîte)
 }
 
+// Log par question pour les séances enregistrées depuis l'ajout du champ.
+// Permet de diagnostiquer vitesse et mode après coup, y compris pour les
+// révisions bonus qui ne créent pas d'entrée dans `fact.history` (cf. App.tsx
+// handleAnswer). Champ optionnel sur SessionResult pour rétrocompat avec les
+// profils antérieurs.
+export interface SessionQuestionLog {
+  a: number;
+  b: number;
+  correct: boolean;
+  responseTimeMs: number;
+  answeredWith: number | null;
+  isBonusReview: boolean;
+  inputMode: 'keypad' | 'voice';
+}
+
 export interface SessionResult {
   date: string;
   questionsCount: number;
@@ -86,6 +101,7 @@ export interface SessionResult {
   averageTimeMs: number;
   newFactsIntroduced: number;
   factsPromoted: number;   // faits dont la boîte finale > boîte initiale dans la séance
+  questions?: SessionQuestionLog[];
 }
 
 // Badges IDs
