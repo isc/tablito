@@ -373,7 +373,7 @@
     <li>Un succès fait monter le fait d'une boîte.</li>
     <li>Un échec renvoie le fait en boîte 1.</li>
     <li>Un fait est considéré « acquis » quand il atteint la boîte 5 et y est confirmé.</li>
-    <li>Le temps de réponse est enregistré. Un succès lent (&gt; 5 secondes) ne fait pas monter de boîte — l'objectif est le rappel automatique, pas le calcul mental.</li>
+    <li>Le temps de réponse est enregistré. Un succès lent (au-delà du seuil mode-dépendant — cf. §3.3) ne fait pas monter de boîte — l'objectif est le rappel automatique, pas le calcul mental.</li>
   </ul>
 
   <h3 id="principes-interference"><span class="num">1.2</span>Regroupement par faible similarité (Low-Interference Training)</h3>
@@ -540,15 +540,14 @@ interface Badge {
     <li>Validation automatique à 2 chiffres, ou bouton « OK » pour les résultats &lt; 10</li>
     <li><strong>Feedback immédiat :</strong>
       <ul>
-        <li><strong>Correct + rapide (&lt; 3s) :</strong> Animation joyeuse, son positif, +1 étoile dorée, montée de boîte</li>
-        <li><strong>Correct + normal (3-5s) :</strong> « Bravo ! », montée de boîte</li>
-        <li><strong>Correct + lent (&gt; 5s) :</strong> « Bravo ! », pas de montée de boîte (le retour est positif côté enfant ; la lenteur n'est jamais verbalisée — cf. §7.2 sur le feedback orienté progrès et l'absence de chrono visible)</li>
+        <li><strong>Correct + assez rapide (&lt; 5s en clavier, &lt; 3s en voix) :</strong> Animation joyeuse, son positif, étoile dorée rayonnante, montée de boîte</li>
+        <li><strong>Correct + lent (au-delà du seuil du mode) :</strong> « Bravo ! » + étoile dorée seule (sans rayons), pas de montée de boîte (le retour est positif côté enfant ; la lenteur n'est jamais verbalisée — cf. §7.2 sur le feedback orienté progrès et l'absence de chrono visible)</li>
         <li><strong>Incorrect :</strong> Pas de son négatif, la bonne réponse s'affiche avec la grille de points, puis re-pose la question 2-3 questions plus tard dans la même séance</li>
       </ul>
     </li>
   </ol>
   <blockquote class="note">
-    <p><strong>Note sur les seuils :</strong> ces seuils tiennent compte du surcoût moteur du pavé numérique (~1-1,5s) par rapport à une réponse orale. Dans la littérature, le rappel automatique est typiquement mesuré sous 1-2s à l'oral. Nos 5s correspondent à environ 3-4s de réflexion + 1-1,5s de manipulation tactile. Si l'application évolue vers une interface vocale (voir audit), les seuils devront être abaissés pour s'aligner avec les mesures de la recherche.</p>
+    <p><strong>Note sur les seuils :</strong> le seuil est mode-dépendant et sert à la fois pour l'étoile rayonnante et pour la montée de boîte — un seul signal cohérent, "ta réponse fait avancer ta maîtrise". Au clavier 5 s, en voix 3 s : on tolère ~2 s de plus au clavier pour absorber le surcoût moteur du pavé numérique chez un enfant de 7-9 ans, alors que la voix peut s'aligner sur les ~2-3 s d'automaticité orale de la littérature.</p>
   </blockquote>
 
   <h3 id="parcours-intro"><span class="num">3.4</span>Introduction d'un nouveau fait</h3>
@@ -650,7 +649,7 @@ interface Badge {
   <h3 id="parcours-voix"><span class="num">3.6bis</span>Entrée vocale (mode optionnel)</h3>
   <p>En complément du pavé numérique, un mode vocal permet à l'enfant de répondre à voix haute (Web Speech API, <code>SpeechRecognition</code>). Utile pour les enfants qui ont déjà automatisé le fait mais sont ralentis par la manipulation tactile, ou pour soulager la charge motrice sur une longue séance.</p>
   <p><strong>Activation :</strong> toggle dans la barre supérieure de l'écran d'accueil (icône micro ↔ clavier). Le toggle n'apparaît que si <code>SpeechRecognition</code> est supportée par le navigateur. Le choix est persisté dans <code>localStorage</code> pour survivre aux rechargements.</p>
-  <p><strong>Seuils de temps ajustés :</strong> en mode vocal, les seuils « rapide » et « lent » sont abaissés à 2 s et 3 s (contre 3 s et 5 s en mode clavier). Cela aligne les seuils avec les mesures d'automatisation à l'oral dans la littérature (§3.3) en retirant le surcoût moteur du pavé numérique.</p>
+  <p><strong>Seuil de temps ajusté :</strong> en mode vocal, le seuil unique de §3.3 (étoile rayonnante + montée de boîte) passe de 5 s à 3 s. Cela aligne le seuil sur les mesures d'automatisation à l'oral dans la littérature en retirant le surcoût moteur du pavé numérique.</p>
   <p><strong>Robustesse :</strong> le module <code>parseFrenchAnswer</code> normalise les réponses parlées (nombres en lettres, variations régionales — « soixante-douze », « septante-deux ») et filtre l'écho du TTS quand la question est énoncée juste avant la réponse.</p>
 </section>
 
@@ -685,7 +684,7 @@ interface Badge {
       <tr><td>Exploration</td><td>Avoir vu tous les faits au moins une fois</td><td>🗺️</td></tr>
       <tr><td>Table de [N]</td><td>Maîtriser tous les faits d'une table</td><td>⭐</td></tr>
       <tr><td>Génie des maths</td><td>Tous les faits en boîte 5</td><td>🏆</td></tr>
-      <tr><td>Véloce</td><td>5 réponses &lt; 2s d'affilée</td><td>🚀</td></tr>
+      <tr><td>Véloce</td><td>5 étoiles dorées d'affilée</td><td>🚀</td></tr>
       <tr><td>Persévérance</td><td>Revenir après 3+ jours d'absence</td><td>💪</td></tr>
       <tr><td>Flamme éternelle</td><td>30 jours consécutifs</td><td>🌟</td></tr>
     </tbody>
