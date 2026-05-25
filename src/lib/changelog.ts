@@ -10,6 +10,14 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-25',
+    items: [
+      "Étoile dorée corrigée : elle ne s'allumait pas vraiment selon la rapidité (bug d'origine). Désormais, une bonne réponse rapide affiche l'étoile avec ses rayons, une bonne réponse lente affiche l'étoile seule. Le signal visuel reflète enfin ce qui se passe en coulisse : seule une réponse rapide fait monter la boîte.",
+      "Mode voix : le seuil de réponse rapide passe à 3 s (au lieu de 5 s, hérité du mode clavier). En clavier on reste à 5 s pour absorber le surcoût du pavé numérique. Avant, en voix, l'enfant pouvait monter de boîte avec une réponse à 4 s qui ne reflète pas la maîtrise.",
+      "Badge Véloce : se décroche désormais après 5 étoiles dorées d'affilée dans une séance — au lieu de \"5 réponses sous 2 s\", un seuil qui n'apparaissait nulle part ailleurs et que les bonus reviews bien plus rapides masquaient partiellement.",
+    ],
+  },
+  {
     date: '2026-05-22',
     items: [
       "Test de placement : les multiplications ratées (mauvaise réponse ou « Je ne sais pas ») ne sont plus introduites en douce via les autres résultats. Quand l'enfant rate 4×7 mais réussit 5×8, l'appli n'en déduit plus qu'il connaît 4×7 — ce fait sera proposé plus tard, avec son écran d'astuce, plutôt que de surgir sans préavis dans une séance.",

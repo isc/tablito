@@ -1,5 +1,5 @@
 import type { MultiFact, BoxLevel } from '../types';
-import { BOX_INTERVALS, RESPONSE_TIME } from '../types';
+import { BOX_INTERVALS, FAST_THRESHOLD_MS } from '../types';
 
 /**
  * Adds `days` calendar days to an ISO date string and returns the new ISO date string.
@@ -30,19 +30,22 @@ export function isDue(fact: MultiFact, now: string): boolean {
 /**
  * Processes an answer and returns the updated MultiFact.
  *
- * Rules from the spec:
- * - Correct + fast (< 5 000 ms): promote box (max 5), update nextDue
- * - Correct + slow (>= 5 000 ms): no box change, still record the attempt
- * - Incorrect: box drops to 1, update nextDue
+ * Rules (cf. spec §3.3 + §3.7) :
+ * - Correct + assez rapide (< seuil mode) : montée de boîte (max 5)
+ * - Correct + lent : pas de changement de boîte, l'attempt est quand même
+ *   enregistré et nextDue recalculé depuis aujourd'hui
+ * - Incorrect : retour boîte 1
  *
- * Note: The UI feedback thresholds (< 3s fast, 3-5s slow, > 5s very slow) are
- * for display purposes. For box promotion, the threshold is 5 000 ms per spec §1.1.
+ * Le seuil dépend du mode de saisie : 5 s en clavier (compense le surcoût
+ * moteur du pavé numérique chez un enfant), 3 s en voix (proche de la mesure
+ * d'automaticité de la littérature, l'output STT étant rapide).
  */
 export function processAnswer(
   fact: MultiFact,
   correct: boolean,
   responseTimeMs: number,
   now: string,
+  inputMode: 'keypad' | 'voice',
 ): MultiFact {
   const attempt = {
     date: now,
@@ -65,7 +68,7 @@ export function processAnswer(
   }
 
   // Correct answer
-  const isFastEnough = responseTimeMs < RESPONSE_TIME.SLOW; // < 5000 ms
+  const isFastEnough = responseTimeMs < FAST_THRESHOLD_MS[inputMode];
 
   if (isFastEnough) {
     const newBox = Math.min(fact.box + 1, 5) as BoxLevel;

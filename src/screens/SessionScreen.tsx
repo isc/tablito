@@ -5,7 +5,7 @@ import VoiceInput from '../components/VoiceInput';
 import DotGrid from '../components/DotGrid';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
-import { RESPONSE_TIME } from '../types';
+import { FAST_THRESHOLD_MS } from '../types';
 import { getFactKey } from '../lib/facts';
 import { getStrategy, hasStrategy } from '../lib/strategies';
 import { todayISO } from '../lib/utils';
@@ -14,10 +14,6 @@ import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { useWakeLock } from '../hooks/useWakeLock';
-
-// Voice mode: lower threshold for the "fast" reward (étoile dorée) since oral
-// recall is faster than typing. Leitner promotion still uses RESPONSE_TIME.SLOW.
-const VOICE_FEEDBACK_FAST = 2000;
 
 // Borne dure sur la longueur d'une session : composeSession vise 12-15 questions,
 // chaque erreur peut insérer une retry. Sans cap, des erreurs en chaîne (surtout
@@ -160,8 +156,7 @@ export default function SessionScreen({
 
       const timeMs = Date.now() - questionStartTime.current;
       const correct = value === currentQuestion.fact.product;
-      const fastThreshold = inputMode === 'voice' ? VOICE_FEEDBACK_FAST : RESPONSE_TIME.FAST;
-      const fast = correct && timeMs < fastThreshold;
+      const fast = correct && timeMs < FAST_THRESHOLD_MS[inputMode];
 
       totalTimeMs.current += timeMs;
       if (correct) correctCount.current++;

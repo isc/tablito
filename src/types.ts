@@ -64,11 +64,22 @@ export const BOX_INTERVALS: Record<BoxLevel, number> = {
   5: 21,
 };
 
-// Seuils de temps de réponse (ms)
+// Seuils de temps de réponse (ms) — utilisés par le test de placement (qui
+// est clavier-only et a sa propre logique de notation).
 export const RESPONSE_TIME = {
   FAST: 3000,
   SLOW: 5000,
 } as const;
+
+// Seuil unique par mode pour les séances : décrocher l'étoile rayonnante ET
+// faire monter la boîte (cf. spec §3.3 + §3.7). En voix le seuil est plus bas
+// car la prononciation et le STT introduisent peu de latence d'output ; au
+// clavier on tolère ~2 s de plus pour absorber le surcoût moteur du pavé
+// numérique chez un enfant de 7-9 ans.
+export const FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
+  keypad: 5000,
+  voice: 3000,
+};
 
 export interface SessionQuestion {
   fact: MultiFact;

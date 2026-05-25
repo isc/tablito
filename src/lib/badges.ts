@@ -152,10 +152,10 @@ export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     id: BADGE_IDS.VELOCE,
     name: 'Véloce',
-    description: '5 réponses < 2s de suite',
+    description: '5 étoiles dorées de suite',
     icon: '🚀',
     color: 'var(--coral)',
-    conditionText: 'Réponds correctement 5 fois de suite en moins de 2 secondes à chaque fois.',
+    conditionText: 'Décroche 5 étoiles dorées d’affilée — une réponse rapide ET correcte à la suite, sans faute ni hésitation.',
   },
   {
     id: BADGE_IDS.PERSEVERANCE,
@@ -186,7 +186,7 @@ const BADGE_MAP = new Map(ALL_BADGE_DEFINITIONS.map((d) => [d.id, d]));
  */
 export function checkBadges(
   profile: UserProfile,
-  sessionStats?: { consecutiveCorrect: number; fastAnswers: number[] },
+  sessionStats?: { consecutiveCorrect: number; wasFast: boolean[] },
   previousLastSessionDate?: string | null,
 ): Badge[] {
   const now = todayISO();
@@ -211,7 +211,7 @@ export function checkBadges(
     earn(BADGE_IDS.MACHINE);
   }
 
-  if (sessionStats && hasConsecutiveFastAnswers(sessionStats.fastAnswers, 5, 2000)) {
+  if (sessionStats && hasConsecutiveTrue(sessionStats.wasFast, 5)) {
     earn(BADGE_IDS.VELOCE);
   }
 
@@ -230,10 +230,10 @@ export function checkBadges(
   return newBadges;
 }
 
-function hasConsecutiveFastAnswers(times: number[], count: number, thresholdMs: number): boolean {
+function hasConsecutiveTrue(values: boolean[], count: number): boolean {
   let consecutive = 0;
-  for (const time of times) {
-    if (time < thresholdMs) {
+  for (const v of values) {
+    if (v) {
       consecutive++;
       if (consecutive >= count) return true;
     } else {

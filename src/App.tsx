@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type { UserProfile, SessionQuestion, SessionResult, SessionQuestionLog, MultiFact, Badge, BoxLevel } from './types';
+import { FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { processAnswer } from './lib/leitner';
 import { checkBadges, getCompletedTables, isRule11Unlocked } from './lib/badges';
@@ -269,7 +270,7 @@ export default function App() {
         if (!prev) return prev;
         // Use the current fact from profile state, not the stale snapshot from the question
         const currentFact = prev.facts.find((f) => f.a === fact.a && f.b === fact.b) ?? fact;
-        const updatedFact = processAnswer(currentFact, correct, timeMs, today);
+        const updatedFact = processAnswer(currentFact, correct, timeMs, today, inputMode);
 
         if (updatedFact.history.length > 0) {
           updatedFact.history[updatedFact.history.length - 1].answeredWith = answered;
@@ -331,10 +332,14 @@ export default function App() {
         sessionHistory,
       };
 
-      // Pass previousLastSessionDate so PERSEVERANCE badge can check the gap
+      // Pass previousLastSessionDate so PERSEVERANCE badge can check the gap.
+      // wasFast = même critère que l'étoile rayonnante de FeedbackOverlay
+      // (correct + sous le seuil du mode). Le badge Véloce = 5 étoiles d'affilée.
       const sessionStats = {
         consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
-        fastAnswers: sessionQuestionLogs.current.map((q) => q.responseTimeMs),
+        wasFast: sessionQuestionLogs.current.map(
+          (q) => q.correct && q.responseTimeMs < FAST_THRESHOLD_MS[q.inputMode],
+        ),
       };
       const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);
       const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
