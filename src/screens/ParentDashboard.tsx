@@ -33,6 +33,31 @@ export default function ParentDashboard({
   const [showImport, setShowImport] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.origin + import.meta.env.BASE_URL;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Multiplix',
+          text: 'Multiplix — pour apprendre les tables de multiplication.',
+          url,
+        });
+      } catch {
+        // Annulation utilisateur : pas de fallback clipboard, sinon on copie
+        // un lien que l'utilisateur a explicitement refusé de partager.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard indisponible (contexte non sécurisé).
+    }
+  };
 
   const { boxCounts, maxBoxCount, hardFacts } = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0];
@@ -316,6 +341,18 @@ export default function ParentDashboard({
             onClick={() => setShowFeedback(true)}
           >
             Envoyer un avis
+          </button>
+        </div>
+      </div>
+
+      <div className="parent-section">
+        <h3>Partager Multiplix</h3>
+        <p className="parent-section-subtitle">
+          Envoyez le lien de l'app à un autre parent.
+        </p>
+        <div className="parent-actions">
+          <button className="parent-action-btn" onClick={handleShare}>
+            {shareCopied ? 'Lien copié ✓' : 'Partager l’app'}
           </button>
         </div>
       </div>

@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-26',
+    items: [
+      "Nouveau bouton « Partager l'app » dans l'espace parent : ouvre la feuille de partage du téléphone (iMessage, WhatsApp, mail…) pour envoyer le lien de Multiplix à un autre parent. Sur ordinateur, le lien est copié dans le presse-papiers.",
+    ],
+  },
+  {
     date: '2026-05-25',
     items: [
       "Étoile dorée corrigée : elle ne s'allumait pas vraiment selon la rapidité (bug d'origine). Désormais, une bonne réponse rapide affiche l'étoile avec ses rayons, une bonne réponse lente affiche l'étoile seule. Le signal visuel reflète enfin ce qui se passe en coulisse : seule une réponse rapide fait monter la boîte.",
