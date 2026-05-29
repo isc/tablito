@@ -101,21 +101,26 @@ export async function subscribeToReminders(childName: string): Promise<Subscribe
 
     const { endpoint, p256dh, auth } = serialize(sub);
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date().toISOString();
 
-    // Upsert (merge-duplicates) : ne touche qu'aux colonnes envoyées, donc
-    // last_session_date / last_notified_date d'une ligne existante sont préservés.
-    const res = await fetch(`${TABLE}?on_conflict=endpoint`, {
+    // On n'utilise PAS l'upsert PostgREST (Prefer: resolution=merge-duplicates) :
+    // sous RLS, le ON CONFLICT DO UPDATE exige une policy SELECT, qu'on refuse
+    // volontairement (l'endpoint opaque sert de secret ; personne ne doit pouvoir
+    // lister/énumérer les subscriptions). À la place : INSERT, et si l'endpoint
+    // existe déjà (409, unique_violation) on PATCH les champs mutables — ce qui
+    // préserve last_session_date / last_notified_date de la ligne existante.
+    let res = await fetch(TABLE, {
       method: 'POST',
-      headers: { ...baseHeaders, Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        endpoint,
-        p256dh,
-        auth,
-        timezone,
-        child_name: childName || null,
-        updated_at: new Date().toISOString(),
-      }),
+      headers: { ...baseHeaders, Prefer: 'return=minimal' },
+      body: JSON.stringify({ endpoint, p256dh, auth, timezone, child_name: childName || null, updated_at: now }),
     });
+    if (res.status === 409) {
+      res = await fetch(`${TABLE}?endpoint=eq.${encodeURIComponent(endpoint)}`, {
+        method: 'PATCH',
+        headers: { ...baseHeaders, Prefer: 'return=minimal' },
+        body: JSON.stringify({ p256dh, auth, timezone, child_name: childName || null, updated_at: now }),
+      });
+    }
     if (!res.ok) {
       // L'enregistrement serveur a échoué : retirer la subscription locale pour
       // ne pas laisser un abonnement que le cron ignore.
