@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260526153610"
+const CACHE = 'multiplix-' + "20260529170042"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -69,6 +69,7 @@ const ASSETS = [
   "/multiplix/src/components/Mascot.js",
   "/multiplix/src/components/Modal.js",
   "/multiplix/src/components/MysteryImage.js",
+  "/multiplix/src/components/NotificationSettings.js",
   "/multiplix/src/components/NumPad.js",
   "/multiplix/src/components/ParentGate.js",
   "/multiplix/src/components/ProgressGrid.js",
@@ -92,6 +93,7 @@ const ASSETS = [
   "/multiplix/src/lib/micPreflight.js",
   "/multiplix/src/lib/parseFrenchNumber.js",
   "/multiplix/src/lib/placement.js",
+  "/multiplix/src/lib/push.js",
   "/multiplix/src/lib/sessionComposer.js",
   "/multiplix/src/lib/similarity.js",
   "/multiplix/src/lib/storage.js",
@@ -166,5 +168,38 @@ self.addEventListener('fetch', (e) => {
       }
       return res
     }))
+  )
+})
+
+// Push : rappel quotidien (cf. scripts/send-reminders.mjs). Le payload est un
+// JSON {title, body, url}. Fallback défensif si le payload manque/est illisible.
+self.addEventListener('push', (e) => {
+  let data = {}
+  try { data = e.data ? e.data.json() : {} } catch { data = {} }
+  const title = data.title || 'Multiplix'
+  const body = data.body || "C'est l'heure de réviser tes tables ! 🎯"
+  const url = data.url || BASE
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: BASE + 'icons/icon-192.png',
+      badge: BASE + 'icons/icon-192.png',
+      tag: 'daily-reminder', // remplace une notif précédente non lue plutôt que d'empiler
+      data: { url },
+    })
+  )
+})
+
+// Clic sur la notif : focus une fenêtre de l'app déjà ouverte, sinon en ouvre une.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const target = (e.notification.data && e.notification.data.url) || BASE
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const c of clients) {
+        if ('focus' in c) return c.focus()
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target)
+    })
   )
 })
