@@ -79,3 +79,36 @@ self.addEventListener('fetch', (e) => {
     }))
   )
 })
+
+// Push : rappel quotidien (cf. scripts/send-reminders.mjs). Le payload est un
+// JSON {title, body, url}. Fallback défensif si le payload manque/est illisible.
+self.addEventListener('push', (e) => {
+  let data = {}
+  try { data = e.data ? e.data.json() : {} } catch { data = {} }
+  const title = data.title || 'Multiplix'
+  const body = data.body || "C'est l'heure de réviser tes tables ! 🎯"
+  const url = data.url || BASE
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: BASE + 'icons/icon-192.png',
+      badge: BASE + 'icons/icon-192.png',
+      tag: 'daily-reminder', // remplace une notif précédente non lue plutôt que d'empiler
+      data: { url },
+    })
+  )
+})
+
+// Clic sur la notif : focus une fenêtre de l'app déjà ouverte, sinon en ouvre une.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const target = (e.notification.data && e.notification.data.url) || BASE
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const c of clients) {
+        if ('focus' in c) return c.focus()
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target)
+    })
+  )
+})

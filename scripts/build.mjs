@@ -41,6 +41,9 @@ const ENV_DEFINE = {
   // sur false au runtime, sans crash (cas d'un contributeur sans config).
   'import.meta.env.VITE_SUPABASE_URL':             JSON.stringify(process.env.VITE_SUPABASE_URL ?? ''),
   'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''),
+  // Clé VAPID publique (Web Push). Comme ci-dessus : vient de .env, vide → push
+  // désactivé au runtime (pushConfigured=false), sans crash.
+  'import.meta.env.VITE_VAPID_PUBLIC_KEY':         JSON.stringify(process.env.VITE_VAPID_PUBLIC_KEY ?? ''),
 }
 
 const SRC_EXTS = ['.tsx', '.ts', '.jsx', '.js']

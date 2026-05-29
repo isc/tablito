@@ -13,6 +13,7 @@ import { todayISO } from './lib/utils';
 import { applyStreakUpdate } from './lib/streak';
 import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
+import { syncLastSession } from './lib/push';
 import { isVoiceMode } from './hooks/useInputMode';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
 // écrans sont hit par tout utilisateur, souvent plusieurs fois par jour
@@ -358,6 +359,11 @@ export default function App() {
       setFreezeJustUsed(streakUpdate.freezeJustUsed);
       setFreezeJustEarned(streakUpdate.freezeJustEarned);
       setScreen('recap');
+
+      // Anti-nag du rappel push : marque qu'une séance a eu lieu aujourd'hui
+      // pour que le cron saute l'envoi du soir. Best-effort (no-op si non
+      // abonné / push non configuré), jamais bloquant pour le recap.
+      void syncLastSession();
     },
     [profile],
   );

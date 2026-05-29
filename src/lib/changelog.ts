@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-05-29',
+    items: [
+      "Nouveau rappel quotidien : activez-le dans l'espace parent (« Rappel quotidien ») pour recevoir chaque jour à 18h une notification qui invite l'enfant à réviser ses tables. Aucun rappel les jours où la séance est déjà faite. Désactivable à tout moment depuis le même endroit. Sur iPhone, il faut d'abord installer Multiplix sur l'écran d'accueil.",
+    ],
+  },
+  {
     date: '2026-05-26',
     items: [
       "Nouveau bouton « Partager l'app » dans l'espace parent : ouvre la feuille de partage du téléphone (iMessage, WhatsApp, mail…) pour envoyer le lien de Multiplix à un autre parent. Sur ordinateur, le lien est copié dans le presse-papiers.",

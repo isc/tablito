@@ -13,6 +13,9 @@ interface ImportMetaEnv {
   // garde une chaîne vide (cf. `feedbackEnabled` dans src/lib/feedback.ts).
   readonly VITE_SUPABASE_URL: string
   readonly VITE_SUPABASE_PUBLISHABLE_KEY: string
+  // Clé VAPID publique (applicationServerKey du Web Push). Vide si non configurée
+  // → pushConfigured retombe sur false au runtime (cf. src/lib/push.ts).
+  readonly VITE_VAPID_PUBLIC_KEY: string
 }
 
 interface ImportMeta {

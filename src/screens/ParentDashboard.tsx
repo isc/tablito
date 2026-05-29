@@ -7,6 +7,7 @@ import ProgressGrid from '../components/ProgressGrid';
 import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
 import EvolutionChart from '../components/EvolutionChart';
+import NotificationSettings from '../components/NotificationSettings';
 
 const HARD_FACTS_WINDOW = 10;
 const EVOLUTION_WINDOW = 20;
@@ -344,6 +345,8 @@ export default function ParentDashboard({
           </button>
         </div>
       </div>
+
+      <NotificationSettings childName={profile.name} />
 
       <div className="parent-section">
         <h3>Partager Multiplix</h3>

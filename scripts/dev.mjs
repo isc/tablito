@@ -36,6 +36,7 @@ const ENV_DEFINE = {
   'import.meta.env.VITE_BASE_PATH':                '"/"',
   'import.meta.env.VITE_SUPABASE_URL':             JSON.stringify(process.env.VITE_SUPABASE_URL ?? ''),
   'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''),
+  'import.meta.env.VITE_VAPID_PUBLIC_KEY':         JSON.stringify(process.env.VITE_VAPID_PUBLIC_KEY ?? ''),
 }
 
 const TRANSFORM_EXT = new Set(['.ts', '.tsx', '.jsx'])
