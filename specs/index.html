@@ -854,6 +854,13 @@ interface Badge {
     <li>Toutes les données en localStorage, aucune dépendance réseau</li>
     <li>Export/import JSON pour la sauvegarde et le transfert</li>
   </ul>
+
+  <h3 id="pwa-rappel"><span class="num">8.1</span>Rappel quotidien (notification push)</h3>
+  <p><strong>Activation :</strong> opt-in via un toggle « Rappel quotidien » dans l'espace parent. À l'activation, l'app demande la permission de notification puis enregistre la subscription push (endpoint + clés) dans une table Supabase <code>push_subscriptions</code>. Désactivable à tout moment depuis le même toggle (supprime la subscription locale et la ligne en base).</p>
+  <p><strong>Comportement :</strong> une notification par jour à <strong>18 h, heure locale de l'appareil</strong>, invitant l'enfant à réviser. <em>Anti-nag</em> : aucun rappel les jours où la séance est déjà faite (l'app marque la date de dernière séance dans la subscription). Un seul envoi par jour est garanti, même si le planificateur est décalé (dédoublonnage par date locale).</p>
+  <p><strong>Envoi :</strong> aucun serveur permanent. Un cron GitHub Actions (horaire) lit les subscriptions, signe avec la clé VAPID privée (secret du dépôt) et pousse via le service de notification du navigateur. La clé VAPID privée n'est jamais exposée côté client ; les endpoints morts (désinstallation, permission révoquée) sont purgés automatiquement à l'envoi.</p>
+  <p><strong>Confidentialité :</strong> la table n'est jamais lisible côté client (aucune policy de lecture) ; l'endpoint, une URL opaque non devinable, sert de clé pour mettre à jour ou supprimer sa propre subscription. Aucune donnée nominative au-delà du prénom, utilisé pour personnaliser le message.</p>
+  <p><strong>iOS :</strong> le push web n'est disponible que si Multiplix est installé sur l'écran d'accueil (iOS 16.4+). Sinon, le toggle affiche une invite à installer l'app d'abord.</p>
 </section>
 
 <section class="chapter" id="perimetre">
