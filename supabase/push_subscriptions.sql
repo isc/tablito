@@ -26,7 +26,6 @@ create table if not exists public.push_subscriptions (
   p256dh             text not null,              -- clé publique de chiffrement de la subscription
   auth               text not null,              -- secret d'authentification de la subscription
   timezone           text not null,              -- IANA, ex 'Europe/Paris' (fenêtre 18h locale)
-  child_name         text,                       -- prénom, pour personnaliser le message
   last_session_date  text,                       -- 'YYYY-MM-DD' local — anti-nag
   last_notified_date text,                       -- 'YYYY-MM-DD' local — dédoublonnage (1 envoi/jour)
   created_at         timestamptz not null default now(),

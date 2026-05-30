@@ -23,9 +23,11 @@ export default function PrivacyScreen({ onBack }: PrivacyScreenProps) {
           <p>
             Le prénom de l'enfant, sa progression (Leitner, badges, séances,
             streak) et ses préférences (son, mode vocal) sont stockés
-            localement dans le navigateur (<code>localStorage</code>). Rien
-            n'est envoyé sur un serveur — l'application fonctionne entièrement
-            hors-ligne après le premier chargement.
+            localement dans le navigateur (<code>localStorage</code>).
+            L'application fonctionne entièrement hors-ligne après le premier
+            chargement. Par défaut, rien n'est envoyé sur un serveur : les deux
+            seules exceptions sont opt-in et décrites ci-dessous (l'envoi d'un
+            avis et l'activation du rappel quotidien).
           </p>
         </section>
 
@@ -52,12 +54,42 @@ export default function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </section>
 
         <section className="privacy-section">
+          <h2>Ce qui est envoyé si vous activez le rappel quotidien</h2>
+          <p>
+            Le <strong>rappel quotidien</strong> (espace parent) est facultatif.
+            Si vous l'activez, l'appareil enregistre un <em>abonnement push</em>{' '}
+            dans la même base Supabase :
+          </p>
+          <ul>
+            <li>
+              un identifiant technique fourni par le navigateur (l'<em>endpoint</em>{' '}
+              de notification) et ses clés de chiffrement,
+            </li>
+            <li>le fuseau horaire de l'appareil (pour envoyer à 18&nbsp;h heure locale),</li>
+            <li>
+              la date de la dernière séance, uniquement pour ne pas notifier les
+              jours où l'enfant a déjà pratiqué (anti-nag).
+            </li>
+          </ul>
+          <p>
+            <strong>Le prénom n'est pas envoyé</strong> et le message de rappel
+            est générique. Ces informations sont rattachées à l'abonnement (son
+            endpoint), pas à une identité. L'envoi des notifications passe par le
+            service de notification de votre navigateur (Google, Mozilla ou Apple
+            selon le navigateur), comme pour toute notification web. Vous pouvez
+            désactiver le rappel à tout moment depuis le même bouton, ce qui
+            supprime l'abonnement de la base.
+          </p>
+        </section>
+
+        <section className="privacy-section">
           <h2>Ce qui n'est pas collecté</h2>
           <ul>
             <li>Aucun cookie de suivi, aucun analytics tiers.</li>
             <li>Aucune publicité, aucun lien externe côté enfant.</li>
             <li>Aucun nom de famille, école, adresse, ou donnée sensible.</li>
             <li>Aucune donnée vocale n'est enregistrée : le mode vocal utilise l'API du navigateur en local, rien ne sort.</li>
+            <li>Aucun prénom n'est envoyé, même avec le rappel quotidien activé.</li>
           </ul>
         </section>
 
@@ -85,7 +117,7 @@ export default function PrivacyScreen({ onBack }: PrivacyScreenProps) {
           </p>
         </section>
 
-        <p className="privacy-updated">Dernière mise à jour : avril 2026.</p>
+        <p className="privacy-updated">Dernière mise à jour : mai 2026.</p>
       </div>
     </div>
   );

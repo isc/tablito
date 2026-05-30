@@ -346,7 +346,7 @@ export default function ParentDashboard({
         </div>
       </div>
 
-      <NotificationSettings childName={profile.name} />
+      <NotificationSettings />
 
       <div className="parent-section">
         <h3>Partager Multiplix</h3>

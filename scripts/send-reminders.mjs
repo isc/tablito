@@ -80,10 +80,8 @@ async function main() {
   console.log(`${subs.length} subscription(s), ${due.length} à notifier.`);
 
   let sent = 0, removed = 0, failed = 0;
+  const body = "C'est l'heure de réviser tes tables ! 🎯";
   for (const sub of due) {
-    const body = sub.child_name
-      ? `${sub.child_name}, c'est l'heure de réviser tes tables ! 🎯`
-      : "C'est l'heure de réviser tes tables ! 🎯";
     const payload = JSON.stringify({ title: 'Multiplix', body, url: reminderUrl });
     try {
       await webpush.sendNotification(

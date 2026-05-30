@@ -83,7 +83,7 @@ export type SubscribeResult = 'subscribed' | 'denied' | 'unsupported' | 'error';
  * Active le rappel quotidien : demande la permission, crée la subscription
  * push, et upsert la ligne Supabase (clé = endpoint).
  */
-export async function subscribeToReminders(childName: string): Promise<SubscribeResult> {
+export async function subscribeToReminders(): Promise<SubscribeResult> {
   if (!pushConfigured || !pushSupported()) return 'unsupported';
 
   const permission = await Notification.requestPermission();
@@ -112,13 +112,13 @@ export async function subscribeToReminders(childName: string): Promise<Subscribe
     let res = await fetch(TABLE, {
       method: 'POST',
       headers: { ...baseHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ endpoint, p256dh, auth, timezone, child_name: childName || null, updated_at: now }),
+      body: JSON.stringify({ endpoint, p256dh, auth, timezone, updated_at: now }),
     });
     if (res.status === 409) {
       res = await fetch(`${TABLE}?endpoint=eq.${encodeURIComponent(endpoint)}`, {
         method: 'PATCH',
         headers: { ...baseHeaders, Prefer: 'return=minimal' },
-        body: JSON.stringify({ p256dh, auth, timezone, child_name: childName || null, updated_at: now }),
+        body: JSON.stringify({ p256dh, auth, timezone, updated_at: now }),
       });
     }
     if (!res.ok) {

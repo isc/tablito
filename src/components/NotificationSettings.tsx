@@ -8,16 +8,12 @@ import {
 } from '../lib/push';
 import { isIOS, isStandalone } from '../lib/install';
 
-interface NotificationSettingsProps {
-  childName: string;
-}
-
 // Section « Rappel quotidien » de l'espace parent : un simple toggle on/off.
 // L'heure (18h locale) est fixe côté serveur (cf. scripts/send-reminders.mjs) ;
 // pas de sélecteur d'heure. La source de vérité de l'état activé/désactivé est
 // la subscription du navigateur (isSubscribed), pas le profil — on la
 // réconcilie au montage pour gérer une permission révoquée hors de l'app.
-export default function NotificationSettings({ childName }: NotificationSettingsProps) {
+export default function NotificationSettings() {
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,7 +41,7 @@ export default function NotificationSettings({ childName }: NotificationSettings
         await unsubscribeFromReminders();
         setEnabled(false);
       } else {
-        const res = await subscribeToReminders(childName);
+        const res = await subscribeToReminders();
         if (res === 'subscribed') {
           setEnabled(true);
         } else if (res === 'denied') {
@@ -59,7 +55,7 @@ export default function NotificationSettings({ childName }: NotificationSettings
     } finally {
       setBusy(false);
     }
-  }, [busy, enabled, childName]);
+  }, [busy, enabled]);
 
   if (!pushConfigured) return null;
 
