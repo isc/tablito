@@ -162,4 +162,9 @@ export const BADGE_IDS = {
   VELOCE: 'veloce',
   PERSEVERANCE: 'perseverance',
   FLAMME_ETERNELLE: 'flamme-eternelle',
+  // Niveau 2 — division (cf. specs §11). Masqués tant que le niveau n'est pas
+  // débloqué (cf. isDivisionUnlocked / visibleBadgeDefinitions).
+  DIV_PREMIERE_MAITRISE: 'div-premiere-maitrise',
+  DIV_TABLE_PREFIX: 'div-table-',
+  DIV_GENIE: 'div-genie',
 } as const;
