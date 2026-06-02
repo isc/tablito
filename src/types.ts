@@ -105,6 +105,16 @@ export const FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
   voice: 3000,
 };
 
+// Niveau 2 — division : seuil plus généreux que la multiplication (specs §11.6).
+// La division reste plus lente même maîtrisée (effet de taille du problème plus
+// marqué, Curtis et al. 2016) : on tolère ~1 s de plus avant de retirer l'étoile
+// rayonnante / bloquer la montée de boîte. La magnitude (+1 s) est un choix
+// d'implémentation, la spec ne fixant que « plus généreux ».
+export const DIVISION_FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
+  keypad: 6000,
+  voice: 4000,
+};
+
 export interface SessionQuestion {
   fact: MultiFact;
   displayA: number;  // peut être inversé pour varier a×b / b×a

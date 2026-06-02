@@ -5,7 +5,7 @@ import VoiceInput from '../components/VoiceInput';
 import DotGrid from '../components/DotGrid';
 import DivisionFeedbackOverlay from '../components/DivisionFeedbackOverlay';
 import DivisionStrategyHint from '../components/DivisionStrategyHint';
-import { FAST_THRESHOLD_MS } from '../types';
+import { DIVISION_FAST_THRESHOLD_MS } from '../types';
 import { getDivisionFactKey } from '../lib/divisionFacts';
 import { getDivisionStrategy } from '../lib/divisionStrategies';
 import { todayISO } from '../lib/utils';
@@ -126,7 +126,7 @@ export default function DivisionSessionScreen({
 
       const timeMs = Date.now() - questionStartTime.current;
       const correct = value === currentQuestion.fact.quotient;
-      const fast = correct && timeMs < FAST_THRESHOLD_MS[inputMode];
+      const fast = correct && timeMs < DIVISION_FAST_THRESHOLD_MS[inputMode];
 
       totalTimeMs.current += timeMs;
       if (correct) correctCount.current++;

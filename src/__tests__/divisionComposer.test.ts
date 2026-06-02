@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import type { UserProfile } from '../types';
+import { DIVISION_FAST_THRESHOLD_MS } from '../types';
 import { createNewProfile } from '../lib/storage';
 import { createInitialDivisionFacts, parentMultiplicationKey } from '../lib/divisionFacts';
 import { composeDivisionSession } from '../lib/divisionComposer';
@@ -61,6 +62,26 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     }
   });
 
+  it('n\'introduit pas de nouveau fait si un fait introduit est en boîte 1 (pacing §11.6)', () => {
+    const p = withMastered([[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
+    // Un fait de division introduit mais retombé en boîte 1 → pas de nouvelle
+    // intro tant qu'il n'est pas remonté (même règle que la multiplication).
+    p.divisionFacts = p.divisionFacts!.map((f, i) =>
+      i === 0 ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
+    );
+    const session = composeDivisionSession(p, NOW);
+    expect(session.filter((q) => q.isIntroduction)).toHaveLength(0);
+  });
+
+  it('reprend les intros une fois les faits introduits en boîte ≥ 2', () => {
+    const p = withMastered([[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
+    p.divisionFacts = p.divisionFacts!.map((f, i) =>
+      i === 0 ? { ...f, introduced: true, box: 2 as const, nextDue: '2026-12-31' } : f,
+    );
+    const session = composeDivisionSession(p, NOW);
+    expect(session.filter((q) => q.isIntroduction).length).toBeGreaterThan(0);
+  });
+
   it('inclut les faits de division déjà introduits et dus en révision', () => {
     const p = withMastered([[2, 2], [3, 3], [4, 4], [5, 5]]);
     // Introduit + dû (nextDue vide = dû) quelques faits de division.
@@ -102,5 +123,15 @@ describe('Leitner réutilisé pour la division (specs §11.6)', () => {
     const fact = createInitialDivisionFacts()[0]; // nextDue '' → dû
     expect(isDue(fact, NOW)).toBe(true);
     expect(isDue({ ...fact, nextDue: '2026-12-31' }, NOW)).toBe(false);
+  });
+
+  it('seuil de vitesse division plus généreux (§11.6) : 5,5 s au clavier fait monter de boîte', () => {
+    const fact = createInitialDivisionFacts()[0]; // boîte 1
+    // 5500 ms : trop lent pour la multiplication (seuil 5000), mais sous le
+    // seuil division (6000) → la boîte doit monter.
+    const mult = processAnswer(fact, true, 5500, NOW, 'keypad');
+    expect(mult.box).toBe(1); // seuil multiplication par défaut → pas de montée
+    const div = processAnswer(fact, true, 5500, NOW, 'keypad', DIVISION_FAST_THRESHOLD_MS.keypad);
+    expect(div.box).toBe(2); // seuil division → montée
   });
 });

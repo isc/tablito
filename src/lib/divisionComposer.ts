@@ -1,5 +1,5 @@
 import type { UserProfile, DivisionFact, DivisionSessionQuestion } from '../types';
-import { isDue } from './leitner';
+import { isDue, shouldIntroduceNew } from './leitner';
 import { getFactKey } from './facts';
 import { getDivisionFactKey, parentMultiplicationKey } from './divisionFacts';
 import { shuffle, interleaveGreedy } from './utils';
@@ -77,16 +77,21 @@ export function composeDivisionSession(
   );
 
   // Intros : faits non introduits dont le parent multiplicatif est maîtrisé.
-  const eligible = divisionFacts
-    .filter((f) => !f.introduced && masteredKeys.has(parentMultiplicationKey(f)))
-    .sort((a, b) => divisionStage(a) - divisionStage(b) || a.dividend - b.dividend);
-
+  // Même pacing que la multiplication (specs §11.6, §3.4bis) : on n'introduit
+  // de nouveaux faits que si tous ceux déjà introduits sont en boîte ≥ 2 — sinon
+  // un enfant en difficulté accumulerait des faits en boîte 1.
   const newFacts: DivisionFact[] = [];
-  for (const fact of eligible) {
-    if (newFacts.length >= MAX_NEW_FACTS) break;
-    // Ne pas introduire ensemble deux faits qui interfèrent.
-    if (newFacts.some((nf) => questionConflict(nf, fact))) continue;
-    newFacts.push(fact);
+  if (shouldIntroduceNew(divisionFacts)) {
+    const eligible = divisionFacts
+      .filter((f) => !f.introduced && masteredKeys.has(parentMultiplicationKey(f)))
+      .sort((a, b) => divisionStage(a) - divisionStage(b) || a.dividend - b.dividend);
+
+    for (const fact of eligible) {
+      if (newFacts.length >= MAX_NEW_FACTS) break;
+      // Ne pas introduire ensemble deux faits qui interfèrent.
+      if (newFacts.some((nf) => questionConflict(nf, fact))) continue;
+      newFacts.push(fact);
+    }
   }
 
   const reviewBudget = MAX_QUESTIONS - newFacts.length;

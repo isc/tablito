@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type { UserProfile, SessionQuestion, DivisionSessionQuestion, SessionResult, SessionQuestionLog, MultiFact, DivisionFact, Badge, BoxLevel } from './types';
-import { FAST_THRESHOLD_MS } from './types';
+import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDivisionSession } from './lib/divisionComposer';
 import { processAnswer } from './lib/leitner';
@@ -451,7 +451,14 @@ export default function App() {
           prev.divisionFacts.find(
             (f) => f.dividend === fact.dividend && f.divisor === fact.divisor,
           ) ?? fact;
-        const updatedFact = processAnswer(currentFact, correct, timeMs, today, inputMode);
+        const updatedFact = processAnswer(
+          currentFact,
+          correct,
+          timeMs,
+          today,
+          inputMode,
+          DIVISION_FAST_THRESHOLD_MS[inputMode],
+        );
 
         if (updatedFact.history.length > 0) {
           updatedFact.history[updatedFact.history.length - 1].answeredWith = answered;
@@ -508,10 +515,12 @@ export default function App() {
         sessionHistory,
       };
 
+      // wasFast utilise le seuil division (étoile dorée = seuil §11.6), pour
+      // que le badge Véloce s'aligne sur ce que voit l'enfant en séance.
       const sessionStats = {
         consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
         wasFast: sessionQuestionLogs.current.map(
-          (q) => q.correct && q.responseTimeMs < FAST_THRESHOLD_MS[q.inputMode],
+          (q) => q.correct && q.responseTimeMs < DIVISION_FAST_THRESHOLD_MS[q.inputMode],
         ),
       };
       const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);

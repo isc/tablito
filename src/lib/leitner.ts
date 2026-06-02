@@ -1,4 +1,4 @@
-import type { MultiFact, BoxLevel, Attempt } from '../types';
+import type { BoxLevel, Attempt } from '../types';
 import { BOX_INTERVALS, FAST_THRESHOLD_MS } from '../types';
 
 // Forme minimale de planification Leitner, commune à MultiFact et DivisionFact.
@@ -57,6 +57,9 @@ export function processAnswer<T extends Schedulable>(
   responseTimeMs: number,
   now: string,
   inputMode: 'keypad' | 'voice',
+  // Seuil de rapidité (montée de boîte). Par défaut celui de la multiplication ;
+  // la division passe un seuil plus généreux (specs §11.6).
+  fastThresholdMs: number = FAST_THRESHOLD_MS[inputMode],
 ): T {
   const attempt: Attempt = {
     date: now,
@@ -79,7 +82,7 @@ export function processAnswer<T extends Schedulable>(
   }
 
   // Correct answer
-  const isFastEnough = responseTimeMs < FAST_THRESHOLD_MS[inputMode];
+  const isFastEnough = responseTimeMs < fastThresholdMs;
 
   if (isFastEnough) {
     const newBox = Math.min(fact.box + 1, 5) as BoxLevel;
@@ -113,8 +116,11 @@ const TAIL_INTRO_THRESHOLD = 2;
 /**
  * Returns true if a new fact should be introduced.
  * Condition: all previously introduced facts are at box 2 or above.
+ *
+ * Agnostique au type de fait (multiplication ou division) : ne lit que
+ * `introduced` et `box`. Réutilisé tel quel par le niveau 2 (specs §11.6).
  */
-export function shouldIntroduceNew(facts: MultiFact[]): boolean {
+export function shouldIntroduceNew(facts: { introduced: boolean; box: BoxLevel }[]): boolean {
   const introduced = facts.filter((f) => f.introduced);
   if (introduced.length === 0) return true;
   if (facts.length - introduced.length <= TAIL_INTRO_THRESHOLD) return true;
