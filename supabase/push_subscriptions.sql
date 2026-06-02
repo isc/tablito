@@ -47,3 +47,31 @@ create policy "client update" on public.push_subscriptions
 create policy "client delete" on public.push_subscriptions
   for delete to anon, authenticated using (true);
 -- (service_role bypasse la RLS — utilisé par le cron d'envoi)
+
+-- Anti-nag : marquage de la séance du jour.
+--
+-- ⚠ On NE peut PAS faire ça via un PATCH client direct. Sous RLS, un UPDATE
+-- filtré (`WHERE endpoint = …`) doit d'abord LIRE la ligne ciblée, donc les
+-- policies SELECT s'appliquent — or on en refuse une exprès (anti-énumération).
+-- Sans ligne visible, l'UPDATE matche 0 ligne *tout en renvoyant 204* :
+-- last_session_date n'était jamais écrit et l'anti-nag ne se déclenchait jamais.
+--
+-- La fonction ci-dessous est SECURITY DEFINER (s'exécute en tant que `postgres`,
+-- propriétaire de la table → bypasse RLS) et ne RETOURNE RIEN : le client peut
+-- mettre à jour SA ligne (clé = endpoint opaque) sans qu'aucune lecture/énumération
+-- de la table ne soit possible. Appelée par src/lib/push.ts syncLastSession via
+-- POST /rest/v1/rpc/mark_reminder_session.
+create or replace function public.mark_reminder_session(p_endpoint text, p_session_date text)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.push_subscriptions
+     set last_session_date = p_session_date,
+         updated_at = now()
+   where endpoint = p_endpoint;
+$$;
+
+revoke all on function public.mark_reminder_session(text, text) from public;
+grant execute on function public.mark_reminder_session(text, text) to anon, authenticated;

@@ -159,10 +159,16 @@ export async function syncLastSession(): Promise<void> {
     const sub = await activeSubscription();
     if (!sub) return;
     const { endpoint } = serialize(sub);
-    await fetch(`${TABLE}?endpoint=eq.${encodeURIComponent(endpoint)}`, {
-      method: 'PATCH',
-      headers: { ...baseHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ last_session_date: localToday(), updated_at: new Date().toISOString() }),
+    // On passe par un RPC SECURITY DEFINER (pas un PATCH direct) : sous RLS, un
+    // UPDATE filtré par `WHERE endpoint = …` lit la table, donc les policies
+    // SELECT s'appliquent — or on en refuse exprès une (anti-énumération). Sans
+    // ligne « visible », l'UPDATE matche 0 ligne tout en renvoyant 204, et
+    // last_session_date n'était jamais écrit (anti-nag cassé). La fonction
+    // bypasse RLS et ne retourne rien, donc l'anti-énumération reste intacte.
+    await fetch(`${url}/rest/v1/rpc/mark_reminder_session`, {
+      method: 'POST',
+      headers: baseHeaders,
+      body: JSON.stringify({ p_endpoint: endpoint, p_session_date: localToday() }),
     });
   } catch {
     // best-effort
