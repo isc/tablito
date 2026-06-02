@@ -344,6 +344,7 @@
     <li><a href="#pwa">Fonctionnalités PWA / hors-ligne</a></li>
     <li><a href="#perimetre">Périmètre — ce que l'app ne fait PAS</a></li>
     <li><a href="#metriques">Métriques de succès</a></li>
+    <li><a href="#division">Niveau 2 — Réviser par la division</a></li>
     <li><a href="#evolutions">Évolutions possibles (V2)</a></li>
     <li><a href="#references">Références</a></li>
   </ol>
@@ -866,13 +867,16 @@ interface Badge {
 <section class="chapter" id="perimetre">
   <h2><span class="num">9</span>Périmètre — Ce que l'application ne fait PAS</h2>
   <ul>
-    <li>Pas de division, addition ou soustraction (focus unique)</li>
+    <li>Pas d'addition ni de soustraction (le périmètre reste le seul champ multiplicatif)</li>
     <li>Pas de comptes utilisateurs / backend / authentification</li>
     <li>Pas de classement entre enfants (pas de compétition)</li>
     <li>Pas de mode examen chronométré</li>
     <li>Pas de récompenses payantes</li>
     <li>Pas de collecte de données personnelles</li>
   </ul>
+  <blockquote class="note">
+    <p><strong>Division :</strong> exclue du cœur v1 (focus unique sur la mémorisation des tables), elle n'est plus écartée sur le principe — elle est spécifiée comme <strong>niveau 2 optionnel</strong> (§11) : un track séparé qui révise les mêmes faits sous forme de division, déclenché uniquement après maîtrise multiplicative. Un enfant qui travaille encore ses tables ne le voit pas, donc le focus unique de la v1 est préservé.</p>
+  </blockquote>
 </section>
 
 <section class="chapter" id="metriques">
@@ -889,28 +893,95 @@ interface Badge {
   </table>
 </section>
 
+<section class="chapter" id="division">
+  <h2><span class="num">11</span>Niveau 2 — Réviser les faits par la division</h2>
+  <p>Le cœur de l'application (chapitres 1 à 10) poursuit un objectif <strong>borné</strong> : amener les 36 faits multiplicatifs en boîte 5. Une fois cet objectif atteint, l'enfant a obtenu tous les badges et l'image mystère est entièrement révélée — l'app a, par design, <strong>rempli son rôle</strong> (§4.1, §5.1). Le <strong>niveau 2</strong> est une extension <em>optionnelle</em> qui prolonge le parcours <strong>sans rouvrir</strong> le chantier multiplicatif : il re-pratique exactement les mêmes faits, mais posés <strong>sous forme de division</strong> (« 56 ÷ 7 = ? »). C'est l'évolution « lien division » historiquement listée en V2, ici pleinement spécifiée.</p>
+  <blockquote class="note">
+    <p><strong>Statut.</strong> Le niveau 2 se situe <em>au-delà</em> du périmètre v1 (§9). Il ne se déclenche jamais tant que la multiplication n'est pas (quasi) maîtrisée — un enfant qui travaille encore ses tables ne le voit pas. Le focus unique de la v1 reste donc préservé.</p>
+  </blockquote>
+
+  <h3 id="division-pourquoi"><span class="num">11.1</span>Pourquoi la division consolide la multiplication</h3>
+  <p class="source"><strong>Sources :</strong> LeFevre &amp; Morris (1999), Mauro, LeFevre &amp; Morris (2003), Campbell (1999), De Brauwer &amp; Fias (2009), Huber et al. (2013)</p>
+  <p>La division n'est pas un domaine cognitif séparé : <strong>on résout une division en mobilisant la multiplication.</strong> « 56 ÷ 7 » est traité comme « 7 fois combien font 56 ? » — une récupération à <em>facteur manquant</em> dans la table déjà apprise. Présenter une division en format multiplicatif accélère la réponse, et résoudre une division facilite ensuite la multiplication correspondante (asymétrie de médiation, observée surtout pour les grands faits). Réviser les faits sous forme de division revient donc à faire du <em>retrieval practice</em> sur le réseau multiplicatif par une autre porte d'entrée — pas à apprendre un corpus neuf.</p>
+  <p>Chez l'enfant, multiplication et division se développent en parallèle dès le CE2, et la corrélation entre les deux est d'autant <strong>plus forte que l'élève est performant</strong>. Le débat théorique (réseaux séparés reliés par médiation <em>vs.</em> représentation unique partagée) n'est pas tranché, mais <strong>les deux modèles prédisent qu'entraîner un membre renforce son inverse</strong> : la prémisse du niveau 2 tient quel que soit le camp.</p>
+
+  <h3 id="division-inventaire"><span class="num">11.2</span>Inventaire des faits de division</h3>
+  <p class="source"><strong>Source :</strong> Campbell (1997)</p>
+  <p>Chaque fait multiplicatif <code>a×b=P</code> engendre les divisions <code>P÷a=b</code> et <code>P÷b=a</code>. Contrairement à la multiplication, <strong>la division n'est pas commutative</strong> : « 56 ÷ 7 = 8 » et « 56 ÷ 8 = 7 » sont deux faits distincts, avec deux réponses différentes (le transfert entre eux est sensible à l'ordre, alors qu'en multiplication a×b et b×a transfèrent à l'identique). La réduction par commutativité qui ramenait les 100 multiplications à 36 faits ne s'applique donc pas :</p>
+  <ul>
+    <li>28 faits non-carrés × 2 sens = <strong>56 faits</strong></li>
+    <li>8 carrés (49÷7=7, …, 81÷9=9) × 1 sens = <strong>8 faits</strong></li>
+    <li><strong>Total : 64 faits de division</strong></li>
+  </ul>
+  <p>Les divisions par 1 et par 10 restent traitées comme des <strong>règles</strong>, jamais mémorisées — cohérent avec l'exclusion des ×1 et ×10 (§2.3). Les réponses des 64 faits sont toujours des nombres de 2 à 9 (un seul chiffre) : l'<strong>entrée reste plus simple</strong> qu'en multiplication (jamais de résultat à deux chiffres à saisir).</p>
+
+  <h3 id="division-declenchement"><span class="num">11.3</span>Déclenchement</h3>
+  <p class="source"><strong>Sources :</strong> Programmes de l'Éducation nationale (attendus de fin de CE2) ; Common Core State Standards (3.OA) ; Van de Walle</p>
+  <p>Un fait de division n'est introduit que lorsque le fait multiplicatif parent est <strong>maîtrisé (boîte 5)</strong>. C'est à la fois la condition pédagogique (la division s'appuie sur la table connue, jamais l'inverse) et la réponse à la « falaise de complétion ». Le niveau lui-même se débloque sur le même principe que la règle bonus ×11 (§2.3) : un critère fondé sur les <strong>badges</strong> — donc permanent, une mauvaise journée ne « reprend » pas l'accès — typiquement l'obtention du badge « Génie des maths » (ou des 8 badges « Table de N »).</p>
+  <p>Le timing colle au curriculum : à la fin du CE2 (l'âge de l'utilisatrice cible), les programmes français attendent <em>à la fois</em> la connaissance des tables de 2 à 9 <em>et</em> l'obtention du quotient et du reste d'une division euclidienne par un nombre à un chiffre. La division n'est donc pas en avance — elle est attendue la même année. Common Core enseigne d'ailleurs multiplication et division ensemble dès le grade 3 via la relation d'inversion.</p>
+  <ul>
+    <li><a href="https://eduscol.education.gouv.fr/sites/default/files/document/06-maths-ce2-attendus-eduscol1114736pdf-74634.pdf">Mathématiques CE2 — Attendus de fin d'année (Éduscol)</a></li>
+    <li><a href="https://www.thecorestandards.org/Math/Content/3/OA/">Common Core — Grade 3, Operations &amp; Algebraic Thinking (3.OA)</a></li>
+  </ul>
+
+  <h3 id="division-strategie"><span class="num">11.4</span>Stratégie « pense à la multiplication »</h3>
+  <p class="source"><strong>Sources :</strong> Robinson &amp; Dubé (2009), Robinson &amp; LeFevre (2012)</p>
+  <p>Point crucial : même avec une excellente fluence multiplicative, <strong>les enfants n'exploitent pas spontanément la relation d'inversion</strong> — il faut l'enseigner explicitement. Le niveau 2 ne suppose donc jamais que l'enfant « devinera » 56 ÷ 7 parce qu'il sait 7 × 8. L'astuce de dérivation est le <strong>cœur</strong> de l'introduction, pas un bonus :</p>
+  <blockquote class="note">
+    <p>« 56 ÷ 7, c'est : <strong>7 fois combien font 56 ?</strong> »</p>
+  </blockquote>
+  <p>Comme pour les stratégies multiplicatives (§3.4bis), l'astuce est affichée à l'introduction et en cas d'erreur pour les faits en boîte ≤ 2, et énoncée à voix haute. C'est le prolongement direct de la philosophie de dérivation existante, pas un mécanisme neuf.</p>
+
+  <h3 id="division-image"><span class="num">11.5</span>Image mystère dédiée</h3>
+  <p>La grille support reste la <strong>même grille 8×8 = 64 cases</strong> (§5.1). La case <code>(r,c)</code> porte la division « produit de r et c, divisé par r » : la case (7,8) est 56÷7, la case (8,7) est 56÷8. Les 64 faits se posent ainsi <strong>un par case, en bijection parfaite</strong> — sans la redondance de la multiplication (où 36 faits se répartissaient sur 64 cases).</p>
+  <p><strong>La symétrie miroir disparaît</strong>, et c'est <em>fidèle</em> : là où les deux cases (a,b) et (b,a) se révélaient en synchrone pour matérialiser la commutativité (§5.1), elles évoluent désormais indépendamment — une case peut être nette pendant que sa miroir reste floue. Le visuel enseigne ainsi que 56÷7 et 56÷8 sont deux questions distinctes. Ce n'est pas un compromis sur le support, c'est une représentation correcte de la non-commutativité.</p>
+  <p>L'image de division est <strong>une image propre, distincte</strong> de celle de la multiplication : cette dernière reste affichée, complète, comme témoin de la réussite (§5.1) — on ne la re-floute jamais. Conséquence : à grille identique, l'image de division demande <strong>64 maîtrises indépendantes</strong> (contre 36 en multiplication, où maîtriser un fait dévoilait deux cases d'un coup), soit un parcours sensiblement plus long — exactement l'effet recherché pour prolonger l'engagement au-delà de la complétion.</p>
+
+  <h3 id="division-algo"><span class="num">11.6</span>Adaptations de l'algorithme</h3>
+  <p class="source"><strong>Sources :</strong> Campbell (1997), Curtis, Huebner &amp; LeFevre (2016)</p>
+  <p>Le moteur Leitner, l'entrelacement et la composition de séance (§1, §6) sont agnostiques au type de fait et se réutilisent tels quels. Trois ajustements propres à la division :</p>
+  <ul>
+    <li><strong>Anti-interférence renforcée (§1.2) :</strong> 56÷7 et 56÷8 partagent le dividende et sont hautement confusibles — ils ne doivent jamais figurer dans la même série. Les erreurs de division sont typiquement des « erreurs de table » (une réponse dont le produit implicite est proche du dividende), ce qui confirme le besoin de les espacer.</li>
+    <li><strong>Seuil de vitesse plus généreux (§3.3) :</strong> la division reste plus lente que la multiplication, même maîtrisée (effet de taille du problème plus marqué) ; le seuil de l'étoile rayonnante et de la montée de boîte doit en tenir compte.</li>
+    <li><strong>Bienveillance accrue (§1.1, §7.2) :</strong> s'attendre à davantage d'erreurs et de réponses lentes qu'en multiplication ; le principe « un fait oublié revient sans notion d'échec » est d'autant plus important.</li>
+  </ul>
+
+  <h3 id="division-reserves"><span class="num">11.7</span>Réserve méthodologique honnête</h3>
+  <p class="source"><strong>Sources :</strong> Axtell et al. (2009) ; Codding, Burns &amp; Lukito (2011)</p>
+  <p>Des interventions de fluence ciblant <em>directement</em> la division existent et fonctionnent (cover-copy-compare, taped problems, detect-practice-repair). En revanche, les bénéfices de la <strong>répétition espacée</strong> sont démontrés sur la multiplication et la rétention en général, mais <strong>pas directement sur les faits de division</strong> : les méta-analyses traitent la division au sein des « faits de base » sans isoler son effet, et l'opération s'avère être un modérateur significatif. Appliquer Leitner à la division est donc une <strong>généralisation plausible mais non directement prouvée</strong> — un pari raisonné, assumé comme tel, à surveiller si l'usage révélait un comportement différent de la multiplication.</p>
+</section>
+
 <section class="chapter" id="evolutions">
-  <h2><span class="num">11</span>Évolutions possibles (V2)</h2>
+  <h2><span class="num">12</span>Évolutions possibles (V2)</h2>
   <ul>
     <li>Mode défi : séance bonus optionnelle le week-end</li>
     <li>Mode multi-enfant (plusieurs profils sur le même appareil)</li>
-    <li>Lien division : une fois un fait maîtrisé en multiplication, introduction du fait de division associé</li>
   </ul>
 </section>
 
 <section class="chapter" id="references">
-  <h2><span class="num">12</span>Références</h2>
+  <h2><span class="num">13</span>Références</h2>
   <ol class="references">
+    <li>Axtell, P. K., McCallum, R. S., Bell, S. M., &amp; Poncy, B. (2009). Developing math automaticity using a classwide fluency building procedure for middle school students: A preliminary study. <em>Psychology in the Schools, 46</em>(6), 526–538.</li>
     <li>Brendefur, J., Strother, S., Thiede, K., &amp; Appleton, S. (2015). Developing multiplication fact fluency. <em>Advances in Social Sciences Research Journal, 2</em>(8). <a href="https://doi.org/10.14738/assrj.28.1396">doi:10.14738/assrj.28.1396</a></li>
     <li>Burns, M. K., Kanive, R., &amp; DeGrande, M. (2012). Effect of a computer-delivered math fact intervention as a supplemental intervention for math in third and fourth grades. <em>Remedial and Special Education, 33</em>(3), 184–191. <a href="https://doi.org/10.1177/0741932510381652">doi:10.1177/0741932510381652</a></li>
     <li>Butler, R. (1988). Enhancing and undermining intrinsic motivation: The effects of task-involving and ego-involving evaluation on interest and performance. <em>British Journal of Educational Psychology, 58</em>(1), 1–14. <a href="https://doi.org/10.1111/j.2044-8279.1988.tb00874.x">doi:10.1111/j.2044-8279.1988.tb00874.x</a></li>
+    <li>Campbell, J. I. D. (1997). On the relation between skilled performance of simple division and multiplication. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition, 23</em>(5), 1140–1159. <a href="https://doi.org/10.1037/0278-7393.23.5.1140">doi:10.1037/0278-7393.23.5.1140</a></li>
+    <li>Campbell, J. I. D. (1999). Division by multiplication. <em>Memory &amp; Cognition, 27</em>(5), 791–802. <a href="https://doi.org/10.3758/BF03198532">doi:10.3758/BF03198532</a></li>
     <li>Cepeda, N. J., Vul, E., Rohrer, D., Wixted, J. T., &amp; Pashler, H. (2008). Spacing effects in learning: A temporal ridgeline of optimal retention. <em>Psychological Science, 19</em>(11), 1095–1102. <a href="https://doi.org/10.1111/j.1467-9280.2008.02209.x">doi:10.1111/j.1467-9280.2008.02209.x</a></li>
     <li>Codding, R. S., Burns, M. K., &amp; Lukito, G. (2011). Meta-analysis of mathematic basic-fact fluency interventions: A component analysis. <em>Learning Disabilities Research &amp; Practice, 26</em>(1), 36–47. <a href="https://doi.org/10.1111/j.1540-5826.2010.00323.x">doi:10.1111/j.1540-5826.2010.00323.x</a></li>
     <li>Cowan, R., Donlan, C., Shepherd, D.-L., Cole-Fletcher, R., Saxton, M., &amp; Hurry, J. (2011). Basic calculation proficiency and mathematics achievement in elementary school children. <em>Journal of Educational Psychology, 103</em>(4), 786–803. <a href="https://doi.org/10.1037/a0024556">doi:10.1037/a0024556</a></li>
+    <li>Curtis, E. T., Huebner, M. G., &amp; LeFevre, J.-A. (2016). The relationship between problem size and fixation patterns during addition, subtraction, multiplication, and division. <em>Journal of Numerical Cognition, 2</em>(2), 91–115. <a href="https://doi.org/10.5964/jnc.v2i2.17">doi:10.5964/jnc.v2i2.17</a></li>
+    <li>De Brauwer, J., &amp; Fias, W. (2009). A longitudinal study of children's performance on simple multiplication and division problems. <em>Developmental Psychology, 45</em>(5), 1480–1496. <a href="https://doi.org/10.1037/a0015465">doi:10.1037/a0015465</a></li>
     <li>Dotan, D., &amp; Zviran-Ginat, S. (2022). Elementary math in elementary school: The effect of interference on learning the multiplication table. <em>Cognitive Research: Principles and Implications, 7</em>, 101. <a href="https://doi.org/10.1186/s41235-022-00451-0">doi:10.1186/s41235-022-00451-0</a></li>
     <li>Hattie, J., &amp; Timperley, H. (2007). The power of feedback. <em>Review of Educational Research, 77</em>(1), 81–112. <a href="https://doi.org/10.3102/003465430298487">doi:10.3102/003465430298487</a></li>
+    <li>Huber, S., Fischer, U., Moeller, K., &amp; Nuerk, H.-C. (2013). On the interrelation of multiplication and division in secondary school children. <em>Frontiers in Psychology, 4</em>, 740. <a href="https://doi.org/10.3389/fpsyg.2013.00740">doi:10.3389/fpsyg.2013.00740</a></li>
     <li>Kang, S. H. K. (2016). Spaced repetition promotes efficient and effective learning. <em>Policy Insights from the Behavioral and Brain Sciences, 3</em>(1), 12–19. <a href="https://doi.org/10.1177/2372732215624708">doi:10.1177/2372732215624708</a></li>
+    <li>LeFevre, J.-A., &amp; Morris, J. (1999). More on the relation between division and multiplication in simple arithmetic: Evidence for mediation of division solutions via multiplication. <em>Memory &amp; Cognition, 27</em>(5), 803–812. <a href="https://doi.org/10.3758/BF03198533">doi:10.3758/BF03198533</a></li>
+    <li>Mauro, D. G., LeFevre, J.-A., &amp; Morris, J. (2003). Effects of problem format on division and multiplication performance: Division facts are mediated via multiplication-based representations. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition, 29</em>(2), 163–170. <a href="https://doi.org/10.1037/0278-7393.29.2.163">doi:10.1037/0278-7393.29.2.163</a></li>
     <li>Rea, C. P., &amp; Modigliani, V. (1985). The effect of expanded versus massed practice on the retention of multiplication facts and spelling lists. <em>Human Learning, 4</em>, 11–18.</li>
+    <li>Robinson, K. M., &amp; Dubé, A. K. (2009). Children's understanding of the inverse relation between multiplication and division. <em>Journal of Experimental Child Psychology</em>. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0885201408000889">ScienceDirect</a></li>
+    <li>Robinson, K. M., &amp; LeFevre, J.-A. (2012). The inverse relation between multiplication and division: Concepts, procedures, and a cognitive framework. <em>Educational Studies in Mathematics, 79</em>(3), 409–428. <a href="https://doi.org/10.1007/s10649-011-9330-5">doi:10.1007/s10649-011-9330-5</a></li>
     <li>Rohrer, D., Dedrick, R. F., &amp; Burgess, K. (2014). The benefit of interleaved mathematics practice is not limited to superficially similar kinds of problems. <em>Psychonomic Bulletin &amp; Review, 21</em>(5), 1323–1330. <a href="https://doi.org/10.3758/s13423-014-0588-3">doi:10.3758/s13423-014-0588-3</a></li>
     <li>Rohrer, D., &amp; Taylor, K. (2007). The shuffling of mathematics problems improves learning. <em>Instructional Science, 35</em>, 481–498. <a href="https://doi.org/10.1007/s11251-007-9015-8">doi:10.1007/s11251-007-9015-8</a></li>
   </ol>
@@ -920,7 +991,7 @@ interface Badge {
 </main>
 
 <footer class="page-footer">
-  <p>Document de spécifications — v1.0 — Avril 2026</p>
+  <p>Document de spécifications — v1.1 — Juin 2026</p>
   <p><a href="https://github.com/isc/multiplix">Code source sur GitHub</a></p>
 </footer>
 
