@@ -101,26 +101,24 @@ export async function subscribeToReminders(): Promise<SubscribeResult> {
 
     const { endpoint, p256dh, auth } = serialize(sub);
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const now = new Date().toISOString();
 
-    // On n'utilise PAS l'upsert PostgREST (Prefer: resolution=merge-duplicates) :
-    // sous RLS, le ON CONFLICT DO UPDATE exige une policy SELECT, qu'on refuse
-    // volontairement (l'endpoint opaque sert de secret ; personne ne doit pouvoir
-    // lister/énumérer les subscriptions). À la place : INSERT, et si l'endpoint
-    // existe déjà (409, unique_violation) on PATCH les champs mutables — ce qui
-    // préserve last_session_date / last_notified_date de la ligne existante.
-    let res = await fetch(TABLE, {
+    // Upsert via un RPC SECURITY DEFINER, pas un INSERT/PATCH PostgREST direct :
+    // sous RLS, un ON CONFLICT DO UPDATE (comme un PATCH filtré par endpoint)
+    // doit lire la ligne ciblée, donc les policies SELECT s'appliquent — or on en
+    // refuse une exprès (l'endpoint opaque sert de secret, personne ne doit pouvoir
+    // énumérer les abonnés). La fonction bypasse RLS et ne retourne rien : on peut
+    // upsert SA ligne sans rendre la table lisible. Le ON CONFLICT préserve
+    // last_session_date / last_notified_date (la fonction ne les touche pas).
+    const res = await fetch(`${url}/rest/v1/rpc/upsert_push_subscription`, {
       method: 'POST',
-      headers: { ...baseHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ endpoint, p256dh, auth, timezone, updated_at: now }),
+      headers: baseHeaders,
+      body: JSON.stringify({
+        p_endpoint: endpoint,
+        p_p256dh: p256dh,
+        p_auth: auth,
+        p_timezone: timezone,
+      }),
     });
-    if (res.status === 409) {
-      res = await fetch(`${TABLE}?endpoint=eq.${encodeURIComponent(endpoint)}`, {
-        method: 'PATCH',
-        headers: { ...baseHeaders, Prefer: 'return=minimal' },
-        body: JSON.stringify({ p256dh, auth, timezone, updated_at: now }),
-      });
-    }
     if (!res.ok) {
       // L'enregistrement serveur a échoué : retirer la subscription locale pour
       // ne pas laisser un abonnement que le cron ignore.

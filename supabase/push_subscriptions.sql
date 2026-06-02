@@ -15,10 +15,16 @@
 --   - cron d'envoi (scripts/send-reminders.mjs, clé secrète, rôle service_role) :
 --     bypass RLS, lit toutes les lignes, patch `last_notified_date`, purge les 410.
 --
--- Note : on N'utilise PAS l'upsert PostgREST (resolution=merge-duplicates) côté
--- client. Le ON CONFLICT DO UPDATE qui en découle exige une policy SELECT sous
--- RLS, qu'on refuse ici. Le client fait donc INSERT puis PATCH si 409 (cf.
--- src/lib/push.ts subscribeToReminders).
+-- Note : le client n'écrit JAMAIS la table en direct (ni INSERT, ni PATCH, ni
+-- upsert PostgREST). Sous RLS, toute écriture filtrée par endpoint (PATCH /
+-- DELETE / ON CONFLICT) doit lire la ligne ciblée, donc une policy SELECT serait
+-- requise — qu'on refuse ici (anti-énumération). Sans ligne « visible »,
+-- l'écriture matche 0 ligne *en renvoyant 204* : échec silencieux. Le client
+-- passe donc par deux fonctions SECURITY DEFINER (upsert_push_subscription pour
+-- (dé)s'abonner, mark_reminder_session pour l'anti-nag) qui bypassent RLS et ne
+-- retournent rien — cf. src/lib/push.ts. Seul le DELETE de désabonnement reste
+-- best-effort en direct : il échoue en silence mais le cron purge l'endpoint au
+-- premier 410, et la subscription locale est retirée côté navigateur.
 
 create table if not exists public.push_subscriptions (
   id                 uuid primary key default gen_random_uuid(),
@@ -48,18 +54,35 @@ create policy "client delete" on public.push_subscriptions
   for delete to anon, authenticated using (true);
 -- (service_role bypasse la RLS — utilisé par le cron d'envoi)
 
--- Anti-nag : marquage de la séance du jour.
---
--- ⚠ On NE peut PAS faire ça via un PATCH client direct. Sous RLS, un UPDATE
--- filtré (`WHERE endpoint = …`) doit d'abord LIRE la ligne ciblée, donc les
--- policies SELECT s'appliquent — or on en refuse une exprès (anti-énumération).
--- Sans ligne visible, l'UPDATE matche 0 ligne *tout en renvoyant 204* :
--- last_session_date n'était jamais écrit et l'anti-nag ne se déclenchait jamais.
---
--- La fonction ci-dessous est SECURITY DEFINER (s'exécute en tant que `postgres`,
--- propriétaire de la table → bypasse RLS) et ne RETOURNE RIEN : le client peut
--- mettre à jour SA ligne (clé = endpoint opaque) sans qu'aucune lecture/énumération
--- de la table ne soit possible. Appelée par src/lib/push.ts syncLastSession via
+-- Fonctions d'écriture client (SECURITY DEFINER, s'exécutent en tant que
+-- `postgres` propriétaire de la table → bypassent RLS, ne retournent rien). Voir
+-- la note d'en-tête : un INSERT/PATCH/upsert direct filtré par endpoint matcherait
+-- 0 ligne sous RLS sans policy SELECT, qu'on refuse volontairement.
+
+-- (Dé)s'abonner : upsert de la ligne par endpoint. Le ON CONFLICT préserve
+-- last_session_date / last_notified_date (non touchés ici). Appelée par
+-- src/lib/push.ts subscribeToReminders via POST /rest/v1/rpc/upsert_push_subscription.
+create or replace function public.upsert_push_subscription(
+  p_endpoint text, p_p256dh text, p_auth text, p_timezone text
+) returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into public.push_subscriptions (endpoint, p256dh, auth, timezone, updated_at)
+    values (p_endpoint, p_p256dh, p_auth, p_timezone, now())
+  on conflict (endpoint) do update
+    set p256dh = excluded.p256dh,
+        auth = excluded.auth,
+        timezone = excluded.timezone,
+        updated_at = now();
+$$;
+
+revoke all on function public.upsert_push_subscription(text, text, text, text) from public;
+grant execute on function public.upsert_push_subscription(text, text, text, text) to anon, authenticated;
+
+-- Anti-nag : marquage de la séance du jour, pour que le cron saute l'envoi un
+-- jour de séance. Appelée par src/lib/push.ts syncLastSession via
 -- POST /rest/v1/rpc/mark_reminder_session.
 create or replace function public.mark_reminder_session(p_endpoint text, p_session_date text)
 returns void
