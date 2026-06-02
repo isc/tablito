@@ -43,7 +43,7 @@ export interface Badge {
 
 // `village` est réservé au guide utilisateur (pour ne pas spoiler) ;
 // les profils réels tirent aléatoirement dans MYSTERY_POOL à la création.
-export const MYSTERY_POOL = ['market', 'ocean'] as const;
+export const MYSTERY_POOL = ['market', 'ocean', 'garden', 'savanna', 'city', 'space'] as const;
 
 export type MysteryTheme = (typeof MYSTERY_POOL)[number] | 'village';
 
