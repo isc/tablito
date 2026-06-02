@@ -18,6 +18,21 @@ export interface MultiFact {
   introduced: boolean; // le fait a-t-il été présenté conceptuellement ?
 }
 
+// === Niveau 2 — division (cf. specs §11) ===
+// La division n'est PAS commutative : 56÷7 et 56÷8 sont deux faits distincts.
+// On stocke (dividend, divisor, quotient) sans normalisation. 64 faits au
+// total (un par couple (a,b) ∈ [2..9]², via (a×b) ÷ a = b).
+export interface DivisionFact {
+  dividend: number;   // le nombre à diviser (P = divisor × quotient) : 24, 56…
+  divisor: number;    // diviseur affiché (2-9)
+  quotient: number;   // réponse attendue (2-9)
+  box: 1 | 2 | 3 | 4 | 5;
+  lastSeen: string;    // ISO date
+  nextDue: string;     // ISO date
+  history: Attempt[];
+  introduced: boolean;
+}
+
 export interface Badge {
   id: string;
   name: string;
@@ -52,6 +67,15 @@ export interface UserProfile {
   // elle-même reste visible dès le déblocage.
   hasSeenRule11: boolean;
   mysteryTheme: MysteryTheme;
+  // === Niveau 2 — division (cf. specs §11). Champs optionnels : absents des
+  // profils v1, backfillés par migrateProfile au chargement. ===
+  // Les 64 faits de division. Toujours présents après migration (même tant
+  // que le niveau n'est pas débloqué — ils restent box 1 / non introduits).
+  divisionFacts?: DivisionFact[];
+  // Image mystère dédiée à la division (specs §11.5), tirée distincte de
+  // `mysteryTheme` pour ne jamais re-flouter l'image multiplication conquise.
+  divisionMysteryTheme?: MysteryTheme;
+  hasSeenDivisionIntro?: boolean;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -88,6 +112,16 @@ export interface SessionQuestion {
   isIntroduction: boolean;
   isRetry: boolean;   // re-posée après erreur dans la même séance
   isBonusReview: boolean; // révision bonus (pas de changement de boîte)
+}
+
+// Question de division. Pas de displayA/displayB inversables : la division
+// n'étant pas commutative (specs §11.2), la question est toujours posée
+// « dividend ÷ divisor = ? ».
+export interface DivisionSessionQuestion {
+  fact: DivisionFact;
+  isIntroduction: boolean;
+  isRetry: boolean;
+  isBonusReview: boolean;
 }
 
 // Log par question pour les séances enregistrées depuis l'ajout du champ.

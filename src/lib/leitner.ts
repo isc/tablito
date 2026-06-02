@@ -1,5 +1,16 @@
-import type { MultiFact, BoxLevel } from '../types';
+import type { MultiFact, BoxLevel, Attempt } from '../types';
 import { BOX_INTERVALS, FAST_THRESHOLD_MS } from '../types';
+
+// Forme minimale de planification Leitner, commune à MultiFact et DivisionFact.
+// Les fonctions ci-dessous opèrent uniquement sur ces champs (jamais sur a/b/
+// product ni dividend/divisor) : elles sont donc agnostiques au type de fait
+// et réutilisées telles quelles par le niveau 2 division (cf. specs §11.6).
+type Schedulable = {
+  box: BoxLevel;
+  lastSeen: string;
+  nextDue: string;
+  history: Attempt[];
+};
 
 /**
  * Adds `days` calendar days to an ISO date string and returns the new ISO date string.
@@ -22,7 +33,7 @@ export function computeNextDue(box: BoxLevel, lastSeen: string): string {
  * Returns true if a fact is due for review (nextDue <= now).
  * A fact with no nextDue (empty string) is always due.
  */
-export function isDue(fact: MultiFact, now: string): boolean {
+export function isDue(fact: { nextDue: string }, now: string): boolean {
   if (!fact.nextDue) return true;
   return fact.nextDue <= now;
 }
@@ -40,14 +51,14 @@ export function isDue(fact: MultiFact, now: string): boolean {
  * moteur du pavé numérique chez un enfant), 3 s en voix (proche de la mesure
  * d'automaticité de la littérature, l'output STT étant rapide).
  */
-export function processAnswer(
-  fact: MultiFact,
+export function processAnswer<T extends Schedulable>(
+  fact: T,
   correct: boolean,
   responseTimeMs: number,
   now: string,
   inputMode: 'keypad' | 'voice',
-): MultiFact {
-  const attempt = {
+): T {
+  const attempt: Attempt = {
     date: now,
     correct,
     responseTimeMs,

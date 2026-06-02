@@ -1,10 +1,19 @@
-import type { UserProfile } from '../types';
+import type { UserProfile, MysteryTheme } from '../types';
 import { MYSTERY_POOL } from '../types';
 import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
+import { createInitialDivisionFacts } from './divisionFacts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
+
+// Tire un thème d'image mystère pour la division, distinct de celui de la
+// multiplication quand le pool le permet — l'image multiplication conquise ne
+// doit jamais être re-floutée par le niveau 2 (specs §11.5).
+function pickDivisionTheme(multTheme: MysteryTheme): MysteryTheme {
+  const others = MYSTERY_POOL.filter((t) => t !== multTheme);
+  return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
+}
 
 // ⚠ Cette clé est aussi référencée en dur dans l'inline script de
 // index.html (pour décider si la landing statique doit s'afficher avant
@@ -72,6 +81,7 @@ export function importProfile(json: string): UserProfile | null {
  */
 export function createNewProfile(name: string): UserProfile {
   const now = todayISO();
+  const mysteryTheme = pickRandom(MYSTERY_POOL);
   return {
     name,
     startDate: now,
@@ -85,7 +95,10 @@ export function createNewProfile(name: string): UserProfile {
     sessionHistory: [],
     hasSeenRulesIntro: false,
     hasSeenRule11: false,
-    mysteryTheme: pickRandom(MYSTERY_POOL),
+    mysteryTheme,
+    divisionFacts: createInitialDivisionFacts(),
+    divisionMysteryTheme: pickDivisionTheme(mysteryTheme),
+    hasSeenDivisionIntro: false,
   };
 }
 
@@ -124,6 +137,18 @@ function migrateProfile(profile: UserProfile): UserProfile {
   }
   // Strip deprecated mascotLevel field from older profiles
   delete (profile as UserProfile & { mascotLevel?: number }).mascotLevel;
+  // Niveau 2 — division : backfill des 64 faits et de l'image dédiée pour les
+  // profils v1. Inoffensif tant que le niveau n'est pas débloqué (faits en
+  // boîte 1, non introduits ; jamais proposés avant maîtrise multiplicative).
+  if (!Array.isArray(profile.divisionFacts)) {
+    profile.divisionFacts = createInitialDivisionFacts();
+  }
+  if (profile.divisionMysteryTheme === undefined) {
+    profile.divisionMysteryTheme = pickDivisionTheme(profile.mysteryTheme);
+  }
+  if (typeof profile.hasSeenDivisionIntro !== 'boolean') {
+    profile.hasSeenDivisionIntro = false;
+  }
   // Fix les profils créés avant l'ajout de l'inférence par dominance lors
   // du test de placement : si des faits restent non introduits alors qu'on
   // a une preuve de réussite sur des faits plus durs, on les introduit.
@@ -163,6 +188,22 @@ function isValidProfile(obj: unknown): boolean {
     if (typeof f.box !== 'number' || f.box < 1 || f.box > 5) return false;
     if (typeof f.introduced !== 'boolean') return false;
     if (!Array.isArray(f.history)) return false;
+  }
+
+  // divisionFacts est optionnel (absent des profils v1). S'il est présent, il
+  // doit avoir la bonne forme — un import corrompu doit être rejeté.
+  if (p.divisionFacts !== undefined) {
+    if (!Array.isArray(p.divisionFacts)) return false;
+    for (const fact of p.divisionFacts) {
+      if (typeof fact !== 'object' || fact === null) return false;
+      const f = fact as Record<string, unknown>;
+      if (typeof f.dividend !== 'number') return false;
+      if (typeof f.divisor !== 'number') return false;
+      if (typeof f.quotient !== 'number') return false;
+      if (typeof f.box !== 'number' || f.box < 1 || f.box > 5) return false;
+      if (typeof f.introduced !== 'boolean') return false;
+      if (!Array.isArray(f.history)) return false;
+    }
   }
 
   return true;
