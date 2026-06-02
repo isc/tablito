@@ -2,7 +2,7 @@ import type { MultiFact, UserProfile, SessionQuestion } from '../types';
 import { isDue, shouldIntroduceNew } from './leitner';
 import { getFactKey } from './facts';
 import { computeSimilarity } from './similarity';
-import { daysBetween, shuffle } from './utils';
+import { daysBetween, shuffle, interleaveGreedy } from './utils';
 
 // Target range: 12-15 questions (~5 min at ~20-30s per question with feedback).
 // MIN_QUESTIONS is a soft target, not an absolute floor: if fewer distinct facts
@@ -57,40 +57,6 @@ function isAdjacentConflict(prev: SessionQuestion, candidate: SessionQuestion): 
     return true;
   }
   return false;
-}
-
-/**
- * Attempts to reorder questions so that no two consecutive questions share a table
- * or have strong similarity. Uses a greedy approach.
- */
-function interleave(questions: SessionQuestion[]): SessionQuestion[] {
-  if (questions.length <= 1) return questions;
-
-  const remaining = [...questions];
-  const result: SessionQuestion[] = [];
-
-  // Pick the first question randomly
-  const firstIdx = Math.floor(Math.random() * remaining.length);
-  result.push(remaining.splice(firstIdx, 1)[0]);
-
-  while (remaining.length > 0) {
-    const prev = result[result.length - 1];
-    // Find the first candidate that doesn't conflict
-    let placed = false;
-    for (let i = 0; i < remaining.length; i++) {
-      if (!isAdjacentConflict(prev, remaining[i])) {
-        result.push(remaining.splice(i, 1)[0]);
-        placed = true;
-        break;
-      }
-    }
-    if (!placed) {
-      // No conflict-free candidate: just take the first one (best effort)
-      result.push(remaining.shift()!);
-    }
-  }
-
-  return result;
 }
 
 /**
@@ -194,7 +160,7 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
 
   // Combine: intro questions are placed at the front, then interleave the rest.
   // The spec says intro happens before practice, so intro questions come first.
-  const allReview = interleave(reviewQuestions);
+  const allReview = interleaveGreedy(reviewQuestions, isAdjacentConflict);
   const result = [...introQuestions, ...allReview];
 
   // Padding par bonus reviews (feedback normal mais sans toucher au Leitner :
@@ -219,7 +185,7 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
         isRetry: false,
         isBonusReview: true,
       }));
-    result.push(...interleave(bonusQuestions));
+    result.push(...interleaveGreedy(bonusQuestions, isAdjacentConflict));
   }
 
   return result;

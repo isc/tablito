@@ -2,7 +2,7 @@ import type { UserProfile, DivisionFact, DivisionSessionQuestion } from '../type
 import { isDue } from './leitner';
 import { getFactKey } from './facts';
 import { getDivisionFactKey, parentMultiplicationKey } from './divisionFacts';
-import { shuffle } from './utils';
+import { shuffle, interleaveGreedy } from './utils';
 
 // Mêmes bornes que la multiplication (cf. sessionComposer.ts, specs §6).
 const MIN_QUESTIONS = 12;
@@ -32,35 +32,10 @@ function questionConflict(a: DivisionFact, b: DivisionFact): boolean {
   return a.dividend === b.dividend || a.divisor === b.divisor;
 }
 
-/**
- * Réordonne pour éviter, autant que possible, deux questions adjacentes en
- * conflit (cf. interleave de sessionComposer, adapté à la division).
- */
+// Entrelacement : deux questions adjacentes ne doivent pas être en conflit
+// (même dividende ou même diviseur, cf. questionConflict).
 function interleave(questions: DivisionSessionQuestion[]): DivisionSessionQuestion[] {
-  if (questions.length <= 1) return questions;
-
-  const remaining = [...questions];
-  const result: DivisionSessionQuestion[] = [];
-
-  const firstIdx = Math.floor(Math.random() * remaining.length);
-  result.push(remaining.splice(firstIdx, 1)[0]);
-
-  while (remaining.length > 0) {
-    const prev = result[result.length - 1];
-    let placed = false;
-    for (let i = 0; i < remaining.length; i++) {
-      if (!questionConflict(prev.fact, remaining[i].fact)) {
-        result.push(remaining.splice(i, 1)[0]);
-        placed = true;
-        break;
-      }
-    }
-    if (!placed) {
-      result.push(remaining.shift()!);
-    }
-  }
-
-  return result;
+  return interleaveGreedy(questions, (a, b) => questionConflict(a.fact, b.fact));
 }
 
 function makeQuestion(

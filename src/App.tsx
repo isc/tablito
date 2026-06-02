@@ -233,6 +233,15 @@ export default function App() {
     return composeDivisionSession(profile, today);
   }, [profile, divisionUnlocked, today]);
 
+  // Remet à zéro les compteurs de séance (partagés multiplication/division).
+  const resetSessionTracking = useCallback(() => {
+    sessionConsecutiveCorrect.current = 0;
+    sessionMaxConsecutiveCorrect.current = 0;
+    sessionQuestionLogs.current = [];
+    sessionInitialBoxes.current = new Map();
+    sessionPromoted.current = new Set();
+  }, []);
+
   // Start session
   const handleStartSession = useCallback(async () => {
     if (!profile || pendingSession.length === 0) return;
@@ -244,17 +253,12 @@ export default function App() {
       await preflightMicPermission();
     }
 
-    sessionConsecutiveCorrect.current = 0;
-    sessionMaxConsecutiveCorrect.current = 0;
-    sessionQuestionLogs.current = [];
-    sessionInitialBoxes.current = new Map();
-    sessionPromoted.current = new Set();
-
+    resetSessionTracking();
     tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
 
     setSessionQuestions(pendingSession);
     setScreen('session');
-  }, [profile, pendingSession]);
+  }, [profile, pendingSession, resetSessionTracking]);
 
   // Start division session (niveau 2)
   const handleStartDivisionSession = useCallback(async () => {
@@ -264,15 +268,11 @@ export default function App() {
       await preflightMicPermission();
     }
 
-    sessionConsecutiveCorrect.current = 0;
-    sessionMaxConsecutiveCorrect.current = 0;
-    sessionQuestionLogs.current = [];
-    sessionInitialBoxes.current = new Map();
-    sessionPromoted.current = new Set();
+    resetSessionTracking();
 
     setDivisionSessionQuestions(pendingDivisionSession);
     setScreen('divisionSession');
-  }, [profile, pendingDivisionSession]);
+  }, [profile, pendingDivisionSession, resetSessionTracking]);
 
   // Handle individual answer — use functional updater to avoid stale fact on retries
   const handleAnswer = useCallback(

@@ -311,12 +311,11 @@ export function checkBadges(
     }
   }
 
-  // Niveau 2 — badges division. Évalués seulement si des faits de division
-  // existent (backfillés par migrateProfile) ; sans progression ils ne sont
-  // de toute façon jamais atteints, et restent masqués tant que le niveau
-  // n'est pas débloqué (visibleBadgeDefinitions).
+  // Niveau 2 — badges division. Évalués seulement une fois le niveau débloqué :
+  // avant cela les faits de division sont tous en boîte 1 (aucun badge gagnable),
+  // donc on évite ces passes inutiles pour la grande majorité des profils.
   const divFacts = profile.divisionFacts;
-  if (divFacts && divFacts.length > 0) {
+  if (divFacts && divFacts.length > 0 && isDivisionUnlocked(profile)) {
     if (divFacts.some((f) => f.box === 5)) earn(BADGE_IDS.DIV_PREMIERE_MAITRISE);
     if (divFacts.every((f) => f.box === 5)) earn(BADGE_IDS.DIV_GENIE);
     for (let n = 2; n <= 9; n++) {
