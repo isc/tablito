@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-06-02',
+    items: [
+      "Nouveau niveau 2 — la division : quand l'enfant a maîtrisé toutes ses tables (badge « Génie des maths »), un bouton « Les divisions » apparaît sur l'accueil. Il révise exactement les mêmes faits, mais sous forme de division (56 ÷ 7 = ?), avec sa propre image mystère à dévoiler. Chaque division n'est proposée qu'une fois la multiplication correspondante bien maîtrisée, et l'appli enseigne l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ».",
+    ],
+  },
+  {
     date: '2026-05-29',
     items: [
       "Nouveau rappel quotidien : activez-le dans l'espace parent (« Rappel quotidien ») pour recevoir chaque jour à 18h une notification qui invite l'enfant à réviser ses tables. Aucun rappel les jours où la séance est déjà faite. Désactivable à tout moment depuis le même endroit. Sur iPhone, il faut d'abord installer Multiplix sur l'écran d'accueil.",
