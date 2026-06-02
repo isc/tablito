@@ -1,12 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
-import type { UserProfile, SessionQuestion, SessionResult, SessionQuestionLog, MultiFact, Badge, BoxLevel } from './types';
+import type { UserProfile, SessionQuestion, DivisionSessionQuestion, SessionResult, SessionQuestionLog, MultiFact, DivisionFact, Badge, BoxLevel } from './types';
 import { FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
+import { composeDivisionSession } from './lib/divisionComposer';
 import { processAnswer } from './lib/leitner';
-import { checkBadges, getCompletedTables, isRule11Unlocked } from './lib/badges';
+import { checkBadges, getCompletedTables, isRule11Unlocked, isDivisionUnlocked } from './lib/badges';
 import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
+import { getDivisionFactKey } from './lib/divisionFacts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
 import { todayISO } from './lib/utils';
@@ -28,12 +30,14 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionScreen from './screens/SessionScreen';
+import DivisionSessionScreen from './screens/DivisionSessionScreen';
 import RecapScreen from './screens/RecapScreen';
 // Lazy : écrans secondaires (consultation, parent, infos) — ouverts
 // occasionnellement, leur coût parse/CPU au cold launch est gaspillé
 // pour la majorité des sessions. Précachés par le SW → cache hit
 // instantané quand l'utilisateur clique.
 const ProgressScreen   = lazy(() => import('./screens/ProgressScreen'));
+const DivisionProgressScreen = lazy(() => import('./screens/DivisionProgressScreen'));
 const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
 const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
@@ -45,8 +49,10 @@ type Screen =
   | 'rulesIntro'
   | 'home'
   | 'session'
+  | 'divisionSession'
   | 'recap'
   | 'progress'
+  | 'divisionProgress'
   | 'badges'
   | 'rules'
   | 'parent'
@@ -63,6 +69,10 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile));
   const [sessionQuestions, setSessionQuestions] = useState<SessionQuestion[]>([]);
+  const [divisionSessionQuestions, setDivisionSessionQuestions] = useState<DivisionSessionQuestion[]>([]);
+  // Quelle « saveur » de récap afficher (multiplication vs division) — pilote
+  // le nom affiché, le badge de complétion surveillé et l'écran image cible.
+  const [recapMode, setRecapMode] = useState<'mult' | 'div'>('mult');
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
@@ -210,6 +220,19 @@ export default function App() {
     return composeSession(profile, today);
   }, [profile, today]);
 
+  // Niveau 2 — division (specs §11). Le niveau se débloque au badge Génie des
+  // maths. Une seule séance par jour au total : le gate lastSessionDate vaut
+  // pour les deux pistes (faire l'une marque la journée comme faite).
+  const divisionUnlocked = useMemo(
+    () => (profile ? isDivisionUnlocked(profile) : false),
+    [profile],
+  );
+  const pendingDivisionSession = useMemo(() => {
+    if (!profile || !divisionUnlocked) return [];
+    if (profile.lastSessionDate === today) return [];
+    return composeDivisionSession(profile, today);
+  }, [profile, divisionUnlocked, today]);
+
   // Start session
   const handleStartSession = useCallback(async () => {
     if (!profile || pendingSession.length === 0) return;
@@ -232,6 +255,24 @@ export default function App() {
     setSessionQuestions(pendingSession);
     setScreen('session');
   }, [profile, pendingSession]);
+
+  // Start division session (niveau 2)
+  const handleStartDivisionSession = useCallback(async () => {
+    if (!profile || pendingDivisionSession.length === 0) return;
+
+    if (isVoiceMode()) {
+      await preflightMicPermission();
+    }
+
+    sessionConsecutiveCorrect.current = 0;
+    sessionMaxConsecutiveCorrect.current = 0;
+    sessionQuestionLogs.current = [];
+    sessionInitialBoxes.current = new Map();
+    sessionPromoted.current = new Set();
+
+    setDivisionSessionQuestions(pendingDivisionSession);
+    setScreen('divisionSession');
+  }, [profile, pendingDivisionSession]);
 
   // Handle individual answer — use functional updater to avoid stale fact on retries
   const handleAnswer = useCallback(
@@ -368,12 +409,137 @@ export default function App() {
     [profile],
   );
 
+  // Division — réponse individuelle (met à jour profile.divisionFacts via le
+  // même processAnswer générique). Les logs sont poussés pour les stats de
+  // badges (Machine/Véloce) mais PAS persistés dans le résultat, pour ne pas
+  // polluer le dashboard parent (top des multiplications difficiles).
+  const handleDivisionAnswer = useCallback(
+    (
+      fact: DivisionFact,
+      correct: boolean,
+      timeMs: number,
+      answered: number | null,
+      isBonusReview: boolean,
+      inputMode: 'keypad' | 'voice',
+    ) => {
+      sessionQuestionLogs.current.push({
+        a: fact.divisor,
+        b: fact.quotient,
+        correct,
+        responseTimeMs: timeMs,
+        answeredWith: answered,
+        isBonusReview,
+        inputMode,
+      });
+      if (correct) {
+        sessionConsecutiveCorrect.current++;
+        sessionMaxConsecutiveCorrect.current = Math.max(
+          sessionMaxConsecutiveCorrect.current,
+          sessionConsecutiveCorrect.current,
+        );
+      } else {
+        sessionConsecutiveCorrect.current = 0;
+      }
+
+      if (isBonusReview) return;
+
+      const today = todayISO();
+
+      setProfile((prev) => {
+        if (!prev || !prev.divisionFacts) return prev;
+        const currentFact =
+          prev.divisionFacts.find(
+            (f) => f.dividend === fact.dividend && f.divisor === fact.divisor,
+          ) ?? fact;
+        const updatedFact = processAnswer(currentFact, correct, timeMs, today, inputMode);
+
+        if (updatedFact.history.length > 0) {
+          updatedFact.history[updatedFact.history.length - 1].answeredWith = answered;
+        }
+        if (!updatedFact.introduced) {
+          updatedFact.introduced = true;
+        }
+
+        const key = getDivisionFactKey(fact.dividend, fact.divisor);
+        if (!sessionInitialBoxes.current.has(key)) {
+          sessionInitialBoxes.current.set(key, currentFact.box);
+        }
+        const initialBox = sessionInitialBoxes.current.get(key)!;
+        if (updatedFact.box > initialBox) {
+          sessionPromoted.current.add(key);
+        } else {
+          sessionPromoted.current.delete(key);
+        }
+
+        const divisionFacts = prev.divisionFacts.map((f) =>
+          f.dividend === fact.dividend && f.divisor === fact.divisor ? updatedFact : f,
+        );
+        return { ...prev, divisionFacts };
+      });
+    },
+    [],
+  );
+
+  // Division — fin de séance. Compte comme la séance du jour (streak + récap),
+  // récap en mode 'div'.
+  const handleDivisionSessionComplete = useCallback(
+    (partial: Omit<SessionResult, 'factsPromoted'>) => {
+      if (!profile) return;
+
+      const result: SessionResult = {
+        ...partial,
+        factsPromoted: sessionPromoted.current.size,
+      };
+
+      const today = todayISO();
+      const previousLastSessionDate = profile.lastSessionDate;
+
+      const streakUpdate = applyStreakUpdate(profile, today);
+      const longestStreak = Math.max(profile.longestStreak, streakUpdate.currentStreak);
+      const sessionHistory = [...profile.sessionHistory, result].slice(-50);
+
+      const updatedProfile: UserProfile = {
+        ...profile,
+        totalSessions: profile.totalSessions + 1,
+        currentStreak: streakUpdate.currentStreak,
+        longestStreak,
+        lastSessionDate: today,
+        streakFreezes: streakUpdate.streakFreezes,
+        sessionHistory,
+      };
+
+      const sessionStats = {
+        consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
+        wasFast: sessionQuestionLogs.current.map(
+          (q) => q.correct && q.responseTimeMs < FAST_THRESHOLD_MS[q.inputMode],
+        ),
+      };
+      const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);
+      const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
+      const brandNewBadges = earned.filter((b) => !previousBadgeIds.has(b.id));
+      updatedProfile.badges = [...profile.badges, ...brandNewBadges];
+
+      setProfile(updatedProfile);
+      setSessionResult(result);
+      setNewBadges(brandNewBadges);
+      setNewlyCompletedTables([]);
+      setFreezeJustUsed(streakUpdate.freezeJustUsed);
+      setFreezeJustEarned(streakUpdate.freezeJustEarned);
+      setRecapMode('div');
+      setScreen('recap');
+
+      void syncLastSession();
+    },
+    [profile],
+  );
+
   const exitRecap = useCallback((next: Screen) => {
     setSessionResult(null);
     setNewBadges([]);
     setNewlyCompletedTables([]);
     setFreezeJustUsed(false);
     setFreezeJustEarned(false);
+    setRecapMode('mult');
     setScreen(next);
   }, []);
 
@@ -428,8 +594,12 @@ export default function App() {
           profile={profile}
           hasSessionAvailable={pendingSession.length > 0}
           hasNewRule={hasNewRule}
+          divisionUnlocked={divisionUnlocked}
+          hasDivisionSessionAvailable={pendingDivisionSession.length > 0}
           onStart={handleStartSession}
+          onStartDivision={handleStartDivisionSession}
           onShowProgress={() => setScreen('progress')}
+          onShowDivisionProgress={() => setScreen('divisionProgress')}
           onShowBadges={() => setScreen('badges')}
           onShowRules={handleShowRules}
           onShowParent={() => setScreen('parent')}
@@ -444,6 +614,14 @@ export default function App() {
         />
       )}
 
+      {screen === 'divisionSession' && profile && divisionSessionQuestions.length > 0 && (
+        <DivisionSessionScreen
+          questions={divisionSessionQuestions}
+          onComplete={handleDivisionSessionComplete}
+          onAnswer={handleDivisionAnswer}
+        />
+      )}
+
       {screen === 'recap' && profile && sessionResult && (
         <RecapScreen
           name={profile.name}
@@ -453,15 +631,26 @@ export default function App() {
           currentStreak={profile.currentStreak}
           freezeJustUsed={freezeJustUsed}
           freezeJustEarned={freezeJustEarned}
-          knownFactsCount={profile.facts.filter((f) => f.box >= 3).length}
-          totalFacts={profile.facts.length}
+          knownFactsCount={
+            recapMode === 'div'
+              ? (profile.divisionFacts ?? []).filter((f) => f.box >= 3).length
+              : profile.facts.filter((f) => f.box >= 3).length
+          }
+          totalFacts={
+            recapMode === 'div' ? (profile.divisionFacts ?? []).length : profile.facts.length
+          }
           onFinish={handleRecapFinish}
-          onShowProgress={() => exitRecap('progress')}
+          onShowProgress={() => exitRecap(recapMode === 'div' ? 'divisionProgress' : 'progress')}
+          mode={recapMode}
         />
       )}
 
       {screen === 'progress' && profile && (
         <ProgressScreen profile={profile} onBack={() => setScreen('home')} />
+      )}
+
+      {screen === 'divisionProgress' && profile && (
+        <DivisionProgressScreen profile={profile} onBack={() => setScreen('home')} />
       )}
 
       {screen === 'badges' && profile && (

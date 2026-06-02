@@ -12,11 +12,29 @@ interface HomeScreenProps {
   profile: UserProfile;
   hasSessionAvailable: boolean;
   hasNewRule: boolean;
+  // Niveau 2 — division (cf. specs §11). divisionUnlocked = badge Génie des
+  // maths obtenu ; hasDivisionSessionAvailable = niveau débloqué + faits
+  // éligibles + pas déjà fait aujourd'hui.
+  divisionUnlocked: boolean;
+  hasDivisionSessionAvailable: boolean;
   onStart: () => void;
+  onStartDivision: () => void;
   onShowProgress: () => void;
+  onShowDivisionProgress: () => void;
   onShowBadges: () => void;
   onShowRules: () => void;
   onShowParent: () => void;
+}
+
+function IconDivision() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="5" y="7" width="22" height="18" rx="2.5" stroke="var(--ink)" strokeWidth="1.6" fill="var(--indigo-soft)" />
+      <line x1="11" y1="16" x2="21" y2="16" stroke="var(--indigo)" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="16" cy="12" r="1.6" fill="var(--indigo)" />
+      <circle cx="16" cy="20" r="1.6" fill="var(--indigo)" />
+    </svg>
+  );
 }
 
 function IconGear() {
@@ -84,8 +102,12 @@ export default function HomeScreen({
   profile,
   hasSessionAvailable,
   hasNewRule,
+  divisionUnlocked,
+  hasDivisionSessionAvailable,
   onStart,
+  onStartDivision,
   onShowProgress,
+  onShowDivisionProgress,
   onShowBadges,
   onShowRules,
   onShowParent,
@@ -214,11 +236,17 @@ export default function HomeScreen({
         </div>
 
         <div className="home-cta-wrap">
-          {hasSessionAvailable ? (
+          {hasSessionAvailable && (
             <button className="btn btn--indigo home-start-btn" onClick={onStart}>
               {'▶'} C'est parti&nbsp;!
             </button>
-          ) : (
+          )}
+          {divisionUnlocked && hasDivisionSessionAvailable && (
+            <button className="btn btn--ink home-start-btn" onClick={onStartDivision}>
+              {'➗'} Les divisions
+            </button>
+          )}
+          {!hasSessionAvailable && !(divisionUnlocked && hasDivisionSessionAvailable) && (
             <div className="home-done-msg">Bravo, c'est fait pour aujourd'hui&nbsp;!</div>
           )}
         </div>
@@ -228,6 +256,12 @@ export default function HomeScreen({
             <span className="home-nav-btn-icon"><IconImage /></span>
             <span className="home-nav-btn-label">Mon image</span>
           </button>
+          {divisionUnlocked && (
+            <button className="home-nav-btn" onClick={onShowDivisionProgress}>
+              <span className="home-nav-btn-icon"><IconDivision /></span>
+              <span className="home-nav-btn-label">Divisions</span>
+            </button>
+          )}
           <button className="home-nav-btn" onClick={onShowBadges}>
             <span className="home-nav-btn-icon"><IconBadge /></span>
             <span className="home-nav-btn-label">Badges</span>
