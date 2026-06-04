@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('Niveau 2 — séance du jour décidée par l\'app', () => {
-  it('niveau verrouillé : pas de tuile Divisions, bouton unique', () => {
+  it('niveau verrouillé : tuile « Mon image », bouton unique', () => {
     const p = createNewProfile('Zoé');
     p.hasSeenRulesIntro = true;
     p.lastSessionDate = null;
@@ -50,7 +50,8 @@ describe('Niveau 2 — séance du jour décidée par l\'app', () => {
 
     render(<App />);
 
-    expect(findByText(/Divisions/)).toBeNull();
+    expect(findByText(/Mon image/)).not.toBeNull();
+    expect(findByText(/Mes images/)).toBeNull();
     expect(findByText(/C'est parti/)).not.toBeNull();
   });
 
@@ -59,8 +60,8 @@ describe('Niveau 2 — séance du jour décidée par l\'app', () => {
 
     render(<App />);
 
-    // La tuile « Divisions » (accès image dédiée) apparaît une fois débloqué.
-    expect(findByText(/Divisions/)).not.toBeNull();
+    // Une fois débloqué, la tuile « Mon image » devient « Mes images ».
+    expect(findByText(/Mes images/)).not.toBeNull();
 
     const cta = findByText(/C'est parti/);
     expect(cta).not.toBeNull();

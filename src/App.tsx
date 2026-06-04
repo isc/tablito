@@ -36,7 +36,6 @@ import RecapScreen from './screens/RecapScreen';
 // pour la majorité des sessions. Précachés par le SW → cache hit
 // instantané quand l'utilisateur clique.
 const ProgressScreen   = lazy(() => import('./screens/ProgressScreen'));
-const DivisionProgressScreen = lazy(() => import('./screens/DivisionProgressScreen'));
 const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
 const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
@@ -50,7 +49,6 @@ type Screen =
   | 'session'
   | 'recap'
   | 'progress'
-  | 'divisionProgress'
   | 'badges'
   | 'rules'
   | 'parent'
@@ -72,6 +70,9 @@ export default function App() {
   // Quelle « saveur » de récap afficher (multiplication vs division) — pilote
   // le nom affiché, le badge de complétion surveillé et l'écran image cible.
   const [recapMode, setRecapMode] = useState<'mult' | 'div'>('mult');
+  // Onglet ouvert à l'arrivée sur l'écran progression (« Mes images ») : sur
+  // l'image division quand on y va depuis le récap d'une séance de division.
+  const [progressView, setProgressView] = useState<'mult' | 'div'>('mult');
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
@@ -605,8 +606,7 @@ export default function App() {
           hasNewRule={hasNewRule}
           divisionUnlocked={divisionUnlocked}
           onStart={handleStart}
-          onShowProgress={() => setScreen('progress')}
-          onShowDivisionProgress={() => setScreen('divisionProgress')}
+          onShowProgress={() => { setProgressView('mult'); setScreen('progress'); }}
           onShowBadges={() => setScreen('badges')}
           onShowRules={handleShowRules}
           onShowParent={() => setScreen('parent')}
@@ -639,17 +639,13 @@ export default function App() {
             recapMode === 'div' ? (profile.divisionFacts ?? []).length : profile.facts.length
           }
           onFinish={handleRecapFinish}
-          onShowProgress={() => exitRecap(recapMode === 'div' ? 'divisionProgress' : 'progress')}
+          onShowProgress={() => { setProgressView(recapMode); exitRecap('progress'); }}
           mode={recapMode}
         />
       )}
 
       {screen === 'progress' && profile && (
-        <ProgressScreen profile={profile} onBack={() => setScreen('home')} />
-      )}
-
-      {screen === 'divisionProgress' && profile && (
-        <DivisionProgressScreen profile={profile} onBack={() => setScreen('home')} />
+        <ProgressScreen profile={profile} onBack={() => setScreen('home')} initialView={progressView} />
       )}
 
       {screen === 'badges' && profile && (

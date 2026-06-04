@@ -676,10 +676,11 @@ async function captureDivisionScreens(page) {
   // L'accueil montre maintenant le bouton « Les divisions » + la tuile nav.
   await shot(page, '15-division-home');
 
-  // Image mystère dédiée à la division (DivisionProgressScreen réutilise les
-  // classes .progress-*).
-  await page.click('.home-nav-btn:has-text("Divisions")');
+  // Image mystère dédiée à la division : tuile « Mes images » puis onglet
+  // « Divisions » de l'écran progression.
+  await page.click('.home-nav-btn:has-text("Mes images")');
   await page.waitForSelector('.progress-screen');
+  await page.click('.progress-tab:has-text("Divisions")');
   await shot(page, '18-division-progress');
   await page.click('.progress-back-btn');
   await page.waitForSelector('.home-screen');
@@ -855,17 +856,19 @@ const SECTIONS = [
     title: 'Niveau 2 — la division',
     description: `Quand l'enfant a maîtrisé toutes ses tables (le badge « Génie
       des maths »), un niveau se débloque : réviser les mêmes faits, mais sous
-      forme de division (« 56 ÷ 7 = ? »), avec une image mystère dédiée — l'image
-      des tables, elle, reste acquise. Il n'y a toujours qu'un seul bouton
-      « C'est parti » : la séance du jour devient la division, et les quelques
-      tables à réviser pour l'entretien y sont glissées au passage (× et ÷ dans
-      la même séance). Chaque division n'est proposée qu'une fois la multiplication
+      forme de division (« 56 ÷ 7 = ? »), avec sa propre image mystère — l'image
+      des tables, elle, reste acquise. La tuile « Mon image » devient « Mes
+      images » : on y bascule entre l'image des multiplications et celle des
+      divisions. Il n'y a toujours qu'un seul bouton « C'est parti » : la séance
+      du jour devient la division, et les quelques tables à réviser pour
+      l'entretien y sont glissées au passage (× et ÷ dans la même séance).
+      Chaque division n'est proposée qu'une fois la multiplication
       correspondante parfaitement maîtrisée, et l'app enseigne explicitement
       l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ». Tout
       le reste — boîtes de Leitner, image qui se révèle, encouragements sans
       jugement — fonctionne exactement comme pour la multiplication.`,
     shots: [
-      { file: '15-division-home', caption: 'Une fois les tables maîtrisées, une tuile « Divisions » apparaît ; la séance du jour bascule sur la division.' },
+      { file: '15-division-home', caption: 'Une fois les tables maîtrisées, « Mon image » devient « Mes images » (multiplications + divisions).' },
       { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
       { file: '17-division-question', caption: 'Question de division au pavé numérique.' },
       { file: '18-division-progress', caption: 'Une image mystère dédiée à la division, distincte de celle des tables.' },
