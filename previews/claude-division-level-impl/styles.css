@@ -3173,6 +3173,31 @@ input, select, textarea {
   letter-spacing: -0.3px;
 }
 
+.progress-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 2px 20px 12px;
+}
+
+.progress-tab {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.progress-tab.active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+}
+
 .progress-stats-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

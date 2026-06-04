@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260604194246"
+const CACHE = 'multiplix-' + "20260604195129"
 const BASE = "/multiplix/previews/claude-division-level-impl/"
 const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/favicon.svg",
@@ -116,7 +116,6 @@ const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/src/main.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/BadgesScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/ChangelogScreen.js",
-  "/multiplix/previews/claude-division-level-impl/src/screens/DivisionProgressScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/HomeScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/ParentDashboard.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/PrivacyScreen.js",
