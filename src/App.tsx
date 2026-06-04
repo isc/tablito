@@ -354,15 +354,19 @@ export default function App() {
     [trackPromotion],
   );
 
-  // Session complete
+  // Fin de séance — un seul handler pour les deux modes. Le récap suit le type
+  // de séance : 'div' quand la division est débloquée (séance mixte div +
+  // entretien tables), 'mult' sinon. Les tables « nouvellement complétées » ne
+  // concernent que le mode 'mult' (post-déblocage elles sont déjà toutes en
+  // boîte 5 — getCompletedTables renverrait [] de toute façon).
   const handleSessionComplete = useCallback(
     (partial: Omit<SessionResult, 'factsPromoted'>) => {
       if (!profile) return;
 
+      const mode: 'mult' | 'div' = divisionUnlocked ? 'div' : 'mult';
       const result: SessionResult = {
         ...partial,
         factsPromoted: sessionPromoted.current.size,
-        questions: sessionQuestionLogs.current,
       };
 
       const today = todayISO();
@@ -372,8 +376,7 @@ export default function App() {
       const longestStreak = Math.max(profile.longestStreak, streakUpdate.currentStreak);
 
       // Append session result to history, capped at 50
-      const previousHistory = profile.sessionHistory;
-      const sessionHistory = [...previousHistory, result].slice(-50);
+      const sessionHistory = [...profile.sessionHistory, result].slice(-50);
 
       const updatedProfile: UserProfile = {
         ...profile,
@@ -387,7 +390,8 @@ export default function App() {
 
       // Pass previousLastSessionDate so PERSEVERANCE badge can check the gap.
       // wasFast = l'étoile dorée enregistrée au moment de la réponse (seuil
-      // propre au type de question). Le badge Véloce = 5 étoiles d'affilée.
+      // propre au type de question, séance possiblement mixte). Badge Véloce =
+      // 5 étoiles d'affilée.
       const sessionStats = {
         consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
         wasFast: sessionQuestionLogs.current.map((q) => q.fast ?? false),
@@ -398,9 +402,13 @@ export default function App() {
 
       updatedProfile.badges = [...profile.badges, ...brandNewBadges];
 
-      // Detect newly completed tables (all facts at box >= 5)
-      const completedNow = [...getCompletedTables(updatedProfile.facts)]
-        .filter((t) => !tablesCompletedBeforeSession.current.has(t));
+      // Tables fraîchement complétées (tous faits en boîte ≥ 5) — mode 'mult'.
+      const completedNow =
+        mode === 'mult'
+          ? [...getCompletedTables(updatedProfile.facts)].filter(
+              (t) => !tablesCompletedBeforeSession.current.has(t),
+            )
+          : [];
 
       setProfile(updatedProfile);
       setSessionResult(result);
@@ -408,7 +416,7 @@ export default function App() {
       setNewlyCompletedTables(completedNow);
       setFreezeJustUsed(streakUpdate.freezeJustUsed);
       setFreezeJustEarned(streakUpdate.freezeJustEarned);
-      setRecapMode('mult');
+      setRecapMode(mode);
       setScreen('recap');
 
       // Anti-nag du rappel push : marque qu'une séance a eu lieu aujourd'hui
@@ -416,61 +424,7 @@ export default function App() {
       // abonné / push non configuré), jamais bloquant pour le recap.
       void syncLastSession();
     },
-    [profile],
-  );
-
-  // Division — fin de séance. Compte comme la séance du jour (streak + récap),
-  // récap en mode 'div'.
-  const handleDivisionSessionComplete = useCallback(
-    (partial: Omit<SessionResult, 'factsPromoted'>) => {
-      if (!profile) return;
-
-      const result: SessionResult = {
-        ...partial,
-        factsPromoted: sessionPromoted.current.size,
-      };
-
-      const today = todayISO();
-      const previousLastSessionDate = profile.lastSessionDate;
-
-      const streakUpdate = applyStreakUpdate(profile, today);
-      const longestStreak = Math.max(profile.longestStreak, streakUpdate.currentStreak);
-      const sessionHistory = [...profile.sessionHistory, result].slice(-50);
-
-      const updatedProfile: UserProfile = {
-        ...profile,
-        totalSessions: profile.totalSessions + 1,
-        currentStreak: streakUpdate.currentStreak,
-        longestStreak,
-        lastSessionDate: today,
-        streakFreezes: streakUpdate.streakFreezes,
-        sessionHistory,
-      };
-
-      // Séance potentiellement mixte (division + entretien tables) : on s'appuie
-      // sur l'étoile dorée enregistrée par question (seuil propre à son type)
-      // plutôt que de recalculer avec un seuil unique. Badge Véloce = 5 d'affilée.
-      const sessionStats = {
-        consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
-        wasFast: sessionQuestionLogs.current.map((q) => q.fast ?? false),
-      };
-      const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);
-      const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
-      const brandNewBadges = earned.filter((b) => !previousBadgeIds.has(b.id));
-      updatedProfile.badges = [...profile.badges, ...brandNewBadges];
-
-      setProfile(updatedProfile);
-      setSessionResult(result);
-      setNewBadges(brandNewBadges);
-      setNewlyCompletedTables([]);
-      setFreezeJustUsed(streakUpdate.freezeJustUsed);
-      setFreezeJustEarned(streakUpdate.freezeJustEarned);
-      setRecapMode('div');
-      setScreen('recap');
-
-      void syncLastSession();
-    },
-    [profile],
+    [profile, divisionUnlocked],
   );
 
   const exitRecap = useCallback((next: Screen) => {
@@ -551,7 +505,7 @@ export default function App() {
       {screen === 'session' && profile && sessionItems.length > 0 && (
         <SessionScreen
           questions={sessionItems}
-          onComplete={divisionUnlocked ? handleDivisionSessionComplete : handleSessionComplete}
+          onComplete={handleSessionComplete}
           onAnswer={handleSessionItemAnswer}
         />
       )}

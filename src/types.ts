@@ -169,7 +169,6 @@ export interface SessionResult {
   averageTimeMs: number;
   newFactsIntroduced: number;
   factsPromoted: number;   // faits dont la boîte finale > boîte initiale dans la séance
-  questions?: SessionQuestionLog[];
 }
 
 // Badges IDs
