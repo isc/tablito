@@ -1,7 +1,9 @@
-import { cleanup, fireEvent, render } from '@testing-library/preact';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
+// Précharge le chunk lazy de l'écran progression pour qu'il se résolve dans le test.
+import '../screens/ProgressScreen';
 import { createNewProfile, saveProfile } from '../lib/storage';
 
 // Test d'intégration : monte le vrai <App /> et vérifie, via le DOM, le modèle
@@ -74,4 +76,17 @@ describe('Niveau 2 — séance du jour décidée par l\'app', () => {
     expect(el?.textContent).toContain('÷');
   });
 
+  it('« Mes images » s\'ouvre par défaut sur l\'image division', async () => {
+    saveProfile(masteredProfile());
+
+    render(<App />);
+
+    fireEvent.click(findByText(/Mes images/)!);
+
+    // L'onglet actif doit être « Divisions » (l'image des tables est déjà complète).
+    await waitFor(() => {
+      const activeTab = document.querySelector('.progress-tab.active');
+      expect(activeTab?.textContent).toContain('Divisions');
+    });
+  });
 });

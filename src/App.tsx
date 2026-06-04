@@ -606,7 +606,12 @@ export default function App() {
           hasNewRule={hasNewRule}
           divisionUnlocked={divisionUnlocked}
           onStart={handleStart}
-          onShowProgress={() => { setProgressView('mult'); setScreen('progress'); }}
+          onShowProgress={() => {
+            // Post-déblocage, l'image des tables est complète (tout en boîte 5) :
+            // on ouvre directement sur la division, celle qui reste à dévoiler.
+            setProgressView(divisionUnlocked ? 'div' : 'mult');
+            setScreen('progress');
+          }}
           onShowBadges={() => setScreen('badges')}
           onShowRules={handleShowRules}
           onShowParent={() => setScreen('parent')}
