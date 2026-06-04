@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
-import type { UserProfile, SessionItem, SessionResult, SessionQuestionLog, MultiFact, DivisionFact, Badge, BoxLevel } from './types';
+import type { UserProfile, SessionItem, SessionResult, SessionQuestionLog, Badge, BoxLevel } from './types';
 import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
@@ -255,7 +255,29 @@ export default function App() {
     setScreen('session');
   }, [profile, pendingItems, resetSessionTracking]);
 
-  // Aiguille une réponse vers la bonne piste selon le type de question.
+  // Met à jour le suivi « fait promu » (boîte finale > boîte initiale dans la
+  // séance), qui pilote le « ton image a changé » du récap (§3.5). Idempotent —
+  // sûr sous la double-invocation strict-mode du reducer setProfile.
+  const trackPromotion = useCallback(
+    (key: string, currentBox: BoxLevel, newBox: BoxLevel) => {
+      if (!sessionInitialBoxes.current.has(key)) {
+        sessionInitialBoxes.current.set(key, currentBox);
+      }
+      const initialBox = sessionInitialBoxes.current.get(key)!;
+      if (newBox > initialBox) {
+        sessionPromoted.current.add(key);
+      } else {
+        sessionPromoted.current.delete(key);
+      }
+    },
+    [],
+  );
+
+  // Réponse individuelle — un seul handler pour les deux types de question
+  // (multiplication / division). Préambule commun (log + série de bonnes
+  // réponses) ; la mise à jour Leitner branche sur le type (facts vs
+  // divisionFacts) via le discriminant `kind`. Updater fonctionnel pour ne pas
+  // lire un fait périmé lors des retries.
   const handleSessionItemAnswer = useCallback(
     (
       item: SessionItem,
@@ -264,37 +286,19 @@ export default function App() {
       answered: number | null,
       inputMode: 'keypad' | 'voice',
     ) => {
-      if (item.kind === 'div') {
-        handleDivisionAnswer(item.fact, correct, timeMs, answered, item.isBonusReview, inputMode);
-      } else {
-        handleAnswer(item.fact, correct, timeMs, answered, item.isBonusReview, inputMode);
-      }
-    },
-    // handleAnswer / handleDivisionAnswer sont stables (useCallback [] / [profile]).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+      const fastMs = (item.kind === 'div' ? DIVISION_FAST_THRESHOLD_MS : FAST_THRESHOLD_MS)[inputMode];
 
-  // Handle individual answer — use functional updater to avoid stale fact on retries
-  const handleAnswer = useCallback(
-    (
-      fact: MultiFact,
-      correct: boolean,
-      timeMs: number,
-      answered: number | null,
-      isBonusReview: boolean,
-      inputMode: 'keypad' | 'voice',
-    ) => {
       sessionQuestionLogs.current.push({
-        a: fact.a,
-        b: fact.b,
+        a: item.kind === 'div' ? item.fact.divisor : item.fact.a,
+        b: item.kind === 'div' ? item.fact.quotient : item.fact.b,
         correct,
         responseTimeMs: timeMs,
         answeredWith: answered,
-        isBonusReview,
+        isBonusReview: item.isBonusReview,
         inputMode,
-        fast: correct && timeMs < FAST_THRESHOLD_MS[inputMode],
+        fast: correct && timeMs < fastMs,
       });
+
       if (correct) {
         sessionConsecutiveCorrect.current++;
         sessionMaxConsecutiveCorrect.current = Math.max(
@@ -305,44 +309,49 @@ export default function App() {
         sessionConsecutiveCorrect.current = 0;
       }
 
-      // Bonus review: feedback and session stats only, no Leitner state change
-      if (isBonusReview) return;
+      // Révision bonus : feedback et stats seulement, pas de changement Leitner.
+      if (item.isBonusReview) return;
 
       const today = todayISO();
 
       setProfile((prev) => {
         if (!prev) return prev;
-        // Use the current fact from profile state, not the stale snapshot from the question
-        const currentFact = prev.facts.find((f) => f.a === fact.a && f.b === fact.b) ?? fact;
-        const updatedFact = processAnswer(currentFact, correct, timeMs, today, inputMode);
 
-        if (updatedFact.history.length > 0) {
-          updatedFact.history[updatedFact.history.length - 1].answeredWith = answered;
-        }
-        if (!updatedFact.introduced) {
-          updatedFact.introduced = true;
-        }
-
-        // Idempotent set ops — safe under React strict-mode double-invocation
-        // of this reducer.
-        const factKey = getFactKey(fact.a, fact.b);
-        if (!sessionInitialBoxes.current.has(factKey)) {
-          sessionInitialBoxes.current.set(factKey, currentFact.box);
-        }
-        const initialBox = sessionInitialBoxes.current.get(factKey)!;
-        if (updatedFact.box > initialBox) {
-          sessionPromoted.current.add(factKey);
-        } else {
-          sessionPromoted.current.delete(factKey);
+        if (item.kind === 'div') {
+          if (!prev.divisionFacts) return prev;
+          const { dividend, divisor } = item.fact;
+          const current =
+            prev.divisionFacts.find((f) => f.dividend === dividend && f.divisor === divisor) ??
+            item.fact;
+          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
+          if (updated.history.length > 0) {
+            updated.history[updated.history.length - 1].answeredWith = answered;
+          }
+          if (!updated.introduced) updated.introduced = true;
+          trackPromotion(getDivisionFactKey(dividend, divisor), current.box, updated.box);
+          return {
+            ...prev,
+            divisionFacts: prev.divisionFacts.map((f) =>
+              f.dividend === dividend && f.divisor === divisor ? updated : f,
+            ),
+          };
         }
 
-        const updatedFacts = prev.facts.map((f) =>
-          f.a === fact.a && f.b === fact.b ? updatedFact : f,
-        );
-        return { ...prev, facts: updatedFacts };
+        const { a, b } = item.fact;
+        const current = prev.facts.find((f) => f.a === a && f.b === b) ?? item.fact;
+        const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
+        if (updated.history.length > 0) {
+          updated.history[updated.history.length - 1].answeredWith = answered;
+        }
+        if (!updated.introduced) updated.introduced = true;
+        trackPromotion(getFactKey(a, b), current.box, updated.box);
+        return {
+          ...prev,
+          facts: prev.facts.map((f) => (f.a === a && f.b === b ? updated : f)),
+        };
       });
     },
-    [],
+    [trackPromotion],
   );
 
   // Session complete
@@ -408,85 +417,6 @@ export default function App() {
       void syncLastSession();
     },
     [profile],
-  );
-
-  // Division — réponse individuelle (met à jour profile.divisionFacts via le
-  // même processAnswer générique). Les logs sont poussés pour les stats de
-  // badges (Machine/Véloce) mais PAS persistés dans le résultat, pour ne pas
-  // polluer le dashboard parent (top des multiplications difficiles).
-  const handleDivisionAnswer = useCallback(
-    (
-      fact: DivisionFact,
-      correct: boolean,
-      timeMs: number,
-      answered: number | null,
-      isBonusReview: boolean,
-      inputMode: 'keypad' | 'voice',
-    ) => {
-      sessionQuestionLogs.current.push({
-        a: fact.divisor,
-        b: fact.quotient,
-        correct,
-        responseTimeMs: timeMs,
-        answeredWith: answered,
-        isBonusReview,
-        inputMode,
-        fast: correct && timeMs < DIVISION_FAST_THRESHOLD_MS[inputMode],
-      });
-      if (correct) {
-        sessionConsecutiveCorrect.current++;
-        sessionMaxConsecutiveCorrect.current = Math.max(
-          sessionMaxConsecutiveCorrect.current,
-          sessionConsecutiveCorrect.current,
-        );
-      } else {
-        sessionConsecutiveCorrect.current = 0;
-      }
-
-      if (isBonusReview) return;
-
-      const today = todayISO();
-
-      setProfile((prev) => {
-        if (!prev || !prev.divisionFacts) return prev;
-        const currentFact =
-          prev.divisionFacts.find(
-            (f) => f.dividend === fact.dividend && f.divisor === fact.divisor,
-          ) ?? fact;
-        const updatedFact = processAnswer(
-          currentFact,
-          correct,
-          timeMs,
-          today,
-          inputMode,
-          DIVISION_FAST_THRESHOLD_MS[inputMode],
-        );
-
-        if (updatedFact.history.length > 0) {
-          updatedFact.history[updatedFact.history.length - 1].answeredWith = answered;
-        }
-        if (!updatedFact.introduced) {
-          updatedFact.introduced = true;
-        }
-
-        const key = getDivisionFactKey(fact.dividend, fact.divisor);
-        if (!sessionInitialBoxes.current.has(key)) {
-          sessionInitialBoxes.current.set(key, currentFact.box);
-        }
-        const initialBox = sessionInitialBoxes.current.get(key)!;
-        if (updatedFact.box > initialBox) {
-          sessionPromoted.current.add(key);
-        } else {
-          sessionPromoted.current.delete(key);
-        }
-
-        const divisionFacts = prev.divisionFacts.map((f) =>
-          f.dividend === fact.dividend && f.divisor === fact.divisor ? updatedFact : f,
-        );
-        return { ...prev, divisionFacts };
-      });
-    },
-    [],
   );
 
   // Division — fin de séance. Compte comme la séance du jour (streak + récap),

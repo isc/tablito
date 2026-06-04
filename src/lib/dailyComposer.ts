@@ -72,9 +72,9 @@ export function composeDailySession(profile: UserProfile, now: string): SessionI
 
   // L'entretien remplace des révisions division pour viser ~TARGET sans gonfler
   // la séance. Intros division gardées en priorité.
-  const reviewSlots = Math.max(0, TARGET_QUESTIONS - divIntros.length - maintenance.length);
+  const divReviewBudget = Math.max(0, TARGET_QUESTIONS - divIntros.length - maintenance.length);
   const rest = interleaveGreedy(
-    [...divReviews.slice(0, reviewSlots), ...maintenance],
+    [...divReviews.slice(0, divReviewBudget), ...maintenance],
     itemConflict,
   );
 
