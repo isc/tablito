@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260604191912"
+const CACHE = 'multiplix-' + "20260604194246"
 const BASE = "/multiplix/previews/claude-division-level-impl/"
 const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/favicon.svg",
@@ -45,6 +45,7 @@ const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/specs/index.html",
   "/multiplix/previews/claude-division-level-impl/src/App.js",
   "/multiplix/previews/claude-division-level-impl/src/__tests__/badges.test.js",
+  "/multiplix/previews/claude-division-level-impl/src/__tests__/dailyComposer.test.js",
   "/multiplix/previews/claude-division-level-impl/src/__tests__/divisionBadges.test.js",
   "/multiplix/previews/claude-division-level-impl/src/__tests__/divisionComposer.test.js",
   "/multiplix/previews/claude-division-level-impl/src/__tests__/divisionFacts.test.js",
@@ -94,6 +95,7 @@ const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/src/lib/audioContext.js",
   "/multiplix/previews/claude-division-level-impl/src/lib/badges.js",
   "/multiplix/previews/claude-division-level-impl/src/lib/changelog.js",
+  "/multiplix/previews/claude-division-level-impl/src/lib/dailyComposer.js",
   "/multiplix/previews/claude-division-level-impl/src/lib/divisionComposer.js",
   "/multiplix/previews/claude-division-level-impl/src/lib/divisionFacts.js",
   "/multiplix/previews/claude-division-level-impl/src/lib/divisionStrategies.js",
@@ -115,7 +117,6 @@ const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/src/screens/BadgesScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/ChangelogScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/DivisionProgressScreen.js",
-  "/multiplix/previews/claude-division-level-impl/src/screens/DivisionSessionScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/HomeScreen.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/ParentDashboard.js",
   "/multiplix/previews/claude-division-level-impl/src/screens/PrivacyScreen.js",
