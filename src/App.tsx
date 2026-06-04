@@ -1,10 +1,10 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
-import type { UserProfile, SessionQuestion, DivisionSessionQuestion, SessionResult, SessionQuestionLog, MultiFact, DivisionFact, Badge, BoxLevel } from './types';
+import type { UserProfile, SessionItem, SessionResult, SessionQuestionLog, MultiFact, DivisionFact, Badge, BoxLevel } from './types';
 import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
-import { composeDivisionSession } from './lib/divisionComposer';
-import { processAnswer, isDue } from './lib/leitner';
+import { composeDailySession } from './lib/dailyComposer';
+import { processAnswer } from './lib/leitner';
 import { checkBadges, getCompletedTables, isRule11Unlocked, isDivisionUnlocked } from './lib/badges';
 import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
@@ -30,7 +30,6 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionScreen from './screens/SessionScreen';
-import DivisionSessionScreen from './screens/DivisionSessionScreen';
 import RecapScreen from './screens/RecapScreen';
 // Lazy : écrans secondaires (consultation, parent, infos) — ouverts
 // occasionnellement, leur coût parse/CPU au cold launch est gaspillé
@@ -49,7 +48,6 @@ type Screen =
   | 'rulesIntro'
   | 'home'
   | 'session'
-  | 'divisionSession'
   | 'recap'
   | 'progress'
   | 'divisionProgress'
@@ -68,8 +66,9 @@ function initialScreen(profile: UserProfile | null): Screen {
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile));
-  const [sessionQuestions, setSessionQuestions] = useState<SessionQuestion[]>([]);
-  const [divisionSessionQuestions, setDivisionSessionQuestions] = useState<DivisionSessionQuestion[]>([]);
+  // Liste unifiée de la séance en cours : 100% multiplication avant déblocage,
+  // mixte (division + entretien des tables) après (specs §11.6).
+  const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
   // Quelle « saveur » de récap afficher (multiplication vs division) — pilote
   // le nom affiché, le badge de complétion surveillé et l'écran image cible.
   const [recapMode, setRecapMode] = useState<'mult' | 'div'>('mult');
@@ -212,35 +211,23 @@ export default function App() {
     setScreen('rules');
   }, []);
 
-  // Piste du jour (specs §11). Une seule séance quotidienne, un seul bouton :
-  // c'est l'app qui choisit. Tant que la division n'est pas débloquée, c'est
-  // toujours la multiplication. Une fois débloquée, on fait une séance de
-  // MULTIPLICATION les jours où des faits sont réellement dus en révision
-  // (maintenance, §5.1) — sinon c'est la DIVISION (le vrai nouvel apprentissage).
+  // Séance du jour, un seul bouton (specs §11). Avant déblocage de la division :
+  // 100% multiplication (parcours v1). Après : séance mixte composée par
+  // composeDailySession — division + entretien des tables réellement dues
+  // (§11.6), un seul écran de séance pour les deux.
   const divisionUnlocked = useMemo(
     () => (profile ? isDivisionUnlocked(profile) : false),
     [profile],
   );
-  const multReviewsDue = useMemo(
-    () => !!profile && profile.facts.some((f) => f.introduced && isDue(f, today)),
-    [profile, today],
-  );
-  const todaysTrack: 'mult' | 'div' = divisionUnlocked && !multReviewsDue ? 'div' : 'mult';
-
-  // On ne compose que la piste retenue. lastSessionDate gate les deux (une
-  // séance/jour). Pré-calcul pour connaître la disponibilité sans recomposer.
   const sessionDone = !!profile && profile.lastSessionDate === today;
-  const pendingMult = useMemo(() => {
-    if (!profile || sessionDone || todaysTrack !== 'mult') return [];
-    return composeSession(profile, today);
-  }, [profile, sessionDone, todaysTrack, today]);
-  const pendingDivision = useMemo(() => {
-    if (!profile || sessionDone || todaysTrack !== 'div') return [];
-    return composeDivisionSession(profile, today);
-  }, [profile, sessionDone, todaysTrack, today]);
-  const hasSessionAvailable = pendingMult.length > 0 || pendingDivision.length > 0;
+  const pendingItems = useMemo<SessionItem[]>(() => {
+    if (!profile || sessionDone) return [];
+    if (divisionUnlocked) return composeDailySession(profile, today);
+    return composeSession(profile, today).map((q): SessionItem => ({ kind: 'mult', ...q }));
+  }, [profile, sessionDone, divisionUnlocked, today]);
+  const hasSessionAvailable = pendingItems.length > 0;
 
-  // Remet à zéro les compteurs de séance (partagés multiplication/division).
+  // Remet à zéro les compteurs de séance.
   const resetSessionTracking = useCallback(() => {
     sessionConsecutiveCorrect.current = 0;
     sessionMaxConsecutiveCorrect.current = 0;
@@ -249,10 +236,9 @@ export default function App() {
     sessionPromoted.current = new Set();
   }, []);
 
-  // Démarre la séance du jour — la piste a déjà été choisie par l'app (todaysTrack).
+  // Démarre la séance du jour (multiplication ou mixte selon le déblocage).
   const handleStart = useCallback(async () => {
-    if (!profile) return;
-    if (todaysTrack === 'div' ? pendingDivision.length === 0 : pendingMult.length === 0) return;
+    if (!profile || pendingItems.length === 0) return;
 
     // En mode vocal, on attend la réponse au prompt micro avant d'entrer en
     // séance — sinon la première question (et son timer) démarrerait pendant
@@ -262,16 +248,31 @@ export default function App() {
     }
 
     resetSessionTracking();
+    // Snapshot des tables maîtrisées (célébration de complétion, parcours v1).
+    tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
+    setSessionItems(pendingItems);
+    setScreen('session');
+  }, [profile, pendingItems, resetSessionTracking]);
 
-    if (todaysTrack === 'div') {
-      setDivisionSessionQuestions(pendingDivision);
-      setScreen('divisionSession');
-    } else {
-      tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
-      setSessionQuestions(pendingMult);
-      setScreen('session');
-    }
-  }, [profile, todaysTrack, pendingMult, pendingDivision, resetSessionTracking]);
+  // Aiguille une réponse vers la bonne piste selon le type de question.
+  const handleSessionItemAnswer = useCallback(
+    (
+      item: SessionItem,
+      correct: boolean,
+      timeMs: number,
+      answered: number | null,
+      inputMode: 'keypad' | 'voice',
+    ) => {
+      if (item.kind === 'div') {
+        handleDivisionAnswer(item.fact, correct, timeMs, answered, item.isBonusReview, inputMode);
+      } else {
+        handleAnswer(item.fact, correct, timeMs, answered, item.isBonusReview, inputMode);
+      }
+    },
+    // handleAnswer / handleDivisionAnswer sont stables (useCallback [] / [profile]).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   // Handle individual answer — use functional updater to avoid stale fact on retries
   const handleAnswer = useCallback(
@@ -291,6 +292,7 @@ export default function App() {
         answeredWith: answered,
         isBonusReview,
         inputMode,
+        fast: correct && timeMs < FAST_THRESHOLD_MS[inputMode],
       });
       if (correct) {
         sessionConsecutiveCorrect.current++;
@@ -374,13 +376,11 @@ export default function App() {
       };
 
       // Pass previousLastSessionDate so PERSEVERANCE badge can check the gap.
-      // wasFast = même critère que l'étoile rayonnante de FeedbackOverlay
-      // (correct + sous le seuil du mode). Le badge Véloce = 5 étoiles d'affilée.
+      // wasFast = l'étoile dorée enregistrée au moment de la réponse (seuil
+      // propre au type de question). Le badge Véloce = 5 étoiles d'affilée.
       const sessionStats = {
         consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
-        wasFast: sessionQuestionLogs.current.map(
-          (q) => q.correct && q.responseTimeMs < FAST_THRESHOLD_MS[q.inputMode],
-        ),
+        wasFast: sessionQuestionLogs.current.map((q) => q.fast ?? false),
       };
       const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);
       const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
@@ -398,6 +398,7 @@ export default function App() {
       setNewlyCompletedTables(completedNow);
       setFreezeJustUsed(streakUpdate.freezeJustUsed);
       setFreezeJustEarned(streakUpdate.freezeJustEarned);
+      setRecapMode('mult');
       setScreen('recap');
 
       // Anti-nag du rappel push : marque qu'une séance a eu lieu aujourd'hui
@@ -429,6 +430,7 @@ export default function App() {
         answeredWith: answered,
         isBonusReview,
         inputMode,
+        fast: correct && timeMs < DIVISION_FAST_THRESHOLD_MS[inputMode],
       });
       if (correct) {
         sessionConsecutiveCorrect.current++;
@@ -514,13 +516,12 @@ export default function App() {
         sessionHistory,
       };
 
-      // wasFast utilise le seuil division (étoile dorée = seuil §11.6), pour
-      // que le badge Véloce s'aligne sur ce que voit l'enfant en séance.
+      // Séance potentiellement mixte (division + entretien tables) : on s'appuie
+      // sur l'étoile dorée enregistrée par question (seuil propre à son type)
+      // plutôt que de recalculer avec un seuil unique. Badge Véloce = 5 d'affilée.
       const sessionStats = {
         consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
-        wasFast: sessionQuestionLogs.current.map(
-          (q) => q.correct && q.responseTimeMs < DIVISION_FAST_THRESHOLD_MS[q.inputMode],
-        ),
+        wasFast: sessionQuestionLogs.current.map((q) => q.fast ?? false),
       };
       const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);
       const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
@@ -612,19 +613,11 @@ export default function App() {
         />
       )}
 
-      {screen === 'session' && profile && sessionQuestions.length > 0 && (
+      {screen === 'session' && profile && sessionItems.length > 0 && (
         <SessionScreen
-          questions={sessionQuestions}
-          onComplete={handleSessionComplete}
-          onAnswer={handleAnswer}
-        />
-      )}
-
-      {screen === 'divisionSession' && profile && divisionSessionQuestions.length > 0 && (
-        <DivisionSessionScreen
-          questions={divisionSessionQuestions}
-          onComplete={handleDivisionSessionComplete}
-          onAnswer={handleDivisionAnswer}
+          questions={sessionItems}
+          onComplete={divisionUnlocked ? handleDivisionSessionComplete : handleSessionComplete}
+          onAnswer={handleSessionItemAnswer}
         />
       )}
 

@@ -73,20 +73,4 @@ describe('Niveau 2 — séance du jour décidée par l\'app', () => {
     expect(el?.textContent).toContain('÷');
   });
 
-  it('débloqué, une table due → la séance du jour est la multiplication', () => {
-    const p = masteredProfile();
-    // Un fait multiplicatif dû (date passée) → jour de maintenance multiplication.
-    p.facts = p.facts.map((f, i) => (i === 0 ? { ...f, nextDue: '2020-01-01' } : f));
-    saveProfile(p);
-
-    render(<App />);
-
-    const cta = findByText(/C'est parti/);
-    expect(cta).not.toBeNull();
-    fireEvent.click(cta!);
-
-    const el = document.querySelector('.session-question-text');
-    expect(el?.textContent).toContain('×'); // ×
-    expect(el?.textContent).not.toContain('÷');
-  });
 });

@@ -26,7 +26,7 @@ function factStage(fact: MultiFact): number {
  * Returns a random display order for a fact (a*b or b*a).
  * For squares (a === b), returns the original order.
  */
-function randomDisplayOrder(fact: MultiFact): { displayA: number; displayB: number } {
+export function randomDisplayOrder(fact: MultiFact): { displayA: number; displayB: number } {
   if (fact.a === fact.b) {
     return { displayA: fact.a, displayB: fact.b };
   }

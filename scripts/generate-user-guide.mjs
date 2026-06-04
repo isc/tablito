@@ -857,9 +857,9 @@ const SECTIONS = [
       des maths »), un niveau se débloque : réviser les mêmes faits, mais sous
       forme de division (« 56 ÷ 7 = ? »), avec une image mystère dédiée — l'image
       des tables, elle, reste acquise. Il n'y a toujours qu'un seul bouton
-      « C'est parti » : c'est l'app qui choisit la séance du jour — les tables
-      les jours où des faits sont à réviser (entretien), la division le reste du
-      temps. Chaque division n'est proposée qu'une fois la multiplication
+      « C'est parti » : la séance du jour devient la division, et les quelques
+      tables à réviser pour l'entretien y sont glissées au passage (× et ÷ dans
+      la même séance). Chaque division n'est proposée qu'une fois la multiplication
       correspondante parfaitement maîtrisée, et l'app enseigne explicitement
       l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ». Tout
       le reste — boîtes de Leitner, image qui se révèle, encouragements sans

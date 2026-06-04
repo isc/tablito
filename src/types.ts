@@ -134,6 +134,14 @@ export interface DivisionSessionQuestion {
   isBonusReview: boolean;
 }
 
+// Élément d'une séance mixte (specs §11.6) : après déblocage, la séance du
+// jour est principalement de la division mais peut intégrer des révisions
+// d'entretien des tables (× et ÷ entrelacés). Le discriminant `kind` permet à
+// l'écran de séance de rendre chaque question selon son type.
+export type SessionItem =
+  | ({ kind: 'mult' } & SessionQuestion)
+  | ({ kind: 'div' } & DivisionSessionQuestion);
+
 // Log par question pour les séances enregistrées depuis l'ajout du champ.
 // Permet de diagnostiquer vitesse et mode après coup, y compris pour les
 // révisions bonus qui ne créent pas d'entrée dans `fact.history` (cf. App.tsx
@@ -147,6 +155,11 @@ export interface SessionQuestionLog {
   answeredWith: number | null;
   isBonusReview: boolean;
   inputMode: 'keypad' | 'voice';
+  // « Étoile dorée » : correct ET sous le seuil de rapidité du type de question
+  // (mult ou division). Enregistré au moment de la réponse pour que le badge
+  // Véloce s'appuie sur le bon seuil dans une séance mixte. Optionnel (absent
+  // des logs antérieurs).
+  fast?: boolean;
 }
 
 export interface SessionResult {
