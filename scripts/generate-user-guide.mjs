@@ -199,7 +199,13 @@ function buildUnlockedDivisionProfile() {
   const divisionFacts = [];
   for (let a = 2; a <= 9; a++) {
     for (let b = 2; b <= 9; b++) {
-      const { box, introduced } = seededBox(b, a); // décalé vs tables pour varier l'image
+      const seed = seededBox(b, a); // décalé vs tables pour varier l'image
+      const introduced = seed.introduced;
+      // Aucun fait INTRODUIT en boîte 1 : sinon le pacing d'introduction
+      // (§11.6 / shouldIntroduceNew) bloque les nouvelles intros et la capture
+      // « 16-division-intro » n'a pas lieu. Les faits non introduits restent
+      // en boîte 1 (introduced=false) et éligibles pour l'intro.
+      const box = introduced ? Math.max(seed.box, 2) : seed.box;
       divisionFacts.push({
         dividend: a * b,
         divisor: a,
