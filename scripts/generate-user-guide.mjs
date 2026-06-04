@@ -176,7 +176,7 @@ function buildSampleProfile({ sessionAvailable = true } = {}) {
 }
 
 // Profil « niveau 2 débloqué » : toutes les tables en boîte 5 → la migration
-// attribue le badge Génie des maths au chargement → la division est débloquée.
+// attribue le badge Génie de la multiplication au chargement → division débloquée.
 // Sert à capturer l'accueil avec le bouton division, la séance et l'image
 // mystère dédiée.
 function buildUnlockedDivisionProfile() {
@@ -880,7 +880,7 @@ const SECTIONS = [
     description: `Dix-huit badges pour les tables, répartis en trois familles :
       jalons (première séance, 7 jours, 30 jours), performance (10 réponses de
       suite, 5 réponses < 2 s), et maîtrise (premier fait en boîte 4, premier en
-      boîte 5, un badge par table + un badge « génie des maths » quand tout
+      boîte 5, un badge par table + un badge « génie de la multiplication » quand tout
       est en boîte 5). Une fois toutes les tables maîtrisées, une série de
       badges dédiés à la division vient s'ajouter à la collection. Chaque
       vignette est cliquable et ouvre une fiche qui explique la condition de

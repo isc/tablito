@@ -15,7 +15,7 @@ const NUM_DIV_TABLE_BADGES = 8;
 
 /**
  * Vrai quand le niveau 2 (division) est débloqué : on gate sur le badge
- * « Génie des maths » (toutes les multiplications en boîte 5). Critère basé
+ * « Génie de la multiplication » (toutes les multiplications en boîte 5). Critère basé
  * sur un badge ⇒ permanent (specs §11.3), cohérent avec la règle bonus ×11.
  */
 export function isDivisionUnlocked(profile: UserProfile): boolean {
@@ -154,8 +154,8 @@ export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
   }),
   {
     id: BADGE_IDS.GENIE_MATHS,
-    name: 'Génie des maths',
-    description: 'Tous les faits en boîte 5',
+    name: 'Génie de la multiplication',
+    description: 'Toutes les multiplications maîtrisées',
     icon: '🏆',
     color: 'var(--honey)',
     conditionText: 'Place toutes les multiplications dans la boîte 5 (le top niveau !).',

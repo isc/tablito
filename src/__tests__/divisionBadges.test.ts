@@ -20,7 +20,7 @@ function earn(p: UserProfile, id: string): void {
 }
 
 describe('isDivisionUnlocked', () => {
-  it('faux par défaut, vrai dès le badge Génie des maths', () => {
+  it('faux par défaut, vrai dès le badge Génie de la multiplication', () => {
     const p = profile();
     expect(isDivisionUnlocked(p)).toBe(false);
     earn(p, BADGE_IDS.GENIE_MATHS);

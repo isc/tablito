@@ -122,7 +122,7 @@ export default function RecapScreen({
       </div>
 
       {/* Déblocage de la division : la séance qui complète l'image des tables
-          (badge Génie des maths) révèle le niveau 2. Une seule fois. */}
+          (badge Génie de la multiplication) révèle le niveau 2. Une seule fois. */}
       {mode === 'mult' && imageJustCompleted && (
         <div className="recap-card recap-division-unlock">
           <div className="recap-division-unlock-icon" aria-hidden="true">➗</div>
