@@ -1709,6 +1709,32 @@
   overflow-wrap: break-word;
 }
 
+/* Division : équation à facteur manquant « divisor × ? = dividend » (§11.4).
+   La case dashed honey évoque le slot à remplir — l'enfant cherche le facteur. */
+.strategy-hint-pivot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-weight: 800;
+  font-size: 1.12em;
+  color: var(--ink);
+}
+
+.strategy-hint-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  padding: 0 0.25em;
+  border: 2px dashed var(--honey);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--honey-ink);
+  font-weight: 800;
+  line-height: 1;
+}
+
 .strategy-hint-recall {
   margin-top: 10px;
   padding-top: 10px;

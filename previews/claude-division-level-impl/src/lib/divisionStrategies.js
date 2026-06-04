@@ -1,3 +1,3 @@
-function o(n){const{dividend:i,divisor:t,quotient:e}=n;return{title:"Pense \xE0 la multiplication",lines:[`${i} \xF7 ${t}, c'est : ${t} fois combien font ${i} ?`,`${t} \xD7 ${e} = ${i}`,`Donc ${i} \xF7 ${t} = ${e}.`]}}export{o as getDivisionStrategy};
+function e(o){const{dividend:i,divisor:t,quotient:n}=o;return{title:"Pense \xE0 la multiplication",intro:`${i} \xF7 ${t}, c'est : ${t} fois combien font ${i} ?`,divisor:t,dividend:i,quotient:n,conclusion:`Donc ${i} \xF7 ${t} = ${n}.`}}export{e as getDivisionStrategy};
 
 //# sourceMappingURL=divisionStrategies.js.map
