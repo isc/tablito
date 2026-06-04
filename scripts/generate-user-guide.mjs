@@ -862,11 +862,12 @@ const SECTIONS = [
       divisions. Il n'y a toujours qu'un seul bouton « C'est parti » : la séance
       du jour devient la division, et les quelques tables à réviser pour
       l'entretien y sont glissées au passage (× et ÷ dans la même séance).
-      Chaque division n'est proposée qu'une fois la multiplication
-      correspondante parfaitement maîtrisée, et l'app enseigne explicitement
-      l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ». Tout
-      le reste — boîtes de Leitner, image qui se révèle, encouragements sans
-      jugement — fonctionne exactement comme pour la multiplication.`,
+      Les divisions arrivent progressivement (pas toutes d'un coup), dans le même
+      ordre pensé que les tables — du plus simple au plus difficile — et l'app
+      enseigne explicitement l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois
+      combien font 56 ? ». Tout le reste — boîtes de Leitner, image qui se
+      révèle, encouragements sans jugement — fonctionne exactement comme pour la
+      multiplication.`,
     shots: [
       { file: '15-division-home', caption: 'Une fois les tables maîtrisées, « Mon image » devient « Mes images » (multiplications + divisions).' },
       { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
