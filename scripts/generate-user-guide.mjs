@@ -684,8 +684,9 @@ async function captureDivisionScreens(page) {
   await page.click('.progress-back-btn');
   await page.waitForSelector('.home-screen');
 
-  // Séance de division : intro « pense à la multiplication » puis question.
-  await page.click('.home-start-btn:has-text("divisions")');
+  // Séance de division : le seed n'a aucune table due → la séance du jour est
+  // la division. On clique le bouton unique « C'est parti ».
+  await page.click('.home-start-btn');
   await page.waitForSelector('.session-screen');
   if (await page.locator('.session-intro').count()) {
     await page.waitForFunction(
@@ -853,17 +854,18 @@ const SECTIONS = [
     id: 'division',
     title: 'Niveau 2 — la division',
     description: `Quand l'enfant a maîtrisé toutes ses tables (le badge « Génie
-      des maths »), un niveau optionnel se débloque : réviser les mêmes faits,
-      mais sous forme de division (« 56 ÷ 7 = ? »). Un bouton « Les divisions »
-      apparaît sur l'accueil à côté de la séance habituelle, avec sa propre
-      tuile et une image mystère dédiée — l'image des tables, elle, reste
-      acquise. Chaque division n'est proposée qu'une fois la multiplication
+      des maths »), un niveau se débloque : réviser les mêmes faits, mais sous
+      forme de division (« 56 ÷ 7 = ? »), avec une image mystère dédiée — l'image
+      des tables, elle, reste acquise. Il n'y a toujours qu'un seul bouton
+      « C'est parti » : c'est l'app qui choisit la séance du jour — les tables
+      les jours où des faits sont à réviser (entretien), la division le reste du
+      temps. Chaque division n'est proposée qu'une fois la multiplication
       correspondante parfaitement maîtrisée, et l'app enseigne explicitement
       l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ». Tout
       le reste — boîtes de Leitner, image qui se révèle, encouragements sans
       jugement — fonctionne exactement comme pour la multiplication.`,
     shots: [
-      { file: '15-division-home', caption: 'Une fois toutes les tables maîtrisées, le bouton « Les divisions » apparaît.' },
+      { file: '15-division-home', caption: 'Une fois les tables maîtrisées, une tuile « Divisions » apparaît ; la séance du jour bascule sur la division.' },
       { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
       { file: '17-division-question', caption: 'Question de division au pavé numérique.' },
       { file: '18-division-progress', caption: 'Une image mystère dédiée à la division, distincte de celle des tables.' },

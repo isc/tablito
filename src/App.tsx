@@ -4,7 +4,7 @@ import type { UserProfile, SessionQuestion, DivisionSessionQuestion, SessionResu
 import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDivisionSession } from './lib/divisionComposer';
-import { processAnswer } from './lib/leitner';
+import { processAnswer, isDue } from './lib/leitner';
 import { checkBadges, getCompletedTables, isRule11Unlocked, isDivisionUnlocked } from './lib/badges';
 import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
@@ -212,26 +212,33 @@ export default function App() {
     setScreen('rules');
   }, []);
 
-  // Pre-compute the next session so we can check availability without re-running
-  // composeSession on every render, and reuse it when the user clicks "start".
-  const pendingSession = useMemo(() => {
-    if (!profile) return [];
-    if (profile.lastSessionDate === today) return [];
-    return composeSession(profile, today);
-  }, [profile, today]);
-
-  // Niveau 2 — division (specs §11). Le niveau se débloque au badge Génie des
-  // maths. Une seule séance par jour au total : le gate lastSessionDate vaut
-  // pour les deux pistes (faire l'une marque la journée comme faite).
+  // Piste du jour (specs §11). Une seule séance quotidienne, un seul bouton :
+  // c'est l'app qui choisit. Tant que la division n'est pas débloquée, c'est
+  // toujours la multiplication. Une fois débloquée, on fait une séance de
+  // MULTIPLICATION les jours où des faits sont réellement dus en révision
+  // (maintenance, §5.1) — sinon c'est la DIVISION (le vrai nouvel apprentissage).
   const divisionUnlocked = useMemo(
     () => (profile ? isDivisionUnlocked(profile) : false),
     [profile],
   );
-  const pendingDivisionSession = useMemo(() => {
-    if (!profile || !divisionUnlocked) return [];
-    if (profile.lastSessionDate === today) return [];
+  const multReviewsDue = useMemo(
+    () => !!profile && profile.facts.some((f) => f.introduced && isDue(f, today)),
+    [profile, today],
+  );
+  const todaysTrack: 'mult' | 'div' = divisionUnlocked && !multReviewsDue ? 'div' : 'mult';
+
+  // On ne compose que la piste retenue. lastSessionDate gate les deux (une
+  // séance/jour). Pré-calcul pour connaître la disponibilité sans recomposer.
+  const sessionDone = !!profile && profile.lastSessionDate === today;
+  const pendingMult = useMemo(() => {
+    if (!profile || sessionDone || todaysTrack !== 'mult') return [];
+    return composeSession(profile, today);
+  }, [profile, sessionDone, todaysTrack, today]);
+  const pendingDivision = useMemo(() => {
+    if (!profile || sessionDone || todaysTrack !== 'div') return [];
     return composeDivisionSession(profile, today);
-  }, [profile, divisionUnlocked, today]);
+  }, [profile, sessionDone, todaysTrack, today]);
+  const hasSessionAvailable = pendingMult.length > 0 || pendingDivision.length > 0;
 
   // Remet à zéro les compteurs de séance (partagés multiplication/division).
   const resetSessionTracking = useCallback(() => {
@@ -242,9 +249,10 @@ export default function App() {
     sessionPromoted.current = new Set();
   }, []);
 
-  // Start session
-  const handleStartSession = useCallback(async () => {
-    if (!profile || pendingSession.length === 0) return;
+  // Démarre la séance du jour — la piste a déjà été choisie par l'app (todaysTrack).
+  const handleStart = useCallback(async () => {
+    if (!profile) return;
+    if (todaysTrack === 'div' ? pendingDivision.length === 0 : pendingMult.length === 0) return;
 
     // En mode vocal, on attend la réponse au prompt micro avant d'entrer en
     // séance — sinon la première question (et son timer) démarrerait pendant
@@ -254,25 +262,16 @@ export default function App() {
     }
 
     resetSessionTracking();
-    tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
 
-    setSessionQuestions(pendingSession);
-    setScreen('session');
-  }, [profile, pendingSession, resetSessionTracking]);
-
-  // Start division session (niveau 2)
-  const handleStartDivisionSession = useCallback(async () => {
-    if (!profile || pendingDivisionSession.length === 0) return;
-
-    if (isVoiceMode()) {
-      await preflightMicPermission();
+    if (todaysTrack === 'div') {
+      setDivisionSessionQuestions(pendingDivision);
+      setScreen('divisionSession');
+    } else {
+      tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
+      setSessionQuestions(pendingMult);
+      setScreen('session');
     }
-
-    resetSessionTracking();
-
-    setDivisionSessionQuestions(pendingDivisionSession);
-    setScreen('divisionSession');
-  }, [profile, pendingDivisionSession, resetSessionTracking]);
+  }, [profile, todaysTrack, pendingMult, pendingDivision, resetSessionTracking]);
 
   // Handle individual answer — use functional updater to avoid stale fact on retries
   const handleAnswer = useCallback(
@@ -601,12 +600,10 @@ export default function App() {
       {screen === 'home' && profile && (
         <HomeScreen
           profile={profile}
-          hasSessionAvailable={pendingSession.length > 0}
+          hasSessionAvailable={hasSessionAvailable}
           hasNewRule={hasNewRule}
           divisionUnlocked={divisionUnlocked}
-          hasDivisionSessionAvailable={pendingDivisionSession.length > 0}
-          onStart={handleStartSession}
-          onStartDivision={handleStartDivisionSession}
+          onStart={handleStart}
           onShowProgress={() => setScreen('progress')}
           onShowDivisionProgress={() => setScreen('divisionProgress')}
           onShowBadges={() => setScreen('badges')}

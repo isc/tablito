@@ -4,10 +4,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import App from '../App';
 import { createNewProfile, saveProfile } from '../lib/storage';
 
-// Test d'intégration : monte le vrai <App /> et vérifie le gating du niveau 2
-// (division) + l'entrée en séance, uniquement via le DOM.
+// Test d'intégration : monte le vrai <App /> et vérifie, via le DOM, le modèle
+// « un seul bouton, l'app choisit la piste » du niveau 2 (specs §11) :
+//   - niveau verrouillé → pas de tuile Divisions, séance multiplication ;
+//   - débloqué + aucune table due → la séance du jour est la division ;
+//   - débloqué + une table due → la séance du jour est la multiplication.
 
-function findButton(re: RegExp): HTMLButtonElement | null {
+function findByText(re: RegExp): HTMLButtonElement | null {
   return (
     (Array.from(document.querySelectorAll('button')).find((b) =>
       re.test((b.textContent ?? '').trim()),
@@ -15,14 +18,31 @@ function findButton(re: RegExp): HTMLButtonElement | null {
   );
 }
 
+// Toutes les tables maîtrisées (boîte 5) → la migration attribue Génie des
+// maths au chargement → niveau 2 débloqué. nextDue très loin = aucune table due.
+function masteredProfile() {
+  const p = createNewProfile('Zoé');
+  p.hasSeenRulesIntro = true;
+  p.totalSessions = 50;
+  p.lastSessionDate = null;
+  p.facts = p.facts.map((f) => ({
+    ...f,
+    box: 5 as const,
+    introduced: true,
+    lastSeen: '2026-01-01',
+    nextDue: '2099-12-31',
+    history: [{ date: '2026-01-01', correct: true, responseTimeMs: 1000, answeredWith: f.product }],
+  }));
+  return p;
+}
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
 });
 
-describe('Niveau 2 — flux division (UI)', () => {
-  it('ne montre pas l\'accès division tant que le niveau n\'est pas débloqué', () => {
-    // Profil par défaut (tables non maîtrisées) → pas de badge Génie des maths.
+describe('Niveau 2 — séance du jour décidée par l\'app', () => {
+  it('niveau verrouillé : pas de tuile Divisions, bouton unique', () => {
     const p = createNewProfile('Zoé');
     p.hasSeenRulesIntro = true;
     p.lastSessionDate = null;
@@ -30,29 +50,43 @@ describe('Niveau 2 — flux division (UI)', () => {
 
     render(<App />);
 
-    expect(findButton(/Les divisions/)).toBeNull();
+    expect(findByText(/Divisions/)).toBeNull();
+    expect(findByText(/C'est parti/)).not.toBeNull();
   });
 
-  it('débloque la division quand tout est maîtrisé et entre en séance', () => {
-    // Toutes les multiplications en boîte 5 → la migration attribue le badge
-    // Génie des maths au chargement → niveau 2 débloqué.
-    const p = createNewProfile('Zoé');
-    p.hasSeenRulesIntro = true;
-    p.lastSessionDate = null;
-    p.totalSessions = 50;
-    p.facts = p.facts.map((f) => ({ ...f, box: 5, introduced: true }));
+  it('débloqué, aucune table à réviser → la séance du jour est la division', () => {
+    saveProfile(masteredProfile());
+
+    render(<App />);
+
+    // La tuile « Divisions » (accès image dédiée) apparaît une fois débloqué.
+    expect(findByText(/Divisions/)).not.toBeNull();
+
+    const cta = findByText(/C'est parti/);
+    expect(cta).not.toBeNull();
+    fireEvent.click(cta!);
+
+    // Première question = division (intro « pense à la multiplication »).
+    const el =
+      document.querySelector('.session-intro-formula') ??
+      document.querySelector('.session-question-text');
+    expect(el?.textContent).toContain('÷');
+  });
+
+  it('débloqué, une table due → la séance du jour est la multiplication', () => {
+    const p = masteredProfile();
+    // Un fait multiplicatif dû (date passée) → jour de maintenance multiplication.
+    p.facts = p.facts.map((f, i) => (i === 0 ? { ...f, nextDue: '2020-01-01' } : f));
     saveProfile(p);
 
     render(<App />);
 
-    const cta = findButton(/Les divisions/);
+    const cta = findByText(/C'est parti/);
     expect(cta).not.toBeNull();
-
     fireEvent.click(cta!);
 
-    // Première question de division = introduction : formule avec l'opérateur ÷.
-    const formula = document.querySelector('.session-intro-formula');
-    expect(formula).not.toBeNull();
-    expect(formula?.textContent).toContain('÷');
+    const el = document.querySelector('.session-question-text');
+    expect(el?.textContent).toContain('×'); // ×
+    expect(el?.textContent).not.toContain('÷');
   });
 });

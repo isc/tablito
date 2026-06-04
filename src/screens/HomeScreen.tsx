@@ -13,12 +13,10 @@ interface HomeScreenProps {
   hasSessionAvailable: boolean;
   hasNewRule: boolean;
   // Niveau 2 — division (cf. specs §11). divisionUnlocked = badge Génie des
-  // maths obtenu ; hasDivisionSessionAvailable = niveau débloqué + faits
-  // éligibles + pas déjà fait aujourd'hui.
+  // maths obtenu : ajoute la tuile « Divisions » (image dédiée). La séance du
+  // jour reste un bouton unique — c'est l'app qui choisit tables vs divisions.
   divisionUnlocked: boolean;
-  hasDivisionSessionAvailable: boolean;
   onStart: () => void;
-  onStartDivision: () => void;
   onShowProgress: () => void;
   onShowDivisionProgress: () => void;
   onShowBadges: () => void;
@@ -103,9 +101,7 @@ export default function HomeScreen({
   hasSessionAvailable,
   hasNewRule,
   divisionUnlocked,
-  hasDivisionSessionAvailable,
   onStart,
-  onStartDivision,
   onShowProgress,
   onShowDivisionProgress,
   onShowBadges,
@@ -236,17 +232,11 @@ export default function HomeScreen({
         </div>
 
         <div className="home-cta-wrap">
-          {hasSessionAvailable && (
+          {hasSessionAvailable ? (
             <button className="btn btn--indigo home-start-btn" onClick={onStart}>
               {'▶'} C'est parti&nbsp;!
             </button>
-          )}
-          {divisionUnlocked && hasDivisionSessionAvailable && (
-            <button className="btn btn--ink home-start-btn" onClick={onStartDivision}>
-              {'➗'} Les divisions
-            </button>
-          )}
-          {!hasSessionAvailable && !(divisionUnlocked && hasDivisionSessionAvailable) && (
+          ) : (
             <div className="home-done-msg">Bravo, c'est fait pour aujourd'hui&nbsp;!</div>
           )}
         </div>
