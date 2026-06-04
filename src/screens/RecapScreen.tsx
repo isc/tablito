@@ -121,6 +121,22 @@ export default function RecapScreen({
         <div className="recap-message">Bravo {name}, tu as bien travaillé.</div>
       </div>
 
+      {/* Déblocage de la division : la séance qui complète l'image des tables
+          (badge Génie des maths) révèle le niveau 2. Une seule fois. */}
+      {mode === 'mult' && imageJustCompleted && (
+        <div className="recap-card recap-division-unlock">
+          <div className="recap-division-unlock-icon" aria-hidden="true">➗</div>
+          <div className="recap-division-unlock-text">
+            <div className="recap-division-unlock-title">Tu débloques les divisions&nbsp;!</div>
+            <div className="recap-division-unlock-subtitle">
+              Tu connais toutes tes tables&nbsp;! Tu vas maintenant les réviser
+              autrement : en divisions (comme 56&nbsp;÷&nbsp;7). Une nouvelle image
+              mystère t'attend.
+            </div>
+          </div>
+        </div>
+      )}
+
       {newlyCompletedTables.length > 0 && (
         <div className="recap-card recap-table-complete">
           <div className="recap-table-complete-title">
