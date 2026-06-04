@@ -1,6 +1,10 @@
+import type { ReactNode } from 'react';
+
 interface StrategyHintShellProps {
   title: string;
-  lines: string[];
+  // Lignes du corps : du texte, ou un nœud riche (ex : la case à facteur
+  // manquant de la division). Multiplication passe simplement des strings.
+  lines: ReactNode[];
   variant: 'feedback' | 'intro';
   // En-tête de la carte feedback (« L'astuce du ×9 », « L'astuce »).
   eyebrow?: string;
