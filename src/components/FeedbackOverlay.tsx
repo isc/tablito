@@ -2,20 +2,20 @@ import { useEffect, useState } from 'react';
 import DotGrid from './DotGrid';
 import FeedbackStar from './FeedbackStar';
 import StrategyHint from './StrategyHint';
+import DivisionStrategyHint from './DivisionStrategyHint';
 import { getStrategy } from '../lib/strategies';
+import { getDivisionStrategy } from '../lib/divisionStrategies';
 import { pickRandom } from '../lib/utils';
-import type { BoxLevel } from '../types';
+import type { SessionItem } from '../types';
 
 interface FeedbackOverlayProps {
+  // Question à laquelle on vient de répondre (multiplication ou division).
+  item: SessionItem;
   correct: boolean;
   fast: boolean;
-  correctAnswer: number;
-  // The value the user actually entered/said — shown on the wrong-answer
-  // path so they (or a parent looking over their shoulder) can tell apart
-  // "I gave a wrong answer" from "the mic misheard me".
+  // Valeur réellement saisie/dite — affichée sur le chemin erreur pour
+  // distinguer « mauvaise réponse » de « le micro a mal entendu ».
   submittedValue: number;
-  fact: { a: number; b: number };
-  factBox: BoxLevel;
   onDismiss: () => void;
 }
 
@@ -29,18 +29,13 @@ const CORRECT_MESSAGES = [
   'Trop fort !',
 ];
 
-const INCORRECT_MESSAGES = [
-  'Presque !',
-  'Pas tout à fait…',
-];
+const INCORRECT_MESSAGES = ['Presque !', 'Pas tout à fait…'];
 
 export default function FeedbackOverlay({
+  item,
   correct,
   fast,
-  correctAnswer,
   submittedValue,
-  fact,
-  factBox,
   onDismiss,
 }: FeedbackOverlayProps) {
   const [message] = useState(() =>
@@ -53,19 +48,42 @@ export default function FeedbackOverlay({
     return () => clearTimeout(timer);
   }, [correct, onDismiss]);
 
+  // Opérandes affichés + réponse, selon le type de question.
+  const left = item.kind === 'div' ? item.fact.dividend : item.displayA;
+  const op = item.kind === 'div' ? '÷' : '×';
+  const right = item.kind === 'div' ? item.fact.divisor : item.displayB;
+  const answer = item.kind === 'div' ? item.fact.quotient : item.fact.product;
+
   if (correct) {
     return (
       <div className="feedback-overlay correct" onClick={onDismiss}>
         <FeedbackStar fast={fast} />
         <div className="feedback-message correct">{message}</div>
         <div className="feedback-answer">
-          {fact.a} {'×'} {fact.b} = <b>{correctAnswer}</b>
+          {left} {op} {right} = <b>{answer}</b>
         </div>
       </div>
     );
   }
 
-  const strategy = factBox <= 2 ? getStrategy(fact.a, fact.b) : null;
+  // Astuce affichée uniquement en début d'apprentissage (boîte ≤ 2) ; la grille
+  // de points montre toujours le fait multiplicatif sous-jacent.
+  let strategyHint = null;
+  if (item.fact.box <= 2) {
+    if (item.kind === 'div') {
+      strategyHint = <DivisionStrategyHint strategy={getDivisionStrategy(item.fact)} variant="feedback" />;
+    } else {
+      const s = getStrategy(item.fact.a, item.fact.b);
+      if (s) strategyHint = <StrategyHint strategy={s} variant="feedback" />;
+    }
+  }
+
+  const gridA = item.kind === 'div' ? item.fact.divisor : item.displayA;
+  const gridB = item.kind === 'div' ? item.fact.quotient : item.displayB;
+  const gridEyebrow =
+    item.kind === 'div'
+      ? `${item.fact.divisor} × ${item.fact.quotient} = ${item.fact.dividend}`
+      : `${item.displayA} × ${item.displayB} = ${item.displayA} rangée${item.displayA > 1 ? 's' : ''} de ${item.displayB}`;
 
   return (
     <div className="feedback-overlay incorrect">
@@ -75,14 +93,12 @@ export default function FeedbackOverlay({
           Tu as répondu <b>{submittedValue}</b>
         </div>
         <div className="feedback-answer">
-          {fact.a} {'×'} {fact.b} = <b>{correctAnswer}</b>
+          {left} {op} {right} = <b>{answer}</b>
         </div>
-        {strategy && <StrategyHint strategy={strategy} variant="feedback" />}
+        {strategyHint}
         <div className="feedback-dotgrid">
-          <div className="feedback-dotgrid-eyebrow">
-            {fact.a} {'×'} {fact.b} = {fact.a} rangée{fact.a > 1 ? 's' : ''} de {fact.b}
-          </div>
-          <DotGrid a={fact.a} b={fact.b} animated={false} bare />
+          <div className="feedback-dotgrid-eyebrow">{gridEyebrow}</div>
+          <DotGrid a={gridA} b={gridB} animated={false} bare />
         </div>
         <button type="button" className="feedback-ok-btn" onClick={onDismiss}>
           J'ai compris

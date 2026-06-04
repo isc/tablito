@@ -4,7 +4,6 @@ import NumPad from '../components/NumPad';
 import VoiceInput from '../components/VoiceInput';
 import DotGrid from '../components/DotGrid';
 import FeedbackOverlay from '../components/FeedbackOverlay';
-import DivisionFeedbackOverlay from '../components/DivisionFeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
 import DivisionStrategyHint from '../components/DivisionStrategyHint';
 import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from '../types';
@@ -394,24 +393,13 @@ export default function SessionScreen({
         </div>
       )}
 
-      {/* Feedback — composant selon le type */}
-      {feedback && feedback.item.kind === 'div' && (
-        <DivisionFeedbackOverlay
-          correct={feedback.correct}
-          fast={feedback.fast}
-          fact={feedback.item.fact}
-          submittedValue={feedback.submittedValue}
-          onDismiss={handleFeedbackDismiss}
-        />
-      )}
-      {feedback && feedback.item.kind === 'mult' && (
+      {/* Feedback — un seul composant, qui rend × ou ÷ selon l'item */}
+      {feedback && (
         <FeedbackOverlay
+          item={feedback.item}
           correct={feedback.correct}
           fast={feedback.fast}
-          correctAnswer={feedback.item.fact.product}
           submittedValue={feedback.submittedValue}
-          fact={{ a: feedback.item.displayA, b: feedback.item.displayB }}
-          factBox={feedback.item.fact.box}
           onDismiss={handleFeedbackDismiss}
         />
       )}
