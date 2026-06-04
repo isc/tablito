@@ -19,8 +19,15 @@ const files = {
   'compat-client.mjs':     'compat/client.mjs',
 }
 
+// On ne vendore PAS les `.map` (sources d'origine non publiées) : on retire
+// donc l'annotation `//# sourceMappingURL=…` sinon le navigateur tente de
+// charger des fichiers absents → 404 bruyants en console (DevTools).
+const stripSourceMap = (code) =>
+  code.replace(/\n?\/\/# sourceMappingURL=.*\.map\s*$/, '\n')
+
 await fs.mkdir(OUT, { recursive: true })
 for (const [out, src] of Object.entries(files)) {
-  await fs.copyFile(path.join(SRC, src), path.join(OUT, out))
+  const code = await fs.readFile(path.join(SRC, src), 'utf8')
+  await fs.writeFile(path.join(OUT, out), stripSourceMap(code))
 }
 console.log(`Vendored Preact (${Object.keys(files).length} files) into ${OUT}`)
