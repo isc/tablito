@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260604203435"
+const CACHE = 'multiplix-' + "20260604204755"
 const BASE = "/multiplix/previews/claude-division-level-impl/"
 const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/favicon.svg",
@@ -64,7 +64,6 @@ const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/src/components/BackChevron.js",
   "/multiplix/previews/claude-division-level-impl/src/components/Badge.js",
   "/multiplix/previews/claude-division-level-impl/src/components/BadgeDetailModal.js",
-  "/multiplix/previews/claude-division-level-impl/src/components/DivisionFeedbackOverlay.js",
   "/multiplix/previews/claude-division-level-impl/src/components/DivisionMysteryImage.js",
   "/multiplix/previews/claude-division-level-impl/src/components/DivisionStrategyHint.js",
   "/multiplix/previews/claude-division-level-impl/src/components/DotGrid.js",
@@ -77,12 +76,14 @@ const ASSETS = [
   "/multiplix/previews/claude-division-level-impl/src/components/FlameIcon.js",
   "/multiplix/previews/claude-division-level-impl/src/components/Mascot.js",
   "/multiplix/previews/claude-division-level-impl/src/components/Modal.js",
+  "/multiplix/previews/claude-division-level-impl/src/components/MysteryGrid.js",
   "/multiplix/previews/claude-division-level-impl/src/components/MysteryImage.js",
   "/multiplix/previews/claude-division-level-impl/src/components/NotificationSettings.js",
   "/multiplix/previews/claude-division-level-impl/src/components/NumPad.js",
   "/multiplix/previews/claude-division-level-impl/src/components/ParentGate.js",
   "/multiplix/previews/claude-division-level-impl/src/components/ProgressGrid.js",
   "/multiplix/previews/claude-division-level-impl/src/components/StrategyHint.js",
+  "/multiplix/previews/claude-division-level-impl/src/components/StrategyHintShell.js",
   "/multiplix/previews/claude-division-level-impl/src/components/StreakDetailModal.js",
   "/multiplix/previews/claude-division-level-impl/src/components/VoiceInput.js",
   "/multiplix/previews/claude-division-level-impl/src/env.d.js",
