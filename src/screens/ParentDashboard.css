@@ -370,36 +370,6 @@
   letter-spacing: 0.4px;
 }
 
-/* Sélecteur Multiplications / Divisions (gaté sur le déblocage niveau 2).
-   Mirroir du sélecteur côté enfant (ProgressScreen.css `.progress-tab`). */
-.parent-op-selector-section {
-  padding-bottom: 4px;
-}
-
-.parent-op-selector {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.parent-op-tab {
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: 1.5px solid var(--line);
-  background: var(--paper);
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-
-.parent-op-tab.active {
-  background: var(--indigo);
-  border-color: var(--indigo);
-  color: #fff;
-}
-
 /* Marqueur ×/÷ devant chaque ligne de « Faits les plus difficiles » : permet
    d'identifier l'opération dans la liste unifiée mult+div. */
 .parent-hard-fact-kind {

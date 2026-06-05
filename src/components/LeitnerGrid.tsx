@@ -1,5 +1,6 @@
 import { useState, Fragment } from 'react';
 import type { BoxLevel } from '../types';
+import { boxLevelLabel } from '../lib/leitner';
 import Modal from './Modal';
 
 export interface LeitnerGridCell {
@@ -70,14 +71,7 @@ export default function LeitnerGrid({ operator, cellFor }: LeitnerGridProps) {
       {selected && (
         <Modal onClose={() => setSelected(null)} className="fact-detail">
           <h3 className="fact-detail-title">{selected.modal.title}</h3>
-          <p className="fact-detail-line">
-            Niveau :{' '}
-            {selected.box === 1
-              ? 'En apprentissage'
-              : selected.box === 5
-                ? 'Maîtrisé !'
-                : `Boîte ${selected.box}/5`}
-          </p>
+          <p className="fact-detail-line">Niveau : {boxLevelLabel(selected.box)}</p>
           <p className="fact-detail-line">
             {selected.modal.totalAttempts > 0
               ? `${selected.modal.correctCount}/${selected.modal.totalAttempts} bonnes réponses`

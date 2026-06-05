@@ -128,6 +128,22 @@ export function shouldIntroduceNew(facts: { introduced: boolean; box: BoxLevel }
   return introduced.every((f) => f.box >= 2);
 }
 
+// Seuil de « maîtrise » partagé : un fait est considéré maîtrisé dès la boîte 4
+// (1ère case quasi-nette de l'image mystère ; cf. badge « Première case »).
+export const MASTERY_BOX: BoxLevel = 4;
+
+/** Nombre de faits maîtrisés (boîte ≥ MASTERY_BOX), × ou ÷. */
+export function countMastered(facts: { box: BoxLevel }[]): number {
+  return facts.filter((f) => f.box >= MASTERY_BOX).length;
+}
+
+/** Libellé lisible du niveau d'un fait selon sa boîte (espace parent, images). */
+export function boxLevelLabel(box: BoxLevel): string {
+  if (box === 5) return 'Maîtrisé !';
+  if (box === 1) return 'En apprentissage';
+  return `Boîte ${box}/5`;
+}
+
 // --- Briques de composition de séance, partagées par les composeurs × et ÷ ---
 // (la séparation des composeurs est volontaire — politiques d'intro/conflit
 // distinctes ; seules les briques mécaniques ci-dessous sont mutualisées).

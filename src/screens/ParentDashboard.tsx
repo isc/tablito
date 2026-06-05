@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { UserProfile } from '../types';
-import { getFactKey } from '../lib/facts';
-import { getDivisionFactKey } from '../lib/divisionFacts';
 import { isDivisionUnlocked } from '../lib/badges';
+import { countMastered } from '../lib/leitner';
+import { getHardestFacts } from '../lib/hardestFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 import ProgressGrid from '../components/ProgressGrid';
@@ -73,69 +73,23 @@ export default function ParentDashboard({
     }
   };
 
-  const { boxCounts, maxBoxCount, hardFacts } = useMemo(() => {
-    // Histogramme de l'opération sélectionnée par le parent (× / ÷).
+  // Histogramme de l'opération sélectionnée par le parent (× / ÷).
+  const { boxCounts, maxBoxCount } = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0];
     const histoFacts = showDiv ? divisionFacts : profile.facts;
     for (const fact of histoFacts) {
       if (!fact.introduced) counts[0]++;
       else counts[fact.box]++;
     }
+    return { boxCounts: counts, maxBoxCount: Math.max(...counts, 1) };
+  }, [profile.facts, divisionFacts, showDiv]);
 
-    // Sans fenêtre, un fait galéré il y a longtemps mais désormais en
-    // boîte 5 resterait dans le top — la boîte reflète l'état courant,
-    // pas le compteur d'erreurs.
-    const sessions = profile.sessionHistory;
-    const cutoff =
-      sessions.length > HARD_FACTS_WINDOW
-        ? sessions[sessions.length - HARD_FACTS_WINDOW].date
-        : null;
-
-    // Liste UNIFIÉE × + ÷ : on mélange les deux opérations dans le même top 5,
-    // pour que le parent voie d'un coup d'œil sur quoi l'enfant a buté
-    // récemment, quelle que soit l'opération. Chaque ligne porte son type.
-    type Hard =
-      | { kind: 'mult'; a: number; b: number; product: number; box: number; key: string; errorCount: number }
-      | { kind: 'div'; dividend: number; divisor: number; quotient: number; box: number; key: string; errorCount: number };
-
-    const countErrors = (history: { correct: boolean; date: string }[]) =>
-      history.filter((h) => !h.correct && (cutoff === null || h.date >= cutoff)).length;
-
-    const multHard: Hard[] = profile.facts
-      .filter((f) => f.introduced)
-      .map((f) => ({
-        kind: 'mult' as const,
-        a: f.a,
-        b: f.b,
-        product: f.product,
-        box: f.box,
-        key: getFactKey(f.a, f.b),
-        errorCount: countErrors(f.history),
-      }));
-
-    const divHard: Hard[] = divisionFacts
-      .filter((f) => f.introduced)
-      .map((f) => ({
-        kind: 'div' as const,
-        dividend: f.dividend,
-        divisor: f.divisor,
-        quotient: f.quotient,
-        box: f.box,
-        key: getDivisionFactKey(f.dividend, f.divisor),
-        errorCount: countErrors(f.history),
-      }));
-
-    const hard = [...multHard, ...divHard]
-      .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
-      .slice(0, 5)
-      .filter((f) => f.errorCount > 0);
-
-    return {
-      boxCounts: counts,
-      maxBoxCount: Math.max(...counts, 1),
-      hardFacts: hard,
-    };
-  }, [profile.facts, divisionFacts, profile.sessionHistory, showDiv]);
+  // Liste UNIFIÉE × + ÷ — indépendante du sélecteur (mélange les deux opérations
+  // pour montrer où l'enfant bute en ce moment, cf. lib/hardestFacts).
+  const hardFacts = useMemo(
+    () => getHardestFacts(profile, HARD_FACTS_WINDOW, 5),
+    [profile],
+  );
 
   const recentSessions = useMemo(
     () => [...profile.sessionHistory].reverse().slice(0, 10),
@@ -210,8 +164,7 @@ export default function ParentDashboard({
           </div>
           <div className="parent-stat-card">
             <div className="parent-stat-value">
-              {profile.facts.filter((f) => f.box >= 4).length}/
-              {profile.facts.length}
+              {countMastered(profile.facts)}/{profile.facts.length}
             </div>
             <div className="parent-stat-label">
               {divisionUnlocked ? 'Multiplications maîtrisées' : 'Faits maîtrisés'}
@@ -220,8 +173,7 @@ export default function ParentDashboard({
           {divisionUnlocked && (
             <div className="parent-stat-card">
               <div className="parent-stat-value">
-                {divisionFacts.filter((f) => f.box >= 4).length}/
-                {divisionFacts.length}
+                {countMastered(divisionFacts)}/{divisionFacts.length}
               </div>
               <div className="parent-stat-label">Divisions maîtrisées</div>
             </div>
@@ -230,28 +182,25 @@ export default function ParentDashboard({
       </div>
 
       {/* Sélecteur d'opération — partagé par la Répartition et la Grille Leitner
-          ci-dessous. Apparaît uniquement quand le niveau 2 est débloqué : avant,
-          la division ne doit pas être visible (specs §11.3). */}
+          ci-dessous. Réutilise les classes du sélecteur « Mes images » côté
+          enfant (.progress-tabs, CSS concaténé global). Visible uniquement après
+          déblocage : avant, la division ne doit pas apparaître (specs §11.3). */}
       {divisionUnlocked && (
-        <div className="parent-section parent-op-selector-section">
-          <div className="parent-op-selector" role="tablist" aria-label="Opération">
-            <button
-              role="tab"
-              aria-selected={!showDiv}
-              className={`parent-op-tab ${!showDiv ? 'active' : ''}`}
-              onClick={() => setGridView('mult')}
-            >
-              Multiplications
-            </button>
-            <button
-              role="tab"
-              aria-selected={showDiv}
-              className={`parent-op-tab ${showDiv ? 'active' : ''}`}
-              onClick={() => setGridView('div')}
-            >
-              Divisions
-            </button>
-          </div>
+        <div className="progress-tabs" role="tablist" aria-label="Opération">
+          <button
+            type="button"
+            className={`progress-tab ${!showDiv ? 'active' : ''}`}
+            onClick={() => setGridView('mult')}
+          >
+            Multiplications
+          </button>
+          <button
+            type="button"
+            className={`progress-tab ${showDiv ? 'active' : ''}`}
+            onClick={() => setGridView('div')}
+          >
+            Divisions
+          </button>
         </div>
       )}
 
