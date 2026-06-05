@@ -673,7 +673,8 @@ async function captureDivisionScreens(page) {
   await seedProfile(page, buildUnlockedDivisionProfile());
   await gotoHome(page);
   await page.waitForSelector('.home-screen');
-  // L'accueil montre maintenant le bouton « Les divisions » + la tuile nav.
+  // Niveau 2 débloqué : un seul bouton « C'est parti », et la tuile « Mon image »
+  // est devenue « Mes images » (pas de second bouton ni de tuile dédiée).
   await shot(page, '15-division-home');
 
   // Image mystère dédiée à la division : tuile « Mes images » puis onglet
@@ -794,8 +795,9 @@ const SECTIONS = [
       bas donne accès aux progrès, aux badges et aux règles ×1 / ×10. L'icône
       engrenage ouvre l'espace parent, après une courte multiplication-gate
       pour écarter les doigts curieux. Quand toutes les tables sont maîtrisées,
-      un second bouton « Les divisions » et une tuile dédiée apparaissent
-      (voir le niveau 2 plus bas).`,
+      le niveau 2 (division) se débloque — sans second bouton ni nouvelle tuile :
+      la tuile « Mon image » devient « Mes images » et la séance du jour bascule
+      sur la division (voir le niveau 2 plus bas).`,
     shots: [
       { file: '05-home', caption: 'Accueil avec la mascotte et la série de 5 jours.' },
     ],
@@ -854,8 +856,8 @@ const SECTIONS = [
   {
     id: 'division',
     title: 'Niveau 2 — la division',
-    description: `Quand l'enfant a maîtrisé toutes ses tables (le badge « Génie
-      des maths »), un niveau se débloque : réviser les mêmes faits, mais sous
+    description: `Quand l'enfant a maîtrisé toutes ses tables (le badge « Génie de
+      la multiplication »), un niveau se débloque : réviser les mêmes faits, mais sous
       forme de division (« 56 ÷ 7 = ? »), avec sa propre image mystère — l'image
       des tables, elle, reste acquise. La tuile « Mon image » devient « Mes
       images » : on y bascule entre l'image des multiplications et celle des

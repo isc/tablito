@@ -12,7 +12,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     date: '2026-06-02',
     items: [
-      "Nouveau niveau 2 — la division : quand l'enfant a maîtrisé toutes ses tables (badge « Génie de la multiplication »), l'app se met à réviser les mêmes faits sous forme de division (56 ÷ 7 = ?), avec sa propre image mystère à dévoiler. Toujours un seul bouton « C'est parti » : la séance du jour devient la division, et les quelques tables à réviser pour l'entretien y sont glissées au passage. Chaque division n'est proposée qu'une fois la multiplication correspondante bien maîtrisée, et l'appli enseigne l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ».",
+      "Nouveau niveau 2 — la division : quand l'enfant a maîtrisé toutes ses tables (badge « Génie de la multiplication »), l'app se met à réviser les mêmes faits sous forme de division (56 ÷ 7 = ?), avec sa propre image mystère à dévoiler. Toujours un seul bouton « C'est parti » : la séance du jour devient la division, et les quelques tables à réviser pour l'entretien y sont glissées au passage. Les divisions arrivent progressivement, et l'appli enseigne l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? » (7 × ? = 56).",
     ],
   },
   {
