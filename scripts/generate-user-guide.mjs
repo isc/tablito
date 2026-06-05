@@ -175,6 +175,58 @@ function buildSampleProfile({ sessionAvailable = true } = {}) {
   };
 }
 
+// Profil « niveau 2 débloqué » : toutes les tables en boîte 5 → la migration
+// attribue le badge Génie de la multiplication au chargement → division débloquée.
+// Sert à capturer l'accueil avec le bouton division, la séance et l'image
+// mystère dédiée.
+function buildUnlockedDivisionProfile() {
+  const profile = buildSampleProfile();
+  // Multiplications toutes maîtrisées et NON dues (nextDue dans le futur) :
+  // on isole la division — seul son CTA s'affiche sur l'accueil.
+  const future = '2026-05-03';
+  for (const f of profile.facts) {
+    f.introduced = true;
+    f.box = 5;
+    f.lastSeen = SEED_YESTERDAY;
+    f.nextDue = future;
+    if (!f.history.length) {
+      f.history = [{ date: SEED_YESTERDAY, correct: true, responseTimeMs: 2000, answeredWith: f.product }];
+    }
+  }
+  // Faits de division : même distribution déterministe que les tables, pour
+  // une image partiellement révélée + des faits dûs (questions) + quelques
+  // faits non introduits (l'intro « pense à la multiplication »).
+  const divisionFacts = [];
+  for (let a = 2; a <= 9; a++) {
+    for (let b = 2; b <= 9; b++) {
+      const seed = seededBox(b, a); // décalé vs tables pour varier l'image
+      const introduced = seed.introduced;
+      // Aucun fait INTRODUIT en boîte 1 : sinon le pacing d'introduction
+      // (§11.6 / shouldIntroduceNew) bloque les nouvelles intros et la capture
+      // « 16-division-intro » n'a pas lieu. Les faits non introduits restent
+      // en boîte 1 (introduced=false) et éligibles pour l'intro.
+      const box = introduced ? Math.max(seed.box, 2) : seed.box;
+      divisionFacts.push({
+        dividend: a * b,
+        divisor: a,
+        quotient: b,
+        box,
+        introduced,
+        lastSeen: introduced ? SEED_YESTERDAY : '',
+        nextDue: introduced ? SEED_TODAY : '',
+        history: introduced
+          ? [{ date: SEED_YESTERDAY, correct: box >= 3, responseTimeMs: 2500, answeredWith: box >= 3 ? b : null }]
+          : [],
+      });
+    }
+  }
+  profile.divisionFacts = divisionFacts;
+  profile.divisionMysteryTheme = 'village'; // même raison que mysteryTheme : pas de spoiler
+  profile.hasSeenDivisionIntro = true;
+  profile.lastSessionDate = SEED_YESTERDAY;
+  return profile;
+}
+
 // --- Page helpers -----------------------------------------------------------
 
 async function seedProfile(page, profile) {
@@ -617,6 +669,45 @@ async function captureRecap(page) {
   await shot(page, '14-recap');
 }
 
+async function captureDivisionScreens(page) {
+  await seedProfile(page, buildUnlockedDivisionProfile());
+  await gotoHome(page);
+  await page.waitForSelector('.home-screen');
+  // Niveau 2 débloqué : un seul bouton « C'est parti », et la tuile « Mon image »
+  // est devenue « Mes images » (pas de second bouton ni de tuile dédiée).
+  await shot(page, '15-division-home');
+
+  // Image mystère dédiée à la division : tuile « Mes images » puis onglet
+  // « Divisions » de l'écran progression.
+  await page.click('.home-nav-btn:has-text("Mes images")');
+  await page.waitForSelector('.progress-screen');
+  await page.click('.progress-tab:has-text("Divisions")');
+  await shot(page, '18-division-progress');
+  await page.click('.progress-back-btn');
+  await page.waitForSelector('.home-screen');
+
+  // Séance de division : le seed n'a aucune table due → la séance du jour est
+  // la division. On clique le bouton unique « C'est parti ».
+  await page.click('.home-start-btn');
+  await page.waitForSelector('.session-screen');
+  if (await page.locator('.session-intro').count()) {
+    await page.waitForFunction(
+      () => {
+        const rows = document.querySelectorAll('.session-intro .dot-grid-row');
+        return rows.length > 0 && Array.from(rows).every((r) => !r.classList.contains('hidden'));
+      },
+      { timeout: 5000 },
+    ).catch(() => log('WARN: division DotGrid rows did not fully appear'));
+    await sleep(400);
+    await shot(page, '16-division-intro');
+    await clickAllIntroSteps(page);
+  } else {
+    log('WARN: no division intro step — 16-division-intro will be missing');
+  }
+  await page.waitForSelector('.session-question-text');
+  await shot(page, '17-division-question');
+}
+
 // --- HTML guide generator ---------------------------------------------------
 
 const SECTIONS = [
@@ -703,7 +794,10 @@ const SECTIONS = [
       série en cours. Le gros bouton lance la séance du jour, et la barre du
       bas donne accès aux progrès, aux badges et aux règles ×1 / ×10. L'icône
       engrenage ouvre l'espace parent, après une courte multiplication-gate
-      pour écarter les doigts curieux.`,
+      pour écarter les doigts curieux. Quand toutes les tables sont maîtrisées,
+      le niveau 2 (division) se débloque — sans second bouton ni nouvelle tuile :
+      la tuile « Mon image » devient « Mes images » et la séance du jour bascule
+      sur la division (voir le niveau 2 plus bas).`,
     shots: [
       { file: '05-home', caption: 'Accueil avec la mascotte et la série de 5 jours.' },
     ],
@@ -760,16 +854,42 @@ const SECTIONS = [
     ],
   },
   {
+    id: 'division',
+    title: 'Niveau 2 — la division',
+    description: `Quand l'enfant a maîtrisé toutes ses tables (le badge « Génie de
+      la multiplication »), un niveau se débloque : réviser les mêmes faits, mais sous
+      forme de division (« 56 ÷ 7 = ? »), avec sa propre image mystère — l'image
+      des tables, elle, reste acquise. La tuile « Mon image » devient « Mes
+      images » : on y bascule entre l'image des multiplications et celle des
+      divisions. Il n'y a toujours qu'un seul bouton « C'est parti » : la séance
+      du jour devient la division, et les quelques tables à réviser pour
+      l'entretien y sont glissées au passage (× et ÷ dans la même séance).
+      Les divisions arrivent progressivement (pas toutes d'un coup), dans le même
+      ordre pensé que les tables — du plus simple au plus difficile — et l'app
+      enseigne explicitement l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois
+      combien font 56 ? ». Tout le reste — boîtes de Leitner, image qui se
+      révèle, encouragements sans jugement — fonctionne exactement comme pour la
+      multiplication.`,
+    shots: [
+      { file: '15-division-home', caption: 'Une fois les tables maîtrisées, « Mon image » devient « Mes images » (multiplications + divisions).' },
+      { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
+      { file: '17-division-question', caption: 'Question de division au pavé numérique.' },
+      { file: '18-division-progress', caption: 'Une image mystère dédiée à la division, distincte de celle des tables.' },
+    ],
+  },
+  {
     id: 'badges',
     title: 'Les badges',
-    description: `18 badges au total, répartis en trois familles : jalons
-      (première séance, 7 jours, 30 jours), performance (10 réponses de suite,
-      5 réponses < 2 s), et maîtrise (premier fait en boîte 4, premier en
-      boîte 5, un badge par table + un badge « génie des maths » quand tout
-      est en boîte 5). Chaque vignette est cliquable et ouvre une fiche qui
-      explique la condition de déblocage. Pour les badges verrouillés, une
-      barre de progression montre où en est l'enfant — les icônes seules ne
-      sont pas auto-portantes pour qui découvre la gamification.`,
+    description: `Dix-huit badges pour les tables, répartis en trois familles :
+      jalons (première séance, 7 jours, 30 jours), performance (10 réponses de
+      suite, 5 réponses < 2 s), et maîtrise (premier fait en boîte 4, premier en
+      boîte 5, un badge par table + un badge « génie de la multiplication » quand tout
+      est en boîte 5). Une fois toutes les tables maîtrisées, une série de
+      badges dédiés à la division vient s'ajouter à la collection. Chaque
+      vignette est cliquable et ouvre une fiche qui explique la condition de
+      déblocage. Pour les badges verrouillés, une barre de progression montre
+      où en est l'enfant — les icônes seules ne sont pas auto-portantes pour
+      qui découvre la gamification.`,
     shots: [
       { file: '11-badges', caption: 'Collection de badges — obtenus et à débloquer.' },
       { file: '11-badges-detail', caption: 'En cliquant sur un badge verrouillé, on découvre la condition et la progression.' },
@@ -1193,6 +1313,7 @@ async function main() {
     await captureParentDashboard(page);
     await captureSessionScreens(page);
     await captureRecap(page);
+    await captureDivisionScreens(page);
     // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
     // the input mode to 'voice' via addInitScript, both of which would
     // pollute any subsequent capture (especially captureRecap which drives

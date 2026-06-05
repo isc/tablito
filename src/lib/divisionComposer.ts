@@ -1,0 +1,136 @@
+import type { UserProfile, DivisionFact, DivisionSessionQuestion } from '../types';
+import {
+  isDue,
+  shouldIntroduceNew,
+  vanDeWalleStage,
+  prioritizeByBoxLevel,
+  pickBonusReviewFacts,
+} from './leitner';
+import { getFactKey } from './facts';
+import { getDivisionFactKey, parentMultiplicationKey } from './divisionFacts';
+import { interleaveGreedy } from './utils';
+
+// Mêmes bornes que la multiplication (cf. sessionComposer.ts, specs §6).
+const MIN_QUESTIONS = 12;
+const MAX_QUESTIONS = 15;
+const MAX_NEW_FACTS = 2;
+
+/**
+ * Deux faits de division en conflit s'ils ne doivent pas être adjacents :
+ * - même dividende (56÷7 vs 56÷8) → forte interférence, le cas clé du §11.6 ;
+ * - même diviseur → même « table » (règle d'entrelacement).
+ */
+function questionConflict(a: DivisionFact, b: DivisionFact): boolean {
+  return a.dividend === b.dividend || a.divisor === b.divisor;
+}
+
+// Entrelacement : deux questions adjacentes ne doivent pas être en conflit
+// (même dividende ou même diviseur, cf. questionConflict).
+function interleave(questions: DivisionSessionQuestion[]): DivisionSessionQuestion[] {
+  return interleaveGreedy(questions, (a, b) => questionConflict(a.fact, b.fact));
+}
+
+function makeQuestion(
+  fact: DivisionFact,
+  flags: Partial<DivisionSessionQuestion> = {},
+): DivisionSessionQuestion {
+  return {
+    fact,
+    isIntroduction: false,
+    isRetry: false,
+    isBonusReview: false,
+    ...flags,
+  };
+}
+
+/**
+ * Compose une séance de division (12-15 questions), miroir de composeSession
+ * adapté au niveau 2 (specs §11) :
+ *
+ * - Introduction GATÉE sur la maîtrise multiplicative : un fait de division
+ *   n'est introduit que si son parent multiplicatif est en boîte 5 (§11.3).
+ * - Anti-interférence renforcée : jamais deux faits de même dividende
+ *   adjacents (§11.6).
+ * - Pas de variation d'ordre : la division n'est pas commutative (§11.2).
+ *
+ * Renvoie une liste vide si aucun fait de division n'est encore éligible
+ * (niveau pas encore débloqué / aucune table maîtrisée).
+ */
+export function composeDivisionSession(
+  profile: UserProfile,
+  now: string,
+): DivisionSessionQuestion[] {
+  const divisionFacts = profile.divisionFacts ?? [];
+  const today = now.slice(0, 10);
+
+  // Faits multiplicatifs maîtrisés (boîte 5) → leurs clés canoniques.
+  const masteredKeys = new Set(
+    profile.facts.filter((f) => f.box === 5).map((f) => getFactKey(f.a, f.b)),
+  );
+
+  // Intros : faits non introduits dont le parent multiplicatif est maîtrisé.
+  // Même pacing que la multiplication (specs §11.6, §3.4bis) : on n'introduit
+  // de nouveaux faits que si tous ceux déjà introduits sont en boîte ≥ 2 — sinon
+  // un enfant en difficulté accumulerait des faits en boîte 1.
+  const newFacts: DivisionFact[] = [];
+  if (shouldIntroduceNew(divisionFacts)) {
+    const eligible = divisionFacts
+      .filter((f) => !f.introduced && masteredKeys.has(parentMultiplicationKey(f)))
+      .sort(
+        (a, b) =>
+          vanDeWalleStage(a.divisor, a.quotient) - vanDeWalleStage(b.divisor, b.quotient) ||
+          a.dividend - b.dividend,
+      );
+
+    for (const fact of eligible) {
+      if (newFacts.length >= MAX_NEW_FACTS) break;
+      // Ne pas introduire ensemble deux faits qui interfèrent.
+      if (newFacts.some((nf) => questionConflict(nf, fact))) continue;
+      newFacts.push(fact);
+    }
+  }
+
+  const reviewBudget = MAX_QUESTIONS - newFacts.length;
+
+  const dueFacts = divisionFacts.filter((f) => f.introduced && isDue(f, today));
+  const prioritized = prioritizeByBoxLevel(dueFacts);
+
+  const selected: DivisionFact[] = [];
+  for (const fact of prioritized) {
+    if (selected.length >= reviewBudget) break;
+    // Évite d'embarquer deux orientations du même dividende dans la séance.
+    if (!selected.some((s) => s.dividend === fact.dividend)) {
+      selected.push(fact);
+    }
+  }
+
+  // Fallback : relâche la contrainte de dividende plutôt que livrer une séance
+  // trop courte quand le pool dû ne suffit pas.
+  if (selected.length + newFacts.length < MIN_QUESTIONS) {
+    for (const fact of prioritized) {
+      if (selected.length >= reviewBudget) break;
+      if (!selected.includes(fact)) selected.push(fact);
+    }
+  }
+
+  const reviewQuestions = selected.map((fact) => makeQuestion(fact));
+  const introQuestions = newFacts.map((fact) => makeQuestion(fact, { isIntroduction: true }));
+
+  const result = [...introQuestions, ...interleave(reviewQuestions)];
+
+  // Padding par révisions bonus (pas de modification Leitner — cf. §6.2 /
+  // pickBonusReviewFacts).
+  if (result.length < MIN_QUESTIONS) {
+    const usedKeys = new Set(
+      result.map((q) => getDivisionFactKey(q.fact.dividend, q.fact.divisor)),
+    );
+    const bonus = pickBonusReviewFacts(
+      divisionFacts,
+      (f) => usedKeys.has(getDivisionFactKey(f.dividend, f.divisor)),
+      MIN_QUESTIONS - result.length,
+    ).map((fact) => makeQuestion(fact, { isBonusReview: true }));
+    result.push(...interleave(bonus));
+  }
+
+  return result;
+}

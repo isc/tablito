@@ -18,6 +18,21 @@ export interface MultiFact {
   introduced: boolean; // le fait a-t-il été présenté conceptuellement ?
 }
 
+// === Niveau 2 — division (cf. specs §11) ===
+// La division n'est PAS commutative : 56÷7 et 56÷8 sont deux faits distincts.
+// On stocke (dividend, divisor, quotient) sans normalisation. 64 faits au
+// total (un par couple (a,b) ∈ [2..9]², via (a×b) ÷ a = b).
+export interface DivisionFact {
+  dividend: number;   // le nombre à diviser (P = divisor × quotient) : 24, 56…
+  divisor: number;    // diviseur affiché (2-9)
+  quotient: number;   // réponse attendue (2-9)
+  box: 1 | 2 | 3 | 4 | 5;
+  lastSeen: string;    // ISO date
+  nextDue: string;     // ISO date
+  history: Attempt[];
+  introduced: boolean;
+}
+
 export interface Badge {
   id: string;
   name: string;
@@ -28,7 +43,7 @@ export interface Badge {
 
 // `village` est réservé au guide utilisateur (pour ne pas spoiler) ;
 // les profils réels tirent aléatoirement dans MYSTERY_POOL à la création.
-export const MYSTERY_POOL = ['market', 'ocean'] as const;
+export const MYSTERY_POOL = ['market', 'ocean', 'garden', 'savanna', 'city', 'space'] as const;
 
 export type MysteryTheme = (typeof MYSTERY_POOL)[number] | 'village';
 
@@ -52,6 +67,15 @@ export interface UserProfile {
   // elle-même reste visible dès le déblocage.
   hasSeenRule11: boolean;
   mysteryTheme: MysteryTheme;
+  // === Niveau 2 — division (cf. specs §11). Champs optionnels : absents des
+  // profils v1, backfillés par migrateProfile au chargement. ===
+  // Les 64 faits de division. Toujours présents après migration (même tant
+  // que le niveau n'est pas débloqué — ils restent box 1 / non introduits).
+  divisionFacts?: DivisionFact[];
+  // Image mystère dédiée à la division (specs §11.5), tirée distincte de
+  // `mysteryTheme` pour ne jamais re-flouter l'image multiplication conquise.
+  divisionMysteryTheme?: MysteryTheme;
+  hasSeenDivisionIntro?: boolean;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -81,6 +105,16 @@ export const FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
   voice: 3000,
 };
 
+// Niveau 2 — division : seuil plus généreux que la multiplication (specs §11.6).
+// La division reste plus lente même maîtrisée (effet de taille du problème plus
+// marqué, Curtis et al. 2016) : on tolère ~1 s de plus avant de retirer l'étoile
+// rayonnante / bloquer la montée de boîte. La magnitude (+1 s) est un choix
+// d'implémentation, la spec ne fixant que « plus généreux ».
+export const DIVISION_FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
+  keypad: 6000,
+  voice: 4000,
+};
+
 export interface SessionQuestion {
   fact: MultiFact;
   displayA: number;  // peut être inversé pour varier a×b / b×a
@@ -90,12 +124,37 @@ export interface SessionQuestion {
   isBonusReview: boolean; // révision bonus (pas de changement de boîte)
 }
 
+// Question de division. Pas de displayA/displayB inversables : la division
+// n'étant pas commutative (specs §11.2), la question est toujours posée
+// « dividend ÷ divisor = ? ».
+export interface DivisionSessionQuestion {
+  fact: DivisionFact;
+  isIntroduction: boolean;
+  isRetry: boolean;
+  isBonusReview: boolean;
+}
+
+// Élément d'une séance mixte (specs §11.6) : après déblocage, la séance du
+// jour est principalement de la division mais peut intégrer des révisions
+// d'entretien des tables (× et ÷ entrelacés). Le discriminant `kind` permet à
+// l'écran de séance de rendre chaque question selon son type.
+export type SessionItem =
+  | ({ kind: 'mult' } & SessionQuestion)
+  | ({ kind: 'div' } & DivisionSessionQuestion);
+
 // Log par question pour les séances enregistrées depuis l'ajout du champ.
 // Permet de diagnostiquer vitesse et mode après coup, y compris pour les
 // révisions bonus qui ne créent pas d'entrée dans `fact.history` (cf. App.tsx
 // handleAnswer). Champ optionnel sur SessionResult pour rétrocompat avec les
 // profils antérieurs.
 export interface SessionQuestionLog {
+  // Type de question. Absent des logs antérieurs au niveau 2 → traiter comme
+  // 'mult'. Indispensable pour ne pas confondre une division avec une
+  // multiplication dans le feedback : pour 'div', `a`/`b` portent diviseur et
+  // quotient (le dividende = a × b), sinon `56 ÷ 7` serait illisible comme
+  // `{a:7, b:8}`, identique à `7 × 8`.
+  kind?: 'mult' | 'div';
+  // 'mult' : opérandes (canoniques). 'div' : a = diviseur, b = quotient.
   a: number;
   b: number;
   correct: boolean;
@@ -103,6 +162,11 @@ export interface SessionQuestionLog {
   answeredWith: number | null;
   isBonusReview: boolean;
   inputMode: 'keypad' | 'voice';
+  // « Étoile dorée » : correct ET sous le seuil de rapidité du type de question
+  // (mult ou division). Enregistré au moment de la réponse pour que le badge
+  // Véloce s'appuie sur le bon seuil dans une séance mixte. Optionnel (absent
+  // des logs antérieurs).
+  fast?: boolean;
 }
 
 export interface SessionResult {
@@ -112,6 +176,14 @@ export interface SessionResult {
   averageTimeMs: number;
   newFactsIntroduced: number;
   factsPromoted: number;   // faits dont la boîte finale > boîte initiale dans la séance
+  // Log par-question de la séance. ⚠️ NE PAS supprimer comme « champ mort » :
+  // aucun code ne le lit par accès direct `.questions`, mais il est embarqué
+  // (via tout `sessionHistory`) dans le `profile_snapshot` du feedback opt-in
+  // — voir lib/feedback.ts `buildContext(profile, includeFullProfile)`, case à
+  // cocher de FeedbackModal. C'est ce qui permet de rejouer « quelles questions
+  // ont été programmées dans la séance » lors de l'analyse d'un feedback (les
+  // bonus reviews sont absentes de fact.history, et le mode de saisie n'est
+  // tracé que là). Optionnel pour rétrocompat (séances pré-feature 32c74e5).
   questions?: SessionQuestionLog[];
 }
 
@@ -128,4 +200,9 @@ export const BADGE_IDS = {
   VELOCE: 'veloce',
   PERSEVERANCE: 'perseverance',
   FLAMME_ETERNELLE: 'flamme-eternelle',
+  // Niveau 2 — division (cf. specs §11). Masqués tant que le niveau n'est pas
+  // débloqué (cf. isDivisionUnlocked / visibleBadgeDefinitions).
+  DIV_PREMIERE_MAITRISE: 'div-premiere-maitrise',
+  DIV_TABLE_PREFIX: 'div-table-',
+  DIV_GENIE: 'div-genie',
 } as const;

@@ -1,12 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
-import type { UserProfile, SessionQuestion, SessionResult, SessionQuestionLog, MultiFact, Badge, BoxLevel } from './types';
-import { FAST_THRESHOLD_MS } from './types';
+import type { UserProfile, SessionItem, SessionResult, SessionQuestionLog, Badge, BoxLevel } from './types';
+import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
+import { composeDailySession } from './lib/dailyComposer';
 import { processAnswer } from './lib/leitner';
-import { checkBadges, getCompletedTables, isRule11Unlocked } from './lib/badges';
+import { checkBadges, getCompletedTables, isRule11Unlocked, isDivisionUnlocked } from './lib/badges';
 import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
+import { getDivisionFactKey } from './lib/divisionFacts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
 import { todayISO } from './lib/utils';
@@ -62,7 +64,15 @@ function initialScreen(profile: UserProfile | null): Screen {
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile));
-  const [sessionQuestions, setSessionQuestions] = useState<SessionQuestion[]>([]);
+  // Liste unifiée de la séance en cours : 100% multiplication avant déblocage,
+  // mixte (division + entretien des tables) après (specs §11.6).
+  const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
+  // Quelle « saveur » de récap afficher (multiplication vs division) — pilote
+  // le nom affiché, le badge de complétion surveillé et l'écran image cible.
+  const [recapMode, setRecapMode] = useState<'mult' | 'div'>('mult');
+  // Onglet ouvert à l'arrivée sur l'écran progression (« Mes images ») : sur
+  // l'image division quand on y va depuis le récap d'une séance de division.
+  const [progressView, setProgressView] = useState<'mult' | 'div'>('mult');
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
@@ -202,17 +212,34 @@ export default function App() {
     setScreen('rules');
   }, []);
 
-  // Pre-compute the next session so we can check availability without re-running
-  // composeSession on every render, and reuse it when the user clicks "start".
-  const pendingSession = useMemo(() => {
-    if (!profile) return [];
-    if (profile.lastSessionDate === today) return [];
-    return composeSession(profile, today);
-  }, [profile, today]);
+  // Séance du jour, un seul bouton (specs §11). Avant déblocage de la division :
+  // 100% multiplication (parcours v1). Après : séance mixte composée par
+  // composeDailySession — division + entretien des tables réellement dues
+  // (§11.6), un seul écran de séance pour les deux.
+  const divisionUnlocked = useMemo(
+    () => (profile ? isDivisionUnlocked(profile) : false),
+    [profile],
+  );
+  const sessionDone = !!profile && profile.lastSessionDate === today;
+  const pendingItems = useMemo<SessionItem[]>(() => {
+    if (!profile || sessionDone) return [];
+    if (divisionUnlocked) return composeDailySession(profile, today);
+    return composeSession(profile, today).map((q): SessionItem => ({ kind: 'mult', ...q }));
+  }, [profile, sessionDone, divisionUnlocked, today]);
+  const hasSessionAvailable = pendingItems.length > 0;
 
-  // Start session
-  const handleStartSession = useCallback(async () => {
-    if (!profile || pendingSession.length === 0) return;
+  // Remet à zéro les compteurs de séance.
+  const resetSessionTracking = useCallback(() => {
+    sessionConsecutiveCorrect.current = 0;
+    sessionMaxConsecutiveCorrect.current = 0;
+    sessionQuestionLogs.current = [];
+    sessionInitialBoxes.current = new Map();
+    sessionPromoted.current = new Set();
+  }, []);
+
+  // Démarre la séance du jour (multiplication ou mixte selon le déblocage).
+  const handleStart = useCallback(async () => {
+    if (!profile || pendingItems.length === 0) return;
 
     // En mode vocal, on attend la réponse au prompt micro avant d'entrer en
     // séance — sinon la première question (et son timer) démarrerait pendant
@@ -221,37 +248,58 @@ export default function App() {
       await preflightMicPermission();
     }
 
-    sessionConsecutiveCorrect.current = 0;
-    sessionMaxConsecutiveCorrect.current = 0;
-    sessionQuestionLogs.current = [];
-    sessionInitialBoxes.current = new Map();
-    sessionPromoted.current = new Set();
-
+    resetSessionTracking();
+    // Snapshot des tables maîtrisées (célébration de complétion, parcours v1).
     tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
-
-    setSessionQuestions(pendingSession);
+    setSessionItems(pendingItems);
     setScreen('session');
-  }, [profile, pendingSession]);
+  }, [profile, pendingItems, resetSessionTracking]);
 
-  // Handle individual answer — use functional updater to avoid stale fact on retries
-  const handleAnswer = useCallback(
+  // Met à jour le suivi « fait promu » (boîte finale > boîte initiale dans la
+  // séance), qui pilote le « ton image a changé » du récap (§3.5). Idempotent —
+  // sûr sous la double-invocation strict-mode du reducer setProfile.
+  const trackPromotion = useCallback(
+    (key: string, currentBox: BoxLevel, newBox: BoxLevel) => {
+      if (!sessionInitialBoxes.current.has(key)) {
+        sessionInitialBoxes.current.set(key, currentBox);
+      }
+      const initialBox = sessionInitialBoxes.current.get(key)!;
+      if (newBox > initialBox) {
+        sessionPromoted.current.add(key);
+      } else {
+        sessionPromoted.current.delete(key);
+      }
+    },
+    [],
+  );
+
+  // Réponse individuelle — un seul handler pour les deux types de question
+  // (multiplication / division). Préambule commun (log + série de bonnes
+  // réponses) ; la mise à jour Leitner branche sur le type (facts vs
+  // divisionFacts) via le discriminant `kind`. Updater fonctionnel pour ne pas
+  // lire un fait périmé lors des retries.
+  const handleSessionItemAnswer = useCallback(
     (
-      fact: MultiFact,
+      item: SessionItem,
       correct: boolean,
       timeMs: number,
       answered: number | null,
-      isBonusReview: boolean,
       inputMode: 'keypad' | 'voice',
     ) => {
+      const fastMs = (item.kind === 'div' ? DIVISION_FAST_THRESHOLD_MS : FAST_THRESHOLD_MS)[inputMode];
+
       sessionQuestionLogs.current.push({
-        a: fact.a,
-        b: fact.b,
+        kind: item.kind,
+        a: item.kind === 'div' ? item.fact.divisor : item.fact.a,
+        b: item.kind === 'div' ? item.fact.quotient : item.fact.b,
         correct,
         responseTimeMs: timeMs,
         answeredWith: answered,
-        isBonusReview,
+        isBonusReview: item.isBonusReview,
         inputMode,
+        fast: correct && timeMs < fastMs,
       });
+
       if (correct) {
         sessionConsecutiveCorrect.current++;
         sessionMaxConsecutiveCorrect.current = Math.max(
@@ -262,54 +310,66 @@ export default function App() {
         sessionConsecutiveCorrect.current = 0;
       }
 
-      // Bonus review: feedback and session stats only, no Leitner state change
-      if (isBonusReview) return;
+      // Révision bonus : feedback et stats seulement, pas de changement Leitner.
+      if (item.isBonusReview) return;
 
       const today = todayISO();
 
       setProfile((prev) => {
         if (!prev) return prev;
-        // Use the current fact from profile state, not the stale snapshot from the question
-        const currentFact = prev.facts.find((f) => f.a === fact.a && f.b === fact.b) ?? fact;
-        const updatedFact = processAnswer(currentFact, correct, timeMs, today, inputMode);
 
-        if (updatedFact.history.length > 0) {
-          updatedFact.history[updatedFact.history.length - 1].answeredWith = answered;
-        }
-        if (!updatedFact.introduced) {
-          updatedFact.introduced = true;
-        }
-
-        // Idempotent set ops — safe under React strict-mode double-invocation
-        // of this reducer.
-        const factKey = getFactKey(fact.a, fact.b);
-        if (!sessionInitialBoxes.current.has(factKey)) {
-          sessionInitialBoxes.current.set(factKey, currentFact.box);
-        }
-        const initialBox = sessionInitialBoxes.current.get(factKey)!;
-        if (updatedFact.box > initialBox) {
-          sessionPromoted.current.add(factKey);
-        } else {
-          sessionPromoted.current.delete(factKey);
+        if (item.kind === 'div') {
+          if (!prev.divisionFacts) return prev;
+          const { dividend, divisor } = item.fact;
+          const current =
+            prev.divisionFacts.find((f) => f.dividend === dividend && f.divisor === divisor) ??
+            item.fact;
+          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
+          if (updated.history.length > 0) {
+            updated.history[updated.history.length - 1].answeredWith = answered;
+          }
+          if (!updated.introduced) updated.introduced = true;
+          trackPromotion(getDivisionFactKey(dividend, divisor), current.box, updated.box);
+          return {
+            ...prev,
+            divisionFacts: prev.divisionFacts.map((f) =>
+              f.dividend === dividend && f.divisor === divisor ? updated : f,
+            ),
+          };
         }
 
-        const updatedFacts = prev.facts.map((f) =>
-          f.a === fact.a && f.b === fact.b ? updatedFact : f,
-        );
-        return { ...prev, facts: updatedFacts };
+        const { a, b } = item.fact;
+        const current = prev.facts.find((f) => f.a === a && f.b === b) ?? item.fact;
+        const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
+        if (updated.history.length > 0) {
+          updated.history[updated.history.length - 1].answeredWith = answered;
+        }
+        if (!updated.introduced) updated.introduced = true;
+        trackPromotion(getFactKey(a, b), current.box, updated.box);
+        return {
+          ...prev,
+          facts: prev.facts.map((f) => (f.a === a && f.b === b ? updated : f)),
+        };
       });
     },
-    [],
+    [trackPromotion],
   );
 
-  // Session complete
+  // Fin de séance — un seul handler pour les deux modes. Le récap suit le type
+  // de séance : 'div' quand la division est débloquée (séance mixte div +
+  // entretien tables), 'mult' sinon. Les tables « nouvellement complétées » ne
+  // concernent que le mode 'mult' (post-déblocage elles sont déjà toutes en
+  // boîte 5 — getCompletedTables renverrait [] de toute façon).
   const handleSessionComplete = useCallback(
     (partial: Omit<SessionResult, 'factsPromoted'>) => {
       if (!profile) return;
 
+      const mode: 'mult' | 'div' = divisionUnlocked ? 'div' : 'mult';
       const result: SessionResult = {
         ...partial,
         factsPromoted: sessionPromoted.current.size,
+        // Log par-question persisté pour diagnostic (cf. SessionResult.questions).
+        // Désormais peuplé pour TOUTES les séances, division comprise.
         questions: sessionQuestionLogs.current,
       };
 
@@ -320,8 +380,7 @@ export default function App() {
       const longestStreak = Math.max(profile.longestStreak, streakUpdate.currentStreak);
 
       // Append session result to history, capped at 50
-      const previousHistory = profile.sessionHistory;
-      const sessionHistory = [...previousHistory, result].slice(-50);
+      const sessionHistory = [...profile.sessionHistory, result].slice(-50);
 
       const updatedProfile: UserProfile = {
         ...profile,
@@ -334,13 +393,12 @@ export default function App() {
       };
 
       // Pass previousLastSessionDate so PERSEVERANCE badge can check the gap.
-      // wasFast = même critère que l'étoile rayonnante de FeedbackOverlay
-      // (correct + sous le seuil du mode). Le badge Véloce = 5 étoiles d'affilée.
+      // wasFast = l'étoile dorée enregistrée au moment de la réponse (seuil
+      // propre au type de question, séance possiblement mixte). Badge Véloce =
+      // 5 étoiles d'affilée.
       const sessionStats = {
         consecutiveCorrect: sessionMaxConsecutiveCorrect.current,
-        wasFast: sessionQuestionLogs.current.map(
-          (q) => q.correct && q.responseTimeMs < FAST_THRESHOLD_MS[q.inputMode],
-        ),
+        wasFast: sessionQuestionLogs.current.map((q) => q.fast ?? false),
       };
       const earned = checkBadges(updatedProfile, sessionStats, previousLastSessionDate);
       const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
@@ -348,9 +406,13 @@ export default function App() {
 
       updatedProfile.badges = [...profile.badges, ...brandNewBadges];
 
-      // Detect newly completed tables (all facts at box >= 5)
-      const completedNow = [...getCompletedTables(updatedProfile.facts)]
-        .filter((t) => !tablesCompletedBeforeSession.current.has(t));
+      // Tables fraîchement complétées (tous faits en boîte ≥ 5) — mode 'mult'.
+      const completedNow =
+        mode === 'mult'
+          ? [...getCompletedTables(updatedProfile.facts)].filter(
+              (t) => !tablesCompletedBeforeSession.current.has(t),
+            )
+          : [];
 
       setProfile(updatedProfile);
       setSessionResult(result);
@@ -358,6 +420,7 @@ export default function App() {
       setNewlyCompletedTables(completedNow);
       setFreezeJustUsed(streakUpdate.freezeJustUsed);
       setFreezeJustEarned(streakUpdate.freezeJustEarned);
+      setRecapMode(mode);
       setScreen('recap');
 
       // Anti-nag du rappel push : marque qu'une séance a eu lieu aujourd'hui
@@ -365,7 +428,7 @@ export default function App() {
       // abonné / push non configuré), jamais bloquant pour le recap.
       void syncLastSession();
     },
-    [profile],
+    [profile, divisionUnlocked],
   );
 
   const exitRecap = useCallback((next: Screen) => {
@@ -374,6 +437,7 @@ export default function App() {
     setNewlyCompletedTables([]);
     setFreezeJustUsed(false);
     setFreezeJustEarned(false);
+    setRecapMode('mult');
     setScreen(next);
   }, []);
 
@@ -426,21 +490,27 @@ export default function App() {
       {screen === 'home' && profile && (
         <HomeScreen
           profile={profile}
-          hasSessionAvailable={pendingSession.length > 0}
+          hasSessionAvailable={hasSessionAvailable}
           hasNewRule={hasNewRule}
-          onStart={handleStartSession}
-          onShowProgress={() => setScreen('progress')}
+          divisionUnlocked={divisionUnlocked}
+          onStart={handleStart}
+          onShowProgress={() => {
+            // Post-déblocage, l'image des tables est complète (tout en boîte 5) :
+            // on ouvre directement sur la division, celle qui reste à dévoiler.
+            setProgressView(divisionUnlocked ? 'div' : 'mult');
+            setScreen('progress');
+          }}
           onShowBadges={() => setScreen('badges')}
           onShowRules={handleShowRules}
           onShowParent={() => setScreen('parent')}
         />
       )}
 
-      {screen === 'session' && profile && sessionQuestions.length > 0 && (
+      {screen === 'session' && profile && sessionItems.length > 0 && (
         <SessionScreen
-          questions={sessionQuestions}
+          questions={sessionItems}
           onComplete={handleSessionComplete}
-          onAnswer={handleAnswer}
+          onAnswer={handleSessionItemAnswer}
         />
       )}
 
@@ -453,15 +523,22 @@ export default function App() {
           currentStreak={profile.currentStreak}
           freezeJustUsed={freezeJustUsed}
           freezeJustEarned={freezeJustEarned}
-          knownFactsCount={profile.facts.filter((f) => f.box >= 3).length}
-          totalFacts={profile.facts.length}
+          knownFactsCount={
+            recapMode === 'div'
+              ? (profile.divisionFacts ?? []).filter((f) => f.box >= 3).length
+              : profile.facts.filter((f) => f.box >= 3).length
+          }
+          totalFacts={
+            recapMode === 'div' ? (profile.divisionFacts ?? []).length : profile.facts.length
+          }
           onFinish={handleRecapFinish}
-          onShowProgress={() => exitRecap('progress')}
+          onShowProgress={() => { setProgressView(recapMode); exitRecap('progress'); }}
+          mode={recapMode}
         />
       )}
 
       {screen === 'progress' && profile && (
-        <ProgressScreen profile={profile} onBack={() => setScreen('home')} />
+        <ProgressScreen profile={profile} onBack={() => setScreen('home')} initialView={progressView} />
       )}
 
       {screen === 'badges' && profile && (

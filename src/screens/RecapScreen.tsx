@@ -19,6 +19,9 @@ interface RecapScreenProps {
   totalFacts: number;
   onFinish: () => void;
   onShowProgress: () => void;
+  // 'div' pour une séance de division : change le nom affiché et le badge de
+  // complétion d'image surveillé (specs §11). Défaut 'mult'.
+  mode?: 'mult' | 'div';
 }
 
 function ImageCardIcon() {
@@ -66,13 +69,16 @@ export default function RecapScreen({
   totalFacts,
   onFinish,
   onShowProgress,
+  mode = 'mult',
 }: RecapScreenProps) {
   const { playBadge, playTableComplete, playImageComplete } = useSound();
   const { speak } = useTTS();
   const { triggerConfetti } = useConfetti();
   const hasPlayedRef = useRef(false);
 
-  const imageJustCompleted = newBadges.some((b) => b.id === BADGE_IDS.GENIE_MATHS);
+  const noun = mode === 'div' ? 'divisions' : 'multiplications';
+  const completionBadgeId = mode === 'div' ? BADGE_IDS.DIV_GENIE : BADGE_IDS.GENIE_MATHS;
+  const imageJustCompleted = newBadges.some((b) => b.id === completionBadgeId);
   const imageChanged = result.factsPromoted > 0;
 
   useEffect(() => {
@@ -114,6 +120,22 @@ export default function RecapScreen({
         <div className="recap-title">Séance terminée&nbsp;!</div>
         <div className="recap-message">Bravo {name}, tu as bien travaillé.</div>
       </div>
+
+      {/* Déblocage de la division : la séance qui complète l'image des tables
+          (badge Génie de la multiplication) révèle le niveau 2. Une seule fois. */}
+      {mode === 'mult' && imageJustCompleted && (
+        <div className="recap-card recap-division-unlock">
+          <div className="recap-division-unlock-icon" aria-hidden="true">➗</div>
+          <div className="recap-division-unlock-text">
+            <div className="recap-division-unlock-title">Tu débloques les divisions&nbsp;!</div>
+            <div className="recap-division-unlock-subtitle">
+              Tu connais toutes tes tables&nbsp;! Tu vas maintenant les réviser
+              autrement : en divisions (comme 56&nbsp;÷&nbsp;7). Une nouvelle image
+              mystère t'attend.
+            </div>
+          </div>
+        </div>
+      )}
 
       {newlyCompletedTables.length > 0 && (
         <div className="recap-card recap-table-complete">
@@ -158,7 +180,7 @@ export default function RecapScreen({
         <div className="recap-progress-row">
           <span className="recap-progress-eyebrow">Tu connais</span>
           <span className="recap-progress-count">
-            <b>{knownFactsCount}</b> / {totalFacts} multiplications
+            <b>{knownFactsCount}</b> / {totalFacts} {noun}
           </span>
         </div>
         <div className="recap-progress-bar">

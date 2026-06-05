@@ -135,6 +135,29 @@ function buildEntries() {
     }
   }
 
+  // Niveau 2 — division (specs §11). Pour chaque couple (a,b) ∈ [2..9]², le
+  // fait « (a×b) ÷ a = b » : question (qd-), introduction (introd-) et astuce
+  // « pense à la multiplication » (strategyd-). 64 faits → 192 fichiers.
+  for (let a = 2; a <= 9; a++) {
+    for (let b = 2; b <= 9; b++) {
+      const dividend = a * b;
+      const divisor = a;
+      const quotient = b;
+      entries.push({
+        key: `qd-${dividend}-${divisor}`,
+        text: `${dividend} divisé par ${divisor}`,
+      });
+      entries.push({
+        key: `introd-${dividend}-${divisor}`,
+        text: `Nouveau ! ${dividend} divisé par ${divisor}. ${divisor} fois combien font ${dividend} ? ${divisor} fois ${quotient}, égale ${dividend}. Donc ${dividend} divisé par ${divisor}, égale ${quotient}.`,
+      });
+      entries.push({
+        key: `strategyd-${dividend}-${divisor}`,
+        text: `${divisor} fois combien font ${dividend} ? ${divisor} fois ${quotient}, égale ${dividend}. Donc ${dividend} divisé par ${divisor}, égale ${quotient}.`,
+      });
+    }
+  }
+
   // Static phrases
   entries.push({
     key: 'welcome-hello',

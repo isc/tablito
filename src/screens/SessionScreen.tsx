@@ -1,13 +1,16 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { SessionQuestion, SessionResult, MultiFact, BoxLevel } from '../types';
+import type { SessionItem, SessionResult } from '../types';
 import NumPad from '../components/NumPad';
 import VoiceInput from '../components/VoiceInput';
 import DotGrid from '../components/DotGrid';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
-import { FAST_THRESHOLD_MS } from '../types';
-import { getFactKey } from '../lib/facts';
+import DivisionStrategyHint from '../components/DivisionStrategyHint';
+import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from '../types';
 import { getStrategy, hasStrategy } from '../lib/strategies';
+import { getDivisionStrategy } from '../lib/divisionStrategies';
+import { getDivisionFactKey } from '../lib/divisionFacts';
+import { getFactKey } from '../lib/facts';
 import { todayISO } from '../lib/utils';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
@@ -15,56 +18,79 @@ import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { useWakeLock } from '../hooks/useWakeLock';
 
-// Borne dure sur la longueur d'une session : composeSession vise 12-15 questions,
-// chaque erreur peut insérer une retry. Sans cap, des erreurs en chaîne (surtout
-// en mode vocal où la reconnaissance rate plus souvent) rendent la session
-// interminable alors que les points de progression sont déjà tous remplis.
+// Borne dure sur la longueur d'une session : la composition vise 12-15
+// questions, chaque erreur peut insérer une retry. Sans cap, des erreurs en
+// chaîne (surtout en vocal) rendent la session interminable.
 const MAX_SESSION_LENGTH = 20;
-
 const STT_SUPPORTED = isSpeechRecognitionSupported();
 
+// Écran de séance UNIFIÉ (specs §11.6). Une séance est une liste de SessionItem
+// qui peut être 100% multiplication (avant déblocage de la division) ou mixte
+// (division + entretien des tables, après déblocage). Chaque question est
+// rendue selon son `kind`.
+type IntroStep = 'grid' | 'commute' | 'strategy';
+
 interface SessionScreenProps {
-  questions: SessionQuestion[];
+  questions: SessionItem[];
   onComplete: (result: Omit<SessionResult, 'factsPromoted'>) => void;
   onAnswer: (
-    fact: MultiFact,
+    item: SessionItem,
     correct: boolean,
     timeMs: number,
     answered: number | null,
-    isBonusReview: boolean,
     inputMode: 'keypad' | 'voice',
   ) => void;
 }
 
-interface QuestionResult {
-  correct: boolean;
+// Vue d'affichage selon le type : opérateur, opérandes affichés, réponse
+// attendue, seuil de rapidité, clé TTS de la question.
+function view(item: SessionItem) {
+  if (item.kind === 'div') {
+    const { dividend, divisor, quotient } = item.fact;
+    return {
+      left: dividend,
+      op: '÷',
+      right: divisor,
+      answer: quotient,
+      fastMs: DIVISION_FAST_THRESHOLD_MS,
+      qKey: `qd-${dividend}-${divisor}`,
+      token: `d-${dividend}-${divisor}`,
+    };
+  }
+  return {
+    left: item.displayA,
+    op: '×',
+    right: item.displayB,
+    answer: item.fact.product,
+    fastMs: FAST_THRESHOLD_MS,
+    qKey: `q-${item.displayA}-${item.displayB}`,
+    token: `m-${item.displayA}-${item.displayB}`,
+  };
 }
 
-type IntroStep = 'grid' | 'commute' | 'strategy';
+function itemKey(item: SessionItem): string {
+  return item.kind === 'div'
+    ? getDivisionFactKey(item.fact.dividend, item.fact.divisor)
+    : getFactKey(item.fact.a, item.fact.b);
+}
 
 export default function SessionScreen({
   questions: initialQuestions,
   onComplete,
   onAnswer,
 }: SessionScreenProps) {
-  const [questions, setQuestions] = useState<SessionQuestion[]>(initialQuestions);
+  const [questions, setQuestions] = useState<SessionItem[]>(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [results, setResults] = useState<QuestionResult[]>([]);
+  const [results, setResults] = useState<{ correct: boolean }[]>([]);
   const [showIntro, setShowIntro] = useState(false);
   const [introStep, setIntroStep] = useState<IntroStep>('grid');
   const [feedback, setFeedback] = useState<{
+    item: SessionItem;
     correct: boolean;
     fast: boolean;
-    correctAnswer: number;
     submittedValue: number;
-    fact: { a: number; b: number };
-    factBox: BoxLevel;
   } | null>(null);
   const [numpadDisabled, setNumpadDisabled] = useState(false);
-  // Double-submit guard : les clics synchrones rapides sur « Valider » ne
-  // laissent pas le temps à React de re-rendre avec numpadDisabled=true, donc
-  // la closure du handler voit l'ancien state. On ajoute une barrière via ref
-  // évaluée en synchrone, à reset à chaque changement de question.
   const submittingRef = useRef(false);
 
   const { playCorrect, playIncorrect } = useSound();
@@ -72,28 +98,23 @@ export default function SessionScreen({
   const { inputMode, setInputMode } = useInputMode();
   useWakeLock(true);
 
-  const speakQuestion = useCallback(
-    (q: SessionQuestion) => speak(`q-${q.displayA}-${q.displayB}`),
-    [speak],
-  );
   const questionStartTime = useRef(0);
   const correctCount = useRef(0);
   const totalTimeMs = useRef(0);
   const introducedFacts = useRef(new Set<string>());
 
-  const currentQuestion = questions[currentIndex] as SessionQuestion | undefined;
+  const currentItem = questions[currentIndex] as SessionItem | undefined;
 
-  // Adjust UI state when the question changes (render-time)
+  const speakQuestion = useCallback((item: SessionItem) => speak(view(item).qKey), [speak]);
+
+  // Ajuste l'état UI au changement de question (render-time, cf. ancien
+  // SessionScreen — reset synchrone du guard anti double-submit).
   const [prevIndex, setPrevIndex] = useState(-1);
-  if (currentIndex !== prevIndex && currentQuestion) {
-    // Reset le guard ici (pas dans un useEffect plus bas), sinon une réponse
-    // trop rapide après le changement de question voit submittingRef encore
-    // à true (l'effet est microtask-async sous Preact). Garde de transition
-    // (prev !== next) → ne peut pas boucler.
+  if (currentIndex !== prevIndex && currentItem) {
     // eslint-disable-next-line react-hooks/refs
     submittingRef.current = false;
     setPrevIndex(currentIndex);
-    if (currentQuestion.isIntroduction) {
+    if (currentItem.isIntroduction) {
       setShowIntro(true);
       setIntroStep('grid');
     } else {
@@ -102,23 +123,22 @@ export default function SessionScreen({
     setNumpadDisabled(false);
   }
 
-  // Side effects when the question changes (TTS, timer, tracking).
   useEffect(() => {
-    if (!currentQuestion) return;
-
-    if (currentQuestion.isIntroduction) {
-      introducedFacts.current.add(getFactKey(currentQuestion.fact.a, currentQuestion.fact.b));
-      const { a, b } = currentQuestion.fact;
-      speak(`intro-${a}-${b}`);
+    if (!currentItem) return;
+    if (currentItem.isIntroduction) {
+      introducedFacts.current.add(itemKey(currentItem));
+      if (currentItem.kind === 'div') {
+        speak(`introd-${currentItem.fact.dividend}-${currentItem.fact.divisor}`);
+      } else {
+        speak(`intro-${currentItem.fact.a}-${currentItem.fact.b}`);
+      }
     } else {
-      speakQuestion(currentQuestion);
+      speakQuestion(currentItem);
     }
-
     questionStartTime.current = Date.now();
-  }, [currentIndex, currentQuestion, speak, speakQuestion]);
+  }, [currentIndex, currentItem, speak, speakQuestion]);
 
-  // In voice mode, start the response timer when the TTS finishes so we
-  // don't count the question playback against the user's response time.
+  // En vocal, démarrer le timer à la fin du TTS (ne pas compter la lecture).
   useEffect(() => {
     if (inputMode !== 'voice') return;
     if (showIntro) return;
@@ -130,11 +150,8 @@ export default function SessionScreen({
   const moveToNext = useCallback(() => {
     const nextIndex = currentIndex + 1;
     if (nextIndex >= questions.length) {
-      // Session complete
       const totalQuestions = results.length + (feedback ? 1 : 0);
-      const avgTime =
-        totalQuestions > 0 ? totalTimeMs.current / totalQuestions : 0;
-
+      const avgTime = totalQuestions > 0 ? totalTimeMs.current / totalQuestions : 0;
       onComplete({
         date: todayISO(),
         questionsCount: questions.length,
@@ -149,14 +166,15 @@ export default function SessionScreen({
 
   const handleAnswer = useCallback(
     (value: number) => {
-      if (!currentQuestion || submittingRef.current) return;
+      if (!currentItem || submittingRef.current) return;
       submittingRef.current = true;
       setNumpadDisabled(true);
       stopSpeech();
 
+      const v = view(currentItem);
       const timeMs = Date.now() - questionStartTime.current;
-      const correct = value === currentQuestion.fact.product;
-      const fast = correct && timeMs < FAST_THRESHOLD_MS[inputMode];
+      const correct = value === v.answer;
+      const fast = correct && timeMs < v.fastMs[inputMode];
 
       totalTimeMs.current += timeMs;
       if (correct) correctCount.current++;
@@ -164,54 +182,32 @@ export default function SessionScreen({
       if (correct) playCorrect();
       else playIncorrect();
 
-      // Notify parent (App) to update Leitner state
-      onAnswer(currentQuestion.fact, correct, timeMs, value, currentQuestion.isBonusReview, inputMode);
+      onAnswer(currentItem, correct, timeMs, value, inputMode);
 
-      // If incorrect, insert a retry 2-3 questions later (capped to keep
-      // sessions from running away when answers chain wrong — see MAX_SESSION_LENGTH).
+      // Réintroduction après erreur (capée — cf. MAX_SESSION_LENGTH).
       if (!correct && questions.length < MAX_SESSION_LENGTH) {
-        const retryPosition = Math.min(
-          currentIndex + 3,
-          questions.length,
-        );
-        const retryQuestion: SessionQuestion = {
-          ...currentQuestion,
-          isRetry: true,
-          isIntroduction: false,
-        };
+        const retryPosition = Math.min(currentIndex + 3, questions.length);
+        const retryItem = { ...currentItem, isRetry: true, isIntroduction: false } as SessionItem;
         setQuestions((prev) => {
           const next = [...prev];
-          next.splice(retryPosition, 0, retryQuestion);
+          next.splice(retryPosition, 0, retryItem);
           return next;
         });
       }
 
       setResults((prev) => [...prev, { correct }]);
+      setFeedback({ item: currentItem, correct, fast, submittedValue: value });
 
-      // Show feedback
-      setFeedback({
-        correct,
-        fast,
-        correctAnswer: currentQuestion.fact.product,
-        submittedValue: value,
-        fact: {
-          a: currentQuestion.displayA,
-          b: currentQuestion.displayB,
-        },
-        factBox: currentQuestion.fact.box,
-      });
-
-      // Speak the strategy hint when it's shown on the incorrect overlay
-      // (gated by box ≤ 2 in FeedbackOverlay — kept in sync here).
-      if (
-        !correct &&
-        currentQuestion.fact.box <= 2 &&
-        hasStrategy(currentQuestion.fact.a, currentQuestion.fact.b)
-      ) {
-        speak(`strategy-${currentQuestion.fact.a}-${currentQuestion.fact.b}`);
+      // Astuce parlée sur l'overlay d'erreur (gated boîte ≤ 2 comme l'overlay).
+      if (!correct && currentItem.fact.box <= 2) {
+        if (currentItem.kind === 'div') {
+          speak(`strategyd-${currentItem.fact.dividend}-${currentItem.fact.divisor}`);
+        } else if (hasStrategy(currentItem.fact.a, currentItem.fact.b)) {
+          speak(`strategy-${currentItem.fact.a}-${currentItem.fact.b}`);
+        }
       }
     },
-    [currentQuestion, currentIndex, questions.length, onAnswer, playCorrect, playIncorrect, stopSpeech, speak, inputMode],
+    [currentItem, currentIndex, questions.length, onAnswer, playCorrect, playIncorrect, stopSpeech, speak, inputMode],
   );
 
   const handleFeedbackDismiss = useCallback(() => {
@@ -220,24 +216,33 @@ export default function SessionScreen({
   }, [moveToNext]);
 
   const handleIntroNext = useCallback(() => {
-    if (!currentQuestion) return;
-    const { a, b } = currentQuestion.fact;
-    const isSquare = a === b;
+    if (!currentItem) return;
 
+    const finish = () => {
+      setShowIntro(false);
+      questionStartTime.current = Date.now();
+      speakQuestion(currentItem);
+    };
+
+    // Division : intro en une étape (« pense à la multiplication »).
+    if (currentItem.kind === 'div') {
+      finish();
+      return;
+    }
+
+    // Multiplication : grille → commutativité (sauf carrés) → astuce → question.
+    const { a, b } = currentItem.fact;
     const goToStrategyOrFinish = () => {
       if (hasStrategy(a, b)) {
         setIntroStep('strategy');
         speak(`strategy-${a}-${b}`);
       } else {
-        setShowIntro(false);
-        questionStartTime.current = Date.now();
-        speakQuestion(currentQuestion);
+        finish();
       }
     };
 
     if (introStep === 'grid') {
-      // Skip commutativity step for square numbers (a === b) — it's nonsensical
-      if (isSquare) {
+      if (a === b) {
         goToStrategyOrFinish();
       } else {
         setIntroStep('commute');
@@ -246,36 +251,29 @@ export default function SessionScreen({
     } else if (introStep === 'commute') {
       goToStrategyOrFinish();
     } else {
-      // 'strategy' step → start the question
-      setShowIntro(false);
-      questionStartTime.current = Date.now();
-      speakQuestion(currentQuestion);
+      finish();
     }
-  }, [introStep, currentQuestion, speak, speakQuestion]);
+  }, [introStep, currentItem, speak, speakQuestion]);
 
-  if (!currentQuestion) {
-    return null;
-  }
+  if (!currentItem) return null;
 
+  const v = view(currentItem);
   const introStrategy =
-    introStep === 'strategy'
-      ? getStrategy(currentQuestion.fact.a, currentQuestion.fact.b)
+    showIntro && currentItem.kind === 'mult' && introStep === 'strategy'
+      ? getStrategy(currentItem.fact.a, currentItem.fact.b)
       : null;
+  const divIntroStrategy =
+    showIntro && currentItem.kind === 'div' ? getDivisionStrategy(currentItem.fact) : null;
 
-  // Progress dots: aligné sur MAX_SESSION_LENGTH pour que la barre reflète
-  // bien la progression réelle, retries inclus.
   const maxDots = Math.min(questions.length, MAX_SESSION_LENGTH);
   const progressDots = Array.from({ length: maxDots }, (_, i) => {
-    if (i < results.length) {
-      return results[i].correct ? 'correct' : 'incorrect';
-    }
+    if (i < results.length) return results[i].correct ? 'correct' : 'incorrect';
     if (i === results.length) return 'current';
     return 'pending';
   });
 
   return (
     <div className="session-screen">
-      {/* Progress bar (centered dots) */}
       {!showIntro && (
         <div className="session-header">
           <div className="session-progress">
@@ -286,79 +284,53 @@ export default function SessionScreen({
         </div>
       )}
 
-      {/* Introduction phase */}
-      {showIntro && (
+      {/* Introduction — multiplication (grille / commutativité / astuce) */}
+      {showIntro && currentItem.kind === 'mult' && (
         <div className="session-intro">
           <div className="session-intro-title">Nouveau&nbsp;!</div>
 
           {introStep === 'grid' ? (
             <>
               <div className="session-intro-formula">
-                {currentQuestion.fact.a}
-                <span className="session-intro-operator">{'\u00D7'}</span>
-                {currentQuestion.fact.b}
+                {currentItem.fact.a}
+                <span className="session-intro-operator">{'×'}</span>
+                {currentItem.fact.b}
               </div>
-              <DotGrid
-                a={currentQuestion.fact.a}
-                b={currentQuestion.fact.b}
-                animated
-                size="normal"
-                bare
-              />
+              <DotGrid a={currentItem.fact.a} b={currentItem.fact.b} animated size="normal" bare />
               <div className="session-intro-result">
-                = <b>{currentQuestion.fact.product}</b>
+                = <b>{currentItem.fact.product}</b>
               </div>
               <div className="session-intro-explanation">
                 <strong>
-                  {currentQuestion.fact.a} {'\u00D7'}{' '}
-                  {currentQuestion.fact.b}
+                  {currentItem.fact.a} {'×'} {currentItem.fact.b}
                 </strong>
                 , c'est{' '}
-                {Array.from({ length: currentQuestion.fact.a })
-                  .map(() => currentQuestion.fact.b.toString())
+                {Array.from({ length: currentItem.fact.a })
+                  .map(() => currentItem.fact.b.toString())
                   .join(' + ')}{' '}
-                = <strong>{currentQuestion.fact.product}</strong>
+                = <strong>{currentItem.fact.product}</strong>
               </div>
-              <button
-                className="btn btn--ink session-intro-btn"
-                onClick={handleIntroNext}
-              >
+              <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
                 Suivant →
               </button>
             </>
           ) : introStep === 'commute' ? (
             <>
-              <DotGrid
-                a={currentQuestion.fact.a}
-                b={currentQuestion.fact.b}
-                animated={false}
-                showRotation
-                size="normal"
-              />
+              <DotGrid a={currentItem.fact.a} b={currentItem.fact.b} animated={false} showRotation size="normal" />
               <div className="session-intro-commutativity">
-                {currentQuestion.fact.b} {'\u00D7'}{' '}
-                {currentQuestion.fact.a}, c'est pareil&nbsp;!
+                {currentItem.fact.b} {'×'} {currentItem.fact.a}, c'est pareil&nbsp;!
                 <br />
-                C'est aussi{' '}
-                <strong>{currentQuestion.fact.product}</strong>
+                C'est aussi <strong>{currentItem.fact.product}</strong>
               </div>
-              <button
-                className="btn btn--ink session-intro-btn"
-                onClick={handleIntroNext}
-              >
+              <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
                 Suivant →
               </button>
             </>
           ) : (
             <>
               {introStrategy && <StrategyHint strategy={introStrategy} variant="intro" />}
-              <div className="session-intro-explanation">
-                Une petite astuce pour s'en souvenir&nbsp;!
-              </div>
-              <button
-                className="btn btn--ink session-intro-btn"
-                onClick={handleIntroNext}
-              >
+              <div className="session-intro-explanation">Une petite astuce pour s'en souvenir&nbsp;!</div>
+              <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
                 J'ai compris&nbsp;!
               </button>
             </>
@@ -366,13 +338,30 @@ export default function SessionScreen({
         </div>
       )}
 
-      {/* Question phase */}
+      {/* Introduction — division (« pense à la multiplication ») */}
+      {showIntro && currentItem.kind === 'div' && (
+        <div className="session-intro">
+          <div className="session-intro-title">Nouveau&nbsp;!</div>
+          <div className="session-intro-formula">
+            {v.left}
+            <span className="session-intro-operator">{v.op}</span>
+            {v.right}
+          </div>
+          <DotGrid a={currentItem.fact.divisor} b={currentItem.fact.quotient} animated size="normal" bare />
+          {divIntroStrategy && <DivisionStrategyHint strategy={divIntroStrategy} variant="intro" />}
+          <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
+            J'ai compris&nbsp;!
+          </button>
+        </div>
+      )}
+
+      {/* Question */}
       {!showIntro && (
         <div className="session-question">
           <div className="formula-text session-question-text">
-            {currentQuestion.displayA}
-            <span className="formula-operator">{'\u00D7'}</span>
-            {currentQuestion.displayB}
+            {v.left}
+            <span className="formula-operator">{v.op}</span>
+            {v.right}
             <span className="formula-equals">=</span>
             <span className="formula-placeholder">?</span>
           </div>
@@ -382,8 +371,8 @@ export default function SessionScreen({
                 onSubmit={handleAnswer}
                 disabled={numpadDisabled}
                 isSpeaking={isSpeaking}
-                questionToken={`${currentQuestion.displayA}-${currentQuestion.displayB}-${currentIndex}`}
-                expectedValue={currentQuestion.fact.product}
+                questionToken={`${v.token}-${currentIndex}`}
+                expectedValue={v.answer}
               />
             ) : (
               <>
@@ -404,15 +393,13 @@ export default function SessionScreen({
         </div>
       )}
 
-      {/* Feedback overlay */}
+      {/* Feedback — un seul composant, qui rend × ou ÷ selon l'item */}
       {feedback && (
         <FeedbackOverlay
+          item={feedback.item}
           correct={feedback.correct}
           fast={feedback.fast}
-          correctAnswer={feedback.correctAnswer}
           submittedValue={feedback.submittedValue}
-          fact={feedback.fact}
-          factBox={feedback.factBox}
           onDismiss={handleFeedbackDismiss}
         />
       )}

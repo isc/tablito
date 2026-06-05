@@ -1,8 +1,14 @@
 import type { MultiFact, UserProfile, SessionQuestion } from '../types';
-import { isDue, shouldIntroduceNew } from './leitner';
+import {
+  isDue,
+  shouldIntroduceNew,
+  vanDeWalleStage,
+  prioritizeByBoxLevel,
+  pickBonusReviewFacts,
+} from './leitner';
 import { getFactKey } from './facts';
 import { computeSimilarity } from './similarity';
-import { daysBetween, shuffle } from './utils';
+import { daysBetween, interleaveGreedy } from './utils';
 
 // Target range: 12-15 questions (~5 min at ~20-30s per question with feedback).
 // MIN_QUESTIONS is a soft target, not an absolute floor: if fewer distinct facts
@@ -12,21 +18,11 @@ const MIN_QUESTIONS = 12;
 const MAX_QUESTIONS = 15;
 const MAX_NEW_FACTS = 2;
 
-// Séquence canonique d'introduction (Van de Walle / Wichita 2014) — voir specs §3.4bis.
-function factStage(fact: MultiFact): number {
-  const { a, b } = fact;
-  if (a === 2 || b === 2) return 1; // Doubles
-  if (a === 5 || b === 5) return 2; // Fives
-  if (a === 9 || b === 9) return 3; // Nines
-  if (a === b) return 4;            // Squares
-  return 5;                          // Derived
-}
-
 /**
  * Returns a random display order for a fact (a*b or b*a).
  * For squares (a === b), returns the original order.
  */
-function randomDisplayOrder(fact: MultiFact): { displayA: number; displayB: number } {
+export function randomDisplayOrder(fact: MultiFact): { displayA: number; displayB: number } {
   if (fact.a === fact.b) {
     return { displayA: fact.a, displayB: fact.b };
   }
@@ -57,40 +53,6 @@ function isAdjacentConflict(prev: SessionQuestion, candidate: SessionQuestion): 
     return true;
   }
   return false;
-}
-
-/**
- * Attempts to reorder questions so that no two consecutive questions share a table
- * or have strong similarity. Uses a greedy approach.
- */
-function interleave(questions: SessionQuestion[]): SessionQuestion[] {
-  if (questions.length <= 1) return questions;
-
-  const remaining = [...questions];
-  const result: SessionQuestion[] = [];
-
-  // Pick the first question randomly
-  const firstIdx = Math.floor(Math.random() * remaining.length);
-  result.push(remaining.splice(firstIdx, 1)[0]);
-
-  while (remaining.length > 0) {
-    const prev = result[result.length - 1];
-    // Find the first candidate that doesn't conflict
-    let placed = false;
-    for (let i = 0; i < remaining.length; i++) {
-      if (!isAdjacentConflict(prev, remaining[i])) {
-        result.push(remaining.splice(i, 1)[0]);
-        placed = true;
-        break;
-      }
-    }
-    if (!placed) {
-      // No conflict-free candidate: just take the first one (best effort)
-      result.push(remaining.shift()!);
-    }
-  }
-
-  return result;
 }
 
 /**
@@ -130,7 +92,8 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   if (shouldIntroduceNew(facts)) {
     const notIntroduced = facts.filter((f) => !f.introduced);
     const sorted = [...notIntroduced].sort(
-      (a, b) => factStage(a) - factStage(b) || a.product - b.product,
+      (a, b) =>
+        vanDeWalleStage(a.a, a.b) - vanDeWalleStage(b.a, b.b) || a.product - b.product,
     );
 
     for (const fact of sorted) {
@@ -148,10 +111,7 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   const reviewBudget = MAX_QUESTIONS - newFacts.length;
 
   const dueFacts = facts.filter((f) => f.introduced && isDue(f, today));
-  const box1 = shuffle(dueFacts.filter((f) => f.box === 1));
-  const box23 = shuffle(dueFacts.filter((f) => f.box === 2 || f.box === 3));
-  const box45 = shuffle(dueFacts.filter((f) => f.box === 4 || f.box === 5));
-  const prioritized: MultiFact[] = [...box1, ...box23, ...box45];
+  const prioritized = prioritizeByBoxLevel(dueFacts);
 
   const selected: MultiFact[] = [];
   for (const fact of prioritized) {
@@ -194,32 +154,25 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
 
   // Combine: intro questions are placed at the front, then interleave the rest.
   // The spec says intro happens before practice, so intro questions come first.
-  const allReview = interleave(reviewQuestions);
+  const allReview = interleaveGreedy(reviewQuestions, isAdjacentConflict);
   const result = [...introQuestions, ...allReview];
 
-  // Padding par bonus reviews (feedback normal mais sans toucher au Leitner :
-  // le calendrier de répétition espacée est préservé). Tri box puis nextDue
-  // pour prioriser les faits les plus faibles ; shuffle stable d'abord pour
-  // que les ex-aequo (cas post-placement où tout est en B3, nextDue=J+3) ne
-  // suivent pas l'ordre de création (toute la table 2, puis 3, …).
+  // Padding par bonus reviews (feedback normal, sans toucher au Leitner :
+  // le calendrier de répétition espacée est préservé — cf. pickBonusReviewFacts).
   if (result.length < MIN_QUESTIONS) {
-    const sessionFactKeys = new Set(
-      result.map((q) => getFactKey(q.fact.a, q.fact.b)),
-    );
-    const slotsLeft = MIN_QUESTIONS - result.length;
-    const bonusQuestions: SessionQuestion[] = shuffle(
-      facts.filter((f) => f.introduced && !sessionFactKeys.has(getFactKey(f.a, f.b))),
-    )
-      .sort((a, b) => a.box - b.box || a.nextDue.localeCompare(b.nextDue))
-      .slice(0, slotsLeft)
-      .map((fact) => ({
-        fact,
-        ...randomDisplayOrder(fact),
-        isIntroduction: false,
-        isRetry: false,
-        isBonusReview: true,
-      }));
-    result.push(...interleave(bonusQuestions));
+    const sessionFactKeys = new Set(result.map((q) => getFactKey(q.fact.a, q.fact.b)));
+    const bonusQuestions: SessionQuestion[] = pickBonusReviewFacts(
+      facts,
+      (f) => sessionFactKeys.has(getFactKey(f.a, f.b)),
+      MIN_QUESTIONS - result.length,
+    ).map((fact) => ({
+      fact,
+      ...randomDisplayOrder(fact),
+      isIntroduction: false,
+      isRetry: false,
+      isBonusReview: true,
+    }));
+    result.push(...interleaveGreedy(bonusQuestions, isAdjacentConflict));
   }
 
   return result;

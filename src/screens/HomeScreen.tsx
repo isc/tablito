@@ -12,6 +12,10 @@ interface HomeScreenProps {
   profile: UserProfile;
   hasSessionAvailable: boolean;
   hasNewRule: boolean;
+  // Niveau 2 — division (cf. specs §11). divisionUnlocked = badge Génie des
+  // maths obtenu : la tuile « Mon image » devient « Mes images » (l'écran
+  // progression montre alors les deux images, multiplication et division).
+  divisionUnlocked: boolean;
   onStart: () => void;
   onShowProgress: () => void;
   onShowBadges: () => void;
@@ -84,6 +88,7 @@ export default function HomeScreen({
   profile,
   hasSessionAvailable,
   hasNewRule,
+  divisionUnlocked,
   onStart,
   onShowProgress,
   onShowBadges,
@@ -226,7 +231,7 @@ export default function HomeScreen({
         <div className="home-nav">
           <button className="home-nav-btn" onClick={onShowProgress}>
             <span className="home-nav-btn-icon"><IconImage /></span>
-            <span className="home-nav-btn-label">Mon image</span>
+            <span className="home-nav-btn-label">{divisionUnlocked ? 'Mes images' : 'Mon image'}</span>
           </button>
           <button className="home-nav-btn" onClick={onShowBadges}>
             <span className="home-nav-btn-icon"><IconBadge /></span>

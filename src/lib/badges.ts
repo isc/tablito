@@ -1,9 +1,25 @@
-import type { UserProfile, Badge, MultiFact } from '../types';
+import type { UserProfile, Badge, MultiFact, DivisionFact } from '../types';
 import { BADGE_IDS } from '../types';
 import { todayISO, daysBetween } from './utils';
 
 function hasBadge(profile: UserProfile, id: string): boolean {
   return profile.badges.some((b) => b.id === id);
+}
+
+// Faits de division d'une « table » (regroupés par diviseur) : ÷2, ÷3, …, ÷9.
+export function factsForDivisionTable(facts: DivisionFact[], divisor: number): DivisionFact[] {
+  return facts.filter((f) => f.divisor === divisor);
+}
+
+const NUM_DIV_TABLE_BADGES = 8;
+
+/**
+ * Vrai quand le niveau 2 (division) est débloqué : on gate sur le badge
+ * « Génie de la multiplication » (toutes les multiplications en boîte 5). Critère basé
+ * sur un badge ⇒ permanent (specs §11.3), cohérent avec la règle bonus ×11.
+ */
+export function isDivisionUnlocked(profile: UserProfile): boolean {
+  return hasBadge(profile, BADGE_IDS.GENIE_MATHS);
 }
 
 function makeBadge(def: BadgeDefinition, now: string): Badge {
@@ -138,8 +154,8 @@ export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
   }),
   {
     id: BADGE_IDS.GENIE_MATHS,
-    name: 'Génie des maths',
-    description: 'Tous les faits en boîte 5',
+    name: 'Génie de la multiplication',
+    description: 'Toutes les multiplications maîtrisées',
     icon: '🏆',
     color: 'var(--honey)',
     conditionText: 'Place toutes les multiplications dans la boîte 5 (le top niveau !).',
@@ -176,7 +192,75 @@ export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
   },
 ];
 
-const BADGE_MAP = new Map(ALL_BADGE_DEFINITIONS.map((d) => [d.id, d]));
+// Badges du niveau 2 — division. Tenus à part d'ALL_BADGE_DEFINITIONS pour
+// rester MASQUÉS tant que le niveau n'est pas débloqué (cf.
+// visibleBadgeDefinitions), mais inclus dans BADGE_MAP pour pouvoir être
+// attribués par checkBadges.
+export const DIVISION_BADGE_DEFINITIONS: BadgeDefinition[] = [
+  {
+    id: BADGE_IDS.DIV_PREMIERE_MAITRISE,
+    name: 'Première division maîtrisée',
+    description: 'Une division au top niveau',
+    icon: '🥈',
+    color: 'var(--honey)',
+    conditionText: 'Place ta toute première division en boîte 5.',
+    progressFor: (p) => {
+      const ready = (p.divisionFacts ?? []).filter((f) => f.box === 5).length;
+      return { current: Math.min(ready, 1), target: 1, unitLabel: 'en boîte 5' };
+    },
+  },
+  ...Array.from({ length: NUM_DIV_TABLE_BADGES }, (_, i) => {
+    const n = i + 2;
+    return {
+      id: `${BADGE_IDS.DIV_TABLE_PREFIX}${n}`,
+      name: `Divisions par ${n}`,
+      description: `Maîtriser les divisions par ${n}`,
+      icon: '➗',
+      color: 'var(--indigo)',
+      conditionText: `Place toutes les divisions par ${n} dans la boîte 4 ou 5.`,
+      progressFor: (p: UserProfile) => {
+        const tableFacts = factsForDivisionTable(p.divisionFacts ?? [], n);
+        return {
+          current: tableFacts.filter((f) => f.box >= 4).length,
+          target: tableFacts.length,
+          unitLabel: 'en boîte 4+',
+        };
+      },
+    };
+  }),
+  {
+    id: BADGE_IDS.DIV_GENIE,
+    name: 'Maître de la division',
+    description: 'Toutes les divisions en boîte 5',
+    icon: '🎓',
+    color: 'var(--honey)',
+    conditionText: 'Place toutes les divisions dans la boîte 5 (le top niveau !).',
+    progressFor: (p) => {
+      const facts = p.divisionFacts ?? [];
+      return {
+        current: facts.filter((f) => f.box === 5).length,
+        target: facts.length,
+        unitLabel: 'en boîte 5',
+      };
+    },
+  },
+];
+
+const BADGE_MAP = new Map(
+  [...ALL_BADGE_DEFINITIONS, ...DIVISION_BADGE_DEFINITIONS].map((d) => [d.id, d]),
+);
+
+/**
+ * Définitions de badges à afficher pour ce profil : les badges multiplication
+ * toujours, les badges division uniquement une fois le niveau débloqué — on ne
+ * spoile pas la division à un enfant qui apprend encore ses tables (même
+ * logique que la révélation différée de la règle ×11, specs §2.3).
+ */
+export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[] {
+  return isDivisionUnlocked(profile)
+    ? [...ALL_BADGE_DEFINITIONS, ...DIVISION_BADGE_DEFINITIONS]
+    : ALL_BADGE_DEFINITIONS;
+}
 
 /**
  * Checks all badge conditions and returns the list of *newly earned* badges.
@@ -224,6 +308,21 @@ export function checkBadges(
     const tableFacts = factsForTable(profile.facts, n);
     if (tableFacts.length > 0 && tableFacts.every((f) => f.box >= 4)) {
       earn(`${BADGE_IDS.TABLE_PREFIX}${n}`);
+    }
+  }
+
+  // Niveau 2 — badges division. Évalués seulement une fois le niveau débloqué :
+  // avant cela les faits de division sont tous en boîte 1 (aucun badge gagnable),
+  // donc on évite ces passes inutiles pour la grande majorité des profils.
+  const divFacts = profile.divisionFacts;
+  if (divFacts && divFacts.length > 0 && isDivisionUnlocked(profile)) {
+    if (divFacts.some((f) => f.box === 5)) earn(BADGE_IDS.DIV_PREMIERE_MAITRISE);
+    if (divFacts.every((f) => f.box === 5)) earn(BADGE_IDS.DIV_GENIE);
+    for (let n = 2; n <= 9; n++) {
+      const tableFacts = factsForDivisionTable(divFacts, n);
+      if (tableFacts.length > 0 && tableFacts.every((f) => f.box >= 4)) {
+        earn(`${BADGE_IDS.DIV_TABLE_PREFIX}${n}`);
+      }
     }
   }
 
