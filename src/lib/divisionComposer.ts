@@ -1,27 +1,19 @@
 import type { UserProfile, DivisionFact, DivisionSessionQuestion } from '../types';
-import { isDue, shouldIntroduceNew } from './leitner';
+import {
+  isDue,
+  shouldIntroduceNew,
+  vanDeWalleStage,
+  prioritizeByBoxLevel,
+  pickBonusReviewFacts,
+} from './leitner';
 import { getFactKey } from './facts';
 import { getDivisionFactKey, parentMultiplicationKey } from './divisionFacts';
-import { shuffle, interleaveGreedy } from './utils';
+import { interleaveGreedy } from './utils';
 
 // Mêmes bornes que la multiplication (cf. sessionComposer.ts, specs §6).
 const MIN_QUESTIONS = 12;
 const MAX_QUESTIONS = 15;
 const MAX_NEW_FACTS = 2;
-
-// Ordre d'introduction, calqué sur la séquence multiplicative (Van de Walle)
-// appliquée au couple (divisor, quotient). En pratique l'éligibilité est déjà
-// pilotée par la maîtrise du parent multiplicatif, donc cet ordre ne fait que
-// départager les faits devenus éligibles en même temps.
-function divisionStage(fact: DivisionFact): number {
-  const a = fact.divisor;
-  const b = fact.quotient;
-  if (a === 2 || b === 2) return 1; // Doubles
-  if (a === 5 || b === 5) return 2; // Fives
-  if (a === 9 || b === 9) return 3; // Nines
-  if (a === b) return 4;            // Carrés
-  return 5;                          // Dérivés
-}
 
 /**
  * Deux faits de division en conflit s'ils ne doivent pas être adjacents :
@@ -84,7 +76,11 @@ export function composeDivisionSession(
   if (shouldIntroduceNew(divisionFacts)) {
     const eligible = divisionFacts
       .filter((f) => !f.introduced && masteredKeys.has(parentMultiplicationKey(f)))
-      .sort((a, b) => divisionStage(a) - divisionStage(b) || a.dividend - b.dividend);
+      .sort(
+        (a, b) =>
+          vanDeWalleStage(a.divisor, a.quotient) - vanDeWalleStage(b.divisor, b.quotient) ||
+          a.dividend - b.dividend,
+      );
 
     for (const fact of eligible) {
       if (newFacts.length >= MAX_NEW_FACTS) break;
@@ -97,10 +93,7 @@ export function composeDivisionSession(
   const reviewBudget = MAX_QUESTIONS - newFacts.length;
 
   const dueFacts = divisionFacts.filter((f) => f.introduced && isDue(f, today));
-  const box1 = shuffle(dueFacts.filter((f) => f.box === 1));
-  const box23 = shuffle(dueFacts.filter((f) => f.box === 2 || f.box === 3));
-  const box45 = shuffle(dueFacts.filter((f) => f.box === 4 || f.box === 5));
-  const prioritized = [...box1, ...box23, ...box45];
+  const prioritized = prioritizeByBoxLevel(dueFacts);
 
   const selected: DivisionFact[] = [];
   for (const fact of prioritized) {
@@ -125,20 +118,17 @@ export function composeDivisionSession(
 
   const result = [...introQuestions, ...interleave(reviewQuestions)];
 
-  // Padding par révisions bonus (pas de modification Leitner — cf. §6.2).
+  // Padding par révisions bonus (pas de modification Leitner — cf. §6.2 /
+  // pickBonusReviewFacts).
   if (result.length < MIN_QUESTIONS) {
     const usedKeys = new Set(
       result.map((q) => getDivisionFactKey(q.fact.dividend, q.fact.divisor)),
     );
-    const slotsLeft = MIN_QUESTIONS - result.length;
-    const bonus = shuffle(
-      divisionFacts.filter(
-        (f) => f.introduced && !usedKeys.has(getDivisionFactKey(f.dividend, f.divisor)),
-      ),
-    )
-      .sort((a, b) => a.box - b.box || a.nextDue.localeCompare(b.nextDue))
-      .slice(0, slotsLeft)
-      .map((fact) => makeQuestion(fact, { isBonusReview: true }));
+    const bonus = pickBonusReviewFacts(
+      divisionFacts,
+      (f) => usedKeys.has(getDivisionFactKey(f.dividend, f.divisor)),
+      MIN_QUESTIONS - result.length,
+    ).map((fact) => makeQuestion(fact, { isBonusReview: true }));
     result.push(...interleave(bonus));
   }
 
