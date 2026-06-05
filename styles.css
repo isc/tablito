@@ -1709,6 +1709,32 @@
   overflow-wrap: break-word;
 }
 
+/* Division : équation à facteur manquant « divisor × ? = dividend » (§11.4).
+   La case dashed honey évoque le slot à remplir — l'enfant cherche le facteur. */
+.strategy-hint-pivot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-weight: 800;
+  font-size: 1.12em;
+  color: var(--ink);
+}
+
+.strategy-hint-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  padding: 0 0.25em;
+  border: 2px dashed var(--honey);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--honey-ink);
+  font-weight: 800;
+  line-height: 1;
+}
+
 .strategy-hint-recall {
   margin-top: 10px;
   padding-top: 10px;
@@ -3173,6 +3199,31 @@ input, select, textarea {
   letter-spacing: -0.3px;
 }
 
+.progress-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 2px 20px 12px;
+}
+
+.progress-tab {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.progress-tab.active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+}
+
 .progress-stats-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3341,6 +3392,42 @@ input, select, textarea {
 }
 
 .recap-freeze-subtitle {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+/* Déblocage du niveau 2 — division (une seule fois, à la maîtrise des tables) */
+.recap-division-unlock {
+  background: var(--indigo-soft);
+  border-color: var(--indigo);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.recap-division-unlock-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.recap-division-unlock-text {
+  flex: 1;
+}
+
+.recap-division-unlock-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.recap-division-unlock-subtitle {
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 600;

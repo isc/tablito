@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260604210526"
+const CACHE = 'multiplix-' + "20260605125608"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -45,6 +45,11 @@ const ASSETS = [
   "/multiplix/specs/index.html",
   "/multiplix/src/App.js",
   "/multiplix/src/__tests__/badges.test.js",
+  "/multiplix/src/__tests__/dailyComposer.test.js",
+  "/multiplix/src/__tests__/divisionBadges.test.js",
+  "/multiplix/src/__tests__/divisionComposer.test.js",
+  "/multiplix/src/__tests__/divisionFacts.test.js",
+  "/multiplix/src/__tests__/divisionJourney.test.js",
   "/multiplix/src/__tests__/leitner.test.js",
   "/multiplix/src/__tests__/parseFrenchNumber.test.js",
   "/multiplix/src/__tests__/placement.test.js",
@@ -59,21 +64,26 @@ const ASSETS = [
   "/multiplix/src/components/BackChevron.js",
   "/multiplix/src/components/Badge.js",
   "/multiplix/src/components/BadgeDetailModal.js",
+  "/multiplix/src/components/DivisionMysteryImage.js",
+  "/multiplix/src/components/DivisionStrategyHint.js",
   "/multiplix/src/components/DotGrid.js",
   "/multiplix/src/components/ErrorBoundary.js",
   "/multiplix/src/components/EvolutionChart.js",
   "/multiplix/src/components/Feather.js",
   "/multiplix/src/components/FeedbackModal.js",
   "/multiplix/src/components/FeedbackOverlay.js",
+  "/multiplix/src/components/FeedbackStar.js",
   "/multiplix/src/components/FlameIcon.js",
   "/multiplix/src/components/Mascot.js",
   "/multiplix/src/components/Modal.js",
+  "/multiplix/src/components/MysteryGrid.js",
   "/multiplix/src/components/MysteryImage.js",
   "/multiplix/src/components/NotificationSettings.js",
   "/multiplix/src/components/NumPad.js",
   "/multiplix/src/components/ParentGate.js",
   "/multiplix/src/components/ProgressGrid.js",
   "/multiplix/src/components/StrategyHint.js",
+  "/multiplix/src/components/StrategyHintShell.js",
   "/multiplix/src/components/StreakDetailModal.js",
   "/multiplix/src/components/VoiceInput.js",
   "/multiplix/src/env.d.js",
@@ -86,6 +96,10 @@ const ASSETS = [
   "/multiplix/src/lib/audioContext.js",
   "/multiplix/src/lib/badges.js",
   "/multiplix/src/lib/changelog.js",
+  "/multiplix/src/lib/dailyComposer.js",
+  "/multiplix/src/lib/divisionComposer.js",
+  "/multiplix/src/lib/divisionFacts.js",
+  "/multiplix/src/lib/divisionStrategies.js",
   "/multiplix/src/lib/facts.js",
   "/multiplix/src/lib/feedback.js",
   "/multiplix/src/lib/install.js",
