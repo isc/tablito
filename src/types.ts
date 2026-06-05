@@ -148,6 +148,13 @@ export type SessionItem =
 // handleAnswer). Champ optionnel sur SessionResult pour rétrocompat avec les
 // profils antérieurs.
 export interface SessionQuestionLog {
+  // Type de question. Absent des logs antérieurs au niveau 2 → traiter comme
+  // 'mult'. Indispensable pour ne pas confondre une division avec une
+  // multiplication dans le feedback : pour 'div', `a`/`b` portent diviseur et
+  // quotient (le dividende = a × b), sinon `56 ÷ 7` serait illisible comme
+  // `{a:7, b:8}`, identique à `7 × 8`.
+  kind?: 'mult' | 'div';
+  // 'mult' : opérandes (canoniques). 'div' : a = diviseur, b = quotient.
   a: number;
   b: number;
   correct: boolean;
@@ -169,9 +176,14 @@ export interface SessionResult {
   averageTimeMs: number;
   newFactsIntroduced: number;
   factsPromoted: number;   // faits dont la boîte finale > boîte initiale dans la séance
-  // Log par-question de la séance, persisté pour diagnostic (inspection manuelle
-  // du localStorage). Rend visibles les bonus reviews — absentes de fact.history
-  // — et le mode de saisie. Optionnel pour rétrocompat (séances pré-feature).
+  // Log par-question de la séance. ⚠️ NE PAS supprimer comme « champ mort » :
+  // aucun code ne le lit par accès direct `.questions`, mais il est embarqué
+  // (via tout `sessionHistory`) dans le `profile_snapshot` du feedback opt-in
+  // — voir lib/feedback.ts `buildContext(profile, includeFullProfile)`, case à
+  // cocher de FeedbackModal. C'est ce qui permet de rejouer « quelles questions
+  // ont été programmées dans la séance » lors de l'analyse d'un feedback (les
+  // bonus reviews sont absentes de fact.history, et le mode de saisie n'est
+  // tracé que là). Optionnel pour rétrocompat (séances pré-feature 32c74e5).
   questions?: SessionQuestionLog[];
 }
 

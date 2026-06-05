@@ -289,6 +289,7 @@ export default function App() {
       const fastMs = (item.kind === 'div' ? DIVISION_FAST_THRESHOLD_MS : FAST_THRESHOLD_MS)[inputMode];
 
       sessionQuestionLogs.current.push({
+        kind: item.kind,
         a: item.kind === 'div' ? item.fact.divisor : item.fact.a,
         b: item.kind === 'div' ? item.fact.quotient : item.fact.b,
         correct,
