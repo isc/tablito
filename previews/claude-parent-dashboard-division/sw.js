@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260605162732"
+const CACHE = 'multiplix-' + "20260605163621"
 const BASE = "/multiplix/previews/claude-parent-dashboard-division/"
 const ASSETS = [
   "/multiplix/previews/claude-parent-dashboard-division/favicon.svg",
@@ -104,6 +104,7 @@ const ASSETS = [
   "/multiplix/previews/claude-parent-dashboard-division/src/lib/divisionStrategies.js",
   "/multiplix/previews/claude-parent-dashboard-division/src/lib/facts.js",
   "/multiplix/previews/claude-parent-dashboard-division/src/lib/feedback.js",
+  "/multiplix/previews/claude-parent-dashboard-division/src/lib/hardestFacts.js",
   "/multiplix/previews/claude-parent-dashboard-division/src/lib/install.js",
   "/multiplix/previews/claude-parent-dashboard-division/src/lib/leitner.js",
   "/multiplix/previews/claude-parent-dashboard-division/src/lib/micPreflight.js",
