@@ -1,3 +1,0 @@
-import{jsx as r}from"preact/jsx-runtime";import n from"./StrategyHintShell.js";const i={"near-ten":"\xD79","skip-count":"\xD75","double-add":"\xD73","double-double":"\xD74","five-plus-one":"\xD76","five-plus-two":"\xD77","double-double-double":"\xD78"},l="Rappel : pour \xD7 10, les chiffres glissent d'une place vers la gauche et un 0 prend la place des unit\xE9s.";function o({strategy:e,variant:t="feedback"}){return r(n,{variant:t,title:e.title,lines:e.lines,eyebrow:`L'astuce du ${i[e.kind]}`,recall:t==="intro"&&e.kind==="near-ten"?l:void 0})}export{o as default};
-
-//# sourceMappingURL=StrategyHint.js.map
