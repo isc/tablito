@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
 import type { UserProfile } from '../types';
-import { getFactKey } from '../lib/facts';
+import { isDivisionUnlocked } from '../lib/badges';
+import { countMastered } from '../lib/leitner';
+import { getHardestFacts } from '../lib/hardestFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 import ProgressGrid from '../components/ProgressGrid';
+import DivisionProgressGrid from '../components/DivisionProgressGrid';
 import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
 import EvolutionChart from '../components/EvolutionChart';
@@ -36,6 +39,16 @@ export default function ParentDashboard({
   const [showFeedback, setShowFeedback] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
+  const divisionUnlocked = useMemo(() => isDivisionUnlocked(profile), [profile]);
+  const divisionFacts = useMemo(() => profile.divisionFacts ?? [], [profile.divisionFacts]);
+  // Onglet par défaut : la division dès qu'elle est débloquée — c'est l'activité
+  // d'apprentissage active (les tables sont déjà en boîte 5 par hypothèse, et
+  // surtout l'objet de l'attention du parent au quotidien).
+  const [gridView, setGridView] = useState<'mult' | 'div'>(
+    divisionUnlocked ? 'div' : 'mult',
+  );
+  const showDiv = divisionUnlocked && gridView === 'div';
+
   const handleShare = async () => {
     const url = window.location.origin + import.meta.env.BASE_URL;
     if (navigator.share) {
@@ -60,40 +73,23 @@ export default function ParentDashboard({
     }
   };
 
-  const { boxCounts, maxBoxCount, hardFacts } = useMemo(() => {
+  // Histogramme de l'opération sélectionnée par le parent (× / ÷).
+  const { boxCounts, maxBoxCount } = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0];
-    for (const fact of profile.facts) {
+    const histoFacts = showDiv ? divisionFacts : profile.facts;
+    for (const fact of histoFacts) {
       if (!fact.introduced) counts[0]++;
       else counts[fact.box]++;
     }
+    return { boxCounts: counts, maxBoxCount: Math.max(...counts, 1) };
+  }, [profile.facts, divisionFacts, showDiv]);
 
-    // Sans fenêtre, un fait galéré il y a longtemps mais désormais en
-    // boîte 5 resterait dans le top — la boîte reflète l'état courant,
-    // pas le compteur d'erreurs.
-    const sessions = profile.sessionHistory;
-    const cutoff =
-      sessions.length > HARD_FACTS_WINDOW
-        ? sessions[sessions.length - HARD_FACTS_WINDOW].date
-        : null;
-
-    const hard = profile.facts
-      .filter((f) => f.introduced)
-      .map((f) => ({
-        ...f,
-        errorCount: f.history.filter(
-          (h) => !h.correct && (cutoff === null || h.date >= cutoff),
-        ).length,
-      }))
-      .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
-      .slice(0, 5)
-      .filter((f) => f.errorCount > 0);
-
-    return {
-      boxCounts: counts,
-      maxBoxCount: Math.max(...counts, 1),
-      hardFacts: hard,
-    };
-  }, [profile.facts, profile.sessionHistory]);
+  // Liste UNIFIÉE × + ÷ — indépendante du sélecteur (mélange les deux opérations
+  // pour montrer où l'enfant bute en ce moment, cf. lib/hardestFacts).
+  const hardFacts = useMemo(
+    () => getHardestFacts(profile, HARD_FACTS_WINDOW, 5),
+    [profile],
+  );
 
   const recentSessions = useMemo(
     () => [...profile.sessionHistory].reverse().slice(0, 10),
@@ -168,13 +164,45 @@ export default function ParentDashboard({
           </div>
           <div className="parent-stat-card">
             <div className="parent-stat-value">
-              {profile.facts.filter((f) => f.box >= 4).length}/
-              {profile.facts.length}
+              {countMastered(profile.facts)}/{profile.facts.length}
             </div>
-            <div className="parent-stat-label">Faits maîtrisés</div>
+            <div className="parent-stat-label">
+              {divisionUnlocked ? 'Multiplications maîtrisées' : 'Faits maîtrisés'}
+            </div>
           </div>
+          {divisionUnlocked && (
+            <div className="parent-stat-card">
+              <div className="parent-stat-value">
+                {countMastered(divisionFacts)}/{divisionFacts.length}
+              </div>
+              <div className="parent-stat-label">Divisions maîtrisées</div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Sélecteur d'opération — partagé par la Répartition et la Grille Leitner
+          ci-dessous. Réutilise les classes du sélecteur « Mes images » côté
+          enfant (.progress-tabs, CSS concaténé global). Visible uniquement après
+          déblocage : avant, la division ne doit pas apparaître (specs §11.3). */}
+      {divisionUnlocked && (
+        <div className="progress-tabs" role="tablist" aria-label="Opération">
+          <button
+            type="button"
+            className={`progress-tab ${!showDiv ? 'active' : ''}`}
+            onClick={() => setGridView('mult')}
+          >
+            Multiplications
+          </button>
+          <button
+            type="button"
+            className={`progress-tab ${showDiv ? 'active' : ''}`}
+            onClick={() => setGridView('div')}
+          >
+            Divisions
+          </button>
+        </div>
+      )}
 
       {/* Box histogram */}
       <div className="parent-section">
@@ -191,8 +219,8 @@ export default function ParentDashboard({
           </a>
         </h3>
         <p className="parent-section-subtitle">
-          Combien de multiplications dans chaque boîte de révision (B1 = à
-          réviser souvent, B5 = bien ancrées).
+          Combien de {showDiv ? 'divisions' : 'multiplications'} dans chaque
+          boîte de révision (B1 = à réviser souvent, B5 = bien ancrées).
         </p>
         <div className="parent-histogram">
           {boxCounts.map((count, i) => (
@@ -227,10 +255,15 @@ export default function ParentDashboard({
           </a>
         </h3>
         <p className="parent-section-subtitle">
-          Une case par multiplication, colorée selon sa boîte. Le rouge signale
-          les faits récents ou en difficulté, le vert ceux bien ancrés.
+          Une case par {showDiv ? 'division' : 'multiplication'}, colorée selon
+          sa boîte. Le rouge signale les faits récents ou en difficulté, le vert
+          ceux bien ancrés.
         </p>
-        <ProgressGrid facts={profile.facts} />
+        {showDiv ? (
+          <DivisionProgressGrid facts={divisionFacts} />
+        ) : (
+          <ProgressGrid facts={profile.facts} />
+        )}
       </div>
 
       {/* Evolution: accuracy + response time */}
@@ -270,9 +303,17 @@ export default function ParentDashboard({
           </p>
           <div className="parent-hard-facts">
             {hardFacts.map((f) => (
-              <div key={getFactKey(f.a, f.b)} className="parent-hard-fact">
+              <div key={`${f.kind}-${f.key}`} className="parent-hard-fact">
+                <span
+                  className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`}
+                  aria-label={f.kind === 'div' ? 'Division' : 'Multiplication'}
+                >
+                  {f.kind === 'div' ? '\u00F7' : '\u00D7'}
+                </span>
                 <span className="parent-hard-fact-name">
-                  {f.a} {'\u00D7'} {f.b} = {f.product}
+                  {f.kind === 'div'
+                    ? `${f.dividend} \u00F7 ${f.divisor} = ${f.quotient}`
+                    : `${f.a} \u00D7 ${f.b} = ${f.product}`}
                 </span>
                 <span className="parent-hard-fact-errors">
                   {f.errorCount} erreur{f.errorCount > 1 ? 's' : ''} | Boîte{' '}

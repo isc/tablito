@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { MysteryTheme, BoxLevel } from '../types';
+import { boxLevelLabel } from '../lib/leitner';
 import DotGrid from './DotGrid';
 
 export interface MysteryCell {
@@ -66,13 +67,7 @@ export default function MysteryGrid({ theme, cellFor }: MysteryGridProps) {
           <div className="mystery-detail-card" onClick={(e) => e.stopPropagation()}>
             <h3>{selected.detailHeading}</h3>
             <DotGrid a={selected.gridA} b={selected.gridB} animated={false} size="small" />
-            <p className="mystery-detail-box">
-              {selected.box === 5
-                ? 'Maîtrisé !'
-                : selected.box === 1
-                  ? 'En apprentissage'
-                  : `Boîte ${selected.box}/5`}
-            </p>
+            <p className="mystery-detail-box">{boxLevelLabel(selected.box)}</p>
             <button className="mystery-detail-close" onClick={() => setSelected(null)}>
               Fermer
             </button>

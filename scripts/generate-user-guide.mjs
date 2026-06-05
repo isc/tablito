@@ -398,7 +398,7 @@ async function captureBadgesScreen(page) {
   await page.waitForSelector('.home-screen');
 }
 
-async function captureParentDashboard(page) {
+async function captureParentDashboard(page, shotName = '13-parent-dashboard') {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
   await page.waitForSelector('.parent-gate-modal');
@@ -411,7 +411,7 @@ async function captureParentDashboard(page) {
   await page.fill('.parent-gate-input', String(a * b));
   await page.click('.parent-gate-submit');
   await page.waitForSelector('.parent-dashboard');
-  await shot(page, '13-parent-dashboard');
+  await shot(page, shotName);
   await page.click('.parent-back-btn');
   await page.waitForSelector('.home-screen');
 }
@@ -677,6 +677,11 @@ async function captureDivisionScreens(page) {
   // est devenue « Mes images » (pas de second bouton ni de tuile dédiée).
   await shot(page, '15-division-home');
 
+  // Espace parent — version division débloquée : carte « Divisions maîtrisées »,
+  // sélecteur ×/÷ pour Répartition + Grille Leitner, liste unifiée des faits
+  // les plus difficiles (mult + div mélangés, marqueur par opération).
+  await captureParentDashboard(page, '13b-parent-dashboard-division');
+
   // Image mystère dédiée à la division : tuile « Mes images » puis onglet
   // « Divisions » de l'écran progression.
   await page.click('.home-nav-btn:has-text("Mes images")');
@@ -872,6 +877,7 @@ const SECTIONS = [
       multiplication.`,
     shots: [
       { file: '15-division-home', caption: 'Une fois les tables maîtrisées, « Mon image » devient « Mes images » (multiplications + divisions).' },
+      { file: '13b-parent-dashboard-division', caption: 'Tableau de bord parent une fois la division débloquée : carte « Divisions maîtrisées », sélecteur ×/÷ sur l\'histogramme et la grille, liste unifiée des faits les plus difficiles avec marqueur par opération.' },
       { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
       { file: '17-division-question', caption: 'Question de division au pavé numérique.' },
       { file: '18-division-progress', caption: 'Une image mystère dédiée à la division, distincte de celle des tables.' },
