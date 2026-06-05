@@ -367,6 +367,9 @@ export default function App() {
       const result: SessionResult = {
         ...partial,
         factsPromoted: sessionPromoted.current.size,
+        // Log par-question persisté pour diagnostic (cf. SessionResult.questions).
+        // Désormais peuplé pour TOUTES les séances, division comprise.
+        questions: sessionQuestionLogs.current,
       };
 
       const today = todayISO();

@@ -169,6 +169,10 @@ export interface SessionResult {
   averageTimeMs: number;
   newFactsIntroduced: number;
   factsPromoted: number;   // faits dont la boîte finale > boîte initiale dans la séance
+  // Log par-question de la séance, persisté pour diagnostic (inspection manuelle
+  // du localStorage). Rend visibles les bonus reviews — absentes de fact.history
+  // — et le mode de saisie. Optionnel pour rétrocompat (séances pré-feature).
+  questions?: SessionQuestionLog[];
 }
 
 // Badges IDs
