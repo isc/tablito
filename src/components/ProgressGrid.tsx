@@ -1,89 +1,37 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useMemo } from 'react';
 import type { MultiFact } from '../types';
-import Modal from './Modal';
+import LeitnerGrid, { type LeitnerGridCell } from './LeitnerGrid';
 
 interface ProgressGridProps {
   facts: MultiFact[];
 }
 
-function getBoxClass(fact: MultiFact | undefined): string {
-  if (!fact || !fact.introduced) return 'box-0';
-  return `box-${fact.box}`;
-}
-
+// Grille Leitner de la multiplication : la case (row, col) porte le fait
+// canonique (min × max) — les cases miroir partagent le même état (§5.1).
 export default function ProgressGrid({ facts }: ProgressGridProps) {
-  const [selectedFact, setSelectedFact] = useState<MultiFact | null>(null);
-  const headers = [2, 3, 4, 5, 6, 7, 8, 9];
-
   const factMap = useMemo(() => {
     const m = new Map<string, MultiFact>();
     for (const f of facts) m.set(`${f.a},${f.b}`, f);
     return m;
   }, [facts]);
 
-  return (
-    <div className="progress-grid-container">
-      <div className="progress-grid">
-        <div className="progress-grid-header progress-grid-corner">{'\u00D7'}</div>
+  const cellFor = (row: number, col: number): LeitnerGridCell => {
+    const a = Math.min(row, col);
+    const b = Math.max(row, col);
+    const fact = factMap.get(`${a},${b}`);
+    const correctCount = fact ? fact.history.filter((h) => h.correct).length : 0;
+    return {
+      box: fact?.box ?? 1,
+      introduced: fact?.introduced ?? false,
+      ariaLabel: `${row} fois ${col} = ${row * col}`,
+      diagonal: row === col,
+      modal: {
+        title: fact ? `${fact.a} × ${fact.b} = ${fact.product}` : '',
+        correctCount,
+        totalAttempts: fact?.history.length ?? 0,
+      },
+    };
+  };
 
-        {headers.map((h) => (
-          <div key={`col-${h}`} className="progress-grid-header">
-            {h}
-          </div>
-        ))}
-
-        {headers.map((row) => (
-          <Fragment key={row}>
-            <div className="progress-grid-header">
-              {row}
-            </div>
-
-            {headers.map((col) => {
-              const a = Math.min(row, col);
-              const b = Math.max(row, col);
-              const fact = factMap.get(`${a},${b}`);
-              const boxClass = getBoxClass(fact);
-              const isDiagonal = row === col;
-
-              return (
-                <button
-                  key={`${row}-${col}`}
-                  className={`progress-grid-cell ${boxClass} ${isDiagonal ? 'diagonal' : ''}`}
-                  onClick={() => fact && fact.introduced && setSelectedFact(fact)}
-                  aria-label={`${row} fois ${col} = ${row * col}`}
-                />
-              );
-            })}
-          </Fragment>
-        ))}
-      </div>
-
-      {selectedFact && (
-        <Modal onClose={() => setSelectedFact(null)} className="fact-detail">
-          <h3 className="fact-detail-title">
-            {selectedFact.a} {'\u00D7'} {selectedFact.b} = {selectedFact.product}
-          </h3>
-          <p className="fact-detail-line">
-            Niveau :{' '}
-            {selectedFact.box === 1
-              ? 'En apprentissage'
-              : selectedFact.box === 5
-                ? 'Maîtrisé !'
-                : `Boîte ${selectedFact.box}/5`}
-          </p>
-          <p className="fact-detail-line">
-            {selectedFact.history.length > 0
-              ? `${selectedFact.history.filter((h) => h.correct).length}/${selectedFact.history.length} bonnes réponses`
-              : 'Pas encore pratiqué'}
-          </p>
-          <button
-            className="modal-close-btn"
-            onClick={() => setSelectedFact(null)}
-          >
-            Fermer
-          </button>
-        </Modal>
-      )}
-    </div>
-  );
+  return <LeitnerGrid operator="×" cellFor={cellFor} />;
 }
