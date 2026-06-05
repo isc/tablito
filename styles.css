@@ -3057,6 +3057,30 @@ input, select, textarea {
   letter-spacing: 0.4px;
 }
 
+/* Marqueur ×/÷ devant chaque ligne de « Faits les plus difficiles » : permet
+   d'identifier l'opération dans la liste unifiée mult+div. */
+.parent-hard-fact-kind {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.parent-hard-fact-kind--mult {
+  background: var(--indigo);
+}
+
+.parent-hard-fact-kind--div {
+  background: var(--honey);
+  color: var(--honey-ink);
+}
+
 /* ===== screens/PrivacyScreen.css ===== */
 .privacy-screen {
   min-height: 100vh;

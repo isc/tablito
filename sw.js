@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260605160257"
+const CACHE = 'multiplix-' + "20260605171805"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -65,6 +65,7 @@ const ASSETS = [
   "/multiplix/src/components/Badge.js",
   "/multiplix/src/components/BadgeDetailModal.js",
   "/multiplix/src/components/DivisionMysteryImage.js",
+  "/multiplix/src/components/DivisionProgressGrid.js",
   "/multiplix/src/components/DivisionStrategyHint.js",
   "/multiplix/src/components/DotGrid.js",
   "/multiplix/src/components/ErrorBoundary.js",
@@ -74,6 +75,7 @@ const ASSETS = [
   "/multiplix/src/components/FeedbackOverlay.js",
   "/multiplix/src/components/FeedbackStar.js",
   "/multiplix/src/components/FlameIcon.js",
+  "/multiplix/src/components/LeitnerGrid.js",
   "/multiplix/src/components/Mascot.js",
   "/multiplix/src/components/Modal.js",
   "/multiplix/src/components/MysteryGrid.js",
@@ -102,6 +104,7 @@ const ASSETS = [
   "/multiplix/src/lib/divisionStrategies.js",
   "/multiplix/src/lib/facts.js",
   "/multiplix/src/lib/feedback.js",
+  "/multiplix/src/lib/hardestFacts.js",
   "/multiplix/src/lib/install.js",
   "/multiplix/src/lib/leitner.js",
   "/multiplix/src/lib/micPreflight.js",
