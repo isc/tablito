@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260605163621"
+const CACHE = 'multiplix-' + "20260605163926"
 const BASE = "/multiplix/previews/claude-parent-dashboard-division/"
 const ASSETS = [
   "/multiplix/previews/claude-parent-dashboard-division/favicon.svg",
