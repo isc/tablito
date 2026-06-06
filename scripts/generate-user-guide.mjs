@@ -696,14 +696,12 @@ async function captureDivisionScreens(page) {
   await page.click('.home-start-btn');
   await page.waitForSelector('.session-screen');
   if (await page.locator('.session-intro').count()) {
-    await page.waitForFunction(
-      () => {
-        const rows = document.querySelectorAll('.session-intro .dot-grid-row');
-        return rows.length > 0 && Array.from(rows).every((r) => !r.classList.contains('hidden'));
-      },
-      { timeout: 5000 },
-    ).catch(() => log('WARN: division DotGrid rows did not fully appear'));
-    await sleep(400);
+    // Attend la révélation "lots" : grille remplie → paquets séparés → compte
+    // d'un lot dévoilé (= le quotient). On capture cet état final enrichi.
+    await page
+      .waitForSelector('.dot-grid-lot-count.visible', { timeout: 9000 })
+      .catch(() => log('WARN: division lot-count reveal did not appear'));
+    await sleep(300);
     await shot(page, '16-division-intro');
     await clickAllIntroSteps(page);
   } else {

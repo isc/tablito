@@ -347,7 +347,11 @@ export default function SessionScreen({
             <span className="session-intro-operator">{v.op}</span>
             {v.right}
           </div>
-          <DotGrid a={currentItem.fact.divisor} b={currentItem.fact.quotient} animated size="normal" bare />
+          <DotGrid a={currentItem.fact.divisor} b={currentItem.fact.quotient} animated size="normal" bare groupReveal />
+          <div className="session-intro-explanation">
+            On partage {currentItem.fact.dividend} en {currentItem.fact.divisor} lots
+            égaux — combien dans chaque&nbsp;?
+          </div>
           {divIntroStrategy && <DivisionStrategyHint strategy={divIntroStrategy} variant="intro" />}
           <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
             J'ai compris&nbsp;!
