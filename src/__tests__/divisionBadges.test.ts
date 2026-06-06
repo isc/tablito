@@ -7,6 +7,7 @@ import {
   isDivisionUnlocked,
   visibleBadgeDefinitions,
   factsForDivisionTable,
+  getCompletedDivisionTables,
   DIVISION_BADGE_DEFINITIONS,
 } from '../lib/badges';
 import { createNewProfile } from '../lib/storage';
@@ -78,5 +79,25 @@ describe('checkBadges — division', () => {
     p.divisionFacts = p.divisionFacts!.map((f) => ({ ...f, box: 5 as const }));
     const earned = checkBadges(p);
     expect(earned.some((b) => b.id === BADGE_IDS.DIV_GENIE)).toBe(true);
+  });
+});
+
+describe('getCompletedDivisionTables', () => {
+  it('ne compte une « table » de division complète qu\'à la boîte 5 de tous ses faits', () => {
+    const p = profile();
+    // ÷2 toutes en boîte 5 → complète ; ÷3 en boîte 4 → pas encore.
+    p.divisionFacts = p.divisionFacts!.map((f) => {
+      if (f.divisor === 2) return { ...f, box: 5 as const };
+      if (f.divisor === 3) return { ...f, box: 4 as const };
+      return f;
+    });
+    const completed = getCompletedDivisionTables(p.divisionFacts!);
+    expect(completed.has(2)).toBe(true);
+    expect(completed.has(3)).toBe(false);
+    expect(completed.has(7)).toBe(false);
+  });
+
+  it('vide sur un profil neuf', () => {
+    expect(getCompletedDivisionTables(profile().divisionFacts!).size).toBe(0);
   });
 });

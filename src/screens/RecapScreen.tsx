@@ -121,17 +121,25 @@ export default function RecapScreen({
         <div className="recap-message">Bravo {name}, tu as bien travaillé.</div>
       </div>
 
-      {/* Déblocage de la division : la séance qui complète l'image des tables
-          (badge Génie de la multiplication) révèle le niveau 2. Une seule fois. */}
-      {mode === 'mult' && imageJustCompleted && (
-        <div className="recap-card recap-division-unlock">
-          <div className="recap-division-unlock-icon" aria-hidden="true">➗</div>
-          <div className="recap-division-unlock-text">
-            <div className="recap-division-unlock-title">Tu débloques les divisions&nbsp;!</div>
-            <div className="recap-division-unlock-subtitle">
-              Tu connais toutes tes tables&nbsp;! Tu vas maintenant les réviser
-              autrement : en divisions (comme 56&nbsp;÷&nbsp;7). Une nouvelle image
-              mystère t'attend.
+      {/* Carte « jalon image » : l'image vient d'être entièrement révélée. En
+          multiplication, c'est le moment du déblocage du niveau 2 (badge Génie
+          de la multiplication) ; en division, le jalon ultime (badge Maître de
+          la division). Même carte, contenu et teinte par mode. */}
+      {imageJustCompleted && (
+        <div className={`recap-card recap-milestone recap-milestone--${mode}`}>
+          <div className="recap-milestone-icon" aria-hidden="true">
+            {mode === 'div' ? '🎓' : '➗'}
+          </div>
+          <div className="recap-milestone-text">
+            <div className="recap-milestone-title">
+              {mode === 'div'
+                ? 'Tu maîtrises toutes les divisions !'
+                : 'Tu débloques les divisions !'}
+            </div>
+            <div className="recap-milestone-subtitle">
+              {mode === 'div'
+                ? "Tu as révélé toute l'image des divisions — les 64 divisions sont en boîte 5. Un énorme accomplissement. Bravo !"
+                : "Tu connais toutes tes tables ! Tu vas maintenant les réviser autrement : en divisions (comme 56 ÷ 7). Une nouvelle image mystère t'attend."}
             </div>
           </div>
         </div>
@@ -140,12 +148,16 @@ export default function RecapScreen({
       {newlyCompletedTables.length > 0 && (
         <div className="recap-card recap-table-complete">
           <div className="recap-table-complete-title">
-            {newlyCompletedTables.length === 1
-              ? `Tu as maîtrisé la table de ${newlyCompletedTables[0]} !`
-              : `Tu as maîtrisé les tables de ${newlyCompletedTables.join(' et ')} !`}
+            {mode === 'div'
+              ? `Tu as maîtrisé les divisions par ${newlyCompletedTables.join(' et ')} !`
+              : newlyCompletedTables.length === 1
+                ? `Tu as maîtrisé la table de ${newlyCompletedTables[0]} !`
+                : `Tu as maîtrisé les tables de ${newlyCompletedTables.join(' et ')} !`}
           </div>
           <div className="recap-table-complete-subtitle">
-            Toutes les multiplications sont en boîte 5.
+            {mode === 'div'
+              ? 'Toutes ces divisions sont en boîte 5.'
+              : 'Toutes les multiplications sont en boîte 5.'}
           </div>
         </div>
       )}

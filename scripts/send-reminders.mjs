@@ -80,7 +80,9 @@ async function main() {
   console.log(`${subs.length} subscription(s), ${due.length} à notifier.`);
 
   let sent = 0, removed = 0, failed = 0;
-  const body = "C'est l'heure de réviser tes tables ! 🎯";
+  // Neutre vis-à-vis de l'opération : la séance du jour peut être de la
+  // multiplication ou de la division (niveau 2) selon la progression.
+  const body = "C'est l'heure de ta séance Multiplix ! 🎯";
   for (const sub of due) {
     const payload = JSON.stringify({ title: 'Multiplix', body, url: reminderUrl });
     try {

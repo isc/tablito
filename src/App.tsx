@@ -5,7 +5,13 @@ import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
 import { processAnswer } from './lib/leitner';
-import { checkBadges, getCompletedTables, isRule11Unlocked, isDivisionUnlocked } from './lib/badges';
+import {
+  checkBadges,
+  getCompletedTables,
+  getCompletedDivisionTables,
+  isRule11Unlocked,
+  isDivisionUnlocked,
+} from './lib/badges';
 import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
 import { getFactKey } from './lib/facts';
 import { getDivisionFactKey } from './lib/divisionFacts';
@@ -94,6 +100,7 @@ export default function App() {
 
   // Snapshot of tables already mastered before the session starts
   const tablesCompletedBeforeSession = useRef<Set<number>>(new Set());
+  const divisionTablesCompletedBeforeSession = useRef<Set<number>>(new Set());
 
   // Skip the initial save-to-localStorage on mount
   const isInitialLoad = useRef(true);
@@ -249,8 +256,11 @@ export default function App() {
     }
 
     resetSessionTracking();
-    // Snapshot des tables maîtrisées (célébration de complétion, parcours v1).
+    // Snapshot des tables maîtrisées (célébration de complétion) — × et ÷.
     tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
+    divisionTablesCompletedBeforeSession.current = getCompletedDivisionTables(
+      profile.divisionFacts ?? [],
+    );
     setSessionItems(pendingItems);
     setScreen('session');
   }, [profile, pendingItems, resetSessionTracking]);
@@ -406,13 +416,16 @@ export default function App() {
 
       updatedProfile.badges = [...profile.badges, ...brandNewBadges];
 
-      // Tables fraîchement complétées (tous faits en boîte ≥ 5) — mode 'mult'.
+      // Tables fraîchement complétées (tous faits en boîte 5) de l'opération de
+      // la séance : tables × en mode mult, « divisions par N » en mode div.
       const completedNow =
-        mode === 'mult'
-          ? [...getCompletedTables(updatedProfile.facts)].filter(
-              (t) => !tablesCompletedBeforeSession.current.has(t),
+        mode === 'div'
+          ? [...getCompletedDivisionTables(updatedProfile.divisionFacts ?? [])].filter(
+              (t) => !divisionTablesCompletedBeforeSession.current.has(t),
             )
-          : [];
+          : [...getCompletedTables(updatedProfile.facts)].filter(
+              (t) => !tablesCompletedBeforeSession.current.has(t),
+            );
 
       setProfile(updatedProfile);
       setSessionResult(result);
