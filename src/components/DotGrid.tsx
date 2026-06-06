@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
 
+// Cadence de la révélation "lots" (intro division), calée après le remplissage
+// de la grille (cf. showResult). Séparation en paquets, puis mise en avant d'un
+// lot avec son compte.
+const GROUP_DELAY_MS = 350;
+const COUNT_DELAY_MS = 1300;
+
 interface DotGridProps {
   a: number;
   b: number;
@@ -70,8 +76,8 @@ export default function DotGrid({
   // compte = la réponse (counted).
   useEffect(() => {
     if (!groupReveal || !showResult) return;
-    const t1 = setTimeout(() => setGrouped(true), 350);
-    const t2 = setTimeout(() => setCounted(true), 1300);
+    const t1 = setTimeout(() => setGrouped(true), GROUP_DELAY_MS);
+    const t2 = setTimeout(() => setCounted(true), COUNT_DELAY_MS);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -106,7 +112,8 @@ export default function DotGrid({
       >
         {Array.from({ length: a }, (_, rowIndex) => {
           const visible = rowIndex < visibleRows;
-          const highlight = grouped && counted && rowIndex === 0;
+          // `counted` survient toujours après `grouped` (timers), donc suffit.
+          const highlight = counted && rowIndex === 0;
           return (
             <div
               key={rowIndex}
