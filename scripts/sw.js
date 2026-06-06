@@ -86,7 +86,7 @@ self.addEventListener('push', (e) => {
   let data = {}
   try { data = e.data ? e.data.json() : {} } catch { data = {} }
   const title = data.title || 'Multiplix'
-  const body = data.body || "C'est l'heure de réviser tes tables ! 🎯"
+  const body = data.body || "C'est l'heure de ta séance Multiplix ! 🎯"
   const url = data.url || BASE
   e.waitUntil(
     self.registration.showNotification(title, {
