@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + "20260605171805"
+const CACHE = 'multiplix-' + "20260606070131"
 const BASE = "/multiplix/"
 const ASSETS = [
   "/multiplix/favicon.svg",
@@ -53,6 +53,7 @@ const ASSETS = [
   "/multiplix/src/__tests__/leitner.test.js",
   "/multiplix/src/__tests__/parseFrenchNumber.test.js",
   "/multiplix/src/__tests__/placement.test.js",
+  "/multiplix/src/__tests__/recapCelebrations.test.js",
   "/multiplix/src/__tests__/sessionComposer.test.js",
   "/multiplix/src/__tests__/setup.js",
   "/multiplix/src/__tests__/strategies.test.js",
@@ -194,7 +195,7 @@ self.addEventListener('push', (e) => {
   let data = {}
   try { data = e.data ? e.data.json() : {} } catch { data = {} }
   const title = data.title || 'Multiplix'
-  const body = data.body || "C'est l'heure de réviser tes tables ! 🎯"
+  const body = data.body || "C'est l'heure de ta séance Multiplix ! 🎯"
   const url = data.url || BASE
   e.waitUntil(
     self.registration.showNotification(title, {
