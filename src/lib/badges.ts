@@ -46,6 +46,20 @@ export function getCompletedTables(facts: MultiFact[]): Set<number> {
   return completed;
 }
 
+// Pendant division de getCompletedTables : une « table » de division regroupe
+// les faits d'un même diviseur (÷2, …, ÷9), complète quand tous sont en boîte 5.
+// Alimente la célébration « Tu as maîtrisé les divisions par N ! » du récap.
+export function getCompletedDivisionTables(facts: DivisionFact[]): Set<number> {
+  const completed = new Set<number>();
+  for (let n = 2; n <= 9; n++) {
+    const tf = factsForDivisionTable(facts, n);
+    if (tf.length > 0 && tf.every((f) => f.box >= 5)) {
+      completed.add(n);
+    }
+  }
+  return completed;
+}
+
 /**
  * Vrai quand les 8 badges « Table de N » (n=2..9) ont été obtenus.
  *

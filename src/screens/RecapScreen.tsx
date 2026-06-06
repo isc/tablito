@@ -137,15 +137,36 @@ export default function RecapScreen({
         </div>
       )}
 
+      {/* Image des divisions entièrement révélée : jalon ultime (badge Maître
+          de la division). Rien à débloquer ensuite — pure célébration. */}
+      {mode === 'div' && imageJustCompleted && (
+        <div className="recap-card recap-image-complete">
+          <div className="recap-image-complete-icon" aria-hidden="true">🎓</div>
+          <div className="recap-image-complete-text">
+            <div className="recap-image-complete-title">Tu maîtrises toutes les divisions&nbsp;!</div>
+            <div className="recap-image-complete-subtitle">
+              Tu as révélé toute l'image des divisions — les 64 divisions sont en
+              boîte 5. Un énorme accomplissement. Bravo&nbsp;!
+            </div>
+          </div>
+        </div>
+      )}
+
       {newlyCompletedTables.length > 0 && (
         <div className="recap-card recap-table-complete">
           <div className="recap-table-complete-title">
-            {newlyCompletedTables.length === 1
-              ? `Tu as maîtrisé la table de ${newlyCompletedTables[0]} !`
-              : `Tu as maîtrisé les tables de ${newlyCompletedTables.join(' et ')} !`}
+            {mode === 'div'
+              ? newlyCompletedTables.length === 1
+                ? `Tu as maîtrisé les divisions par ${newlyCompletedTables[0]} !`
+                : `Tu as maîtrisé les divisions par ${newlyCompletedTables.join(' et ')} !`
+              : newlyCompletedTables.length === 1
+                ? `Tu as maîtrisé la table de ${newlyCompletedTables[0]} !`
+                : `Tu as maîtrisé les tables de ${newlyCompletedTables.join(' et ')} !`}
           </div>
           <div className="recap-table-complete-subtitle">
-            Toutes les multiplications sont en boîte 5.
+            {mode === 'div'
+              ? 'Toutes ces divisions sont en boîte 5.'
+              : 'Toutes les multiplications sont en boîte 5.'}
           </div>
         </div>
       )}
