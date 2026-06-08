@@ -186,7 +186,7 @@ export default function ParentDashboard({
           enfant (.progress-tabs, CSS concaténé global). Visible uniquement après
           déblocage : avant, la division ne doit pas apparaître (specs §11.3). */}
       {divisionUnlocked && (
-        <div className="progress-tabs" role="tablist" aria-label="Opération">
+        <div className="progress-tabs parent-op-tabs" role="tablist" aria-label="Opération">
           <button
             type="button"
             className={`progress-tab ${!showDiv ? 'active' : ''}`}
