@@ -82,6 +82,9 @@ export default function App() {
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
+  // Vrai sur le récap de la séance où le 8e badge de table tombe : c'est le
+  // moment du déblocage du niveau 2 (division), célébré une seule fois.
+  const [divisionJustUnlocked, setDivisionJustUnlocked] = useState(false);
   const [freezeJustUsed, setFreezeJustUsed] = useState(false);
   const [freezeJustEarned, setFreezeJustEarned] = useState(false);
   // Tracked in state so a date rollover (app left open past minuit) re-déclenche
@@ -427,10 +430,16 @@ export default function App() {
               (t) => !tablesCompletedBeforeSession.current.has(t),
             );
 
+      // Déblocage du niveau 2 : la condition (8 badges de table) vient de
+      // basculer cette séance. `divisionUnlocked` reflète l'état d'AVANT la
+      // séance (memo sur `profile`), donc mode est encore 'mult' ici.
+      const divisionUnlockedNow = !divisionUnlocked && isDivisionUnlocked(updatedProfile);
+
       setProfile(updatedProfile);
       setSessionResult(result);
       setNewBadges(brandNewBadges);
       setNewlyCompletedTables(completedNow);
+      setDivisionJustUnlocked(divisionUnlockedNow);
       setFreezeJustUsed(streakUpdate.freezeJustUsed);
       setFreezeJustEarned(streakUpdate.freezeJustEarned);
       setRecapMode(mode);
@@ -448,6 +457,7 @@ export default function App() {
     setSessionResult(null);
     setNewBadges([]);
     setNewlyCompletedTables([]);
+    setDivisionJustUnlocked(false);
     setFreezeJustUsed(false);
     setFreezeJustEarned(false);
     setRecapMode('mult');
@@ -533,6 +543,7 @@ export default function App() {
           result={sessionResult}
           newBadges={newBadges}
           newlyCompletedTables={newlyCompletedTables}
+          divisionJustUnlocked={divisionJustUnlocked}
           currentStreak={profile.currentStreak}
           freezeJustUsed={freezeJustUsed}
           freezeJustEarned={freezeJustEarned}

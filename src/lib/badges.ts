@@ -14,12 +14,24 @@ export function factsForDivisionTable(facts: DivisionFact[], divisor: number): D
 const NUM_DIV_TABLE_BADGES = 8;
 
 /**
- * Vrai quand le niveau 2 (division) est débloqué : on gate sur le badge
- * « Génie de la multiplication » (toutes les multiplications en boîte 5). Critère basé
- * sur un badge ⇒ permanent (specs §11.3), cohérent avec la règle bonus ×11.
+ * Vrai quand le niveau 2 (division) est débloqué : on gate sur l'obtention des
+ * 8 badges « Table de N » (toutes les multiplications en boîte 4+), et NON sur
+ * « Génie de la multiplication » (boîte 5 partout).
+ *
+ * Pourquoi pas Génie : la division est avant tout un outil d'entretien des
+ * multiplications (les faits dus sont entrelacés dans chaque séance, cf.
+ * dailyComposer). Exiger la boîte 5 partout AVANT d'ouvrir le niveau, c'est
+ * imposer un long palier de pur grind boîte 4→5 sans contenu nouveau — trop
+ * sévère. Une fois toutes les tables maîtrisées (8 badges = le moment « je
+ * connais toutes mes tables »), on ouvre la division ; le passage boîte 4→5
+ * continue ensuite via l'entretien, et Génie reste un trophée de complétion
+ * décroché PENDANT le niveau 2.
+ *
+ * Critère basé sur des badges ⇒ permanent (specs §11.3), même condition que
+ * la règle bonus ×11 (isRule11Unlocked).
  */
 export function isDivisionUnlocked(profile: UserProfile): boolean {
-  return hasBadge(profile, BADGE_IDS.GENIE_MATHS);
+  return hasAllTableBadges(profile);
 }
 
 function makeBadge(def: BadgeDefinition, now: string): Badge {
@@ -64,12 +76,17 @@ export function getCompletedDivisionTables(facts: DivisionFact[]): Set<number> {
  * Vrai quand les 8 badges « Table de N » (n=2..9) ont été obtenus.
  *
  * On compte les badges plutôt que de tester `facts.every(box >= 4)` :
- * les badges sont permanents, donc la révélation persiste même si des
- * faits régressent ensuite — la « découverte » reste un événement one-shot.
+ * les badges sont permanents, donc le déblocage persiste même si des
+ * faits régressent ensuite — c'est un événement one-shot, jamais repris.
+ * Sert à la fois au déblocage de la règle bonus ×11 et du niveau 2 division.
  */
-export function isRule11Unlocked(profile: UserProfile): boolean {
+export function hasAllTableBadges(profile: UserProfile): boolean {
   const tableBadges = profile.badges.filter((b) => b.id.startsWith(BADGE_IDS.TABLE_PREFIX));
   return tableBadges.length === NUM_TABLE_BADGES;
+}
+
+export function isRule11Unlocked(profile: UserProfile): boolean {
+  return hasAllTableBadges(profile);
 }
 
 // Single source of truth for all badge metadata

@@ -12,9 +12,10 @@ interface HomeScreenProps {
   profile: UserProfile;
   hasSessionAvailable: boolean;
   hasNewRule: boolean;
-  // Niveau 2 — division (cf. specs §11). divisionUnlocked = badge Génie des
-  // maths obtenu : la tuile « Mon image » devient « Mes images » (l'écran
-  // progression montre alors les deux images, multiplication et division).
+  // Niveau 2 — division (cf. specs §11). divisionUnlocked = les 8 badges de
+  // table obtenus (toutes les tables maîtrisées) : la tuile « Mon image »
+  // devient « Mes images » (l'écran progression montre alors les deux images,
+  // multiplication et division).
   divisionUnlocked: boolean;
   onStart: () => void;
   onShowProgress: () => void;

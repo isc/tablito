@@ -12,6 +12,10 @@ interface RecapScreenProps {
   result: SessionResult;
   newBadges: BadgeType[];
   newlyCompletedTables: number[];
+  // Mode mult uniquement : le 8e badge de table vient de tomber → déblocage du
+  // niveau 2 division. Découplé de « Génie de la multiplication » (boîte 5
+  // partout), qui reste un trophée décroché plus tard, pendant le niveau 2.
+  divisionJustUnlocked: boolean;
   currentStreak: number;
   freezeJustUsed: boolean;
   freezeJustEarned: boolean;
@@ -62,6 +66,7 @@ export default function RecapScreen({
   result,
   newBadges,
   newlyCompletedTables,
+  divisionJustUnlocked,
   currentStreak,
   freezeJustUsed,
   freezeJustEarned,
@@ -77,15 +82,20 @@ export default function RecapScreen({
   const hasPlayedRef = useRef(false);
 
   const noun = mode === 'div' ? 'divisions' : 'multiplications';
-  const completionBadgeId = mode === 'div' ? BADGE_IDS.DIV_GENIE : BADGE_IDS.GENIE_MATHS;
-  const imageJustCompleted = newBadges.some((b) => b.id === completionBadgeId);
+  // Jalon majeur de la séance :
+  // — div : « Maître de la division » (toutes les divisions en boîte 5, image complète) ;
+  // — mult : déblocage du niveau 2 (8e badge de table). PAS « Génie » : Génie
+  //   (boîte 5 partout) arrive plus tard, pendant le niveau 2, et n'affiche
+  //   qu'une carte « Nouveau badge » classique.
+  const milestoneReached =
+    mode === 'div' ? newBadges.some((b) => b.id === BADGE_IDS.DIV_GENIE) : divisionJustUnlocked;
   const imageChanged = result.factsPromoted > 0;
 
   useEffect(() => {
     if (hasPlayedRef.current) return;
     hasPlayedRef.current = true;
 
-    if (imageJustCompleted) {
+    if (milestoneReached) {
       playImageComplete();
       triggerConfetti();
     } else if (newlyCompletedTables.length > 0) {
@@ -95,14 +105,14 @@ export default function RecapScreen({
       playBadge();
       triggerConfetti();
     }
-  }, [imageJustCompleted, newBadges, newlyCompletedTables, playBadge, playImageComplete, playTableComplete, triggerConfetti]);
+  }, [milestoneReached, newBadges, newlyCompletedTables, playBadge, playImageComplete, playTableComplete, triggerConfetti]);
 
   useEffect(() => {
     speak('recap-done');
   }, [speak]);
 
   const mascotMood =
-    imageJustCompleted || newlyCompletedTables.length > 0
+    milestoneReached || newlyCompletedTables.length > 0
       ? 'celebrate'
       : newBadges.length > 0
         ? 'happy'
@@ -121,11 +131,13 @@ export default function RecapScreen({
         <div className="recap-message">Bravo {name}, tu as bien travaillé.</div>
       </div>
 
-      {/* Carte « jalon image » : l'image vient d'être entièrement révélée. En
-          multiplication, c'est le moment du déblocage du niveau 2 (badge Génie
-          de la multiplication) ; en division, le jalon ultime (badge Maître de
-          la division). Même carte, contenu et teinte par mode. */}
-      {imageJustCompleted && (
+      {/* Carte « jalon » du niveau. En multiplication : déblocage du niveau 2,
+          déclenché à l'obtention du 8e badge de table (toutes les tables
+          maîtrisées — l'image n'est pas forcément 100 % révélée, la boîte 5
+          continue ensuite). En division : le jalon ultime, image entièrement
+          révélée (badge Maître de la division). Même carte, contenu et teinte
+          par mode. */}
+      {milestoneReached && (
         <div className={`recap-card recap-milestone recap-milestone--${mode}`}>
           <div className="recap-milestone-icon" aria-hidden="true">
             {mode === 'div' ? '🎓' : '➗'}

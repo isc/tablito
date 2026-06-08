@@ -21,6 +21,7 @@ const baseProps = {
   result,
   newBadges: [] as Badge[],
   newlyCompletedTables: [] as number[],
+  divisionJustUnlocked: false,
   currentStreak: 3,
   freezeJustUsed: false,
   freezeJustEarned: false,
@@ -60,10 +61,24 @@ describe('RecapScreen — image division entièrement révélée', () => {
 
   it('mode mult : la carte image-division ne s\'affiche pas', () => {
     const { queryByText } = render(
-      <RecapScreen {...baseProps} mode="mult" newBadges={[badge(BADGE_IDS.GENIE_MATHS)]} />,
+      <RecapScreen {...baseProps} mode="mult" divisionJustUnlocked />,
     );
     expect(queryByText(/Tu maîtrises toutes les divisions/)).toBeNull();
-    // En mult, le badge Génie déclenche plutôt la carte de déblocage.
+  });
+});
+
+describe('RecapScreen — déblocage du niveau 2', () => {
+  it('mode mult + divisionJustUnlocked : carte « Tu débloques les divisions »', () => {
+    const { queryByText } = render(
+      <RecapScreen {...baseProps} mode="mult" divisionJustUnlocked />,
+    );
     expect(queryByText(/Tu débloques les divisions/)).toBeTruthy();
+  });
+
+  it('le badge Génie seul ne déclenche PAS la carte de déblocage (découplé)', () => {
+    const { queryByText } = render(
+      <RecapScreen {...baseProps} mode="mult" newBadges={[badge(BADGE_IDS.GENIE_MATHS)]} />,
+    );
+    expect(queryByText(/Tu débloques les divisions/)).toBeNull();
   });
 });

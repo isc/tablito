@@ -20,12 +20,27 @@ function earn(p: UserProfile, id: string): void {
   p.badges.push({ id, name: id, description: '', earnedDate: '2026-06-02', icon: '' });
 }
 
+// Débloque le niveau 2 : les 8 badges de table (n=2..9). C'est désormais le
+// critère réel, pas « Génie de la multiplication » (boîte 5 partout).
+function unlockDivision(p: UserProfile): void {
+  for (let n = 2; n <= 9; n++) earn(p, `${BADGE_IDS.TABLE_PREFIX}${n}`);
+}
+
 describe('isDivisionUnlocked', () => {
-  it('faux par défaut, vrai dès le badge Génie de la multiplication', () => {
+  it('faux par défaut, vrai dès les 8 badges de table', () => {
     const p = profile();
     expect(isDivisionUnlocked(p)).toBe(false);
-    earn(p, BADGE_IDS.GENIE_MATHS);
+    // 7 tables ne suffisent pas.
+    for (let n = 2; n <= 8; n++) earn(p, `${BADGE_IDS.TABLE_PREFIX}${n}`);
+    expect(isDivisionUnlocked(p)).toBe(false);
+    earn(p, `${BADGE_IDS.TABLE_PREFIX}9`);
     expect(isDivisionUnlocked(p)).toBe(true);
+  });
+
+  it('le badge Génie seul ne débloque PAS (découplé du niveau 2)', () => {
+    const p = profile();
+    earn(p, BADGE_IDS.GENIE_MATHS);
+    expect(isDivisionUnlocked(p)).toBe(false);
   });
 });
 
@@ -38,7 +53,7 @@ describe('visibleBadgeDefinitions', () => {
 
   it('révèle les badges division une fois débloqué', () => {
     const p = profile();
-    earn(p, BADGE_IDS.GENIE_MATHS);
+    unlockDivision(p);
     const ids = new Set(visibleBadgeDefinitions(p).map((d) => d.id));
     expect(ids.has(BADGE_IDS.DIV_GENIE)).toBe(true);
     expect(ids.has(BADGE_IDS.DIV_PREMIERE_MAITRISE)).toBe(true);
@@ -56,7 +71,7 @@ describe('checkBadges — division', () => {
 
   it('attribue « Première division maîtrisée » dès un fait en boîte 5', () => {
     const p = profile();
-    earn(p, BADGE_IDS.GENIE_MATHS); // niveau débloqué (précondition réelle)
+    unlockDivision(p); // niveau débloqué (précondition réelle)
     p.divisionFacts = p.divisionFacts!.map((f, i) => (i === 0 ? { ...f, box: 5 as const } : f));
     const earned = checkBadges(p);
     expect(earned.some((b) => b.id === BADGE_IDS.DIV_PREMIERE_MAITRISE)).toBe(true);
@@ -64,7 +79,7 @@ describe('checkBadges — division', () => {
 
   it('attribue « Divisions par 2 » quand toutes les ÷2 sont en boîte 4+', () => {
     const p = profile();
-    earn(p, BADGE_IDS.GENIE_MATHS);
+    unlockDivision(p);
     p.divisionFacts = p.divisionFacts!.map((f) =>
       f.divisor === 2 ? { ...f, box: 4 as const } : f,
     );
@@ -75,7 +90,7 @@ describe('checkBadges — division', () => {
 
   it('attribue « Maître de la division » quand les 64 faits sont en boîte 5', () => {
     const p = profile();
-    earn(p, BADGE_IDS.GENIE_MATHS);
+    unlockDivision(p);
     p.divisionFacts = p.divisionFacts!.map((f) => ({ ...f, box: 5 as const }));
     const earned = checkBadges(p);
     expect(earned.some((b) => b.id === BADGE_IDS.DIV_GENIE)).toBe(true);
