@@ -4800,6 +4800,31 @@ input, select, textarea {
   max-width: 320px;
 }
 
+/* Bandeau de réassurance sous la tagline : pour un inconnu qui arrive froid,
+   dit explicitement « gratuit », l'âge/niveau ciblé et que la division est
+   couverte — infos absentes du reste de la landing (cf. audit cold-start).
+   Même style de pastille indigo que l'image de partage (og-image). */
+.landing-badges {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.landing-badge {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--indigo-ink);
+  background: var(--indigo-soft);
+  border-radius: 999px;
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+
 .landing-principles {
   list-style: none;
   padding: 0;
