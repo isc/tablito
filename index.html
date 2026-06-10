@@ -58,6 +58,9 @@
           var isIOS = /iPhone|iPod|iPad/.test(ua)
             || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
           if (isIOS) {
+            // Sert au handler "Installer" à choisir le bon panneau d'aide
+            // (iOS share-sheet vs desktop) quand il n'y a pas de prompt natif.
+            document.documentElement.classList.add('is-ios');
             var v = ua.match(/Version\/(\d+)/);
             var major = v ? parseInt(v[1], 10) : 0;
             if (major > 0 && major < 26) {
@@ -208,7 +211,7 @@
         <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif.
              Deux variantes selon la version Safari (cf. inline script en <head>
              qui pose `html.ios-classic` pour iOS < 26). -->
-        <div id="ios-install-help" class="ios-install-help">
+        <div id="ios-install-help" class="install-help">
           <h2>Installer sur iPhone / iPad</h2>
           <p>Ouvre cette page dans Safari, puis ajoute l'app à l'écran d'accueil&nbsp;:</p>
           <ol class="ios-steps-modern">
@@ -222,7 +225,21 @@
             <li>Choisis <strong>« Sur l'écran d'accueil »</strong> dans la liste.</li>
             <li>Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran d'accueil.</li>
           </ol>
-          <p class="ios-install-note">Astuce&nbsp;: dans Chrome ou Firefox sur iOS, l'ajout n'est pas disponible — ouvre cette page dans Safari.</p>
+          <p class="install-note">Astuce&nbsp;: dans Chrome ou Firefox sur iOS, l'ajout n'est pas disponible — ouvre cette page dans Safari.</p>
+        </div>
+
+        <!-- Desktop sans prompt natif (Safari macOS, Firefox…). Montré au clic
+             "Installer" quand on n'est ni en prompt natif (Chrome/Edge) ni sur
+             iOS. Volontairement court et honnête : sur ordinateur l'install est
+             un bonus, le vrai CTA utile est "Essayer dans le navigateur". -->
+        <div id="desktop-install-help" class="install-help">
+          <h2>Installer sur ordinateur</h2>
+          <p>Selon ton navigateur&nbsp;:</p>
+          <ol>
+            <li>Avec <strong>Chrome</strong> ou <strong>Edge</strong>, une icône d'installation apparaît à droite de la barre d'adresse — clique dessus.</li>
+            <li>Sur <strong>Safari (Mac)</strong>, ouvre le menu <strong>Fichier</strong> puis <strong>« Ajouter au Dock »</strong>.</li>
+          </ol>
+          <p class="install-note">Pas d'installation possible&nbsp;? Clique sur <strong>« Essayer dans le navigateur »</strong> ci-dessus pour commencer tout de suite.</p>
         </div>
       </div>
     </div>
@@ -272,7 +289,10 @@
             deferredPrompt = null;
             return;
           }
-          var help = document.getElementById('ios-install-help');
+          // Pas de prompt natif : iOS → instructions share-sheet ; sinon
+          // (desktop Safari/Firefox…) → aide desktop, et non les étapes iPhone.
+          var isIOS = document.documentElement.classList.contains('is-ios');
+          var help = document.getElementById(isIOS ? 'ios-install-help' : 'desktop-install-help');
           help.classList.add('visible');
           help.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });

@@ -4928,9 +4928,12 @@ input, select, textarea {
   text-align: center;
 }
 
-/* === Section instructions iOS, montrée au clic "Installer" si pas de prompt natif disponible. === */
+/* === Panneau d'aide à l'installation, montré au clic "Installer" quand aucun
+   prompt natif n'est disponible. Deux variantes partagent ce style : iOS
+   (#ios-install-help) et desktop sans prompt (#desktop-install-help) — le
+   handler choisit selon la classe `html.is-ios` posée par le script du <head>. === */
 
-.ios-install-help {
+.install-help {
   display: none;
   background: var(--paper);
   border: 1.5px solid var(--line);
@@ -4943,11 +4946,11 @@ input, select, textarea {
   align-self: center;
 }
 
-.ios-install-help.visible {
+.install-help.visible {
   display: block;
 }
 
-.ios-install-help h2 {
+.install-help h2 {
   font-family: var(--serif);
   font-size: 18px;
   font-weight: 600;
@@ -4956,7 +4959,7 @@ input, select, textarea {
   letter-spacing: -0.2px;
 }
 
-.ios-install-help p {
+.install-help p {
   font-family: var(--sans);
   font-size: 14px;
   line-height: 1.5;
@@ -4964,7 +4967,7 @@ input, select, textarea {
   margin: 0 0 12px;
 }
 
-.ios-install-help ol {
+.install-help ol {
   font-family: var(--sans);
   font-size: 14px;
   line-height: 1.55;
@@ -4973,11 +4976,11 @@ input, select, textarea {
   margin: 0 0 14px;
 }
 
-.ios-install-help ol li {
+.install-help ol li {
   margin-bottom: 8px;
 }
 
-.ios-install-help ol li strong {
+.install-help ol li strong {
   color: var(--indigo-ink);
 }
 
@@ -4985,11 +4988,11 @@ input, select, textarea {
    iPhones en 2026). L'inline script du <head> pose `html.ios-classic`
    pour iOS < 26 (Version/<26 dans l'UA Safari) — l'autre variante prend
    la main alors. */
-.ios-install-help .ios-steps-classic { display: none; }
-html.ios-classic .ios-install-help .ios-steps-modern { display: none; }
-html.ios-classic .ios-install-help .ios-steps-classic { display: block; }
+.install-help .ios-steps-classic { display: none; }
+html.ios-classic .install-help .ios-steps-modern { display: none; }
+html.ios-classic .install-help .ios-steps-classic { display: block; }
 
-.ios-install-note {
+.install-note {
   font-size: 12px;
   color: var(--ink-muted);
   border-top: 1px solid var(--line-soft);
