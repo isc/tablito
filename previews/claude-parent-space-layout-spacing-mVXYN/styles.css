@@ -2802,15 +2802,9 @@ input, select, textarea {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* Carte de maîtrise de l'opération sélectionnée, sous le sélecteur. Pleine
-   largeur (stat phare) et reprend l'habillage des cartes de stats. */
-.parent-mastery-card {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 14px;
-  padding: 12px 16px;
-}
-
+/* Carte de maîtrise de l'opération sélectionnée, sous le sélecteur. Réutilise
+   .parent-stat-card pour l'habillage (cf. markup) : hors grille elle occupe
+   toute la largeur (stat phare), et la valeur reprend l'indigo « maîtrise ». */
 .parent-mastery-card .parent-stat-value {
   color: var(--indigo);
 }
