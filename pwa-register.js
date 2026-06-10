@@ -63,7 +63,7 @@ export function registerSW() {
 
   const startRegistration = () => {
     navigator.serviceWorker
-      .register("/multiplix/sw.js", { updateViaCache: 'none' })
+      .register("/tablito/sw.js", { updateViaCache: 'none' })
       .then((reg) => { currentRegistration = reg })
       .catch((e) => {
         console.warn('[pwa] SW registration failed', e)
