@@ -129,12 +129,22 @@
   position: absolute;
   left: 100%;
   top: 50%;
-  margin-left: 12px;
+  margin-left: 14px;
   transform: translateY(-50%) scale(0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 2px solid var(--honey);
+  color: var(--ink);
   font-family: var(--serif);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 600;
-  color: var(--honey-ink);
+  box-shadow: var(--shadow-sm);
   opacity: 0;
 }
 

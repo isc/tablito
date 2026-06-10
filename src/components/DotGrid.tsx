@@ -95,6 +95,11 @@ export default function DotGrid({
   const rotationMargin =
     rotated && b > a ? ((b - a) * (dotSize + dotGap)) / 2 : 0;
 
+  // Lot mis en avant lors de la révélation division : celui du milieu, pour que
+  // son compte (pastille à droite) tombe au centre de la carte, bien dégagé —
+  // plutôt que collé au coin haut sur le premier lot.
+  const highlightRow = Math.floor(a / 2);
+
   return (
     <div
       className={`dot-grid-wrapper ${size}`}
@@ -113,7 +118,7 @@ export default function DotGrid({
         {Array.from({ length: a }, (_, rowIndex) => {
           const visible = rowIndex < visibleRows;
           // `counted` survient toujours après `grouped` (timers), donc suffit.
-          const highlight = counted && rowIndex === 0;
+          const highlight = counted && rowIndex === highlightRow;
           return (
             <div
               key={rowIndex}
@@ -122,7 +127,7 @@ export default function DotGrid({
               {Array.from({ length: b }, (_, colIndex) => (
                 <div key={colIndex} className="dot" />
               ))}
-              {groupReveal && rowIndex === 0 && (
+              {groupReveal && rowIndex === highlightRow && (
                 <span className={`dot-grid-lot-count ${counted ? 'visible' : ''}`} aria-hidden="true">
                   {b}
                 </span>
