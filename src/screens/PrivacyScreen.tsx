@@ -14,7 +14,7 @@ export default function PrivacyScreen({ onBack }: PrivacyScreenProps) {
       <div className="privacy-content">
         <h1 className="privacy-title">Confidentialité</h1>
         <p className="privacy-subtitle">
-          Multiplix est conçu pour respecter la vie privée des enfants. Voici
+          Tablito est conçu pour respecter la vie privée des enfants. Voici
           exactement ce qui se passe avec les données.
         </p>
 

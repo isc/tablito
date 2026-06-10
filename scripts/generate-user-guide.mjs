@@ -720,7 +720,7 @@ const SECTIONS = [
     id: 'principes',
     title: 'Les principes',
     body: `
-      <p>Multiplix n'est pas un simple quiz. Chaque choix de conception s'appuie
+      <p>Tablito n'est pas un simple quiz. Chaque choix de conception s'appuie
       sur la recherche en psychologie cognitive et en didactique des
       mathématiques. Cinq piliers portent l'application :</p>
       <ul class="principles">
@@ -778,7 +778,7 @@ const SECTIONS = [
   {
     id: 'welcome',
     title: 'Bienvenue',
-    description: `À la toute première ouverture, Multiplix déroule un parcours
+    description: `À la toute première ouverture, Tablito déroule un parcours
       d'accueil en quatre étapes : une salutation de la mascotte, la saisie du
       prénom, une présentation du test de positionnement, puis le test lui-même
       (15 questions bien réparties). Le résultat sert à placer les faits déjà
@@ -984,7 +984,7 @@ async function buildHtml({ generatedAt }) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Multiplix — Guide d'utilisation</title>
+<title>Tablito — Guide d'utilisation</title>
 <link rel="icon" href="../favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1254,7 +1254,7 @@ async function buildHtml({ generatedAt }) {
 <body>
 <header>
   <div class="eyebrow">Guide d'utilisation</div>
-  <h1>Multiplix<em>.</em></h1>
+  <h1>Tablito<em>.</em></h1>
   <a class="back-link" href="../">← Retour à l'application</a>
 </header>
 <main>

@@ -1,4 +1,4 @@
-# TODO — Multiplix
+# TODO — Tablito
 
 Suivi léger des évolutions techniques envisagées mais non encore tranchées.
 

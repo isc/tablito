@@ -26,7 +26,7 @@ export default function ChangelogScreen({ onBack }: ChangelogScreenProps) {
       <div className="changelog-content">
         <h1 className="changelog-title">Nouveautés</h1>
         <p className="changelog-subtitle">
-          Les changements récents de Multiplix.
+          Les changements récents de Tablito.
         </p>
 
         {CHANGELOG.map((entry) => (

@@ -69,7 +69,7 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
 </style></head><body>
   <div class="left">
     <span class="chip">dès le CE1 · 7–11 ans</span>
-    <h1>Multiplix</h1>
+    <h1>Tablito</h1>
     <p class="tagline">Apprendre les tables de multiplication, en douceur.</p>
     <div class="pills">
       <span class="pill">100 % gratuit</span>
