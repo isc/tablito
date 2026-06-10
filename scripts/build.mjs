@@ -2,7 +2,7 @@
 // tel quel sur GitHub Pages (ou n'importe quel CDN).
 //
 //   npm run build                         → dist/ (BASE=/)
-//   BASE=/multiplix/ npm run build        → dist/ pour sous-chemin
+//   BASE=/tablito/ npm run build        → dist/ pour sous-chemin
 //
 // Pas de bundling JS : chaque .ts/.tsx devient un .js indépendant. Les
 // imports relatifs sont réécrits pour pointer vers les .js générés.
@@ -167,7 +167,7 @@ html = html
 await fs.writeFile(path.join(OUT, 'index.html'), html)
 
 // 3.5) Réécrit les URLs dans dist/fonts/fonts.css (`url("/fonts/...")`)
-// pour respecter BASE — sinon en prod (BASE=/multiplix/) les @font-face
+// pour respecter BASE — sinon en prod (BASE=/tablito/) les @font-face
 // pointent sur /fonts/... et 404 sur GitHub Pages.
 const fontsCssPath = path.join(OUT, 'fonts', 'fonts.css')
 if (BASE !== '/') {

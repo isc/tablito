@@ -13,7 +13,7 @@
  *   npm run user-guide
  *
  * The guide is then deployed as part of the `dist/` output to GitHub Pages
- * at https://isc.github.io/multiplix/guide/.
+ * at https://isc.github.io/tablito/guide/.
  */
 
 import { spawn } from 'node:child_process';
@@ -31,9 +31,9 @@ const SHOTS_DIR = join(OUT_DIR, 'screenshots');
 
 const PORT = Number(process.env.GUIDE_PORT ?? 4173);
 // Matches the base baked in at build time (see scripts/build.mjs). For main
-// deploys this is `/multiplix/`; for branch previews it's overridden via
+// deploys this is `/tablito/`; for branch previews it's overridden via
 // the `BASE` env variable.
-const BASE_PATH = process.env.BASE ?? '/multiplix/';
+const BASE_PATH = process.env.BASE ?? '/tablito/';
 const BASE_URL = `http://localhost:${PORT}${BASE_PATH}`;
 
 // Mobile-ish portrait viewport. Matches the 360×760 iPhone logical frame
@@ -1266,7 +1266,7 @@ async function buildHtml({ generatedAt }) {
   <p>
     Pour aller plus loin :
     <a href="../specs/">spécifications fonctionnelles</a> ·
-    <a href="https://github.com/isc/multiplix">code source</a>
+    <a href="https://github.com/isc/tablito">code source</a>
   </p>
   <p>
     Guide généré automatiquement le ${generatedAt}.
