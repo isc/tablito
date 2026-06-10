@@ -2795,6 +2795,26 @@ input, select, textarea {
   gap: 10px;
 }
 
+/* Division débloquée : la « Vue d'ensemble » ne garde que les 3 stats
+   transverses (séances, série actuelle, meilleure série) → une seule rangée
+   de 3 plutôt qu'une carte orpheline en 2 colonnes. */
+.parent-stats-grid--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Carte de maîtrise de l'opération sélectionnée, sous le sélecteur. Pleine
+   largeur (stat phare) et reprend l'habillage des cartes de stats. */
+.parent-mastery-card {
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.parent-mastery-card .parent-stat-value {
+  color: var(--indigo);
+}
+
 .parent-stat-card {
   background: var(--paper);
   border: 1.5px solid var(--line);
