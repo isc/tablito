@@ -38,7 +38,7 @@ jobs:
           raw='${{ github.head_ref }}'
           slug=$(echo "$raw" | tr -c 'a-zA-Z0-9-' '-' | tr -s '-' | sed 's/^-\|-$//g')
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
-          echo "base=/tablito/previews/$slug/" >> "$GITHUB_OUTPUT"
+          echo "base=/previews/$slug/" >> "$GITHUB_OUTPUT"
 
       - run: npm ci
       - run: npm run build
@@ -74,7 +74,7 @@ jobs:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
           SLUG: ${{ steps.slug.outputs.slug }}
         run: |
-          url="https://isc.github.io/tablito/previews/$SLUG/.preview-sha"
+          url="https://tablito.app/previews/$SLUG/.preview-sha"
           for i in $(seq 1 60); do
             actual=$(curl -fsSL "$url" 2>/dev/null | tr -d '[:space:]' || true)
             if [ "$actual" = "$EXPECTED_SHA" ]; then
@@ -100,8 +100,8 @@ jobs:
             message: |
               **Preview déployée** pour cette PR :
 
-              - App : https://isc.github.io/tablito/previews/${{ steps.slug.outputs.slug }}/
-              - Guide : https://isc.github.io/tablito/previews/${{ steps.slug.outputs.slug }}/guide/
+              - App : https://tablito.app/previews/${{ steps.slug.outputs.slug }}/
+              - Guide : https://tablito.app/previews/${{ steps.slug.outputs.slug }}/guide/
 
               Commit : `${{ github.event.pull_request.head.sha }}`
               _Le preview est mis à jour à chaque push et supprimé à la fermeture de la PR._
