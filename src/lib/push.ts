@@ -42,9 +42,10 @@ function localToday(): string {
   return new Date().toLocaleDateString('en-CA'); // en-CA → YYYY-MM-DD
 }
 
-// La clé VAPID publique est en base64url : la convertir en Uint8Array pour
-// `applicationServerKey`.
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+// Convertit une chaîne base64url en Uint8Array. Utilisé pour la clé VAPID
+// publique (`applicationServerKey`) et pour décoder le profil transmis par le
+// redirecteur lors de la migration cross-origin (cf. storage.importProfileFromUrl).
+export function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(base64);
