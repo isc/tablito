@@ -22,6 +22,7 @@
     "mystery-levels": "node scripts/generate-mystery-levels.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "splash": "node scripts/generate-splash.mjs",
+    "og": "node scripts/generate-og-image.mjs",
     "feedback:list": "node --env-file=.env.local scripts/feedback-list.mjs",
     "feedback:show": "node --env-file=.env.local scripts/feedback-show.mjs",
     "feedback:treat": "node --env-file=.env.local scripts/feedback-treat.mjs"
