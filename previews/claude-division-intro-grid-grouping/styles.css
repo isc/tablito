@@ -2838,6 +2838,20 @@ input, select, textarea {
   gap: 10px;
 }
 
+/* Division débloquée : la « Vue d'ensemble » ne garde que les 3 stats
+   transverses (séances, série actuelle, meilleure série) → une seule rangée
+   de 3 plutôt qu'une carte orpheline en 2 colonnes. */
+.parent-stats-grid--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Carte de maîtrise de l'opération sélectionnée, sous le sélecteur. Réutilise
+   .parent-stat-card pour l'habillage (cf. markup) : hors grille elle occupe
+   toute la largeur (stat phare), et la valeur reprend l'indigo « maîtrise ». */
+.parent-mastery-card .parent-stat-value {
+  color: var(--indigo);
+}
+
 .parent-stat-card {
   background: var(--paper);
   border: 1.5px solid var(--line);
@@ -2875,6 +2889,20 @@ input, select, textarea {
 
 .parent-stats-grid .parent-stat-card:nth-child(4) .parent-stat-value {
   color: var(--indigo);
+}
+
+/* Sélecteur d'opération de l'espace parent : il gouverne les sections
+   « Répartition » et « Grille Leitner » qui le suivent, PAS la « Vue
+   d'ensemble » au-dessus (qui agrège mult + div). On l'écarte nettement
+   de la carte du dessus et on le rapproche de la section qu'il contrôle
+   pour que le regroupement visuel soit sans ambiguïté. */
+.parent-op-tabs {
+  margin-top: 28px;
+  padding-bottom: 2px;
+}
+
+.parent-op-tabs + .parent-section {
+  margin-top: 10px;
 }
 
 /* Box histogram */
