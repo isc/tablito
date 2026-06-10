@@ -20,6 +20,21 @@ import '../screens/ParentDashboard';
 const START_DATE = new Date('2026-01-05T08:00:00.000Z');
 const QUESTION_RE = /(\d+)\D+(\d+)/;
 
+// PRNG déterministe (mulberry32) pour rendre les simulations reproductibles.
+// La sélection de session et l'ordre d'affichage utilisent Math.random ; sans
+// graine fixe, la convergence vers la maîtrise dans le plafond de 365 jours
+// n'est pas garantie (flake CI). Avec une graine, le parcours est stable.
+function seededRandom(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 function setDay(offset: number): void {
   const d = new Date(START_DATE);
   d.setUTCDate(d.getUTCDate() + offset);
@@ -181,6 +196,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     // directement comme le ferait un parent qui clique « Essayer dans le
     // navigateur ».
     localStorage.setItem('multiplix-skip-install', '1');
+    vi.spyOn(Math, 'random').mockImplementation(seededRandom(1));
     vi.useFakeTimers({
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
     });
@@ -190,6 +206,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it(
