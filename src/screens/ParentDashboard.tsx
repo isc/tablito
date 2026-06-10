@@ -54,8 +54,8 @@ export default function ParentDashboard({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Multiplix',
-          text: 'Multiplix — pour apprendre les tables de multiplication.',
+          title: 'Tablito',
+          text: 'Tablito — pour apprendre les tables de multiplication.',
           url,
         });
       } catch {
@@ -404,7 +404,7 @@ export default function ParentDashboard({
       <NotificationSettings />
 
       <div className="parent-section">
-        <h3>Partager Multiplix</h3>
+        <h3>Partager Tablito</h3>
         <p className="parent-section-subtitle">
           Envoyez le lien de l'app à un autre parent.
         </p>

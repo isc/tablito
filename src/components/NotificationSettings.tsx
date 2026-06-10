@@ -67,7 +67,7 @@ export default function NotificationSettings() {
       <div className="parent-section">
         <h3>Rappel quotidien</h3>
         <p className="parent-section-subtitle">
-          Pour recevoir un petit rappel chaque jour à 18h, installe d'abord Multiplix
+          Pour recevoir un petit rappel chaque jour à 18h, installe d'abord Tablito
           sur l'écran d'accueil (menu Partager de Safari → « Sur l'écran d'accueil »).
         </p>
       </div>

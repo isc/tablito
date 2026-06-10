@@ -1,4 +1,4 @@
-# Multiplix
+# Tablito
 
 App d'apprentissage des tables de multiplication (PWA, sans backend).
 
