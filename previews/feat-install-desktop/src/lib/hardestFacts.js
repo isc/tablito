@@ -1,3 +1,0 @@
-import{getFactKey as m}from"./facts.js";import{getDivisionFactKey as b}from"./divisionFacts.js";function u(t,e){return t.filter(o=>!o.correct&&(e===null||o.date>=e)).length}function v(t,e,o){const n=t.sessionHistory,i=n.length>e?n[n.length-e].date:null,s=t.facts.filter(r=>r.introduced).map(r=>({kind:"mult",key:m(r.a,r.b),box:r.box,errorCount:u(r.history,i),a:r.a,b:r.b,product:r.product})),c=(t.divisionFacts??[]).filter(r=>r.introduced).map(r=>({kind:"div",key:b(r.dividend,r.divisor),box:r.box,errorCount:u(r.history,i),dividend:r.dividend,divisor:r.divisor,quotient:r.quotient}));return[...s,...c].sort((r,d)=>d.errorCount-r.errorCount||r.box-d.box).slice(0,o).filter(r=>r.errorCount>0)}export{v as getHardestFacts};
-
-//# sourceMappingURL=hardestFacts.js.map
