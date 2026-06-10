@@ -2,7 +2,7 @@
 
 App d'apprentissage des tables de multiplication pour enfants, basée sur la recherche en sciences cognitives.
 
-**https://isc.github.io/multiplix/**
+**https://isc.github.io/tablito/**
 
 ## Fonctionnalités
 
@@ -16,11 +16,11 @@ App d'apprentissage des tables de multiplication pour enfants, basée sur la rec
 
 ## Guide utilisateur
 
-Captures d'écran de chaque écran de l'app : **https://isc.github.io/multiplix/guide/**
+Captures d'écran de chaque écran de l'app : **https://isc.github.io/tablito/guide/**
 
 ## Stack
 
-Approche **nobuild** : ESM natif côté navigateur via import maps, Preact 10 vendoré, esbuild pour la transformation `.tsx → .js` (à la volée en dev, en pré-build pour la prod). Pas de bundler, pas de framework de routing, pas de backend. Les détails et la justification de chaque choix pédagogique sont dans les [spécifications fonctionnelles](https://isc.github.io/multiplix/specs/) (source : [`public/specs/index.html`](public/specs/index.html)).
+Approche **nobuild** : ESM natif côté navigateur via import maps, Preact 10 vendoré, esbuild pour la transformation `.tsx → .js` (à la volée en dev, en pré-build pour la prod). Pas de bundler, pas de framework de routing, pas de backend. Les détails et la justification de chaque choix pédagogique sont dans les [spécifications fonctionnelles](https://isc.github.io/tablito/specs/) (source : [`public/specs/index.html`](public/specs/index.html)).
 
 ## Licence
 

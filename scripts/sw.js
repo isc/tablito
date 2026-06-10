@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'multiplix-' + __VERSION__
+const CACHE = 'tablito-' + __VERSION__
 const BASE = __BASE__
 const ASSETS = __ASSETS__
 

@@ -32,7 +32,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          BASE: /multiplix/
+          BASE: /tablito/
 
       # Install Chromium for Playwright (used by the user-guide generator).
       - run: npx playwright install --with-deps chromium
@@ -40,7 +40,7 @@ jobs:
       # Generate the HTML user guide with screenshots into dist/guide/.
       - run: npm run user-guide
         env:
-          BASE: /multiplix/
+          BASE: /tablito/
 
       # Publish dist/ at the ROOT of the `gh-pages` branch. `keep_files: true`
       # preserves the sibling `previews/` directory written by the preview

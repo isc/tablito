@@ -5,7 +5,7 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 ## Stack
 
 - Approche **nobuild** : ESM natif côté navigateur via import maps.
-  Pas de bundler. Voir `BASE=/multiplix/ npm run build`.
+  Pas de bundler. Voir `BASE=/tablito/ npm run build`.
 - **Landing statique** : `index.html` contient directement le markup
   HTML de la page d'accueil + un inline script qui boot l'app Preact
   via `import('/src/main.tsx')` au clic ou si l'utilisateur est déjà
@@ -39,7 +39,7 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   `pwa-register.js`/`setBusy` quand `App` est sur un écran "safe"
   (`home` uniquement). Évite tout reload mid-séance.
 - localStorage pour la persistance (pas de backend).
-- Déploiement : GitHub Pages via GitHub Actions (`BASE=/multiplix/`).
+- Déploiement : GitHub Pages via GitHub Actions (`BASE=/tablito/`).
 - Node minimum : 22.12+ (CI utilise Node 22).
 
 ## Structure
@@ -69,7 +69,7 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 
 ## Guide utilisateur
 
-Un guide HTML avec captures d'écran est généré par `npm run user-guide` (script `scripts/generate-user-guide.mjs`) et déployé à `/multiplix/guide/`.
+Un guide HTML avec captures d'écran est généré par `npm run user-guide` (script `scripts/generate-user-guide.mjs`) et déployé à `/tablito/guide/`.
 
 ## Changelog in-app
 
