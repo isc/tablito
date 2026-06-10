@@ -478,12 +478,21 @@ export default function App() {
     URL.revokeObjectURL(url);
   }, [profile]);
 
-  const handleImport = useCallback((json: string) => {
+  const handleImport = useCallback((json: string): UserProfile | null => {
     const imported = importProfile(json);
-    if (imported) {
-      setProfile(imported);
-    }
+    if (imported) setProfile(imported);
+    return imported;
   }, []);
+
+  // Variante pour l'écran d'accueil (migration / nouvel appareil) : importe ET
+  // navigue vers l'écran adapté au profil restauré — sinon on resterait bloqué
+  // sur Welcome (le profil ne pilote pas `screen` tout seul). L'import depuis
+  // l'espace parent, lui, ne navigue pas (comportement inchangé).
+  const handleWelcomeImport = useCallback((json: string): boolean => {
+    const imported = handleImport(json);
+    if (imported) setScreen(initialScreen(imported));
+    return imported !== null;
+  }, [handleImport]);
 
   const handleResetProfile = useCallback(() => {
     const ok = window.confirm(
@@ -503,7 +512,7 @@ export default function App() {
           qui flashe. */}
       <Suspense fallback={null}>
       {screen === 'welcome' && (
-        <WelcomeScreen onComplete={handleWelcomeComplete} />
+        <WelcomeScreen onComplete={handleWelcomeComplete} onImport={handleWelcomeImport} />
       )}
 
       {screen === 'rulesIntro' && profile && (

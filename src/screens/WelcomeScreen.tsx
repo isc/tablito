@@ -12,11 +12,18 @@ export type { PlacementResult };
 
 interface WelcomeScreenProps {
   onComplete: (name: string, placementResults: PlacementResult[]) => void;
+  // Restaure une progression (changement d'appareil, migration). Renvoie false
+  // si le JSON collé est invalide, pour afficher une erreur. En cas de succès,
+  // App navigue vers l'écran adapté au profil (ce composant est alors démonté).
+  onImport: (json: string) => boolean;
 }
 
-export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importError, setImportError] = useState(false);
 
   const { speak, stop: stopSpeech } = useTTS();
 
@@ -53,6 +60,14 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 
   const handleSkipTest = () => {
     onComplete(name.trim(), []);
+  };
+
+  // Restaure une progression existante (collée depuis un autre appareil / la
+  // page de migration de l'ancien domaine). En cas de succès, onImport déclenche
+  // la navigation côté App et ce composant est démonté ; sinon on affiche l'erreur.
+  const handleImportConfirm = () => {
+    if (onImport(importText.trim())) return;
+    setImportError(true);
   };
 
   const recordTestResult = useCallback(
@@ -205,6 +220,49 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
           <button className="btn btn--ink welcome-btn" onClick={handleNext}>
             Suivant →
           </button>
+
+          {!showImport ? (
+            <button
+              className="welcome-import-link"
+              onClick={() => setShowImport(true)}
+            >
+              Déjà une progression&nbsp;? L'importer
+            </button>
+          ) : (
+            <div className="welcome-import">
+              <textarea
+                className="welcome-import-textarea"
+                placeholder="Colle ta progression ici…"
+                value={importText}
+                onChange={(e) => {
+                  setImportText(e.currentTarget.value);
+                  setImportError(false);
+                }}
+                autoFocus
+              />
+              {importError && (
+                <div className="welcome-import-error">
+                  Progression non reconnue. Vérifie le copier-coller.
+                </div>
+              )}
+              <button
+                className="btn btn--ink welcome-btn"
+                onClick={handleImportConfirm}
+                disabled={!importText.trim()}
+              >
+                Importer ma progression
+              </button>
+              <button
+                className="welcome-btn-skip"
+                onClick={() => {
+                  setShowImport(false);
+                  setImportError(false);
+                }}
+              >
+                Annuler
+              </button>
+            </div>
+          )}
         </div>
       )}
 

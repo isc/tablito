@@ -238,3 +238,45 @@
   width: 24px;
   background: var(--ink);
 }
+
+/* Import d'une progression existante (migration / changement d'appareil),
+   accessible depuis le 1er écran du Welcome. Volontairement discret. */
+.welcome-import-link {
+  margin-top: 18px;
+  background: none;
+  border: none;
+  color: var(--muted, #888);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.welcome-import {
+  margin-top: 18px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.welcome-import-textarea {
+  width: 100%;
+  min-height: 96px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.welcome-import-error {
+  color: #D9534F;
+  font-size: 0.88rem;
+  text-align: center;
+}
