@@ -416,7 +416,7 @@
       <tr><td>Avis &amp; rappels</td><td>Supabase (PostgREST appelé directement via <code>fetch</code>, sans SDK) — tables <code>feedback</code> (avis, §5.2) et <code>push_subscriptions</code> (rappels, §8.1)</td><td>Deux usages annexes sans serveur applicatif à maintenir</td></tr>
       <tr><td>Notifications push</td><td>Web Push API + clés VAPID ; envoi par un cron GitHub Actions (paquet <code>web-push</code>), pas de serveur permanent</td><td>Rappel quotidien sans backend dédié (cf. §8.1)</td></tr>
       <tr><td>PWA / offline</td><td>Service Worker maison (cache-first sur les navigations), <code>manifest.json</code>, fontes self-hostées précachées</td><td>Installable, cold launch instantané, fonctionne 100 % hors-ligne</td></tr>
-      <tr><td>Hébergement</td><td>GitHub Pages (repo <code>isc/tablito</code>, <code>BASE=/tablito/</code>)</td><td>Gratuit, simple</td></tr>
+      <tr><td>Hébergement</td><td>GitHub Pages (repo <code>isc/tablito</code>, <code>BASE=/</code>)</td><td>Gratuit, simple</td></tr>
     </tbody>
   </table>
   <blockquote class="note">
@@ -776,7 +776,7 @@ interface Badge {
   <ul>
     <li>Exporter les données (JSON)</li>
     <li>Importer les données (pour changer de téléphone)</li>
-    <li><strong>Guide utilisateur</strong> : ouvre <code>/tablito/guide/</code> dans un nouvel onglet (page statique servie depuis la même origine, générée par <code>scripts/generate-user-guide.mjs</code>)</li>
+    <li><strong>Guide utilisateur</strong> : ouvre <code>/guide/</code> dans un nouvel onglet (page statique servie depuis la même origine, générée par <code>scripts/generate-user-guide.mjs</code>)</li>
     <li><strong>Envoyer un avis</strong> : formulaire texte libre + email optionnel. Les envois atterrissent dans une table Supabase (policy RLS insert-only via la publishable key). Un contexte anonyme (user-agent, viewport, stats agrégées du profil — nombre de séances, faits maîtrisés, streak) est joint pour faciliter le triage. Lecture réservée au propriétaire de l'app via la secret key (stockée en local, hors du repo)</li>
     <li><strong>Partager l'app</strong> : ouvre la feuille de partage native du téléphone (iMessage, WhatsApp, mail…) pour envoyer le lien de Tablito ; sur ordinateur, le lien est copié dans le presse-papiers</li>
     <li><strong>Rappel quotidien</strong> : toggle opt-in qui active une notification push quotidienne (détails en §8.1)</li>
