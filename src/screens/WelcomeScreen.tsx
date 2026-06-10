@@ -24,6 +24,9 @@ export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenPro
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState('');
   const [importError, setImportError] = useState(false);
+  // Repli manuel : la zone de collage n'apparaît que si la lecture du
+  // presse-papiers échoue (refus, navigateur non supporté) ou sur demande.
+  const [manualPaste, setManualPaste] = useState(false);
 
   const { speak, stop: stopSpeech } = useTTS();
 
@@ -68,6 +71,24 @@ export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenPro
   const handleImportConfirm = () => {
     if (onImport(importText.trim())) return;
     setImportError(true);
+  };
+
+  // Lit directement le presse-papiers (iOS affiche un prompt « Coller »). Si le
+  // contenu est valide, onImport navigue ailleurs ; sinon on le verse dans la
+  // zone de texte + erreur. Lecture refusée/non supportée → collage manuel.
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (!text) { setManualPaste(true); return; } // presse-papiers vide → collage manuel
+      if (!onImport(text)) {
+        setImportText(text);
+        setImportError(true);
+        setManualPaste(true);
+      }
+    } catch {
+      // Lecture refusée / non supportée → on révèle la zone de collage manuel.
+      setManualPaste(true);
+    }
   };
 
   const recordTestResult = useCallback(
@@ -208,7 +229,7 @@ export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenPro
 
   return (
     <div className="welcome-screen">
-      {step === 0 && (
+      {step === 0 && !showImport && (
         <div className="welcome-step" key="step0">
           <Mascot mood="idle" />
           <div className="welcome-title">Bonjour&nbsp;!</div>
@@ -220,19 +241,41 @@ export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenPro
           <button className="btn btn--ink welcome-btn" onClick={handleNext}>
             Suivant →
           </button>
+          <button
+            className="welcome-import-link"
+            onClick={() => setShowImport(true)}
+          >
+            Déjà une progression&nbsp;? L'importer
+          </button>
+        </div>
+      )}
 
-          {!showImport ? (
-            <button
-              className="welcome-import-link"
-              onClick={() => setShowImport(true)}
-            >
-              Déjà une progression&nbsp;? L'importer
-            </button>
+      {step === 0 && showImport && (
+        <div className="welcome-step" key="import">
+          <div className="welcome-title">Ta progression</div>
+          <div className="welcome-subtitle">
+            Récupère la progression copiée depuis l'ancienne app.
+          </div>
+          {!manualPaste ? (
+            <>
+              <button
+                className="btn btn--ink welcome-btn"
+                onClick={handlePasteFromClipboard}
+              >
+                Coller depuis le presse-papiers
+              </button>
+              <button
+                className="welcome-import-link"
+                onClick={() => setManualPaste(true)}
+              >
+                Coller à la main
+              </button>
+            </>
           ) : (
-            <div className="welcome-import">
+            <>
               <textarea
                 className="welcome-import-textarea"
-                placeholder="Colle ta progression ici…"
+                placeholder="Colle ta progression ici (appui long → Coller)"
                 value={importText}
                 onChange={(e) => {
                   setImportText(e.currentTarget.value);
@@ -252,17 +295,19 @@ export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenPro
               >
                 Importer ma progression
               </button>
-              <button
-                className="welcome-btn-skip"
-                onClick={() => {
-                  setShowImport(false);
-                  setImportError(false);
-                }}
-              >
-                Annuler
-              </button>
-            </div>
+            </>
           )}
+          <button
+            className="welcome-btn-skip"
+            onClick={() => {
+              setShowImport(false);
+              setManualPaste(false);
+              setImportError(false);
+              setImportText('');
+            }}
+          >
+            Annuler
+          </button>
         </div>
       )}
 
