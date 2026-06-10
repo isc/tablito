@@ -44,10 +44,14 @@
         try {
           var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
             || window.navigator.standalone === true;
-          var profile = false, skipped = false;
+          var profile = false, skipped = false, hasImport = false;
           try { profile = !!localStorage.getItem('multiplix-profile'); } catch (e) {}
           try { skipped = localStorage.getItem('multiplix-skip-install') === '1'; } catch (e) {}
-          if (standalone || profile || skipped) {
+          // Migration cross-origin : on arrive de l'ancien domaine avec le profil
+          // dans le fragment (#import=…) → on boote l'app directement (pas la
+          // landing). L'import réel a lieu dans main.tsx (importProfileFromUrl).
+          try { hasImport = location.hash.indexOf('import=') !== -1; } catch (e) {}
+          if (standalone || profile || skipped || hasImport) {
             document.documentElement.classList.add('skip-static-landing');
           }
           var ua = navigator.userAgent;
