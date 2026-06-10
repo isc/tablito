@@ -120,6 +120,11 @@ export default function ParentDashboard({
     return { accuracy, time, timeYMax };
   }, [profile.sessionHistory]);
 
+  // Compteurs de maîtrise (× et ÷) au même format — réutilisés par la carte
+  // « Faits maîtrisés » (avant déblocage) et la carte de maîtrise (après).
+  const multMastered = `${countMastered(profile.facts)}/${profile.facts.length}`;
+  const divMastered = `${countMastered(divisionFacts)}/${divisionFacts.length}`;
+
   const boxColors = [
     'var(--box-gray)', 'var(--box-red)', 'var(--box-orange)',
     'var(--box-yellow)', 'var(--box-lightgreen)', 'var(--box-green)',
@@ -166,9 +171,7 @@ export default function ParentDashboard({
           </div>
           {!divisionUnlocked && (
             <div className="parent-stat-card">
-              <div className="parent-stat-value">
-                {countMastered(profile.facts)}/{profile.facts.length}
-              </div>
+              <div className="parent-stat-value">{multMastered}</div>
               <div className="parent-stat-label">Faits maîtrisés</div>
             </div>
           )}
@@ -203,11 +206,9 @@ export default function ParentDashboard({
               « Vue d'ensemble » pour vivre dans la section pilotée par le
               sélecteur, au même titre que la Répartition et la Grille. */}
           <div className="parent-section">
-            <div className="parent-mastery-card">
+            <div className="parent-stat-card parent-mastery-card">
               <div className="parent-stat-value">
-                {showDiv
-                  ? `${countMastered(divisionFacts)}/${divisionFacts.length}`
-                  : `${countMastered(profile.facts)}/${profile.facts.length}`}
+                {showDiv ? divMastered : multMastered}
               </div>
               <div className="parent-stat-label">
                 {showDiv ? 'Divisions maîtrisées' : 'Multiplications maîtrisées'}
