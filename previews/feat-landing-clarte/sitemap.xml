@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sitemap soumis à Google Search Console. Ne lister que les vraies pages
+     indexables (landing + guide). Les écrans in-app sont du routage SPA
+     côté client, pas des URLs distinctes : on ne les met pas. /specs/ est
+     volontairement absent (doc technique, pas une cible de recherche). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://tablito.app/</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://tablito.app/guide/</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>
