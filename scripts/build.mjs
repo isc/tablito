@@ -185,7 +185,7 @@ for await (const f of walk(OUT)) {
   const rel = '/' + path.relative(OUT, f).split(path.sep).join('/')
   if (rel.endsWith('/sw.js')) continue
   if (rel.endsWith('.map')) continue
-  if (rel === '/og-image.png') continue // image de partage social, lue par les crawlers, jamais par l'app
+  if (rel === '/og-image.png' || rel === '/robots.txt' || rel === '/sitemap.xml') continue // assets lus par les crawlers, jamais par l'app
   if (rel.startsWith('/audio/')) continue
   if (rel.startsWith('/mystery/')) continue
   if (rel.startsWith('/splash/')) continue
