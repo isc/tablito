@@ -6,6 +6,7 @@ import { createInitialDivisionFacts } from './divisionFacts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
+import { urlBase64ToUint8Array } from './push';
 
 // Tire un thème d'image mystère pour la division, distinct de celui de la
 // multiplication quand le pool le permet — l'image multiplication conquise ne
@@ -51,6 +52,53 @@ export function clearStoredProfile(): void {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
     // ignore
+  }
+}
+
+// === Migration cross-origin (ancien domaine isc.github.io → tablito.app) ===
+// Le redirecteur de l'ancien chemin encode le profil dans le fragment d'URL
+// (#import=<flag><base64url>) au moment de la bascule — une navigation
+// top-level, seul moyen fiable de transporter le localStorage entre deux
+// origines (le partitionnement de stockage casse l'astuce de l'iframe). Le
+// flag distingue 'z' (gzip) de 'r' (brut). Côté encodage : repo `multiplix`.
+const IMPORT_HASH_RE = /[#&]import=([^&]+)/;
+
+async function decodeImportPayload(payload: string): Promise<string> {
+  const flag = payload[0];
+  const bytes = urlBase64ToUint8Array(payload.slice(1));
+  if (flag === 'z' && 'DecompressionStream' in globalThis) {
+    const ds = new (globalThis as unknown as {
+      DecompressionStream: new (f: string) => ReadableWritablePair<Uint8Array, Uint8Array>;
+    }).DecompressionStream('gzip');
+    const stream = new Blob([bytes]).stream().pipeThrough(ds);
+    return await new Response(stream).text();
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Au tout premier chargement sur le nouveau domaine, importe le profil transmis
+ * par le redirecteur de l'ancien domaine via `#import=` (migration cross-origin).
+ * No-op si le fragment est absent ou si un profil local existe déjà (on ne
+ * clobber jamais une progression en cours). À appeler avant de monter l'app.
+ */
+export async function importProfileFromUrl(): Promise<void> {
+  const match = window.location.hash.match(IMPORT_HASH_RE);
+  if (!match) return;
+  try {
+    if (localStorage.getItem(STORAGE_KEY)) return; // jamais écraser un profil présent
+    const profile = importProfile(await decodeImportPayload(match[1]));
+    if (profile) saveProfile(profile);
+  } catch {
+    // Best-effort : en cas d'échec on laisse l'utilisateur repartir sur
+    // l'accueil normal plutôt que de planter le boot.
+  } finally {
+    // Retire le fragment pour qu'un refresh ne re-déclenche pas l'import.
+    try {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch {
+      // ignore
+    }
   }
 }
 
