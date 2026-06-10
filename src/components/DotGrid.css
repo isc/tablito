@@ -105,3 +105,56 @@
   color: var(--indigo);
   font-weight: 600;
 }
+
+/* Révélation "lots" de l'intro division : les rangées deviennent des paquets
+   distincts, puis un lot est mis en avant avec son compte (= le quotient). */
+.dot-grid.lots {
+  gap: 12px;
+}
+
+.dot-grid.lots .dot-grid-row {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--honey-soft);
+  transition: background 0.4s ease, padding 0.4s ease, transform 0.3s ease;
+}
+
+.dot-grid-row.lot--highlight {
+  position: relative;
+  background: var(--honey);
+  transform: scale(1.05);
+}
+
+.dot-grid-lot-count {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 14px;
+  transform: translateY(-50%) scale(0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 2px solid var(--honey);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+}
+
+.dot-grid-lot-count.visible {
+  animation: lotCountPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes lotCountPop {
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
