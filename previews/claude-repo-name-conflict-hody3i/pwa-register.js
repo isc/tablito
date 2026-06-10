@@ -63,7 +63,7 @@ export function registerSW() {
 
   const startRegistration = () => {
     navigator.serviceWorker
-      .register("/previews/claude-repo-name-conflict-hody3i/sw.js", { updateViaCache: 'none' })
+      .register("/tablito/previews/claude-repo-name-conflict-hody3i/sw.js", { updateViaCache: 'none' })
       .then((reg) => { currentRegistration = reg })
       .catch((e) => {
         console.warn('[pwa] SW registration failed', e)

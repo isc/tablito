@@ -18,11 +18,11 @@
          vendor-fonts.mjs pour réécrire les hrefs si Google republie. -->
     <link rel="preload" as="font" type="font/woff2" crossorigin
           data-family="Nunito" data-style="normal"
-          href="/previews/claude-repo-name-conflict-hody3i/fonts/nunito-normal-aBTMnFcQ.woff2" />
+          href="/tablito/previews/claude-repo-name-conflict-hody3i/fonts/nunito-normal-aBTMnFcQ.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin
           data-family="Fraunces" data-style="normal"
-          href="/previews/claude-repo-name-conflict-hody3i/fonts/fraunces-normal-TeP2Xz5c.woff2" />
-    <link rel="stylesheet" href="/previews/claude-repo-name-conflict-hody3i/fonts/fonts.css" />
+          href="/tablito/previews/claude-repo-name-conflict-hody3i/fonts/fraunces-normal-TeP2Xz5c.woff2" />
+    <link rel="stylesheet" href="/tablito/previews/claude-repo-name-conflict-hody3i/fonts/fonts.css" />
 
     <!-- Anti-FOUC : couleur de fond + fonte fallback appliquées dès le premier
          paint, avant que la feuille de styles principale ne soit injectée. -->
@@ -108,18 +108,18 @@
     <script type="importmap">
     {
       "imports": {
-        "preact":              "/previews/claude-repo-name-conflict-hody3i/vendor/preact/preact.module.js",
-        "preact/hooks":        "/previews/claude-repo-name-conflict-hody3i/vendor/preact/hooks.module.js",
-        "preact/compat":       "/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat.module.js",
-        "preact/jsx-runtime":  "/previews/claude-repo-name-conflict-hody3i/vendor/preact/jsx-runtime.module.js",
-        "react":               "/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat.module.js",
-        "react-dom":           "/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat.module.js",
-        "react-dom/client":    "/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat-client.mjs",
-        "virtual:pwa-register":"/previews/claude-repo-name-conflict-hody3i/pwa-register.js"
+        "preact":              "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/preact.module.js",
+        "preact/hooks":        "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/hooks.module.js",
+        "preact/compat":       "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat.module.js",
+        "preact/jsx-runtime":  "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/jsx-runtime.module.js",
+        "react":               "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat.module.js",
+        "react-dom":           "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat.module.js",
+        "react-dom/client":    "/tablito/previews/claude-repo-name-conflict-hody3i/vendor/preact/compat-client.mjs",
+        "virtual:pwa-register":"/tablito/previews/claude-repo-name-conflict-hody3i/pwa-register.js"
       }
     }
     </script>
-      <link rel="stylesheet" href="/previews/claude-repo-name-conflict-hody3i/styles.css" />
+      <link rel="stylesheet" href="/tablito/previews/claude-repo-name-conflict-hody3i/styles.css" />
   </head>
   <body>
     <!--
@@ -251,7 +251,7 @@
           // remove manuellement (et ça garde le contenu visible jusqu'à ce
           // que l'app soit prête, plutôt que d'afficher un écran blanc
           // pendant le download de main.js sur réseau lent).
-          return import('/previews/claude-repo-name-conflict-hody3i/src/main.js').catch(function(err) {
+          return import('/tablito/previews/claude-repo-name-conflict-hody3i/src/main.js').catch(function(err) {
             console.error('[boot] failed to load app', err);
           });
         }
