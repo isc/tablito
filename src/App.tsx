@@ -167,13 +167,16 @@ export default function App() {
   }, [screen]);
 
   // Signale au pwa-register si on est dans un écran "safe" pour appliquer
-  // une mise à jour SW (= reload). Seul `home` l'est ici : ailleurs, un
+  // une mise à jour SW (= reload). `home` ET `welcome` le sont : ailleurs, un
   // reload casserait l'état mémoire en cours (séance, recap animations,
-  // navigation parent, etc.). Quand on revient sur home, un éventuel
-  // SW en attente est appliqué automatiquement.
+  // navigation parent, etc.). `welcome` est inclus car une install neuve (sans
+  // profil) y reste bloquée — sans ça, ces utilisateurs ne recevraient JAMAIS
+  // de mise à jour (ex. l'écran d'import lui-même). Rien de précieux à perdre
+  // en rechargeant l'accueil/l'onboarding.
+  const safeForReload = screen === 'home' || screen === 'welcome';
   useEffect(() => {
-    setSwBusy(screen !== 'home');
-  }, [screen]);
+    setSwBusy(!safeForReload);
+  }, [safeForReload]);
 
   // Rafraîchir `today` quand l'app revient au premier plan : sans ça, un user
   // qui laisse l'app ouverte la nuit voit toujours "c'est fait pour aujourd'hui"
