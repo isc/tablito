@@ -61,7 +61,7 @@ async function main() {
   const webpush = (await import('web-push')).default;
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-  const reminderUrl = process.env.REMINDER_URL || 'https://isc.github.io/tablito/';
+  const reminderUrl = process.env.REMINDER_URL || 'https://tablito.app/';
   const table = `${SUPABASE_URL}/rest/v1/push_subscriptions`;
   const headers = {
     apikey: SUPABASE_SECRET_KEY,

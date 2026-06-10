@@ -1,7 +1,7 @@
 // Sert dist/ pour preview locale du build de prod.
 //
 //   npm run preview                    →  http://localhost:5175/
-//   BASE=/tablito/ npm run preview   →  http://localhost:5175/tablito/
+//   BASE=/ npm run preview   →  http://localhost:5175/
 //
 // Le préfixe BASE est strippé de l'URL avant lookup dans dist/, ce qui
 // reproduit le comportement de GitHub Pages servant le repo sous un
