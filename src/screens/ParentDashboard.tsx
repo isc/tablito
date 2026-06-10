@@ -120,6 +120,11 @@ export default function ParentDashboard({
     return { accuracy, time, timeYMax };
   }, [profile.sessionHistory]);
 
+  // Compteurs de maîtrise (× et ÷) au même format — réutilisés par la carte
+  // « Faits maîtrisés » (avant déblocage) et la carte de maîtrise (après).
+  const multMastered = `${countMastered(profile.facts)}/${profile.facts.length}`;
+  const divMastered = `${countMastered(divisionFacts)}/${divisionFacts.length}`;
+
   const boxColors = [
     'var(--box-gray)', 'var(--box-red)', 'var(--box-orange)',
     'var(--box-yellow)', 'var(--box-lightgreen)', 'var(--box-green)',
@@ -146,10 +151,12 @@ export default function ParentDashboard({
         </div>
       </div>
 
-      {/* General stats */}
+      {/* Stats transverses (activité / séries) — indépendantes de l'opération,
+          donc valables pour × comme pour ÷. Les compteurs de maîtrise, eux,
+          vivent plus bas sous le sélecteur (cf. carte de maîtrise). */}
       <div className="parent-section">
         <h3>Vue d'ensemble</h3>
-        <div className="parent-stats-grid">
+        <div className={`parent-stats-grid${divisionUnlocked ? ' parent-stats-grid--three' : ''}`}>
           <div className="parent-stat-card">
             <div className="parent-stat-value">{profile.totalSessions}</div>
             <div className="parent-stat-label">Séances</div>
@@ -162,46 +169,53 @@ export default function ParentDashboard({
             <div className="parent-stat-value">{profile.longestStreak}</div>
             <div className="parent-stat-label">Meilleure série</div>
           </div>
-          <div className="parent-stat-card">
-            <div className="parent-stat-value">
-              {countMastered(profile.facts)}/{profile.facts.length}
-            </div>
-            <div className="parent-stat-label">
-              {divisionUnlocked ? 'Multiplications maîtrisées' : 'Faits maîtrisés'}
-            </div>
-          </div>
-          {divisionUnlocked && (
+          {!divisionUnlocked && (
             <div className="parent-stat-card">
-              <div className="parent-stat-value">
-                {countMastered(divisionFacts)}/{divisionFacts.length}
-              </div>
-              <div className="parent-stat-label">Divisions maîtrisées</div>
+              <div className="parent-stat-value">{multMastered}</div>
+              <div className="parent-stat-label">Faits maîtrisés</div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Sélecteur d'opération — partagé par la Répartition et la Grille Leitner
-          ci-dessous. Réutilise les classes du sélecteur « Mes images » côté
-          enfant (.progress-tabs, CSS concaténé global). Visible uniquement après
-          déblocage : avant, la division ne doit pas apparaître (specs §11.3). */}
+      {/* Sélecteur d'opération — partagé par la carte de maîtrise, la Répartition
+          et la Grille Leitner ci-dessous. Réutilise les classes du sélecteur
+          « Mes images » côté enfant (.progress-tabs, CSS concaténé global).
+          Visible uniquement après déblocage : avant, la division ne doit pas
+          apparaître (specs §11.3). */}
       {divisionUnlocked && (
-        <div className="progress-tabs" role="tablist" aria-label="Opération">
-          <button
-            type="button"
-            className={`progress-tab ${!showDiv ? 'active' : ''}`}
-            onClick={() => setGridView('mult')}
-          >
-            Multiplications
-          </button>
-          <button
-            type="button"
-            className={`progress-tab ${showDiv ? 'active' : ''}`}
-            onClick={() => setGridView('div')}
-          >
-            Divisions
-          </button>
-        </div>
+        <>
+          <div className="progress-tabs parent-op-tabs" role="tablist" aria-label="Opération">
+            <button
+              type="button"
+              className={`progress-tab ${!showDiv ? 'active' : ''}`}
+              onClick={() => setGridView('mult')}
+            >
+              Multiplications
+            </button>
+            <button
+              type="button"
+              className={`progress-tab ${showDiv ? 'active' : ''}`}
+              onClick={() => setGridView('div')}
+            >
+              Divisions
+            </button>
+          </div>
+
+          {/* Compteur de maîtrise de l'opération sélectionnée — sorti de la
+              « Vue d'ensemble » pour vivre dans la section pilotée par le
+              sélecteur, au même titre que la Répartition et la Grille. */}
+          <div className="parent-section">
+            <div className="parent-stat-card parent-mastery-card">
+              <div className="parent-stat-value">
+                {showDiv ? divMastered : multMastered}
+              </div>
+              <div className="parent-stat-label">
+                {showDiv ? 'Divisions maîtrisées' : 'Multiplications maîtrisées'}
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Box histogram */}
