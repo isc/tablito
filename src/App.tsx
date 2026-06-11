@@ -88,6 +88,13 @@ function initialScreen(profile: UserProfile | null, profileCount: number): Scree
   return profileHome(profile);
 }
 
+// Écrans sans état mémoire précieux : un reload SW ou un retour forcé au
+// choix du joueur n'y fait rien perdre. Partout ailleurs (séance, récap,
+// navigation parent…), interrompre casserait le travail en cours.
+function isDisposableScreen(screen: Screen): boolean {
+  return screen === 'home' || screen === 'welcome' || screen === 'profiles';
+}
+
 // Retour au premier plan après une longue absence : sur une tablette
 // familiale, l'enfant qui reprend l'app n'est souvent pas celui qui l'a
 // laissée — et la PWA reste en mémoire des heures, donc le « Qui joue ? » du
@@ -200,13 +207,11 @@ export default function App() {
   }, [screen]);
 
   // Signale au pwa-register si on est dans un écran "safe" pour appliquer
-  // une mise à jour SW (= reload). `home`, `welcome` ET `profiles` le sont :
-  // ailleurs, un reload casserait l'état mémoire en cours (séance, recap
-  // animations, navigation parent, etc.). `welcome` est inclus car une install
-  // neuve (sans profil) y reste bloquée — sans ça, ces utilisateurs ne
-  // recevraient JAMAIS de mise à jour (ex. l'écran d'import lui-même). Rien de
-  // précieux à perdre en rechargeant l'accueil/l'onboarding/le choix du joueur.
-  const safeForReload = screen === 'home' || screen === 'welcome' || screen === 'profiles';
+  // une mise à jour SW (= reload) — cf. isDisposableScreen. `welcome` est
+  // inclus car une install neuve (sans profil) y reste bloquée — sans ça, ces
+  // utilisateurs ne recevraient JAMAIS de mise à jour (ex. l'écran d'import
+  // lui-même).
+  const safeForReload = isDisposableScreen(screen);
   useEffect(() => {
     setSwBusy(!safeForReload);
   }, [safeForReload]);
@@ -229,8 +234,10 @@ export default function App() {
 
   // Repropose « Qui joue ? » au retour au premier plan après une longue
   // absence (cf. RESHOW_PICKER_AFTER_HIDDEN_MS), s'il y a plusieurs profils.
-  // Uniquement depuis l'accueil : on n'interrompt jamais une séance, un récap
-  // ou une navigation parent — leur état mémoire serait perdu.
+  // Uniquement depuis un écran sans état précieux (même notion que le reload
+  // SW) : on n'interrompt jamais une séance, un récap ou une navigation
+  // parent. Un ajout d'enfant laissé en plan > 15 min, lui, est périmé —
+  // retour au choix du joueur, comme le ferait une mise à jour SW.
   useEffect(() => {
     let hiddenAt = 0;
     const onVisibility = () => {
@@ -242,7 +249,7 @@ export default function App() {
         hiddenAt > 0 && Date.now() - hiddenAt >= RESHOW_PICKER_AFTER_HIDDEN_MS;
       hiddenAt = 0;
       if (!longAbsence || listProfiles().length < 2) return;
-      setScreen((prev) => (prev === 'home' ? 'profiles' : prev));
+      setScreen((prev) => (isDisposableScreen(prev) ? 'profiles' : prev));
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);

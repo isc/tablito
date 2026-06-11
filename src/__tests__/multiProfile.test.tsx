@@ -48,6 +48,16 @@ function readGreeting(): string {
   return document.querySelector('.home-greeting')?.textContent ?? '';
 }
 
+// Seed direct (sans passer par l'UI) : un profil prêt à jouer par prénom,
+// onboarding déjà vu. Le dernier ajouté est le profil actif.
+function seedProfiles(...names: string[]): void {
+  for (const name of names) {
+    const profile = createNewProfile(name);
+    profile.hasSeenRulesIntro = true;
+    addProfile(profile);
+  }
+}
+
 // Simule un passage arrière-plan / premier plan de la PWA. jsdom n'expose pas
 // de setter pour visibilityState : on shadow le getter sur l'instance (retiré
 // dans afterEach pour ne pas fuiter sur les autres tests).
@@ -192,12 +202,7 @@ describe('Mode multi-profils (DOM)', () => {
   });
 
   it("repropose « Qui joue ? » au retour au premier plan après une longue absence", () => {
-    const zoe = createNewProfile('Zoe');
-    zoe.hasSeenRulesIntro = true;
-    addProfile(zoe);
-    const max = createNewProfile('Max');
-    max.hasSeenRulesIntro = true;
-    addProfile(max);
+    seedProfiles('Zoe', 'Max');
 
     render(<App />);
     fireEvent.click(findButton(/Max/)!);
@@ -219,9 +224,7 @@ describe('Mode multi-profils (DOM)', () => {
 
   it("ne repropose pas le choix du joueur en pleine séance ni en mono-profil", () => {
     // Mono-profil : une longue absence ne déclenche rien.
-    const zoe = createNewProfile('Zoe');
-    zoe.hasSeenRulesIntro = true;
-    addProfile(zoe);
+    seedProfiles('Zoe');
     render(<App />);
     expect(readGreeting()).toContain('Zoe');
     setVisibility('hidden');
@@ -231,9 +234,7 @@ describe('Mode multi-profils (DOM)', () => {
     expect(readGreeting()).toContain('Zoe');
 
     // Multi-profils mais séance en cours : jamais d'interruption.
-    const max = createNewProfile('Max');
-    max.hasSeenRulesIntro = true;
-    addProfile(max);
+    seedProfiles('Max');
     cleanup();
     render(<App />);
     fireEvent.click(findButton(/Max/)!);
@@ -251,13 +252,7 @@ describe('Mode multi-profils (DOM)', () => {
   });
 
   it("supprimer le profil actif bascule sur l'autre enfant", async () => {
-    // Deux profils seedés directement (Max actif, dernier ajouté).
-    const zoe = createNewProfile('Zoe');
-    zoe.hasSeenRulesIntro = true;
-    addProfile(zoe);
-    const max = createNewProfile('Max');
-    max.hasSeenRulesIntro = true;
-    addProfile(max);
+    seedProfiles('Zoe', 'Max');
 
     render(<App />);
     fireEvent.click(findButton(/Max/)!);
