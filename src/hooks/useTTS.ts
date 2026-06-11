@@ -57,7 +57,7 @@ export function useTTS() {
 
   // Démarre la lecture d'un buffer déjà décodé. No-op si l'appel est périmé
   // (un speak/stop plus récent est passé entre-temps).
-  const playBuffer = useCallback(
+  const startSource = useCallback(
     (buffer: AudioBuffer, ctx: AudioContext, myGen: number, onEnd?: () => void) => {
       if (callGenRef.current !== myGen) return;
 
@@ -85,6 +85,25 @@ export function useTTS() {
       }
     },
     [],
+  );
+
+  const playBuffer = useCallback(
+    (buffer: AudioBuffer, ctx: AudioContext, myGen: number, onEnd?: () => void) => {
+      if (callGenRef.current !== myGen) return;
+
+      // En mode vocal, la reconnaissance (micro) peut, surtout sur iOS,
+      // suspendre/interrompre le contexte audio partagé : `source.start()` sur
+      // un contexte non `running` est alors silencieux. On le réveille d'abord.
+      // Si le contexte tourne déjà (cas courant), on reste sur le chemin
+      // synchrone — crucial pour que la lecture ne soit pas annulable par un
+      // stop() arrivant entre deux microtasks.
+      if (ctx.state !== 'running') {
+        ctx.resume().finally(() => startSource(buffer, ctx, myGen, onEnd));
+        return;
+      }
+      startSource(buffer, ctx, myGen, onEnd);
+    },
+    [startSource],
   );
 
   const speak = useCallback(
