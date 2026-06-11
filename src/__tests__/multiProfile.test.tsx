@@ -48,6 +48,25 @@ function readGreeting(): string {
   return document.querySelector('.home-greeting')?.textContent ?? '';
 }
 
+// Simule un passage arrière-plan / premier plan de la PWA. jsdom n'expose pas
+// de setter pour visibilityState : on shadow le getter sur l'instance (retiré
+// dans afterEach pour ne pas fuiter sur les autres tests).
+function setVisibility(state: 'hidden' | 'visible'): void {
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    get: () => state,
+  });
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+}
+
+// Avance l'horloge mockée sans déclencher les timers en attente (contrairement
+// à advanceTimersByTime) : on simule du temps passé app cachée, pas des timers.
+function jumpClock(ms: number): void {
+  vi.setSystemTime(new Date(Date.now() + ms));
+}
+
 // Crée un profil via le vrai parcours Welcome (prénom + « Passer le test »)
 // puis ferme l'intro des règles pour atterrir sur Home.
 function completeWelcome(name: string): void {
@@ -97,6 +116,9 @@ describe('Mode multi-profils (DOM)', () => {
     cleanup();
     vi.useRealTimers();
     vi.restoreAllMocks();
+    // Retire l'éventuel shadow posé par setVisibility (le getter du prototype
+    // reprend la main).
+    delete (document as { visibilityState?: unknown }).visibilityState;
   });
 
   it("migre l'ancien profil mono-clé vers le schéma multi-profils sans rien perdre", () => {
@@ -167,6 +189,65 @@ describe('Mode multi-profils (DOM)', () => {
 
     expect(listProfiles()).toHaveLength(1);
     expect(readGreeting()).toContain('Zoe');
+  });
+
+  it("repropose « Qui joue ? » au retour au premier plan après une longue absence", () => {
+    const zoe = createNewProfile('Zoe');
+    zoe.hasSeenRulesIntro = true;
+    addProfile(zoe);
+    const max = createNewProfile('Max');
+    max.hasSeenRulesIntro = true;
+    addProfile(max);
+
+    render(<App />);
+    fireEvent.click(findButton(/Max/)!);
+    expect(readGreeting()).toContain('Max');
+
+    // Aller-retour court (< 15 min) : on ne touche à rien.
+    setVisibility('hidden');
+    jumpClock(5 * 60 * 1000);
+    setVisibility('visible');
+    expect(document.querySelector('.profile-select-screen')).toBeNull();
+    expect(readGreeting()).toContain('Max');
+
+    // Longue absence : retour sur le choix du joueur.
+    setVisibility('hidden');
+    jumpClock(16 * 60 * 1000);
+    setVisibility('visible');
+    expect(document.querySelector('.profile-select-screen')).not.toBeNull();
+  });
+
+  it("ne repropose pas le choix du joueur en pleine séance ni en mono-profil", () => {
+    // Mono-profil : une longue absence ne déclenche rien.
+    const zoe = createNewProfile('Zoe');
+    zoe.hasSeenRulesIntro = true;
+    addProfile(zoe);
+    render(<App />);
+    expect(readGreeting()).toContain('Zoe');
+    setVisibility('hidden');
+    jumpClock(60 * 60 * 1000);
+    setVisibility('visible');
+    expect(document.querySelector('.profile-select-screen')).toBeNull();
+    expect(readGreeting()).toContain('Zoe');
+
+    // Multi-profils mais séance en cours : jamais d'interruption.
+    const max = createNewProfile('Max');
+    max.hasSeenRulesIntro = true;
+    addProfile(max);
+    cleanup();
+    render(<App />);
+    fireEvent.click(findButton(/Max/)!);
+    fireEvent.click(findButton(/C'est parti/)!);
+    const inSession = () =>
+      document.querySelector('.session-intro') !== null ||
+      document.querySelector('.session-question-text') !== null;
+    expect(inSession()).toBe(true);
+
+    setVisibility('hidden');
+    jumpClock(60 * 60 * 1000);
+    setVisibility('visible');
+    expect(document.querySelector('.profile-select-screen')).toBeNull();
+    expect(inSession()).toBe(true);
   });
 
   it("supprimer le profil actif bascule sur l'autre enfant", async () => {

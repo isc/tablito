@@ -88,6 +88,14 @@ function initialScreen(profile: UserProfile | null, profileCount: number): Scree
   return profileHome(profile);
 }
 
+// Retour au premier plan après une longue absence : sur une tablette
+// familiale, l'enfant qui reprend l'app n'est souvent pas celui qui l'a
+// laissée — et la PWA reste en mémoire des heures, donc le « Qui joue ? » du
+// boot ne couvre pas ce cas. Au-delà de ce délai passé en arrière-plan, on
+// repropose le choix du joueur. Sous le seuil (notification, aller-retour
+// rapide), on ne touche à rien.
+const RESHOW_PICKER_AFTER_HIDDEN_MS = 15 * 60 * 1000;
+
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile, listProfiles().length));
@@ -217,6 +225,27 @@ export default function App() {
       document.removeEventListener('visibilitychange', refresh);
       window.removeEventListener('focus', refresh);
     };
+  }, []);
+
+  // Repropose « Qui joue ? » au retour au premier plan après une longue
+  // absence (cf. RESHOW_PICKER_AFTER_HIDDEN_MS), s'il y a plusieurs profils.
+  // Uniquement depuis l'accueil : on n'interrompt jamais une séance, un récap
+  // ou une navigation parent — leur état mémoire serait perdu.
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+        return;
+      }
+      const longAbsence =
+        hiddenAt > 0 && Date.now() - hiddenAt >= RESHOW_PICKER_AFTER_HIDDEN_MS;
+      hiddenAt = 0;
+      if (!longAbsence || listProfiles().length < 2) return;
+      setScreen((prev) => (prev === 'home' ? 'profiles' : prev));
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
   // Welcome: create new profile with optional placement test results.
