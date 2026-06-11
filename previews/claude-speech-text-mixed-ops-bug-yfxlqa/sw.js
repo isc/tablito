@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260611175129"
+const CACHE = 'tablito-' + "20260611184333"
 const BASE = "/previews/claude-speech-text-mixed-ops-bug-yfxlqa/"
 const ASSETS = [
   "/previews/claude-speech-text-mixed-ops-bug-yfxlqa/CNAME",
