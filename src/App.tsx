@@ -12,7 +12,18 @@ import {
   isRule11Unlocked,
   isDivisionUnlocked,
 } from './lib/badges';
-import { loadProfile, saveProfile, clearStoredProfile, createNewProfile, exportProfile, importProfile } from './lib/storage';
+import {
+  loadProfile,
+  loadProfileById,
+  saveProfile,
+  addProfile,
+  deleteActiveProfile,
+  setActiveProfile,
+  listProfiles,
+  createNewProfile,
+  exportProfile,
+  importProfile,
+} from './lib/storage';
 import { getFactKey } from './lib/facts';
 import { getDivisionFactKey } from './lib/divisionFacts';
 import { seedFromPlacement } from './lib/placement';
@@ -33,6 +44,7 @@ import { isVoiceMode } from './hooks/useInputMode';
 // boutons sont wired par l'inline script à la fin de body. Quand App
 // monte, on est déjà passé la landing (skip flag, profil, ou standalone).
 import WelcomeScreen from './screens/WelcomeScreen';
+import ProfileSelectScreen from './screens/ProfileSelectScreen';
 import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionScreen from './screens/SessionScreen';
@@ -50,6 +62,7 @@ const ChangelogScreen  = lazy(() => import('./screens/ChangelogScreen'));
 
 type Screen =
   | 'welcome'
+  | 'profiles'
   | 'rulesIntro'
   | 'home'
   | 'session'
@@ -61,15 +74,27 @@ type Screen =
   | 'privacy'
   | 'changelog';
 
-function initialScreen(profile: UserProfile | null): Screen {
+// Écran d'arrivée d'un profil donné (post-sélection ou post-import).
+function profileHome(profile: UserProfile): Screen {
+  return profile.hasSeenRulesIntro ? 'home' : 'rulesIntro';
+}
+
+function initialScreen(profile: UserProfile | null, profileCount: number): Screen {
+  // Dès 2 profils sur l'appareil, le boot passe par « Qui joue ? » : on ne
+  // devine jamais quel enfant tient la tablette. Mono-profil : parcours
+  // inchangé, zéro friction ajoutée.
+  if (profileCount > 1) return 'profiles';
   if (!profile) return 'welcome';
-  if (!profile.hasSeenRulesIntro) return 'rulesIntro';
-  return 'home';
+  return profileHome(profile);
 }
 
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
-  const [screen, setScreen] = useState<Screen>(() => initialScreen(profile));
+  const [screen, setScreen] = useState<Screen>(() => initialScreen(profile, listProfiles().length));
+  // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
+  // du Welcome « ajout d'un enfant ». Lu à chaque render : l'index est
+  // minuscule et ne change que via des flows qui re-rendent déjà App.
+  const profileCount = listProfiles().length;
   // Liste unifiée de la séance en cours : 100% multiplication avant déblocage,
   // mixte (division + entretien des tables) après (specs §11.6).
   const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
@@ -167,13 +192,13 @@ export default function App() {
   }, [screen]);
 
   // Signale au pwa-register si on est dans un écran "safe" pour appliquer
-  // une mise à jour SW (= reload). `home` ET `welcome` le sont : ailleurs, un
-  // reload casserait l'état mémoire en cours (séance, recap animations,
-  // navigation parent, etc.). `welcome` est inclus car une install neuve (sans
-  // profil) y reste bloquée — sans ça, ces utilisateurs ne recevraient JAMAIS
-  // de mise à jour (ex. l'écran d'import lui-même). Rien de précieux à perdre
-  // en rechargeant l'accueil/l'onboarding.
-  const safeForReload = screen === 'home' || screen === 'welcome';
+  // une mise à jour SW (= reload). `home`, `welcome` ET `profiles` le sont :
+  // ailleurs, un reload casserait l'état mémoire en cours (séance, recap
+  // animations, navigation parent, etc.). `welcome` est inclus car une install
+  // neuve (sans profil) y reste bloquée — sans ça, ces utilisateurs ne
+  // recevraient JAMAIS de mise à jour (ex. l'écran d'import lui-même). Rien de
+  // précieux à perdre en rechargeant l'accueil/l'onboarding/le choix du joueur.
+  const safeForReload = screen === 'home' || screen === 'welcome' || screen === 'profiles';
   useEffect(() => {
     setSwBusy(!safeForReload);
   }, [safeForReload]);
@@ -194,12 +219,35 @@ export default function App() {
     };
   }, []);
 
-  // Welcome: create new profile with optional placement test results
+  // Welcome: create new profile with optional placement test results.
+  // addProfile persiste tout de suite sous un NOUVEL id (qui devient actif) :
+  // sans ça, l'effet de sauvegarde écraserait le profil de l'enfant précédent
+  // quand on ajoute un deuxième enfant.
   const handleWelcomeComplete = useCallback((name: string, placementResults: PlacementResult[]) => {
     const newProfile = createNewProfile(name);
     seedFromPlacement(newProfile.facts, placementResults, todayISO());
+    addProfile(newProfile);
     setProfile(newProfile);
     setScreen('rulesIntro');
+  }, []);
+
+  // Sélection d'un joueur depuis l'écran « Qui joue ? ».
+  const handleSelectProfile = useCallback((id: string) => {
+    const selected = loadProfileById(id);
+    if (!selected) return;
+    setActiveProfile(id);
+    setProfile(selected);
+    setScreen(profileHome(selected));
+  }, []);
+
+  // « Ajouter un enfant » (depuis « Qui joue ? » ou l'espace parent) : on
+  // rejoue l'onboarding Welcome complet, prénom + test de placement.
+  const handleAddProfile = useCallback(() => setScreen('welcome'), []);
+
+  // Annulation de l'ajout d'un enfant : retour au choix du joueur s'il y a
+  // plusieurs profils, sinon à l'accueil de l'enfant actif.
+  const handleWelcomeCancel = useCallback(() => {
+    setScreen(listProfiles().length > 1 ? 'profiles' : 'home');
   }, []);
 
   const handleRulesIntroComplete = useCallback(() => {
@@ -487,25 +535,34 @@ export default function App() {
     return imported;
   }, []);
 
-  // Variante pour l'écran d'accueil (migration / nouvel appareil) : importe ET
-  // navigue vers l'écran adapté au profil restauré — sinon on resterait bloqué
-  // sur Welcome (le profil ne pilote pas `screen` tout seul). L'import depuis
-  // l'espace parent, lui, ne navigue pas (comportement inchangé).
+  // Variante pour l'écran d'accueil (migration / nouvel appareil) : importe en
+  // tant que NOUVEAU profil (jamais d'écrasement d'un autre enfant) ET navigue
+  // vers l'écran adapté au profil restauré — sinon on resterait bloqué sur
+  // Welcome (le profil ne pilote pas `screen` tout seul). L'import depuis
+  // l'espace parent, lui, écrase le profil actif (restauration de sauvegarde)
+  // et ne navigue pas (comportement inchangé).
   const handleWelcomeImport = useCallback((json: string): boolean => {
-    const imported = handleImport(json);
-    if (imported) setScreen(initialScreen(imported));
-    return imported !== null;
-  }, [handleImport]);
+    const imported = importProfile(json);
+    if (!imported) return false;
+    addProfile(imported);
+    setProfile(imported);
+    setScreen(profileHome(imported));
+    return true;
+  }, []);
 
-  const handleResetProfile = useCallback(() => {
+  const handleDeleteProfile = useCallback(() => {
+    if (!profile) return;
     const ok = window.confirm(
-      'Réinitialiser le profil ?\n\nLe prénom, les séances, les badges, la série et le test de placement seront effacés. Cette action est irréversible.',
+      `Supprimer le profil de ${profile.name} ?\n\nLe prénom, les séances, les badges et la série seront effacés de cet appareil. Cette action est irréversible.`,
     );
     if (!ok) return;
-    clearStoredProfile();
-    setProfile(null);
-    setScreen('welcome');
-  }, []);
+    deleteActiveProfile();
+    // S'il reste plusieurs enfants → « Qui joue ? » ; un seul → son accueil
+    // directement ; aucun → onboarding complet.
+    const next = loadProfile();
+    setProfile(next);
+    setScreen(next ? (listProfiles().length > 1 ? 'profiles' : profileHome(next)) : 'welcome');
+  }, [profile]);
 
   return (
     <div className="app">
@@ -515,7 +572,21 @@ export default function App() {
           qui flashe. */}
       <Suspense fallback={null}>
       {screen === 'welcome' && (
-        <WelcomeScreen onComplete={handleWelcomeComplete} onImport={handleWelcomeImport} />
+        <WelcomeScreen
+          onComplete={handleWelcomeComplete}
+          onImport={handleWelcomeImport}
+          // Annulable uniquement en mode « ajout d'un enfant » : au tout
+          // premier onboarding il n'y a nulle part où revenir.
+          onCancel={profile ? handleWelcomeCancel : undefined}
+        />
+      )}
+
+      {screen === 'profiles' && (
+        <ProfileSelectScreen
+          profiles={listProfiles()}
+          onSelect={handleSelectProfile}
+          onAdd={handleAddProfile}
+        />
       )}
 
       {screen === 'rulesIntro' && profile && (
@@ -538,6 +609,7 @@ export default function App() {
           onShowBadges={() => setScreen('badges')}
           onShowRules={handleShowRules}
           onShowParent={() => setScreen('parent')}
+          onSwitchProfile={profileCount > 1 ? () => setScreen('profiles') : undefined}
         />
       )}
 
@@ -594,7 +666,8 @@ export default function App() {
           onBack={() => setScreen('home')}
           onExport={handleExport}
           onImport={handleImport}
-          onResetProfile={handleResetProfile}
+          onAddProfile={handleAddProfile}
+          onDeleteProfile={handleDeleteProfile}
           onShowPrivacy={() => setScreen('privacy')}
           onShowChangelog={() => setScreen('changelog')}
         />

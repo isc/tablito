@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react';
-import { STORAGE_KEY } from '../lib/storage';
+import { getActiveProfileRaw } from '../lib/storage';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -28,7 +28,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
   handleDownloadBackup = (): void => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = getActiveProfileRaw();
       if (!raw) return;
       const blob = new Blob([raw], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

@@ -345,6 +345,7 @@
     <li><a href="#perimetre">Périmètre — ce que l'app ne fait PAS</a></li>
     <li><a href="#metriques">Métriques de succès</a></li>
     <li><a href="#division">Niveau 2 — Réviser par la division</a></li>
+    <li><a href="#profils">Multi-profils — plusieurs enfants par appareil</a></li>
     <li><a href="#evolutions">Évolutions possibles (V2)</a></li>
     <li><a href="#references">Références</a></li>
   </ol>
@@ -831,7 +832,8 @@ interface Badge {
   <table>
     <thead><tr><th>Écran</th><th>Contenu</th></tr></thead>
     <tbody>
-      <tr><td>Accueil</td><td>Mascotte (animations d'idle), prénom, streak, bouton « C'est parti ! »</td></tr>
+      <tr><td>Qui joue ?</td><td>Choix du joueur au lancement — visible uniquement dès 2 profils sur l'appareil (§12)</td></tr>
+      <tr><td>Accueil</td><td>Mascotte (animations d'idle), prénom, streak, bouton « C'est parti ! » (+ bouton « changer de joueur » en multi-profils)</td></tr>
       <tr><td>Séance — Intro</td><td>Grille de points animée pour un nouveau fait</td></tr>
       <tr><td>Séance — Question</td><td>Question en gros, pavé numérique, barre de progression</td></tr>
       <tr><td>Séance — Feedback correct</td><td>Animation joyeuse, mascotte enthousiaste</td></tr>
@@ -981,16 +983,33 @@ interface Badge {
   <p>Des interventions de fluence ciblant <em>directement</em> la division existent et fonctionnent (cover-copy-compare, taped problems, detect-practice-repair). En revanche, les bénéfices de la <strong>répétition espacée</strong> sont démontrés sur la multiplication et la rétention en général, mais <strong>pas directement sur les faits de division</strong> : les méta-analyses traitent la division au sein des « faits de base » sans isoler son effet, et l'opération s'avère être un modérateur significatif. Appliquer Leitner à la division est donc une <strong>généralisation plausible mais non directement prouvée</strong> — un pari raisonné, assumé comme tel, à surveiller si l'usage révélait un comportement différent de la multiplication.</p>
 </section>
 
+<section class="chapter" id="profils">
+  <h2><span class="num">12</span>Multi-profils — plusieurs enfants par appareil</h2>
+  <p>Une tablette familiale sert souvent à plusieurs enfants. Chaque enfant dispose de son propre profil : faits, boîtes Leitner, badges, séries et images mystère totalement indépendants. Aucune notion de compte ni de mot de passe — tout reste local sur l'appareil (§9).</p>
+
+  <h3 id="profils-parcours"><span class="num">12.1</span>Parcours</h3>
+  <ul>
+    <li><strong>Mono-profil (cas majoritaire)</strong> : rien ne change. Pas d'écran intermédiaire, pas de bouton supplémentaire — zéro friction ajoutée à la boucle quotidienne.</li>
+    <li><strong>Ajout d'un enfant</strong> : bouton « Ajouter un enfant » dans l'espace parent (section Profils) ou depuis l'écran « Qui joue ? ». Rejoue l'onboarding complet : prénom, test de placement, intro des règles ×1/×10.</li>
+    <li><strong>Dès 2 profils</strong> : l'app s'ouvre sur l'écran « Qui joue ? » (liste des prénoms, pastille-initiale colorée stable par prénom). On ne devine jamais quel enfant tient l'appareil — choisir coûte un tap, se tromper de profil polluerait les boîtes Leitner des deux enfants.</li>
+    <li><strong>Changer de joueur</strong> : bouton dédié en haut de l'écran d'accueil (visible uniquement en multi-profils), qui ramène à « Qui joue ? ».</li>
+    <li><strong>Suppression</strong> : « Supprimer ce profil » dans l'espace parent, avec confirmation explicite. S'il reste un seul profil → retour direct à son accueil ; plusieurs → « Qui joue ? » ; aucun → onboarding.</li>
+  </ul>
+
+  <h3 id="profils-stockage"><span class="num">12.2</span>Stockage et migration</h3>
+  <p>Chaque profil vit sous sa propre clé localStorage (<code>multiplix-profile:&lt;id&gt;</code>) ; un index léger (<code>multiplix-profiles</code>) liste les profils (id, prénom) et le profil actif. L'ancien schéma mono-clé (<code>multiplix-profile</code>) est migré automatiquement et silencieusement au premier lancement : le profil existant devient le premier profil de l'index, rien n'est perdu.</p>
+  <p>L'export/import de sauvegarde reste par-profil : l'export produit le JSON du profil actif (format inchangé, compatible avec les sauvegardes antérieures) ; l'import depuis l'écran d'accueil crée un <em>nouveau</em> profil (jamais d'écrasement d'un autre enfant), tandis que l'import depuis l'espace parent restaure le profil actif.</p>
+</section>
+
 <section class="chapter" id="evolutions">
-  <h2><span class="num">12</span>Évolutions possibles (V2)</h2>
+  <h2><span class="num">13</span>Évolutions possibles (V2)</h2>
   <ul>
     <li>Mode défi : séance bonus optionnelle le week-end</li>
-    <li>Mode multi-enfant (plusieurs profils sur le même appareil)</li>
   </ul>
 </section>
 
 <section class="chapter" id="references">
-  <h2><span class="num">13</span>Références</h2>
+  <h2><span class="num">14</span>Références</h2>
   <ol class="references">
     <li>Axtell, P. K., McCallum, R. S., Bell, S. M., &amp; Poncy, B. (2009). Developing math automaticity using a classwide fluency building procedure for middle school students: A preliminary study. <em>Psychology in the Schools, 46</em>(6), 526–538.</li>
     <li>Brendefur, J., Strother, S., Thiede, K., &amp; Appleton, S. (2015). Developing multiplication fact fluency. <em>Advances in Social Sciences Research Journal, 2</em>(8). <a href="https://doi.org/10.14738/assrj.28.1396">doi:10.14738/assrj.28.1396</a></li>
@@ -1021,7 +1040,7 @@ interface Badge {
 </main>
 
 <footer class="page-footer">
-  <p>Document de spécifications — v1.2 — Juin 2026</p>
+  <p>Document de spécifications — v1.3 — Juin 2026</p>
   <p><a href="https://github.com/isc/tablito">Code source sur GitHub</a></p>
 </footer>
 

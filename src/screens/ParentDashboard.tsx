@@ -20,7 +20,10 @@ interface ParentDashboardProps {
   onBack: () => void;
   onExport: () => void;
   onImport: (json: string) => void;
-  onResetProfile: () => void;
+  // Multi-profils : lance l'onboarding Welcome pour un nouvel enfant.
+  onAddProfile: () => void;
+  // Supprime le profil actif (avec confirmation côté App).
+  onDeleteProfile: () => void;
   onShowPrivacy: () => void;
   onShowChangelog: () => void;
 }
@@ -30,7 +33,8 @@ export default function ParentDashboard({
   onBack,
   onExport,
   onImport,
-  onResetProfile,
+  onAddProfile,
+  onDeleteProfile,
   onShowPrivacy,
   onShowChangelog,
 }: ParentDashboardProps) {
@@ -434,17 +438,22 @@ export default function ParentDashboard({
       </div>
 
       <div className="parent-section">
-        <h3>Réinitialisation</h3>
+        <h3>Profils</h3>
         <p className="parent-section-subtitle">
-          Efface le profil et relance le test de placement. Utile pour
-          recommencer à zéro ou changer d'enfant.
+          Plusieurs enfants sur le même appareil&nbsp;? Chacun a son profil&nbsp;:
+          progression, badges et images séparés. La suppression efface le profil
+          de {profile.name} de cet appareil — pour recommencer à zéro, supprimez
+          puis recréez le profil.
         </p>
         <div className="parent-actions">
+          <button className="parent-action-btn" onClick={onAddProfile}>
+            Ajouter un enfant
+          </button>
           <button
             className="parent-action-btn parent-action-btn--danger"
-            onClick={onResetProfile}
+            onClick={onDeleteProfile}
           >
-            Réinitialiser le profil
+            Supprimer ce profil
           </button>
         </div>
       </div>

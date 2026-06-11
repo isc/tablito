@@ -16,9 +16,13 @@ interface WelcomeScreenProps {
   // si le JSON collé est invalide, pour afficher une erreur. En cas de succès,
   // App navigue vers l'écran adapté au profil (ce composant est alors démonté).
   onImport: (json: string) => boolean;
+  // Présent uniquement en mode « ajouter un enfant » (il existe déjà au moins
+  // un profil) : permet de revenir en arrière sans créer de profil. Absent au
+  // tout premier onboarding.
+  onCancel?: () => void;
 }
 
-export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenProps) {
+export default function WelcomeScreen({ onComplete, onImport, onCancel }: WelcomeScreenProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [showImport, setShowImport] = useState(false);
@@ -247,6 +251,11 @@ export default function WelcomeScreen({ onComplete, onImport }: WelcomeScreenPro
           >
             Déjà une progression&nbsp;? L'importer
           </button>
+          {onCancel && (
+            <button className="welcome-btn-skip" onClick={onCancel}>
+              Annuler
+            </button>
+          )}
         </div>
       )}
 

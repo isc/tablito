@@ -22,6 +22,9 @@ interface HomeScreenProps {
   onShowBadges: () => void;
   onShowRules: () => void;
   onShowParent: () => void;
+  // Présent uniquement quand l'appareil héberge plusieurs profils : ouvre
+  // l'écran « Qui joue ? ». Absent en mono-profil (pas de bouton).
+  onSwitchProfile?: () => void;
 }
 
 function IconGear() {
@@ -76,6 +79,17 @@ const MOOD_RESET_MS = 1500;
 let easterTickleCount = 0;
 let easterHiddenUntil = 0;
 
+function IconUsers() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3.5 19c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="16.5" cy="9" r="2.4" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M16.5 14.2c2.2.1 3.7 1.4 4.2 3.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconRuler() {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -95,6 +109,7 @@ export default function HomeScreen({
   onShowBadges,
   onShowRules,
   onShowParent,
+  onSwitchProfile,
 }: HomeScreenProps) {
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
@@ -183,6 +198,15 @@ export default function HomeScreen({
           )}
         </div>
         <div className="home-top-bar-right">
+          {onSwitchProfile && (
+            <button
+              className="home-chrome-btn home-switch-btn"
+              onClick={onSwitchProfile}
+              aria-label="Changer de joueur"
+            >
+              <IconUsers />
+            </button>
+          )}
           <button
             className="home-chrome-btn home-parent-btn"
             onClick={() => setShowParentGate(true)}

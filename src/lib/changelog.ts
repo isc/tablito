@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-06-11',
+    items: [
+      "Plusieurs enfants sur le même appareil : l'espace parent propose désormais « Ajouter un enfant » (section Profils). Chaque enfant a son propre profil — progression, badges, série et images mystère séparés. Dès deux profils, l'app demande « Qui joue ? » au lancement, et un bouton en haut de l'accueil permet de changer de joueur à tout moment. Les profils existants sont conservés tels quels.",
+    ],
+  },
+  {
     date: '2026-06-05',
     items: [
       "Nouveau niveau 2 — la division : quand l'enfant a décroché ses 8 badges de tables (de 2 à 9), l'app se met à réviser les mêmes faits sous forme de division (56 ÷ 7 = ?), avec sa propre image mystère à dévoiler. Toujours un seul bouton « C'est parti » : la séance du jour devient la division, et les quelques tables à réviser pour l'entretien y sont glissées au passage. Les divisions arrivent progressivement, et l'appli enseigne l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? » (7 × ? = 56).",

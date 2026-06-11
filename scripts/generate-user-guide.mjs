@@ -257,8 +257,12 @@ async function seedProfile(page, profile) {
     };
 
     if (p === null) {
+      // Purge les deux schémas (legacy mono-profil + index multi-profils).
       localStorage.removeItem('multiplix-profile');
+      localStorage.removeItem('multiplix-profiles');
     } else {
+      // On seede via la clé legacy : l'app la migre vers le schéma
+      // multi-profils au boot, ce qui exerce aussi le chemin de migration.
       localStorage.setItem('multiplix-profile', JSON.stringify(p));
     }
     // Bypass the install landing : on est en headless, l'install PWA n'a
@@ -270,7 +274,15 @@ async function seedProfile(page, profile) {
 /** Returns the Leitner box of the currently displayed question's fact. */
 async function readCurrentFactBox(page, q) {
   return page.evaluate((qq) => {
-    const raw = localStorage.getItem('multiplix-profile');
+    // Post-boot, le profil vit sous le schéma multi-profils ; on garde le
+    // fallback legacy au cas où l'app n'a pas encore migré.
+    let raw = null;
+    const idx = localStorage.getItem('multiplix-profiles');
+    if (idx) {
+      const { activeId } = JSON.parse(idx);
+      if (activeId) raw = localStorage.getItem('multiplix-profile:' + activeId);
+    }
+    if (!raw) raw = localStorage.getItem('multiplix-profile');
     if (!raw) return null;
     const profile = JSON.parse(raw);
     const a = Math.min(qq.a, qq.b);

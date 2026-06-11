@@ -385,7 +385,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     },
   );
 
-  it("le bouton « Réinitialiser le profil » efface le profil et relance le test de placement", async () => {
+  it("le bouton « Supprimer ce profil » efface le profil et relance le test de placement", async () => {
     render(<App />);
 
     // Setup minimal : on crée un profil en sautant le test de placement.
@@ -401,7 +401,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
 
     await openParentDashboard();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    fireEvent.click(findButton('Réinitialiser le profil')!);
+    fireEvent.click(findButton('Supprimer ce profil')!);
     confirmSpy.mockRestore();
 
     expect(loadProfile()).toBeNull();
@@ -425,7 +425,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
 
     await openParentDashboard();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    fireEvent.click(findButton('Réinitialiser le profil')!);
+    fireEvent.click(findButton('Supprimer ce profil')!);
     confirmSpy.mockRestore();
 
     expect(loadProfile()?.name).toBe(before!.name);

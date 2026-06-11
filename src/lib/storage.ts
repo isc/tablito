@@ -16,18 +16,121 @@ function pickDivisionTheme(multTheme: MysteryTheme): MysteryTheme {
   return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
 }
 
-// ⚠ Cette clé est aussi référencée en dur dans l'inline script de
-// index.html (pour décider si la landing statique doit s'afficher avant
-// que main.js ne charge). Si tu la renommes, mets à jour les deux.
-export const STORAGE_KEY = 'multiplix-profile';
+// === Multi-profils ===
+// Plusieurs enfants peuvent partager le même appareil (specs §12). Chaque
+// profil vit sous sa propre clé (`multiplix-profile:<id>`), et un index
+// léger (`multiplix-profiles`) liste les {id, name} + le profil actif.
+// Invariant : l'index n'existe en localStorage que s'il reste au moins un
+// profil — l'inline script de index.html teste sa présence (en dur, comme
+// l'ancienne clé) pour décider si la landing statique doit s'afficher avant
+// que main.js ne charge. Si tu renommes une clé, mets à jour les deux.
+export const PROFILES_INDEX_KEY = 'multiplix-profiles';
+const PROFILE_KEY_PREFIX = 'multiplix-profile:';
+// Clé historique mono-profil — migrée vers l'index à la première lecture.
+const LEGACY_STORAGE_KEY = 'multiplix-profile';
 
-/**
- * Loads the user profile from localStorage.
- * Returns null if no profile exists or if parsing fails.
- */
-export function loadProfile(): UserProfile | null {
+export interface ProfileSummary {
+  id: string;
+  name: string;
+}
+
+interface ProfilesIndex {
+  activeId: string | null;
+  profiles: ProfileSummary[];
+}
+
+function profileKey(id: string): string {
+  return PROFILE_KEY_PREFIX + id;
+}
+
+function generateProfileId(): string {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    return crypto.randomUUID();
+  } catch {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+}
+
+function readIndex(): ProfilesIndex {
+  try {
+    const raw = localStorage.getItem(PROFILES_INDEX_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as ProfilesIndex;
+      const profiles = Array.isArray(parsed.profiles)
+        ? parsed.profiles.filter(
+            (p): p is ProfileSummary =>
+              !!p && typeof p === 'object' && typeof p.id === 'string' && typeof p.name === 'string',
+          )
+        : [];
+      // Défensif : un activeId orphelin (entrée supprimée, index altéré)
+      // retombe sur le premier profil plutôt que de bloquer le boot.
+      const activeId = profiles.some((p) => p.id === parsed.activeId)
+        ? parsed.activeId
+        : profiles[0]?.id ?? null;
+      return { activeId, profiles };
+    }
+  } catch {
+    // Index illisible → on retente la migration legacy ci-dessous.
+  }
+  return migrateLegacyProfile();
+}
+
+// Migration : avant le multi-profil, l'unique profil vivait sous la clé
+// `multiplix-profile`. On le déplace tel quel vers le nouveau schéma
+// (id généré + index) et on retire l'ancienne clé.
+function migrateLegacyProfile(): ProfilesIndex {
+  const empty: ProfilesIndex = { activeId: null, profiles: [] };
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return empty;
+    const parsed = JSON.parse(raw);
+    if (!isValidProfile(parsed)) return empty;
+    const id = generateProfileId();
+    localStorage.setItem(profileKey(id), raw);
+    const index: ProfilesIndex = {
+      activeId: id,
+      profiles: [{ id, name: (parsed as UserProfile).name }],
+    };
+    writeIndex(index);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return index;
+  } catch {
+    return empty;
+  }
+}
+
+// Best-effort : localStorage indisponible (mode privé strict) ne doit pas
+// faire planter l'app — au pire l'état reste en mémoire pour la session.
+function writeIndex(index: ProfilesIndex): void {
+  try {
+    if (index.profiles.length === 0) {
+      // Invariant : pas de profil → pas d'index (cf. inline script index.html).
+      localStorage.removeItem(PROFILES_INDEX_KEY);
+    } else {
+      localStorage.setItem(PROFILES_INDEX_KEY, JSON.stringify(index));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function listProfiles(): ProfileSummary[] {
+  return readIndex().profiles;
+}
+
+export function getActiveProfileId(): string | null {
+  return readIndex().activeId;
+}
+
+export function setActiveProfile(id: string): void {
+  const index = readIndex();
+  if (index.activeId === id || !index.profiles.some((p) => p.id === id)) return;
+  writeIndex({ ...index, activeId: id });
+}
+
+export function loadProfileById(id: string): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(profileKey(id));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!isValidProfile(parsed)) return null;
@@ -38,20 +141,83 @@ export function loadProfile(): UserProfile | null {
 }
 
 /**
- * Saves the user profile to localStorage.
+ * Loads the active user profile from localStorage.
+ * Returns null if no profile exists or if parsing fails.
  */
-export function saveProfile(profile: UserProfile): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+export function loadProfile(): UserProfile | null {
+  const id = getActiveProfileId();
+  return id ? loadProfileById(id) : null;
 }
 
-// Best-effort : localStorage indisponible (mode privé strict) ne doit pas
-// faire planter le reset — l'appelant repassera de toute façon par
-// WelcomeScreen via setProfile(null).
-export function clearStoredProfile(): void {
+/**
+ * Saves the profile under the active id (created on the fly if the device
+ * has no profile yet — ex. import cross-origin avant tout onboarding).
+ */
+export function saveProfile(profile: UserProfile): void {
+  const index = readIndex();
+  if (!index.activeId) {
+    addProfile(profile);
+    return;
+  }
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.setItem(profileKey(index.activeId), JSON.stringify(profile));
+  } catch {
+    return;
+  }
+  // Garde le nom de l'index en phase : il peut changer via un import de
+  // sauvegarde depuis l'espace parent (restauration d'un autre prénom).
+  const entry = index.profiles.find((p) => p.id === index.activeId);
+  if (entry && entry.name !== profile.name) {
+    writeIndex({
+      ...index,
+      profiles: index.profiles.map((p) =>
+        p.id === index.activeId ? { ...p, name: profile.name } : p,
+      ),
+    });
+  }
+}
+
+/**
+ * Persiste un profil sous un nouvel id, qui devient le profil actif.
+ * C'est le chemin de création (onboarding) et d'ajout d'un enfant.
+ */
+export function addProfile(profile: UserProfile): string {
+  const index = readIndex();
+  const id = generateProfileId();
+  try {
+    localStorage.setItem(profileKey(id), JSON.stringify(profile));
+  } catch {
+    return id;
+  }
+  writeIndex({ activeId: id, profiles: [...index.profiles, { id, name: profile.name }] });
+  return id;
+}
+
+/**
+ * Supprime le profil actif ; s'il reste des profils, le premier devient actif.
+ */
+export function deleteActiveProfile(): void {
+  const index = readIndex();
+  if (!index.activeId) return;
+  try {
+    localStorage.removeItem(profileKey(index.activeId));
   } catch {
     // ignore
+  }
+  const profiles = index.profiles.filter((p) => p.id !== index.activeId);
+  writeIndex({ activeId: profiles[0]?.id ?? null, profiles });
+}
+
+/**
+ * JSON brut du profil actif, sans validation ni migration — utilisé par
+ * ErrorBoundary pour proposer une sauvegarde même si le profil ne parse plus.
+ */
+export function getActiveProfileRaw(): string | null {
+  try {
+    const id = getActiveProfileId();
+    return id ? localStorage.getItem(profileKey(id)) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -86,7 +252,7 @@ export async function importProfileFromUrl(): Promise<void> {
   const match = window.location.hash.match(IMPORT_HASH_RE);
   if (!match) return;
   try {
-    if (localStorage.getItem(STORAGE_KEY)) return; // jamais écraser un profil présent
+    if (listProfiles().length > 0) return; // jamais écraser un profil présent
     const profile = importProfile(await decodeImportPayload(match[1]));
     if (profile) saveProfile(profile);
   } catch {
