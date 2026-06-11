@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["main.tsx"],
+  "sourcesContent": ["import { StrictMode } from 'react'\nimport { createRoot } from 'react-dom/client'\nimport { registerSW } from 'virtual:pwa-register'\nimport App from './App.tsx'\nimport ErrorBoundary from './components/ErrorBoundary'\nimport { importProfileFromUrl } from './lib/storage'\n\n// Migration cross-origin (ancien domaine \u2192 tablito.app) : si on arrive avec un\n// profil dans le fragment d'URL (#import=\u2026), on le r\u00E9injecte AVANT de monter\n// l'app, pour que loadProfile() le voie et atterrisse direct sur l'accueil.\nasync function boot() {\n  await importProfileFromUrl()\n  registerSW()\n  createRoot(document.getElementById('root')!).render(\n    <StrictMode>\n      <ErrorBoundary>\n        <App />\n      </ErrorBoundary>\n    </StrictMode>,\n  )\n}\n\nboot()\n"],
+  "mappings": "AAgBQ,cAAAA,MAAA,qBAhBR,OAAS,cAAAC,MAAkB,QAC3B,OAAS,cAAAC,MAAkB,mBAC3B,OAAS,cAAAC,MAAkB,uBAC3B,OAAOC,MAAS,YAChB,OAAOC,MAAmB,6BAC1B,OAAS,wBAAAC,MAA4B,gBAKrC,eAAeC,GAAO,CACpB,MAAMD,EAAqB,EAC3BH,EAAW,EACXD,EAAW,SAAS,eAAe,MAAM,CAAE,EAAE,OAC3CF,EAACC,EAAA,CACC,SAAAD,EAACK,EAAA,CACC,SAAAL,EAACI,EAAA,EAAI,EACP,EACF,CACF,CACF,CAEAG,EAAK",
+  "names": ["jsx", "StrictMode", "createRoot", "registerSW", "App", "ErrorBoundary", "importProfileFromUrl", "boot"]
+}
