@@ -256,10 +256,16 @@ async function seedProfile(page, profile) {
       static parse(s) { return RealDate.parse(s); }
     };
 
+    // Repart toujours d'un stockage de profils vierge : les addInitScript
+    // s'empilent au fil des captures et le DERNIER seed doit gagner — y
+    // compris sur l'index multi-profils écrit par seedMultiProfile.
+    localStorage.removeItem('multiplix-profiles');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('multiplix-profile:')) localStorage.removeItem(k);
+    }
     if (p === null) {
-      // Purge les deux schémas (legacy mono-profil + index multi-profils).
       localStorage.removeItem('multiplix-profile');
-      localStorage.removeItem('multiplix-profiles');
     } else {
       // On seede via la clé legacy : l'app la migre vers le schéma
       // multi-profils au boot, ce qui exerce aussi le chemin de migration.
@@ -269,6 +275,27 @@ async function seedProfile(page, profile) {
     // aucun sens, on capture les écrans de l'app directement.
     localStorage.setItem('multiplix-skip-install', '1');
   }, { p: profile, mockTodayIso: SEED_TODAY });
+}
+
+/**
+ * Seeds SEVERAL profiles directly in the multi-profile schema (per-profile
+ * key + index). Reuses seedProfile(null) for the seeded PRNG, frozen clock
+ * and landing skip; init scripts run in order so the writes below win.
+ */
+async function seedMultiProfile(page, entries) {
+  await seedProfile(page, null);
+  await page.addInitScript((list) => {
+    for (const { id, p } of list) {
+      localStorage.setItem('multiplix-profile:' + id, JSON.stringify(p));
+    }
+    localStorage.setItem(
+      'multiplix-profiles',
+      JSON.stringify({
+        activeId: list[0].id,
+        profiles: list.map(({ id, p }) => ({ id, name: p.name })),
+      }),
+    );
+  }, entries);
 }
 
 /** Returns the Leitner box of the currently displayed question's fact. */
@@ -723,6 +750,30 @@ async function captureDivisionScreens(page) {
   await shot(page, '17-division-question');
 }
 
+async function captureMultiProfileScreens(page) {
+  // Deux enfants sur l'appareil : Léa (le profil du reste du guide) + Max
+  // (prénom choisi pour tomber sur une couleur d'avatar différente de Léa —
+  // la couleur est un hash stable du prénom).
+  const lea = buildSampleProfile();
+  const max = buildSampleProfile();
+  max.name = 'Max';
+  await seedMultiProfile(page, [
+    { id: 'guide-lea', p: lea },
+    { id: 'guide-max', p: max },
+  ]);
+  await gotoHome(page);
+
+  // Dès 2 profils, le boot passe par « Qui joue ? ».
+  await page.waitForSelector('.profile-select-screen');
+  await shot(page, '19-profile-select');
+
+  // Accueil avec le bouton « changer de joueur » à côté de l'engrenage.
+  await page.click('.profile-select-btn:has-text("Léa")');
+  await page.waitForSelector('.home-screen');
+  await page.waitForSelector('.home-switch-btn');
+  await shot(page, '20-home-multi');
+}
+
 // --- HTML guide generator ---------------------------------------------------
 
 const SECTIONS = [
@@ -937,9 +988,29 @@ const SECTIONS = [
       histogramme des boîtes Leitner, l'évolution du taux de réussite,
       les faits les plus difficiles,
       les temps de réponse moyens par table, l'historique des 10 dernières
-      séances, et les actions export / import du profil (JSON).`,
+      séances, les actions export / import du profil (JSON), et la gestion
+      des profils — ajouter un enfant ou supprimer le profil affiché (voir
+      « Plusieurs enfants » ci-dessous).`,
     shots: [
       { file: '13-parent-dashboard', caption: 'Tableau de bord parent complet.' },
+    ],
+  },
+  {
+    id: 'profils',
+    title: 'Plusieurs enfants',
+    description: `Une tablette pour toute la fratrie : chaque enfant a son
+      propre profil — progression, badges, série et images mystère totalement
+      séparés. On ajoute un enfant depuis l'espace parent (« Ajouter un
+      enfant », section Profils) ou directement depuis l'écran de choix du
+      joueur. Dès deux profils, l'app demande « Qui joue ? » à l'ouverture,
+      et un bouton dédié en haut de l'accueil permet de changer de joueur à
+      tout moment. Avec un seul profil, rien ne change : pas d'écran ni de
+      bouton en plus. La suppression d'un profil se fait dans l'espace
+      parent, après confirmation — et l'export / import de sauvegarde reste
+      disponible profil par profil.`,
+    shots: [
+      { file: '19-profile-select', caption: '« Qui joue ? » — l\'écran de choix affiché à l\'ouverture dès deux profils.' },
+      { file: '20-home-multi', caption: 'Le bouton « changer de joueur » apparaît en haut de l\'accueil, à côté de l\'engrenage.' },
     ],
   },
 ];
@@ -1330,6 +1401,7 @@ async function main() {
     await captureSessionScreens(page);
     await captureRecap(page);
     await captureDivisionScreens(page);
+    await captureMultiProfileScreens(page);
     // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
     // the input mode to 'voice' via addInitScript, both of which would
     // pollute any subsequent capture (especially captureRecap which drives
