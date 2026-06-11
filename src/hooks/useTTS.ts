@@ -55,27 +55,11 @@ export function useTTS() {
   const callGenRef = useRef(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const speak = useCallback((key: string, onEnd?: () => void) => {
-    const myGen = ++callGenRef.current;
-
-    if (activeRef.current) {
-      activeRef.current.stopped = true;
-      try { activeRef.current.source.stop(); } catch { /* ignore */ }
-      activeRef.current = null;
-    }
-
-    setIsSpeaking(true);
-
-    void (async () => {
-      const ctx = getAudioContext();
-      const buffer = await loadBuffer(key, ctx);
-      // Périmé : un speak() ou stop() plus récent a pris le relais.
+  // Démarre la lecture d'un buffer déjà décodé. No-op si l'appel est périmé
+  // (un speak/stop plus récent est passé entre-temps).
+  const playBuffer = useCallback(
+    (buffer: AudioBuffer, ctx: AudioContext, myGen: number, onEnd?: () => void) => {
       if (callGenRef.current !== myGen) return;
-      if (!buffer) {
-        activeRef.current = null;
-        setIsSpeaking(false);
-        return;
-      }
 
       const source = ctx.createBufferSource();
       source.buffer = buffer;
@@ -99,7 +83,59 @@ export function useTTS() {
           setIsSpeaking(false);
         }
       }
-    })();
+    },
+    [],
+  );
+
+  const speak = useCallback(
+    (key: string, onEnd?: () => void) => {
+      const myGen = ++callGenRef.current;
+
+      if (activeRef.current) {
+        activeRef.current.stopped = true;
+        try { activeRef.current.source.stop(); } catch { /* ignore */ }
+        activeRef.current = null;
+      }
+
+      setIsSpeaking(true);
+
+      const ctx = getAudioContext();
+
+      // Chemin synchrone quand le buffer est déjà en cache (préchargé, ou
+      // rejoué dans la séance) : on démarre immédiatement, sans fenêtre async.
+      // Crucial — sinon un `await` cède la main d'ici le démarrage, et un
+      // stop() déclenché entre-temps (l'enfant répond avant d'avoir entendu
+      // une question qu'il connaît) annule une lecture jamais commencée.
+      const cached = bufferCache.get(key);
+      if (cached) {
+        playBuffer(cached, ctx, myGen, onEnd);
+        return;
+      }
+
+      void (async () => {
+        const buffer = await loadBuffer(key, ctx);
+        // Périmé : un speak() ou stop() plus récent a pris le relais.
+        if (callGenRef.current !== myGen) return;
+        if (!buffer) {
+          activeRef.current = null;
+          setIsSpeaking(false);
+          return;
+        }
+        playBuffer(buffer, ctx, myGen, onEnd);
+      })();
+    },
+    [playBuffer],
+  );
+
+  // Préchargement : décode à l'avance les MP3 d'une liste de clés (typiquement
+  // toutes les questions d'une séance) pour que `speak` les démarre ensuite par
+  // le chemin synchrone ci-dessus. Idempotent et silencieux (les échecs sont
+  // gérés par loadBuffer → speak retombera sur le chemin async ou le silence).
+  const preload = useCallback((keys: string[]) => {
+    const ctx = getAudioContext();
+    for (const key of keys) {
+      if (!bufferCache.has(key)) void loadBuffer(key, ctx);
+    }
   }, []);
 
   const stop = useCallback(() => {
@@ -115,5 +151,5 @@ export function useTTS() {
 
   useEffect(() => stop, [stop]);
 
-  return { speak, stop, isSpeaking };
+  return { speak, stop, preload, isSpeaking };
 }
