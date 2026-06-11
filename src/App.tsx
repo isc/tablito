@@ -244,11 +244,11 @@ export default function App() {
   // rejoue l'onboarding Welcome complet, prénom + test de placement.
   const handleAddProfile = useCallback(() => setScreen('welcome'), []);
 
-  // Annulation de l'ajout d'un enfant : retour au choix du joueur s'il y a
-  // plusieurs profils, sinon à l'accueil de l'enfant actif.
+  // Annulation de l'ajout d'un enfant : même décision qu'au boot — choix du
+  // joueur s'il y a plusieurs profils, sinon l'accueil de l'enfant actif.
   const handleWelcomeCancel = useCallback(() => {
-    setScreen(listProfiles().length > 1 ? 'profiles' : 'home');
-  }, []);
+    setScreen(initialScreen(profile, listProfiles().length));
+  }, [profile]);
 
   const handleRulesIntroComplete = useCallback(() => {
     setProfile((prev) => (prev ? { ...prev, hasSeenRulesIntro: true } : prev));
@@ -557,11 +557,11 @@ export default function App() {
     );
     if (!ok) return;
     deleteActiveProfile();
-    // S'il reste plusieurs enfants → « Qui joue ? » ; un seul → son accueil
-    // directement ; aucun → onboarding complet.
+    // Même décision qu'au boot : plusieurs enfants → « Qui joue ? » ; un seul
+    // → son accueil directement ; aucun → onboarding complet.
     const next = loadProfile();
     setProfile(next);
-    setScreen(next ? (listProfiles().length > 1 ? 'profiles' : profileHome(next)) : 'welcome');
+    setScreen(initialScreen(next, listProfiles().length));
   }, [profile]);
 
   return (
@@ -575,9 +575,10 @@ export default function App() {
         <WelcomeScreen
           onComplete={handleWelcomeComplete}
           onImport={handleWelcomeImport}
-          // Annulable uniquement en mode « ajout d'un enfant » : au tout
-          // premier onboarding il n'y a nulle part où revenir.
-          onCancel={profile ? handleWelcomeCancel : undefined}
+          // Annulable uniquement en mode « ajout d'un enfant » (il existe
+          // déjà au moins un profil) : au tout premier onboarding il n'y a
+          // nulle part où revenir.
+          onCancel={profileCount > 0 ? handleWelcomeCancel : undefined}
         />
       )}
 
