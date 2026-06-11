@@ -45,7 +45,9 @@
           var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
             || window.navigator.standalone === true;
           var profile = false, skipped = false, hasImport = false;
-          try { profile = !!localStorage.getItem('multiplix-profile'); } catch (e) {}
+          // Deux clés : `multiplix-profiles` (index multi-profils) et
+          // `multiplix-profile` (ancien schéma mono-profil, migré au boot).
+          try { profile = !!(localStorage.getItem('multiplix-profiles') || localStorage.getItem('multiplix-profile')); } catch (e) {}
           try { skipped = localStorage.getItem('multiplix-skip-install') === '1'; } catch (e) {}
           // Migration cross-origin : on arrive de l'ancien domaine avec le profil
           // dans le fragment (#import=…) → on boote l'app directement (pas la
