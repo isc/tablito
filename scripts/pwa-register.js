@@ -8,10 +8,21 @@
 //
 //  2. Le SW fait `skipWaiting()` côté SW (cf. sw.js), donc dès qu'un
 //     nouveau SW finit son install il prend le contrôle. La protection
-//     "ne pas reloader pendant une séance" est ici, dans le handler
-//     `controllerchange` : si `busy=true` au moment où le nouveau SW
-//     prend le contrôle, on retient le reload (pendingReload) et on le
-//     déclenche quand busy repasse à false (= retour sur home).
+//     "ne pas reloader pendant une séance" est ici, dans `applyUpdate` :
+//     si `busy=true` au moment où le nouveau SW prend le contrôle, on
+//     retient le reload (pendingReload) et on le déclenche quand busy
+//     repasse à false (= retour sur home).
+//
+//     Deux signaux déclenchent `applyUpdate`, par robustesse cross-browser :
+//       a. `controllerchange` — Chrome/Firefox : fiable dès que le nouveau
+//          SW prend le contrôle (skipWaiting + clients.claim).
+//       b. le worker entrant qui passe à `activated` (`updatefound` +
+//          `statechange`) — filet de secours Safari/WebKit, qui ne déclenche
+//          PAS toujours `controllerchange` après skipWaiting() sur une page
+//          déjà ouverte. Sans ce filet, l'utilisateur reste coincé sur
+//          l'ancien shell (servi cache-first) jusqu'à fermer tous ses onglets.
+//     `triggerReload` est idempotent (flag `refreshing`) → les deux signaux
+//     ne provoquent jamais de double reload.
 //
 //  3. `reg.update()` sur `visibilitychange` : sans ça, une session
 //     longue (onglet/PWA gardé ouvert plusieurs heures) ne récupère
@@ -33,6 +44,16 @@ function triggerReload() {
   window.location.reload()
 }
 
+// Applique une mise à jour SW déjà active : reload, sauf si une séance est en
+// cours (busy) — dans ce cas on diffère jusqu'au retour sur home (setBusy).
+function applyUpdate() {
+  if (busy) {
+    pendingReload = true
+    return
+  }
+  triggerReload()
+}
+
 function checkForUpdate() {
   if (!currentRegistration) return
   const now = Date.now()
@@ -47,24 +68,38 @@ export function registerSW() {
   if (!('serviceWorker' in navigator)) return () => {}
 
   // Reload n'a de sens que sur un UPDATE d'un SW existant. Sur la
-  // première install, controllerchange est aussi déclenché par
-  // clients.claim() qui passe la page de "non contrôlée" à "contrôlée"
-  // — pas un update à appliquer, et reload en pleine 1re visite casse
-  // les scripts Playwright (cf. user-guide qui screenshote l'app).
-  if (navigator.serviceWorker.controller) {
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (busy) {
-        pendingReload = true
-        return
-      }
-      triggerReload()
+  // première install, controllerchange ET le passage à `activated` sont
+  // aussi déclenchés par clients.claim() qui passe la page de "non
+  // contrôlée" à "contrôlée" — pas un update à appliquer, et reload en
+  // pleine 1re visite casse les scripts Playwright (cf. user-guide qui
+  // screenshote l'app). On capture donc une seule fois, au boot, si la page
+  // était déjà contrôlée : seul ce cas autorise un reload automatique.
+  const isUpdate = !!navigator.serviceWorker.controller
+
+  if (isUpdate) {
+    navigator.serviceWorker.addEventListener('controllerchange', applyUpdate)
+  }
+
+  // Filet de secours Safari : on reload aussi quand le worker entrant passe
+  // à `activated`, sans attendre `controllerchange` (peu fiable sur WebKit).
+  const watchActivation = (reg) => {
+    if (!isUpdate) return
+    reg.addEventListener('updatefound', () => {
+      const incoming = reg.installing
+      if (!incoming) return
+      incoming.addEventListener('statechange', () => {
+        if (incoming.state === 'activated') applyUpdate()
+      })
     })
   }
 
   const startRegistration = () => {
     navigator.serviceWorker
       .register(__SW_PATH__, { updateViaCache: 'none' })
-      .then((reg) => { currentRegistration = reg })
+      .then((reg) => {
+        currentRegistration = reg
+        watchActivation(reg)
+      })
       .catch((e) => {
         console.warn('[pwa] SW registration failed', e)
       })
