@@ -77,6 +77,20 @@ export type SpeechRecognitionError =
   | 'bad-grammar'
   | (string & {});
 
+// Garde-fou iOS : au tout premier octroi de permission, WebKit termine parfois
+// la reconnaissance immédiatement (onend) sans jamais émettre onstart ni
+// résultat. Comme on redémarre dans onend pour garder le micro ouvert toute la
+// séance, on obtenait une boucle start→end→start→end qui saturait la boucle
+// d'événements et figeait toute l'UI (l'utilisateur devait force-quitter).
+// On considère qu'un cycle ayant duré moins que ce seuil est « à vide ».
+const RAPID_RESTART_THRESHOLD_MS = 500;
+// Au-delà de ce nombre de cycles à vide consécutifs, on arrête de retenter :
+// la prochaine séance repartira proprement, permission déjà accordée.
+const MAX_RAPID_RESTARTS = 5;
+// Délai laissé au navigateur entre deux tentatives quand un cycle à vide est
+// détecté, pour ne pas re-saturer la boucle d'événements.
+const RESTART_BACKOFF_MS = 400;
+
 export function useSpeechRecognition({
   onFinal,
   onInterim,
@@ -88,6 +102,11 @@ export function useSpeechRecognition({
   const wantListeningRef = useRef(false);
   const onFinalRef = useRef(onFinal);
   const onInterimRef = useRef(onInterim);
+  // Horodatage du dernier start() effectif + compteur de cycles « à vide »
+  // consécutifs + timer de backoff : voir le garde-fou iOS dans onend.
+  const lastStartAtRef = useRef(0);
+  const emptyRestartCountRef = useRef(0);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -146,12 +165,47 @@ export function useSpeechRecognition({
 
     rec.onend = () => {
       setIsListening(false);
-      if (wantListeningRef.current) {
+      if (!wantListeningRef.current) return;
+
+      // Un cycle anormalement court (terminé presque aussitôt démarré, sans
+      // résultat) trahit le glitch iOS du premier octroi de permission. On
+      // les compte ; au-delà d'un seuil on coupe la boucle plutôt que de
+      // figer le thread principal.
+      const ranForMs = Date.now() - lastStartAtRef.current;
+      if (ranForMs < RAPID_RESTART_THRESHOLD_MS) {
+        emptyRestartCountRef.current += 1;
+      } else {
+        emptyRestartCountRef.current = 0;
+      }
+
+      if (emptyRestartCountRef.current >= MAX_RAPID_RESTARTS) {
+        wantListeningRef.current = false;
+        emptyRestartCountRef.current = 0;
+        return;
+      }
+
+      const restart = () => {
+        if (!wantListeningRef.current) return;
+        lastStartAtRef.current = Date.now();
         try {
           rec.start();
         } catch {
           // start() throws if already started — ignore
         }
+      };
+
+      if (emptyRestartCountRef.current > 0) {
+        // Cycle à vide détecté : on laisse respirer le navigateur avant de
+        // retenter, pour ne pas re-saturer la boucle d'événements.
+        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+        restartTimerRef.current = setTimeout(() => {
+          restartTimerRef.current = null;
+          restart();
+        }, RESTART_BACKOFF_MS);
+      } else {
+        // Chemin nominal : redémarrage immédiat pour ne pas manquer une
+        // réponse enchaînée rapidement entre deux questions.
+        restart();
       }
     };
 
@@ -166,6 +220,10 @@ export function useSpeechRecognition({
       return;
     }
     wantListeningRef.current = true;
+    // Démarrage explicite (geste utilisateur / nouvelle séance) : on repart
+    // d'un compteur vierge pour le garde-fou anti-boucle.
+    emptyRestartCountRef.current = 0;
+    lastStartAtRef.current = Date.now();
     setError(null);
     try {
       rec.start();
@@ -176,6 +234,10 @@ export function useSpeechRecognition({
 
   const abort = useCallback(() => {
     wantListeningRef.current = false;
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
     const rec = recognitionRef.current;
     if (!rec) return;
     try {
@@ -188,6 +250,10 @@ export function useSpeechRecognition({
   useEffect(() => {
     return () => {
       wantListeningRef.current = false;
+      if (restartTimerRef.current) {
+        clearTimeout(restartTimerRef.current);
+        restartTimerRef.current = null;
+      }
       const rec = recognitionRef.current;
       if (rec) {
         try {
