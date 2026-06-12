@@ -28,7 +28,11 @@ export default function BadgeDetailModal({
   const detail = getBadgeDetail(badge.id, profile);
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
   const progress = detail.progress;
-  const showProgress = !earned && progress && progress.target > 0;
+  // Badge à objectif unique (target === 1) : pas de fraction « 0 / 1 » ni de
+  // barre — il n'y a rien à compter. Le texte de condition suffit, on ajoute
+  // juste un encouragement.
+  const showProgress = !earned && progress && progress.target > 1;
+  const showCallToAction = !earned && progress && progress.target === 1;
   const percent = showProgress ? progressPercent(progress) : 0;
   const remaining = progress ? Math.max(0, progress.target - progress.current) : 0;
 
@@ -60,6 +64,10 @@ export default function BadgeDetailModal({
           </div>
           <div className="badge-detail-hint">{hintFor(progress.current, remaining)}</div>
         </div>
+      )}
+
+      {showCallToAction && (
+        <p className="badge-detail-hint badge-detail-cta">À toi de jouer !</p>
       )}
 
       {earned && earnedDate && (
