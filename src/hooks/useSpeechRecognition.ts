@@ -232,12 +232,16 @@ export function useSpeechRecognition({
     }
   }, [ensureRecognition]);
 
-  const abort = useCallback(() => {
-    wantListeningRef.current = false;
+  const clearRestartTimer = useCallback(() => {
     if (restartTimerRef.current) {
       clearTimeout(restartTimerRef.current);
       restartTimerRef.current = null;
     }
+  }, []);
+
+  const abort = useCallback(() => {
+    wantListeningRef.current = false;
+    clearRestartTimer();
     const rec = recognitionRef.current;
     if (!rec) return;
     try {
@@ -245,15 +249,12 @@ export function useSpeechRecognition({
     } catch {
       // ignore
     }
-  }, []);
+  }, [clearRestartTimer]);
 
   useEffect(() => {
     return () => {
       wantListeningRef.current = false;
-      if (restartTimerRef.current) {
-        clearTimeout(restartTimerRef.current);
-        restartTimerRef.current = null;
-      }
+      clearRestartTimer();
       const rec = recognitionRef.current;
       if (rec) {
         try {
@@ -263,7 +264,7 @@ export function useSpeechRecognition({
         }
       }
     };
-  }, []);
+  }, [clearRestartTimer]);
 
   return { start, abort, isListening, error, isSupported };
 }
