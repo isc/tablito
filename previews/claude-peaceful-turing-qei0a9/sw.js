@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260612192102"
+const CACHE = 'tablito-' + "20260612204555"
 const BASE = "/previews/claude-peaceful-turing-qei0a9/"
 const ASSETS = [
   "/previews/claude-peaceful-turing-qei0a9/CNAME",
