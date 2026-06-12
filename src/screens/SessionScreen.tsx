@@ -94,7 +94,7 @@ export default function SessionScreen({
   const submittingRef = useRef(false);
 
   const { playCorrect, playIncorrect } = useSound();
-  const { speak, stop: stopSpeech, isSpeaking } = useTTS();
+  const { speak, stop: stopSpeech, preload, isSpeaking } = useTTS();
   const { inputMode, setInputMode } = useInputMode();
   useWakeLock(true);
 
@@ -107,11 +107,34 @@ export default function SessionScreen({
 
   const speakQuestion = useCallback((item: SessionItem) => speak(view(item).qKey), [speak]);
 
+  // Précharge l'audio de toutes les questions de la séance dès son ouverture.
+  // Sans cela, le MP3 d'une question est décodé à la volée quand on l'atteint :
+  // un enfant qui connaît le fait peut répondre avant la fin de ce décodage, et
+  // le stop() de la réponse annule alors une lecture jamais démarrée — la
+  // question n'est jamais lue à voix haute (bug des séances mixtes où les
+  // divisions, plus lentes à répondre, s'entendaient mais pas les tables
+  // connues). Préchargé = `speak` démarre par le chemin synchrone, increvable.
+  useEffect(() => {
+    const keys = new Set<string>();
+    for (const item of initialQuestions) {
+      keys.add(view(item).qKey);
+      if (item.isIntroduction) {
+        keys.add(
+          item.kind === 'div'
+            ? `introd-${item.fact.dividend}-${item.fact.divisor}`
+            : `intro-${item.fact.a}-${item.fact.b}`,
+        );
+      }
+    }
+    preload([...keys]);
+    // Une seule fois à l'ouverture : les retrys réutilisent des clés déjà en cache.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Ajuste l'état UI au changement de question (render-time, cf. ancien
   // SessionScreen — reset synchrone du guard anti double-submit).
   const [prevIndex, setPrevIndex] = useState(-1);
   if (currentIndex !== prevIndex && currentItem) {
-    // eslint-disable-next-line react-hooks/refs
     submittingRef.current = false;
     setPrevIndex(currentIndex);
     if (currentItem.isIntroduction) {
