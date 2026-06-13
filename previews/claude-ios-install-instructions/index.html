@@ -66,6 +66,8 @@
             // « Sur l'écran d'accueil » : on affichera un préambule "ouvre dans
             // Safari". Détection fail-safe : par défaut on suppose Safari (le
             // visiteur n'a pas à se voir dire d'ouvrir Safari s'il y est déjà).
+            // ⚠ Même denylist que isIOSSafari() dans src/lib/install.ts — ce
+            // script inline tourne pré-paint (avant tout module), d'où la copie.
             if (/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua)) {
               document.documentElement.classList.add('ios-other-browser');
             }
@@ -226,11 +228,11 @@
           <ol>
             <li>
               Touche l'icône <strong>Partager</strong>
-              <span class="ios-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
+              <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
               dans la barre d'outils de Safari (<strong>en bas</strong> sur iPhone, <strong>en haut</strong> sur iPad).
               <span class="ios-step-hint">Tu ne la vois pas&nbsp;? Touche d'abord <strong>•••</strong>, puis <strong>« Partager »</strong>.</span>
             </li>
-            <li>Fais défiler, puis choisis <strong>« Sur l'écran d'accueil »</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
+            <li>Fais défiler, puis choisis <strong>« Sur l'écran d'accueil »</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
             <li>Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran&nbsp;!</li>
           </ol>
         </div>

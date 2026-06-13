@@ -5097,6 +5097,18 @@ input, select, textarea {
   border-radius: 7px;
 }
 
+/* Présentation commune aux deux glyphes (partage, « + ») : factorisée ici pour
+   que le markup inline ne porte que le viewBox + le tracé. */
+.install-help .ios-icon svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .install-help .ios-step-hint {
   display: block;
   font-size: 12.5px;

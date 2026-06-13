@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260613064523"
+const CACHE = 'tablito-' + "20260613065207"
 const BASE = "/previews/claude-ios-install-instructions/"
 const ASSETS = [
   "/previews/claude-ios-install-instructions/CNAME",
