@@ -27,6 +27,9 @@ export function isIOS(): boolean {
 export function isIOSSafari(): boolean {
   if (!isIOS()) return false;
   const ua = navigator.userAgent;
+  // ⚠ Cette denylist est aussi dupliquée dans l'inline script de index.html
+  // (détection pré-paint `ios-other-browser`). Si tu la modifies, mets à jour
+  // les deux.
   return /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua);
 }
 
