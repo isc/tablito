@@ -30,16 +30,6 @@ export function isIOSSafari(): boolean {
   return /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua);
 }
 
-// La version Safari suit la version iOS depuis qu'Apple a unifié la
-// numérotation en 2025 (Safari 26 ↔ iOS 26). On s'en sert pour distinguer
-// l'UI historique (Safari < 26 : bouton de partage direct dans le toolbar)
-// du nouveau flow iOS 26+ (••• → Partager → Plus → Sur l'écran d'accueil).
-export function getIOSMajorVersion(): number | null {
-  if (typeof navigator === 'undefined') return null;
-  const match = navigator.userAgent.match(/Version\/(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
-}
-
 export function hasSkippedInstall(): boolean {
   try {
     return localStorage.getItem(SKIP_INSTALL_KEY) === '1';
