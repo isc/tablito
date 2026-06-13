@@ -1,0 +1,3 @@
+import{jsx as i}from"preact/jsx-runtime";import{cleanup as l,render as a}from"@testing-library/preact";import{afterEach as c,describe as d,expect as t,it as r}from"vitest";import n from"../components/DotGrid.js";c(l),d('DotGrid \u2014 r\xE9v\xE9lation "lots" (intro division)',()=>{r("affiche le compte d'un lot (= b, le quotient) quand groupReveal",()=>{const{container:e}=a(i(n,{a:6,b:2,animated:!1,bare:!0,groupReveal:!0})),o=e.querySelector(".dot-grid-lot-count");t(o).toBeTruthy(),t(o?.textContent).toBe("2")}),r("n'ajoute pas de badge de compte sans groupReveal (usage multiplication)",()=>{const{container:e}=a(i(n,{a:3,b:5,animated:!1,bare:!0}));t(e.querySelector(".dot-grid-lot-count")).toBeNull()})});
+
+//# sourceMappingURL=dotGrid.test.js.map
