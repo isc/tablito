@@ -35,10 +35,9 @@
       html.skip-static-landing #static-landing { display: none; }
     </style>
 
-    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée,
-         et quelle variante du flow d'install iOS afficher (Safari < 26 vs ≥ 26
-         où Apple a déplacé le bouton de partage derrière "•••"). Inline + sync
-         pour tourner avant le rendu du <body>. -->
+    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée
+         (et marque iOS, pour choisir le bon panneau d'aide à l'installation).
+         Inline + sync pour tourner avant le rendu du <body>. -->
     <script>
       (function() {
         try {
@@ -63,10 +62,14 @@
             // Sert au handler "Installer" à choisir le bon panneau d'aide
             // (iOS share-sheet vs desktop) quand il n'y a pas de prompt natif.
             document.documentElement.classList.add('is-ios');
-            var v = ua.match(/Version\/(\d+)/);
-            var major = v ? parseInt(v[1], 10) : 0;
-            if (major > 0 && major < 26) {
-              document.documentElement.classList.add('ios-classic');
+            // Hors Safari (Chrome/Firefox/Edge… iOS), le partage n'expose pas
+            // « Sur l'écran d'accueil » : on affichera un préambule "ouvre dans
+            // Safari". Détection fail-safe : par défaut on suppose Safari (le
+            // visiteur n'a pas à se voir dire d'ouvrir Safari s'il y est déjà).
+            // ⚠ Même denylist que isIOSSafari() dans src/lib/install.ts — ce
+            // script inline tourne pré-paint (avant tout module), d'où la copie.
+            if (/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua)) {
+              document.documentElement.classList.add('ios-other-browser');
             }
           }
         } catch (e) {}
@@ -210,23 +213,27 @@
         </div>
 
         <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif.
-             Deux variantes selon la version Safari (cf. inline script en <head>
-             qui pose `html.ios-classic` pour iOS < 26). -->
+             Une seule liste, centrée sur l'ICÔNE de partage plutôt que sur sa
+             position : le bouton est en bas (iPhone) ou en haut (iPad), et son
+             emplacement dépend aussi du réglage « barre d'adresse » — rien de
+             tout ça n'est détectable côté web. Un repli ••• couvre le cas où le
+             partage est replié dans le menu (Safari compact). -->
         <div id="ios-install-help" class="install-help">
           <h2>Installer sur iPhone / iPad</h2>
-          <p>Ouvre cette page dans Safari, puis ajoute l'app à l'écran d'accueil&nbsp;:</p>
-          <ol class="ios-steps-modern">
-            <li>Touche le bouton <strong>•••</strong> en bas à droite de Safari (en mode compact, c'est lui qui cache le partage).</li>
-            <li>Choisis <strong>« Partager »</strong> dans le menu qui s'ouvre.</li>
-            <li>Touche <strong>« Plus »</strong> pour afficher toutes les actions.</li>
-            <li>Choisis <strong>« Sur l'écran d'accueil »</strong> puis touche <strong>« Ajouter »</strong>. L'icône Tablito apparaît sur ton écran.</li>
+          <!-- Préambule montré uniquement hors Safari (cf. html.ios-other-browser) :
+               en Safari, inutile de dire au visiteur d'ouvrir Safari. -->
+          <p class="ios-open-in-safari">Tu es dans Chrome ou Firefox&nbsp;? Ouvre d'abord cette page dans <strong>Safari</strong> (le menu de ton navigateur propose <strong>« Ouvrir dans Safari »</strong>), puis&nbsp;:</p>
+          <p class="ios-intro">Ajoute l'app à ton écran d'accueil en 3 touches&nbsp;:</p>
+          <ol>
+            <li>
+              Touche l'icône <strong>Partager</strong>
+              <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
+              dans la barre d'outils de Safari (<strong>en bas</strong> sur iPhone, <strong>en haut</strong> sur iPad).
+              <span class="ios-step-hint">Tu ne la vois pas&nbsp;? Touche d'abord <strong>•••</strong>, puis <strong>« Partager »</strong>.</span>
+            </li>
+            <li>Fais défiler, puis choisis <strong>« Sur l'écran d'accueil »</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
+            <li>Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran&nbsp;!</li>
           </ol>
-          <ol class="ios-steps-classic">
-            <li>Touche le bouton <strong>de partage</strong> en bas de l'écran (icône avec une flèche vers le haut).</li>
-            <li>Choisis <strong>« Sur l'écran d'accueil »</strong> dans la liste.</li>
-            <li>Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran d'accueil.</li>
-          </ol>
-          <p class="install-note">Astuce&nbsp;: dans Chrome ou Firefox sur iOS, l'ajout n'est pas disponible — ouvre cette page dans Safari.</p>
         </div>
 
         <!-- Desktop sans prompt natif (Safari macOS, Firefox…). Montré au clic
