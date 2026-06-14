@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import NumPad from './NumPad';
-import { parseFrenchAnswer } from '../lib/parseFrenchNumber';
+import { parseSpokenAnswer, speechRecognitionLang } from '../lib/parseSpokenNumber';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useInputMode } from '../hooks/useInputMode';
+import { useLang } from '../i18n/lang';
+import { useVoiceStrings } from '../i18n/voice';
 
 interface VoiceInputProps {
   onSubmit: (value: number) => void;
@@ -33,10 +35,14 @@ const POST_SUBMIT_DEAF_MS = 800;
 // never arrives (recognizer error, abort), don't keep dropping events forever.
 const TRAILING_FINAL_TIMEOUT_MS = 5000;
 
-function pickBestNumber(primary: string, alternatives: string[]): number | null {
+function pickBestNumber(
+  primary: string,
+  alternatives: string[],
+  lang: 'fr' | 'en',
+): number | null {
   const candidates = [primary, ...alternatives];
   for (const c of candidates) {
-    const n = parseFrenchAnswer(c);
+    const n = parseSpokenAnswer(c, lang);
     if (n !== null) return n;
   }
   return null;
@@ -52,6 +58,13 @@ export default function VoiceInput({
   const [showKeypad, setShowKeypad] = useState(false);
   const [, setParseFails] = useState(0);
   const { setInputMode } = useInputMode();
+  const { lang } = useLang();
+  const t = useVoiceStrings();
+  // Lu dans les callbacks de reconnaissance sans les recréer à chaque render.
+  const langRef = useRef(lang);
+  useEffect(() => {
+    langRef.current = lang;
+  }, [lang]);
   const [prevQuestionToken, setPrevQuestionToken] = useState(questionToken);
   const disabledRef = useRef(disabled);
   const expectedRef = useRef(expectedValue);
@@ -89,7 +102,7 @@ export default function VoiceInput({
   const handleFinal = useCallback(
     (transcript: string, alternatives: string[]) => {
       const expected = expectedRef.current;
-      const best = pickBestNumber(transcript, alternatives);
+      const best = pickBestNumber(transcript, alternatives, langRef.current);
       const sinceSpeakEndMs = Date.now() - lastSpeakEndRef.current;
       // Drop the trailing final from a fast-path-submitted utterance. With
       // continuous=false, exactly one final follows the interim that triggered
@@ -144,7 +157,7 @@ export default function VoiceInput({
 
   const handleInterim = useCallback(
     (text: string) => {
-      const parsed = parseFrenchAnswer(text);
+      const parsed = parseSpokenAnswer(text, langRef.current);
       const expected = expectedRef.current;
       if (isEchoOfLastSubmit(parsed)) return;
       // We deliberately don't display interim transcripts to the user:
@@ -171,7 +184,7 @@ export default function VoiceInput({
   const { start, abort, isListening, error, isSupported } = useSpeechRecognition({
     onFinal: handleFinal,
     onInterim: handleInterim,
-    lang: 'fr-FR',
+    lang: speechRecognitionLang(lang),
   });
 
   // Keep the mic on for the whole session — don't restart between questions
@@ -204,7 +217,7 @@ export default function VoiceInput({
     return (
       <div className="voice-fallback">
         <div className="voice-fallback-msg">
-          Je t'entends mal. Tape ta réponse&nbsp;!
+          {t.hardToHear}
         </div>
         <NumPad onSubmit={onSubmit} disabled={disabled} />
         <button
@@ -214,9 +227,9 @@ export default function VoiceInput({
             setParseFails(0);
           }}
           disabled={disabled}
-          aria-label="Réessayer avec la voix"
+          aria-label={t.retryWithVoice}
         >
-          {'🎤'} Réessayer avec la voix
+          {'🎤'} {t.retryWithVoice}
         </button>
       </div>
     );
@@ -235,7 +248,7 @@ export default function VoiceInput({
           if (isListening) abort();
           else start();
         }}
-        aria-label={isListening ? 'Écoute en cours' : 'Parler'}
+        aria-label={isListening ? t.listening : t.speak}
         aria-pressed={isListening}
         disabled={disabled}
       >
@@ -244,17 +257,17 @@ export default function VoiceInput({
       </button>
 
       <div className="voice-transcript" aria-live="polite">
-        {isListening ? 'Je t\'écoute…' : 'Appuie pour parler'}
+        {isListening ? t.listeningHint : t.tapToSpeak}
       </div>
 
       {permissionBlocked && (
         <div className="voice-error">
-          Le micro est bloqué. Autorise-le dans les paramètres du navigateur.
+          {t.micBlocked}
         </div>
       )}
       {networkError && (
         <div className="voice-error">
-          La reconnaissance vocale a besoin d'internet.
+          {t.needsInternet}
         </div>
       )}
 
@@ -264,7 +277,7 @@ export default function VoiceInput({
         onClick={() => setInputMode('keypad')}
         disabled={disabled}
       >
-        {'⌨️'} Utiliser le clavier
+        {'⌨️'} {t.useKeyboard}
       </button>
     </div>
   );
