@@ -2,6 +2,7 @@ import type { UserProfile, Badge, MultiFact, DivisionFact } from '../types';
 import { BADGE_IDS } from '../types';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
+import { getLang, type Lang } from '../i18n/lang';
 
 function hasBadge(profile: UserProfile, id: string): boolean {
   return profile.badges.some((b) => b.id === id);
@@ -103,9 +104,8 @@ export interface BadgeDefinition {
 
 // Définitions des badges de multiplication, construites pour la langue
 // d'interface courante (les chaînes viennent de i18n/badges, le reste — icône,
-// couleur, logique de progression — est figé ici). Reconstruites à chaque
-// appel : coût négligeable, et toujours alignées sur la langue active.
-export function getAllBadgeDefinitions(): BadgeDefinition[] {
+// couleur, logique de progression — est figé ici).
+function buildAllBadgeDefinitions(): BadgeDefinition[] {
   const i = getBadgeI18n();
   const u = i.units;
   return [
@@ -214,7 +214,7 @@ export function getAllBadgeDefinitions(): BadgeDefinition[] {
 // rester MASQUÉS tant que le niveau n'est pas débloqué (cf.
 // visibleBadgeDefinitions), mais inclus dans la map pour pouvoir être
 // attribués par checkBadges.
-export function getDivisionBadgeDefinitions(): BadgeDefinition[] {
+function buildDivisionBadgeDefinitions(): BadgeDefinition[] {
   const i = getBadgeI18n();
   const u = i.units;
   return [
@@ -262,10 +262,38 @@ export function getDivisionBadgeDefinitions(): BadgeDefinition[] {
   ];
 }
 
+// Cache mémoïsé par langue : les définitions ne dépendent que de la langue
+// (les chaînes), pas du profil (passé en argument à progressFor). On les
+// reconstruit donc seulement au changement de langue, pas à chaque appel —
+// medallionColorFor/getBadgeDetail sont appelés une fois par badge dans les
+// boucles de rendu de BadgesScreen.
+let cacheLang: Lang | null = null;
+let cachedAll: BadgeDefinition[] = [];
+let cachedDivision: BadgeDefinition[] = [];
+let cachedMap: Map<string, BadgeDefinition> = new Map();
+
+function ensureCache(): void {
+  const lang = getLang();
+  if (cacheLang === lang) return;
+  cachedAll = buildAllBadgeDefinitions();
+  cachedDivision = buildDivisionBadgeDefinitions();
+  cachedMap = new Map([...cachedAll, ...cachedDivision].map((d) => [d.id, d]));
+  cacheLang = lang;
+}
+
+export function getAllBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedAll;
+}
+
+export function getDivisionBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedDivision;
+}
+
 function badgeMap(): Map<string, BadgeDefinition> {
-  return new Map(
-    [...getAllBadgeDefinitions(), ...getDivisionBadgeDefinitions()].map((d) => [d.id, d]),
-  );
+  ensureCache();
+  return cachedMap;
 }
 
 /**

@@ -104,7 +104,6 @@ interface BadgeStrings {
   earnedLabel: (name: string) => string;
   lockedWithProgressLabel: (name: string, percent: number) => string;
   lockedLabel: (name: string) => string;
-  dateLocale: string;
 }
 
 const badgeFr: BadgeStrings = {
@@ -112,7 +111,6 @@ const badgeFr: BadgeStrings = {
   lockedWithProgressLabel: (name, percent) =>
     `${name}, verrouillé, progression ${percent}% — voir comment le débloquer`,
   lockedLabel: (name) => `${name}, verrouillé — voir comment le débloquer`,
-  dateLocale: 'fr-FR',
 };
 
 const badgeEn: BadgeStrings = {
@@ -120,7 +118,6 @@ const badgeEn: BadgeStrings = {
   lockedWithProgressLabel: (name, percent) =>
     `${name}, locked, progress ${percent}% — see how to unlock it`,
   lockedLabel: (name) => `${name}, locked — see how to unlock it`,
-  dateLocale: 'en-US',
 };
 
 export const badgeStrings = { fr: badgeFr, en: badgeEn };
@@ -139,7 +136,6 @@ interface BadgeDetailStrings {
   callToAction: string;
   unlockedOn: (date: string) => string;
   close: string;
-  dateLocale: string;
 }
 
 const badgeDetailFr: BadgeDetailStrings = {
@@ -150,7 +146,6 @@ const badgeDetailFr: BadgeDetailStrings = {
   callToAction: 'À toi de jouer !',
   unlockedOn: (date) => `Débloqué le ${date}`,
   close: 'Fermer',
-  dateLocale: 'fr-FR',
 };
 
 const badgeDetailEn: BadgeDetailStrings = {
@@ -161,7 +156,6 @@ const badgeDetailEn: BadgeDetailStrings = {
   callToAction: 'Give it a go!',
   unlockedOn: (date) => `Unlocked on ${date}`,
   close: 'Close',
-  dateLocale: 'en-US',
 };
 
 export const badgeDetailStrings = { fr: badgeDetailFr, en: badgeDetailEn };

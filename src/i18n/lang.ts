@@ -46,20 +46,33 @@ export function detectLang(): Lang {
 
 // --- Singleton module pour les consommateurs hors-React ---
 let currentLang: Lang = detectLang();
-const listeners = new Set<(lang: Lang) => void>();
 
 /** Langue courante, lisible depuis n'importe quel module (lib/*). */
 export function getLang(): Lang {
   return currentLang;
 }
 
-/** S'abonner aux changements de langue (pour du code hors-React). */
-export function subscribeLang(fn: (lang: Lang) => void): () => void {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
+// Locale BCP-47 par langue : source de vérité unique pour le formatage des
+// dates (Intl/toLocaleDateString). En-GB plutôt qu'en-US pour garder l'ordre
+// jour-mois proche du français. La langue de reconnaissance vocale a sa propre
+// résolution (lib/parseSpokenNumber) car elle a d'autres contraintes.
+const LOCALE: Record<Lang, string> = {
+  fr: 'fr-FR',
+  en: 'en-GB',
+};
+
+/** Locale BCP-47 pour le formatage des dates de la langue donnée. */
+export function localeFor(lang: Lang): string {
+  return LOCALE[lang];
 }
 
-function commitLang(lang: Lang): void {
+/** Locale BCP-47 de la langue courante (consommateur hors-React). */
+export function getLocale(): string {
+  return LOCALE[currentLang];
+}
+
+/** Applique une langue : met à jour le singleton + persiste. Cf. LangProvider. */
+export function applyLang(lang: Lang): void {
   currentLang = lang;
   try {
     localStorage.setItem(LANG_STORAGE_KEY, lang);
@@ -71,7 +84,6 @@ function commitLang(lang: Lang): void {
   } catch {
     // ignore (SSR / tests)
   }
-  listeners.forEach((fn) => fn(lang));
 }
 
 export interface LangContextValue {
@@ -86,13 +98,13 @@ export const LangContext = createContext<LangContextValue>({
   setLang: () => {},
 });
 
-/** Applique une langue : met à jour le singleton + persiste (cf. LangProvider). */
-export function applyLang(lang: Lang): void {
-  commitLang(lang);
-}
-
 export function useLang(): LangContextValue {
   return useContext(LangContext);
+}
+
+/** Locale BCP-47 de la langue courante du contexte (pour les composants React). */
+export function useLocale(): string {
+  return LOCALE[useContext(LangContext).lang];
 }
 
 /**

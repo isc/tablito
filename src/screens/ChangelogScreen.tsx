@@ -1,6 +1,6 @@
 import BackChevron from '../components/BackChevron';
 import { getChangelog } from '../lib/changelog';
-import { useLang } from '../i18n/lang';
+import { useLocale } from '../i18n/lang';
 import { useChangelogUiStrings } from '../i18n/privacy';
 
 interface ChangelogScreenProps {
@@ -17,9 +17,8 @@ function formatDate(iso: string, locale: string): string {
 }
 
 export default function ChangelogScreen({ onBack }: ChangelogScreenProps) {
-  const { lang } = useLang();
   const t = useChangelogUiStrings();
-  const locale = lang === 'en' ? 'en-GB' : 'fr-FR';
+  const locale = useLocale();
   return (
     <div className="changelog-screen">
       <button className="changelog-back-btn" onClick={onBack} aria-label={t.back}>

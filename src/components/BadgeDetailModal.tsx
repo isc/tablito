@@ -3,6 +3,7 @@ import { getBadgeDetail, medallionColorFor, progressPercent } from '../lib/badge
 import type { UserProfile } from '../types';
 import Modal from './Modal';
 import { useBadgeDetailStrings } from '../i18n/progress';
+import { useLocale } from '../i18n/lang';
 
 interface BadgeDetailModalProps {
   badge: BadgeDefinition;
@@ -20,6 +21,7 @@ export default function BadgeDetailModal({
   onClose,
 }: BadgeDetailModalProps) {
   const t = useBadgeDetailStrings();
+  const locale = useLocale();
   const hintFor = (current: number, remaining: number): string => {
     if (current === 0) return t.hintNotStarted;
     if (remaining === 1) return t.hintOneLeft;
@@ -75,7 +77,7 @@ export default function BadgeDetailModal({
         <div className="badge-detail-earned">
           <span className="badge-detail-earned-check" aria-hidden="true">✓</span>
           {t.unlockedOn(
-            new Date(earnedDate).toLocaleDateString(t.dateLocale, {
+            new Date(earnedDate).toLocaleDateString(locale, {
               day: 'numeric',
               month: 'long',
               year: 'numeric',

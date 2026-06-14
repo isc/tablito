@@ -1,4 +1,4 @@
-import { useStrings } from './lang';
+import { localeFor, useStrings } from './lang';
 
 // Strings de l'espace parent : ParentDashboard, ParentGate, NotificationSettings
 // et FeedbackModal. Même pattern que voice.ts — un dico `fr` source, un `en`
@@ -126,9 +126,9 @@ const parentDashboardFr: ParentDashboardStrings = {
   appVersionLabel: "Version de l'app",
   shareText: 'Tablito — pour apprendre les tables de multiplication.',
   formatShortDate: (date) =>
-    date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+    date.toLocaleDateString(localeFor('fr'), { day: 'numeric', month: 'short' }),
   formatLongDate: (date) =>
-    date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' }),
+    date.toLocaleDateString(localeFor('fr'), { weekday: 'short', day: 'numeric', month: 'long' }),
   divSymbol: '÷',
   multSymbol: '×',
   formatDivFact: (dividend, divisor, quotient) =>
@@ -194,9 +194,9 @@ const parentDashboardEn: ParentDashboardStrings = {
   appVersionLabel: 'App version',
   shareText: 'Tablito — to learn the multiplication tables.',
   formatShortDate: (date) =>
-    date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+    date.toLocaleDateString(localeFor('en'), { day: 'numeric', month: 'short' }),
   formatLongDate: (date) =>
-    date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long' }),
+    date.toLocaleDateString(localeFor('en'), { weekday: 'short', day: 'numeric', month: 'long' }),
   divSymbol: '÷',
   multSymbol: '×',
   formatDivFact: (dividend, divisor, quotient) =>

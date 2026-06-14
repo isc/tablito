@@ -1,5 +1,6 @@
 import { medallionColorFor, progressPercent } from '../lib/badges';
 import { useBadgeStrings } from '../i18n/progress';
+import { useLocale } from '../i18n/lang';
 
 interface BadgeProps {
   badge: {
@@ -25,6 +26,7 @@ function LockIcon() {
 
 export default function Badge({ badge, earned, earnedDate, progress, onClick }: BadgeProps) {
   const t = useBadgeStrings();
+  const locale = useLocale();
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
   const showProgress = !earned && progress && progress.target > 0;
   const percent = showProgress ? progressPercent(progress) : 0;
@@ -49,7 +51,7 @@ export default function Badge({ badge, earned, earnedDate, progress, onClick }: 
       <div className="badge-name">{badge.name}</div>
       {earned && earnedDate ? (
         <div className="badge-date">
-          {new Date(earnedDate).toLocaleDateString(t.dateLocale, {
+          {new Date(earnedDate).toLocaleDateString(locale, {
             day: 'numeric',
             month: 'short',
           })}
