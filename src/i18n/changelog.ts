@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-06-14',
+    items: [
+      "Tablito parle désormais anglais : l'interface est disponible en français et en anglais. La langue suit celle de l'appareil au premier lancement, et se change à tout moment dans l'espace parent (« Langue de l'application »). Tout est traduit — écrans, règles, badges, astuces — et même la voix : les questions et explications sont lues en anglais quand cette langue est choisie.",
+    ],
+  },
+  {
     date: '2026-06-11',
     items: [
       "Plusieurs enfants sur le même appareil : l'espace parent propose désormais « Ajouter un enfant » (section Profils). Chaque enfant a son propre profil — progression, badges, série et images mystère séparés. Dès deux profils, l'app demande « Qui joue ? » au lancement, et un bouton en haut de l'accueil permet de changer de joueur à tout moment. Les profils existants sont conservés tels quels.",
@@ -135,6 +141,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-06-14',
+    items: [
+      'Tablito now speaks English: the interface is available in both French and English. The language follows your device on first launch, and can be changed at any time in the parent area ("App language"). Everything is translated — screens, rules, badges, hints — and even the voice: questions and explanations are read aloud in English when that language is selected.',
+    ],
+  },
   {
     date: '2026-06-11',
     items: [
