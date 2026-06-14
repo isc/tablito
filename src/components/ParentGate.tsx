@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from './Modal';
+import { useParentGateStrings } from '../i18n/parent';
 
 interface ParentGateProps {
   onSuccess: () => void;
@@ -18,6 +19,7 @@ export default function ParentGate({ onSuccess, onClose }: ParentGateProps) {
   const [wrongAttempt, setWrongAttempt] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const expected = useMemo(() => a * b, [a, b]);
+  const t = useParentGateStrings();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -43,9 +45,9 @@ export default function ParentGate({ onSuccess, onClose }: ParentGateProps) {
       className="parent-gate-modal"
       overlayClassName="parent-gate-overlay"
     >
-      <h2 id="parent-gate-title" className="parent-gate-title">Espace parent</h2>
+      <h2 id="parent-gate-title" className="parent-gate-title">{t.title}</h2>
         <p className="parent-gate-subtitle">
-          Une petite multiplication pour confirmer que vous êtes un adulte.
+          {t.subtitle}
         </p>
 
         <form onSubmit={handleSubmit} className="parent-gate-form">
@@ -62,25 +64,25 @@ export default function ParentGate({ onSuccess, onClose }: ParentGateProps) {
               className="parent-gate-input"
               value={answer}
               onChange={(e) => setAnswer(e.target.value.replace(/[^0-9]/g, ''))}
-              aria-label="Résultat"
+              aria-label={t.resultLabel}
               maxLength={4}
             />
           </div>
 
           {wrongAttempt && (
-            <p className="parent-gate-error">Pas tout à fait. Essayez avec cette nouvelle question.</p>
+            <p className="parent-gate-error">{t.wrongAttempt}</p>
           )}
 
           <div className="parent-gate-actions">
             <button type="button" className="parent-gate-cancel" onClick={onClose}>
-              Annuler
+              {t.cancel}
             </button>
             <button
               type="submit"
               className="parent-gate-submit"
               disabled={answer.length === 0}
             >
-              Valider
+              {t.validate}
             </button>
           </div>
         </form>

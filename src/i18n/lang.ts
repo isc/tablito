@@ -1,5 +1,4 @@
-import { createContext, type ReactNode } from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useContext } from 'react';
 
 // === i18n — langue de l'interface ===
 // Langue GLOBALE (un seul réglage pour toute l'app, pas par profil) : choix
@@ -75,34 +74,21 @@ function commitLang(lang: Lang): void {
   listeners.forEach((fn) => fn(lang));
 }
 
-interface LangContextValue {
+export interface LangContextValue {
   lang: Lang;
   setLang: (lang: Lang) => void;
 }
 
-const LangContext = createContext<LangContextValue>({
+// Le contexte vit ici (module sans JSX → pas de frontière fast-refresh) ; le
+// composant `LangProvider` est dans son propre fichier (LangProvider.tsx).
+export const LangContext = createContext<LangContextValue>({
   lang: currentLang,
   setLang: () => {},
 });
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(currentLang);
-
-  const setLang = useCallback((next: Lang) => {
-    commitLang(next);
-    setLangState(next);
-  }, []);
-
-  // Garde le <html lang> en phase dès le montage (et au changement).
-  useEffect(() => {
-    try {
-      document.documentElement.lang = lang;
-    } catch {
-      // ignore
-    }
-  }, [lang]);
-
-  return <LangContext.Provider value={{ lang, setLang }}>{children}</LangContext.Provider>;
+/** Applique une langue : met à jour le singleton + persiste (cf. LangProvider). */
+export function applyLang(lang: Lang): void {
+  commitLang(lang);
 }
 
 export function useLang(): LangContextValue {

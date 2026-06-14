@@ -7,6 +7,7 @@ import {
   unsubscribeFromReminders,
 } from '../lib/push';
 import { isIOS, isStandalone } from '../lib/install';
+import { useNotificationSettingsStrings } from '../i18n/parent';
 
 // Section « Rappel quotidien » de l'espace parent : un simple toggle on/off.
 // L'heure (18h locale) est fixe côté serveur (cf. scripts/send-reminders.mjs) ;
@@ -17,6 +18,7 @@ export default function NotificationSettings() {
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const t = useNotificationSettingsStrings();
 
   const supported = pushSupported();
   // Push web sur iOS : seulement en PWA installée (iOS 16.4+).
@@ -45,17 +47,15 @@ export default function NotificationSettings() {
         if (res === 'subscribed') {
           setEnabled(true);
         } else if (res === 'denied') {
-          setMessage(
-            'Notifications bloquées. Autorise-les dans les réglages de ton navigateur, puis réessaie.',
-          );
+          setMessage(t.blocked);
         } else {
-          setMessage("Impossible d'activer le rappel pour le moment. Réessaie plus tard.");
+          setMessage(t.unavailable);
         }
       }
     } finally {
       setBusy(false);
     }
-  }, [busy, enabled]);
+  }, [busy, enabled, t]);
 
   if (!pushConfigured) return null;
 
@@ -65,10 +65,9 @@ export default function NotificationSettings() {
     if (!iosNeedsInstall) return null;
     return (
       <div className="parent-section">
-        <h3>Rappel quotidien</h3>
+        <h3>{t.dailyReminder}</h3>
         <p className="parent-section-subtitle">
-          Pour recevoir un petit rappel chaque jour à 18h, installe d'abord Tablito
-          sur l'écran d'accueil (menu Partager de Safari → « Sur l'écran d'accueil »).
+          {t.iosInstallSubtitle}
         </p>
       </div>
     );
@@ -76,10 +75,9 @@ export default function NotificationSettings() {
 
   return (
     <div className="parent-section">
-      <h3>Rappel quotidien</h3>
+      <h3>{t.dailyReminder}</h3>
       <p className="parent-section-subtitle">
-        Une notification chaque jour à 18h pour penser à réviser les tables
-        (jamais les jours où la séance est déjà faite).
+        {t.reminderSubtitle}
       </p>
       <button
         type="button"
@@ -90,7 +88,7 @@ export default function NotificationSettings() {
         disabled={busy}
         onClick={handleToggle}
       >
-        <span className="notif-toggle-label">{enabled ? 'Activé' : 'Activer le rappel'}</span>
+        <span className="notif-toggle-label">{enabled ? t.enabled : t.enableReminder}</span>
         <span className={`notif-switch ${enabled ? 'notif-switch--on' : ''}`} aria-hidden="true">
           <span className="notif-switch-knob" />
         </span>

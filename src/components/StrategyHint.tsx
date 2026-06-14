@@ -1,5 +1,6 @@
 import type { Strategy } from '../lib/strategies';
 import StrategyHintShell from './StrategyHintShell';
+import { useStrategyHintStrings } from '../i18n/strategies';
 
 interface StrategyHintProps {
   strategy: Strategy;
@@ -17,17 +18,15 @@ const PIVOT_LABEL = {
   'double-double-double': '×8',
 } as const;
 
-const TEN_RECALL =
-  "Rappel : pour × 10, les chiffres glissent d'une place vers la gauche et un 0 prend la place des unités.";
-
 export default function StrategyHint({ strategy, variant = 'feedback' }: StrategyHintProps) {
+  const t = useStrategyHintStrings();
   return (
     <StrategyHintShell
       variant={variant}
       title={strategy.title}
       lines={strategy.lines}
-      eyebrow={`L'astuce du ${PIVOT_LABEL[strategy.kind]}`}
-      recall={variant === 'intro' && strategy.kind === 'near-ten' ? TEN_RECALL : undefined}
+      eyebrow={t.eyebrowMult(PIVOT_LABEL[strategy.kind])}
+      recall={variant === 'intro' && strategy.kind === 'near-ten' ? t.tenRecall : undefined}
     />
   );
 }

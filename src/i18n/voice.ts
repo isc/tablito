@@ -5,7 +5,7 @@ import { useStrings } from './lang';
 // `useXStrings()` qui sélectionne selon la langue du contexte.
 
 const fr = {
-  hardToHear: "Je t'entends mal. Tape ta réponse !",
+  hardToHear: "Je t'entends mal. Tape ta réponse\u00a0!",
   retryWithVoice: 'Réessayer avec la voix',
   listening: 'Écoute en cours',
   speak: 'Parler',

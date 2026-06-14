@@ -1,4 +1,5 @@
 import { medallionColorFor, progressPercent } from '../lib/badges';
+import { useBadgeStrings } from '../i18n/progress';
 
 interface BadgeProps {
   badge: {
@@ -23,14 +24,15 @@ function LockIcon() {
 }
 
 export default function Badge({ badge, earned, earnedDate, progress, onClick }: BadgeProps) {
+  const t = useBadgeStrings();
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
   const showProgress = !earned && progress && progress.target > 0;
   const percent = showProgress ? progressPercent(progress) : 0;
   const label = earned
-    ? `${badge.name}, débloqué — voir les détails`
+    ? t.earnedLabel(badge.name)
     : showProgress
-      ? `${badge.name}, verrouillé, progression ${percent}% — voir comment le débloquer`
-      : `${badge.name}, verrouillé — voir comment le débloquer`;
+      ? t.lockedWithProgressLabel(badge.name, percent)
+      : t.lockedLabel(badge.name);
   return (
     <button
       type="button"
@@ -47,7 +49,7 @@ export default function Badge({ badge, earned, earnedDate, progress, onClick }: 
       <div className="badge-name">{badge.name}</div>
       {earned && earnedDate ? (
         <div className="badge-date">
-          {new Date(earnedDate).toLocaleDateString('fr-FR', {
+          {new Date(earnedDate).toLocaleDateString(t.dateLocale, {
             day: 'numeric',
             month: 'short',
           })}

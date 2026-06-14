@@ -4,6 +4,7 @@ import BadgeComponent from '../components/Badge';
 import BadgeDetailModal from '../components/BadgeDetailModal';
 import BackChevron from '../components/BackChevron';
 import { visibleBadgeDefinitions, getBadgeDetail } from '../lib/badges';
+import { useBadgesScreenStrings } from '../i18n/progress';
 
 interface BadgesScreenProps {
   profile: UserProfile;
@@ -11,6 +12,7 @@ interface BadgesScreenProps {
 }
 
 export default function BadgesScreen({ profile, onBack }: BadgesScreenProps) {
+  const t = useBadgesScreenStrings();
   const earnedMap = new Map(profile.badges.map((b) => [b.id, b]));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const badgeDefinitions = visibleBadgeDefinitions(profile);
@@ -23,17 +25,17 @@ export default function BadgesScreen({ profile, onBack }: BadgesScreenProps) {
   return (
     <div className="badges-screen">
       <div className="badges-header">
-        <button className="badges-back-btn" onClick={onBack} aria-label="Retour">
+        <button className="badges-back-btn" onClick={onBack} aria-label={t.back}>
           <BackChevron />
         </button>
-        <div className="badges-title">Mes badges</div>
+        <div className="badges-title">{t.myBadges}</div>
       </div>
 
       <div className="badges-banner">
-        <div className="badges-banner-eyebrow">Collection</div>
+        <div className="badges-banner-eyebrow">{t.collection}</div>
         <div className="badges-banner-count">
           {profile.badges.length}
-          <span>/ {badgeDefinitions.length} badges</span>
+          <span>/ {badgeDefinitions.length} {t.badges}</span>
         </div>
       </div>
 

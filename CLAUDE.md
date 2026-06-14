@@ -38,6 +38,18 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   reste en `waiting` jusqu'à ce que la page envoie `SKIP_WAITING` via
   `pwa-register.js`/`setBusy` quand `App` est sur un écran "safe"
   (`home` uniquement). Évite tout reload mid-séance.
+- **i18n (fr/en)** : langue d'interface **globale** (pas par profil),
+  persistée dans `localStorage` sous `multiplix-lang`, défaut = langue du
+  navigateur. Cœur dans `src/i18n/lang.tsx` (`LangProvider`, `useLang`,
+  `useStrings` pour React ; `getLang`/`pickStrings` pour le code hors-React
+  comme `lib/badges`, `lib/strategies`, `lib/changelog`). Chaque domaine a son
+  module de strings (`src/i18n/*.ts`) exposant un hook `useXStrings()` basé sur
+  une table `{ fr, en }` typée. La landing statique de `index.html` est
+  bilingue via des `<span data-lang>` togglés par CSS sur `html[lang]` (langue
+  fixée avant le 1er paint par l'inline script du `<head>`). Voix : MP3 anglais
+  sous `public/audio/tts/en/` (cf. `useTTS`), reconnaissance vocale et parsing
+  des nombres parlés branchés sur la langue (`lib/parseSpokenNumber`). Les
+  specs publiques et le guide utilisateur restent FR pour l'instant.
 - localStorage pour la persistance (pas de backend).
 - Déploiement : GitHub Pages via GitHub Actions (`BASE=/`).
 - Node minimum : 22.12+ (CI utilise Node 22).
@@ -79,7 +91,9 @@ Un guide HTML avec captures d'écran est généré par `npm run user-guide` (scr
 
 Les voix sont pré-générées via `scripts/generate-tts.mjs` (Mistral Voxtral) et checked-in dans `public/audio/tts/`. Le script est idempotent : il ne régénère que les fichiers manquants.
 
-**Quand ajouter un MP3** : ajouter une entrée dans `scripts/generate-tts.mjs` avec une nouvelle `key` et le `text` correspondant, puis générer.
+**Multilingue** : le français vit à la racine de `public/audio/tts/`, l'anglais sous `public/audio/tts/en/` (mêmes clés, chemin résolu par `useTTS` selon la langue). `generate-tts.mjs` génère les deux langues par défaut ; restreindre avec `TTS_LANGS=en`. La voix anglaise est surchargeable par `MISTRAL_VOICE_ID_EN` (sinon réutilise la voix par défaut, lisible en anglais).
+
+**Quand ajouter un MP3** : ajouter une entrée dans `buildEntriesFr()` ET `buildEntriesEn()` de `scripts/generate-tts.mjs` avec la même `key`, puis générer.
 
 **Comment générer** (la clé API n'est jamais en clair dans le repo) :
 

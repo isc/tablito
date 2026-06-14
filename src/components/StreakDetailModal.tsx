@@ -6,7 +6,8 @@ import {
   isStreakProtectedByFreeze,
   STREAK_FREEZE_INTERVAL,
 } from '../lib/streak';
-import { todayISO, pluralize } from '../lib/utils';
+import { todayISO } from '../lib/utils';
+import { useStreakDetailStrings } from '../i18n/progress';
 
 interface StreakDetailModalProps {
   profile: UserProfile;
@@ -14,6 +15,7 @@ interface StreakDetailModalProps {
 }
 
 export default function StreakDetailModal({ profile, onClose }: StreakDetailModalProps) {
+  const t = useStreakDetailStrings();
   const today = todayISO();
   const streak = getActiveStreak(profile, today);
   const record = profile.longestStreak;
@@ -23,19 +25,17 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
   const freezes = profile.streakFreezes;
   const protectedByFreeze = isStreakProtectedByFreeze(profile, today);
 
-  const title = active
-    ? `${streak} ${pluralize(streak, 'jour')} d’affilée`
-    : 'Lance une nouvelle série !';
+  const title = active ? t.titleActive(streak) : t.titleInactive;
 
   let explanation: string;
   if (!active) {
-    explanation = 'Ta série de jours d’affilée est à zéro. Tes progrès sur les multiplications sont conservés : joue aujourd’hui pour repartir.';
+    explanation = t.explanationInactive;
   } else if (protectedByFreeze) {
-    explanation = 'Tu n’as pas joué hier, mais un de tes gels protège ta série. Joue aujourd’hui pour le consommer et la prolonger.';
+    explanation = t.explanationFreeze;
   } else if (doneToday) {
-    explanation = 'Bravo, ta séance d’aujourd’hui est faite ! Reviens demain pour faire +1.';
+    explanation = t.explanationDoneToday;
   } else {
-    explanation = 'Ta série est encore active. N’oublie pas de faire ta séance aujourd’hui pour la prolonger — sinon elle repartira à zéro demain.';
+    explanation = t.explanationActive;
   }
 
   return (
@@ -52,9 +52,9 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
 
       {showRecord && (
         <div className="streak-detail-record">
-          <span className="streak-detail-record-label">Ton record</span>
+          <span className="streak-detail-record-label">{t.recordLabel}</span>
           <span className="streak-detail-record-value">
-            {record} {pluralize(record, 'jour')}
+            {t.recordValue(record)}
           </span>
         </div>
       )}
@@ -63,18 +63,16 @@ export default function StreakDetailModal({ profile, onClose }: StreakDetailModa
         <div className="streak-detail-freezes-row">
           <span className="streak-detail-freezes-icon" aria-hidden="true">❄️</span>
           <span className="streak-detail-freezes-label">
-            {freezes === 0
-              ? 'Aucun gel pour le moment'
-              : `${freezes} ${pluralize(freezes, 'gel')} de série`}
+            {freezes === 0 ? t.noFreezes : t.freezesCount(freezes)}
           </span>
         </div>
         <p className="streak-detail-freezes-explanation">
-          Un gel sauve ta série si tu manques un jour. Tu en gagnes un tous les {STREAK_FREEZE_INTERVAL} jours d’affilée.
+          {t.freezeExplanation(STREAK_FREEZE_INTERVAL)}
         </p>
       </div>
 
       <button type="button" className="modal-close-btn" onClick={onClose}>
-        Fermer
+        {t.close}
       </button>
     </Modal>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Mascot from '../components/Mascot';
 import { useTTS } from '../hooks/useTTS';
+import { useRulesIntroStrings } from '../i18n/onboarding';
 
 interface RulesIntroScreenProps {
   name: string;
@@ -9,6 +10,7 @@ interface RulesIntroScreenProps {
 
 export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenProps) {
   const [step, setStep] = useState(0);
+  const t = useRulesIntroStrings();
 
   const { speak } = useTTS();
 
@@ -32,18 +34,18 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
         <div className="rules-intro-step" key="intro">
           <Mascot mood="celebrate" />
           <div className="rules-intro-title">
-            Avant de commencer, {name}&nbsp;!
+            {t.introTitle(name)}
           </div>
           <div className="rules-intro-subtitle">
-            Je vais te montrer deux règles toutes simples
+            {t.introSubtitlePart1}
             <br />
-            pour multiplier par <strong>1</strong> et par <strong>10</strong>.
+            {t.introSubtitlePart2Prefix}<strong>1</strong>{t.introSubtitlePart2Middle}<strong>10</strong>{t.introSubtitlePart2Suffix}
             <br />
             <br />
-            Pas besoin de les apprendre par cœur : tu vas comprendre comment elles marchent&nbsp;!
+            {t.introSubtitlePart3}
           </div>
           <button className="btn btn--ink rules-intro-btn" onClick={handleNext}>
-            C'est parti&nbsp;!
+            {t.letsGo}
           </button>
         </div>
       )}
@@ -51,9 +53,9 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
       {step === 1 && (
         <div className="rules-intro-step" key="x1">
           <div className="rules-intro-badge rules-intro-badge-indigo" aria-hidden>{'\u00d71'}</div>
-          <div className="rules-intro-title">Multiplier par 1</div>
+          <div className="rules-intro-title">{t.x1Title}</div>
           <div className="rules-intro-message">
-            Tout nombre multiplié par 1 reste le même&nbsp;!
+            {t.x1Message}
           </div>
           <div className="rules-intro-examples">
             <div className="rules-intro-example">
@@ -64,10 +66,10 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
             </div>
           </div>
           <div className="rules-intro-tip">
-            Facile, non&nbsp;?
+            {t.x1Tip}
           </div>
           <button className="btn btn--ink rules-intro-btn" onClick={handleNext}>
-            Suivant
+            {t.next}
           </button>
         </div>
       )}
@@ -75,11 +77,11 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
       {step === 2 && (
         <div className="rules-intro-step" key="x10">
           <div className="rules-intro-badge rules-intro-badge-coral" aria-hidden>{'×10'}</div>
-          <div className="rules-intro-title">Multiplier par 10</div>
+          <div className="rules-intro-title">{t.x10Title}</div>
           <div className="rules-intro-message">
-            Les chiffres glissent d'une place vers la gauche&nbsp;!
+            {t.x10MessagePart1}
             <br />
-            Un <strong>0</strong> vient prendre la place des unités.
+            {t.x10MessagePart2Prefix}<strong>0</strong>{t.x10MessagePart2Suffix}
           </div>
 
           <div className="glisse-demo" aria-hidden>
@@ -122,10 +124,10 @@ export default function RulesIntroScreen({ name, onComplete }: RulesIntroScreenP
             </div>
           </div>
           <div className="rules-intro-tip">
-            Astuce : tous les résultats de la table de 10 se terminent par 0&nbsp;!
+            {t.x10Tip}
           </div>
           <button className="btn btn--ink rules-intro-btn" onClick={handleNext}>
-            J'ai compris&nbsp;!
+            {t.gotIt}
           </button>
         </div>
       )}

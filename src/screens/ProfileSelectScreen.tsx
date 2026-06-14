@@ -1,5 +1,6 @@
 import Mascot from '../components/Mascot';
 import type { ProfileSummary } from '../lib/storage';
+import { useProfileSelectStrings } from '../i18n/onboarding';
 
 interface ProfileSelectScreenProps {
   profiles: ProfileSummary[];
@@ -22,10 +23,11 @@ function avatarColor(name: string): string {
 // profils sur l'appareil (specs §12). Le parcours mono-profil ne le voit
 // jamais : aucune friction ajoutée à la boucle quotidienne d'un enfant seul.
 export default function ProfileSelectScreen({ profiles, onSelect, onAdd }: ProfileSelectScreenProps) {
+  const t = useProfileSelectStrings();
   return (
     <div className="profile-select-screen">
       <Mascot mood="happy" />
-      <div className="profile-select-title">Qui joue&nbsp;?</div>
+      <div className="profile-select-title">{t.title}</div>
       <div className="profile-select-list">
         {profiles.map((p) => (
           <button
@@ -46,7 +48,7 @@ export default function ProfileSelectScreen({ profiles, onSelect, onAdd }: Profi
         ))}
       </div>
       <button type="button" className="profile-select-add" onClick={onAdd}>
-        + Ajouter un enfant
+        {t.addChild}
       </button>
     </div>
   );

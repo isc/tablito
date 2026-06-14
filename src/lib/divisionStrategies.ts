@@ -1,4 +1,5 @@
 import type { DivisionFact } from '../types';
+import { getDivisionStrategyText } from '../i18n/strategies';
 
 export interface DivisionStrategy {
   title: string;
@@ -29,12 +30,13 @@ export interface DivisionStrategy {
  */
 export function getDivisionStrategy(fact: DivisionFact): DivisionStrategy {
   const { dividend, divisor, quotient } = fact;
+  const text = getDivisionStrategyText();
   return {
-    title: 'Pense à la multiplication',
-    intro: `${dividend} ÷ ${divisor}, c'est : ${divisor} fois combien font ${dividend} ?`,
+    title: text.title,
+    intro: text.intro(dividend, divisor),
     divisor,
     dividend,
     quotient,
-    conclusion: `Donc ${dividend} ÷ ${divisor} = ${quotient}.`,
+    conclusion: text.conclusion(dividend, divisor, quotient),
   };
 }
