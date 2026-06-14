@@ -41,35 +41,62 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-async function generateAudio(text, voiceId, outputPath) {
-  const response = await fetch(MISTRAL_TTS_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      input: text,
-      voice_id: voiceId,
-      response_format: 'mp3',
-    }),
-  });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  if (!response.ok) {
+// Retries sur erreurs transitoires : l'API renvoie facilement 429 (rate limit)
+// en rafale, et le délai fixe entre appels ne suffit pas toujours. Backoff
+// exponentiel (1s, 2s, 4s, 8s) sur 429 et 5xx ; les autres 4xx sont définitives
+// (texte/voix invalide) et échouent tout de suite.
+const MAX_ATTEMPTS = 5;
+
+async function generateAudio(text, voiceId, outputPath) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let response;
+    try {
+      response = await fetch(MISTRAL_TTS_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          input: text,
+          voice_id: voiceId,
+          response_format: 'mp3',
+        }),
+      });
+    } catch (err) {
+      // Erreur réseau : transitoire, on retente.
+      if (attempt < MAX_ATTEMPTS) {
+        await sleep(1000 * 2 ** (attempt - 1));
+        continue;
+      }
+      console.error(`Network error: ${err}`);
+      return false;
+    }
+
+    if (response.ok) {
+      const data = await response.json();
+      if (!data.audio_data) {
+        console.error('No audio_data in response');
+        return false;
+      }
+      await writeFile(outputPath, Buffer.from(data.audio_data, 'base64'));
+      return true;
+    }
+
+    const transient = response.status === 429 || response.status >= 500;
+    if (transient && attempt < MAX_ATTEMPTS) {
+      await sleep(1000 * 2 ** (attempt - 1));
+      continue;
+    }
+
     const body = await response.text();
     console.error(`API error: ${response.status} - ${body}`);
     return false;
   }
-
-  const data = await response.json();
-  if (!data.audio_data) {
-    console.error('No audio_data in response');
-    return false;
-  }
-
-  await writeFile(outputPath, Buffer.from(data.audio_data, 'base64'));
-  return true;
+  return false;
 }
 
 // === Français ===
@@ -342,7 +369,7 @@ async function generateLang(lang) {
     }
 
     // Rate-limit API calls
-    await new Promise((r) => setTimeout(r, 200));
+    await sleep(300);
   }
 
   console.log(`\n[${lang}] Done! ${success} generated, ${skipped} skipped, ${failed} failed.`);
