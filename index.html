@@ -262,6 +262,11 @@
             <span data-lang="fr">Attention&nbsp;: si tu installes Tablito plus tard sur iPhone ou iPad, la progression du navigateur ne sera pas conservée.</span>
             <span data-lang="en">Heads up: if you install Tablito later on an iPhone or iPad, your browser progress won't carry over.</span>
           </p>
+          <!-- Guide bilingue (cf. scripts/generate-user-guide.mjs) : un <a> par
+               langue, togglé par le CSS data-lang comme le reste de la landing.
+               Liens relatifs → valables sous n'importe quelle BASE (prod + previews). -->
+          <a class="landing-guide-link" data-lang="fr" href="guide/">Découvrir l'app en images →</a>
+          <a class="landing-guide-link" data-lang="en" href="guide/en/">See the app in pictures →</a>
         </div>
 
         <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif.
