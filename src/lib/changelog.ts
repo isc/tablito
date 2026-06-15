@@ -1,4 +1,4 @@
-import { getLang } from '../i18n/lang';
+import { pickStrings } from '../i18n/lang';
 import { changelogData } from '../i18n/changelog';
 
 export interface ChangelogEntry {
@@ -13,5 +13,5 @@ export interface ChangelogEntry {
 // mentionne pas les détails techniques (refactos, CI, lint), seulement ce qui
 // change l'expérience visible côté enfant ou parent. Garder court et concret.
 export function getChangelog(): ChangelogEntry[] {
-  return changelogData[getLang()];
+  return pickStrings(changelogData);
 }

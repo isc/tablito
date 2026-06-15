@@ -1,11 +1,10 @@
-// Parse a French-language spoken number (0-100) into an integer.
-// Accepts:
-//  - pure digit strings: "24", "7"
-//  - canonical French: "vingt-quatre", "soixante et onze", "quatre-vingts"
-// Returns null if the input cannot be interpreted as a number in range.
-// Intentionally strict: "deux trois" is NOT parsed as 23. Accepting digit
-// sequences creates false positives on TTS echo (hearing the question
-// "2 × 3" as "deux trois" would submit 23 as the answer).
+// Parse un nombre parlé français (0-100). Accepte les chiffres ("24", "7") et le
+// français canonique ("vingt-quatre", "soixante et onze", "quatre-vingts"). La
+// grammaire de repli est partagée avec l'anglais via makeSpokenNumberParser ;
+// ce fichier ne porte que les spécificités françaises (tables de mots, gestion
+// des dizaines 70/80/90, "vin/vint" → "vingt", marqueurs d'égalité).
+
+import { makeSpokenNumberParser } from './spokenNumber';
 
 const UNITS: Record<string, number> = {
   zero: 0,
@@ -102,100 +101,19 @@ function buildPhraseMap(): Map<string, number> {
   return m;
 }
 
-const PHRASE_MAP = buildPhraseMap();
-
-function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[-\u2010-\u2015]/g, ' ')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    // Le STT entend souvent "vingt" comme "vin" / "vint" quand le t final
-    // est muet. On le remet en amont pour que toute la logique de compounds
-    // ("vin et un", "quatre vint", etc.) fonctionne sans cas particulier.
-    .replace(/\b(vin|vint)\b/g, 'vingt')
-    .trim();
-}
-
-export function parseFrenchNumber(input: string): number | null {
-  const s = normalize(input);
-  if (!s) return null;
-
-  if (/^\d+$/.test(s)) {
-    const n = parseInt(s, 10);
-    return Number.isFinite(n) ? n : null;
-  }
-
-  if (PHRASE_MAP.has(s)) return PHRASE_MAP.get(s)!;
-
-  return null;
-}
-
-// Marqueurs d'égalité dans une équation parlée. Si l'enfant répète la question
-// avec sa réponse ("6 fois 5 égale 30"), on prend ce qui suit le dernier
-// marqueur. Un écho TTS pur ("6 fois 5") n'a pas de marqueur et tombe dans
-// la logique stricte ci-dessous.
-// L'input est passé par `normalize` (espaces collapsés à un seul) avant matching,
-// donc les bigrams comme "c est" / "ca fait" peuvent utiliser un espace littéral.
+// Marqueurs d'égalité dans une équation parlée. L'input est normalisé (espaces
+// collapsés) avant matching, donc les bigrams comme "c est" / "ca fait" utilisent
+// un espace littéral.
 const EQUALITY_MARKER_RE =
   /(?:^|\s)(?:egale|egales|egalent|egal|font|vaut|valent|c est|ca fait|ca donne|ca vaut)(?=\s|$)/g;
 
-// Marqueurs de multiplication dans un transcript : leur présence dans le
-// préfixe d'un trailing-token indique qu'on a affaire à un écho de la
-// question ("6 fois 5") plutôt qu'à des utterances accumulées ("37 27").
-const MULTIPLICATION_MARKERS = new Set(['fois', 'x']);
+const { parseNumber: parseFrenchNumber, parseAnswer: parseFrenchAnswer } = makeSpokenNumberParser({
+  phraseMap: buildPhraseMap(),
+  // Le STT entend souvent "vingt" comme "vin"/"vint" (t final muet) : on le remet
+  // en amont pour que toute la logique de compounds fonctionne sans cas spécial.
+  normalizeExtra: (s) => s.replace(/\b(vin|vint)\b/g, 'vingt'),
+  equalityMarkerRe: EQUALITY_MARKER_RE,
+  multiplicationMarkers: new Set(['fois', 'x']),
+});
 
-function afterEqualityMarker(input: string): string | null {
-  const s = normalize(input);
-  let lastEnd = -1;
-  for (const m of s.matchAll(EQUALITY_MARKER_RE)) {
-    lastEnd = (m.index ?? 0) + m[0].length;
-  }
-  if (lastEnd === -1) return null;
-  const tail = s.slice(lastEnd).trim();
-  return tail || null;
-}
-
-// Parse a spoken answer in range 0..100. Tries the whole string, then the
-// part après un marqueur d'égalité ("6 fois 5 égale 30" → 30), puis les
-// trailing 2-3 tokens (handles filler words like "euh trente-deux"), then as
-// a last resort the trailing single token — but only if the prefix contains
-// no recognizable number word. Rationale : une compound cassé comme "quatre
-// vingts un" (pluriel fautif) ne doit pas se replier sur "un" → 1, car
-// l'enfant pensait dire 81. Préfère retourner null pour forcer un retry.
-export function parseFrenchAnswer(input: string): number | null {
-  const direct = parseFrenchNumber(input);
-  if (direct !== null && direct >= 0 && direct <= 100) return direct;
-  const afterMarker = afterEqualityMarker(input);
-  if (afterMarker !== null) {
-    const n = parseFrenchNumber(afterMarker);
-    if (n !== null && n >= 0 && n <= 100) return n;
-  }
-  const tokens = input.trim().split(/\s+/).filter(Boolean);
-  for (let k = 2; k <= Math.min(3, tokens.length); k++) {
-    const tail = tokens.slice(-k).join(' ');
-    const n = parseFrenchNumber(tail);
-    if (n !== null && n >= 0 && n <= 100) return n;
-  }
-  if (tokens.length >= 1) {
-    const last = tokens[tokens.length - 1];
-    const n = parseFrenchNumber(last);
-    if (n === null || n < 0 || n > 100) return null;
-    const prefix = tokens.slice(0, -1);
-    // Accepter le dernier token nombre si chaque token du préfixe est soit
-    // non-nombre soit un nombre purement en chiffres, ET qu'aucun token
-    // n'est un marqueur de multiplication. Deux nombres en chiffres ne
-    // peuvent jamais former un compound français — on débloque "37 27"
-    // (utterances accumulées par le recognizer). Le marqueur "fois"/"x"
-    // garde le rejet de l'écho TTS pur ("6 fois 5" → null).
-    const safe = prefix.every(
-      (t) =>
-        !MULTIPLICATION_MARKERS.has(t)
-        && (parseFrenchNumber(t) === null || /^\d+$/.test(t)),
-    );
-    if (safe) return n;
-  }
-  return null;
-}
+export { parseFrenchNumber, parseFrenchAnswer };

@@ -1,4 +1,4 @@
-import { getLang, type Lang } from './lang';
+import { pickStrings, type Lang } from './lang';
 
 // Traductions des badges. Les métadonnées non textuelles (id, icône, couleur,
 // logique de progression) vivent dans lib/badges.ts ; ici, uniquement les
@@ -212,5 +212,5 @@ export const badgeI18n: Record<Lang, BadgeI18n> = { fr, en };
 
 /** Traductions des badges pour la langue courante (consommateur hors-React). */
 export function getBadgeI18n(): BadgeI18n {
-  return badgeI18n[getLang()];
+  return pickStrings(badgeI18n);
 }

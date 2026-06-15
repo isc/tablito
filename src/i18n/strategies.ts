@@ -1,4 +1,4 @@
-import { getLang, useStrings, type Lang } from './lang';
+import { pickStrings, useStrings, type Lang } from './lang';
 import type { StrategyKind } from '../lib/strategies';
 
 // Textes des stratégies de dérivation (titre + lignes de calcul). Les lignes
@@ -113,7 +113,7 @@ const strategyTemplates: Record<Lang, ReadonlyArray<readonly [number, StrategyTe
 };
 
 export function getStrategyTemplates(): ReadonlyArray<readonly [number, StrategyTemplate]> {
-  return strategyTemplates[getLang()];
+  return pickStrings(strategyTemplates);
 }
 
 // === Division : « pense à la multiplication » ===
@@ -143,7 +143,7 @@ const divisionStrategyText: Record<Lang, DivisionStrategyText> = {
 };
 
 export function getDivisionStrategyText(): DivisionStrategyText {
-  return divisionStrategyText[getLang()];
+  return pickStrings(divisionStrategyText);
 }
 
 // === Strings d'UI des cartes d'astuce (StrategyHint / DivisionStrategyHint) ===
