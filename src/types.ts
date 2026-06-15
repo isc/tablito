@@ -35,8 +35,6 @@ export interface DivisionFact {
   nextDue: string;     // ISO date
   history: Attempt[];
   introduced: boolean;
-  introducedAt?: string; // cf. MultiFact.introducedAt (posé par symétrie, pas
-                         // encore lu : la division n'a pas de fenêtre 48h).
 }
 
 export interface Badge {
