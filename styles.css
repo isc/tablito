@@ -5065,6 +5065,17 @@ input, select, textarea {
   text-align: center;
 }
 
+.landing-guide-link {
+  margin-top: 18px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--indigo-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+
 /* === Panneau d'aide à l'installation, montré au clic "Installer" quand aucun
    prompt natif n'est disponible. Deux variantes partagent ce style : iOS
    (#ios-install-help) et desktop sans prompt (#desktop-install-help) — le
