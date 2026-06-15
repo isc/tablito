@@ -92,7 +92,7 @@ Un guide HTML avec captures d'écran est généré par `npm run user-guide` (scr
 
 Les voix sont pré-générées via `scripts/generate-tts.mjs` (Mistral Voxtral) et checked-in dans `public/audio/tts/`. Le script est idempotent : il ne régénère que les fichiers manquants.
 
-**Multilingue** : un sous-dossier par langue — `public/audio/tts/fr/` et `public/audio/tts/en/` (mêmes clés, chemin `audio/tts/<lang>/<key>.mp3` résolu par `useTTS` selon la langue). `generate-tts.mjs` génère les deux langues par défaut ; restreindre avec `TTS_LANGS=en`. La voix anglaise est surchargeable par `MISTRAL_VOICE_ID_EN` (sinon réutilise la voix par défaut, lisible en anglais).
+**Multilingue** : un sous-dossier par langue — `public/audio/tts/fr/` et `public/audio/tts/en/` (mêmes clés, chemin `audio/tts/<lang>/<key>.mp3` résolu par `useTTS` selon la langue). `generate-tts.mjs` génère les deux langues par défaut ; restreindre avec `TTS_LANGS=en`. Chaque langue a sa voix Voxtral (constantes `VOICE_ID_FR`/`VOICE_ID_EN` dans le script) ; la voix anglaise est surchargeable par `MISTRAL_VOICE_ID_EN`.
 
 **Quand ajouter un MP3** : ajouter une entrée dans `buildEntriesFr()` ET `buildEntriesEn()` de `scripts/generate-tts.mjs` avec la même `key`, puis générer.
 

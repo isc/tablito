@@ -30,10 +30,8 @@ const MISTRAL_TTS_URL = 'https://api.mistral.ai/v1/audio/speech';
 const MODEL = 'voxtral-mini-tts-2603';
 // Marie - Curious (fr_fr, female)
 const VOICE_ID_FR = 'e0580ce5-e63c-4cbe-88c8-a983b80c5f1f';
-// Voix anglaise : surchargeable par env. À défaut on réutilise la voix par
-// défaut (lisible en anglais). Renseigner MISTRAL_VOICE_ID_EN pour une voix
-// native anglaise une fois un id choisi dans le catalogue Voxtral.
-const VOICE_ID_EN = process.env.MISTRAL_VOICE_ID_EN || VOICE_ID_FR;
+// Voix anglaise (en, female), surchargeable par MISTRAL_VOICE_ID_EN.
+const VOICE_ID_EN = process.env.MISTRAL_VOICE_ID_EN || '5de47977-6e47-4266-a938-3bc1d76b4676';
 
 const API_KEY = process.env.MISTRAL_API_KEY;
 if (!API_KEY) {
