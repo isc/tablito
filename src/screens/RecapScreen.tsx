@@ -207,7 +207,7 @@ export default function RecapScreen({
               <div className="recap-new-badge-medallion">{badge.icon}</div>
               <div>
                 <div className="recap-new-badge-eyebrow">{t.newBadgeEyebrow}</div>
-                <div className="recap-new-badge-name">{badgeName(badge.id) ?? badge.name}</div>
+                <div className="recap-new-badge-name">{badgeName(badge.id)}</div>
               </div>
             </div>
           ))}

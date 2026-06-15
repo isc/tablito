@@ -17,7 +17,7 @@ function profile(): UserProfile {
 }
 
 function earn(p: UserProfile, id: string): void {
-  p.badges.push({ id, name: id, description: '', earnedDate: '2026-06-02', icon: '' });
+  p.badges.push({ id, earnedDate: '2026-06-02', icon: '' });
 }
 
 // Débloque le niveau 2 : les 8 badges de table (n=2..9). C'est désormais le

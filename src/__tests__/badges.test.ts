@@ -54,8 +54,6 @@ describe('badge "Première case révélée" (1er fait en boîte 4)', () => {
       badges: [
         {
           id: BADGE_IDS.PREMIERE_CASE,
-          name: 'Première case révélée',
-          description: 'Une multiplication presque maîtrisée',
           earnedDate: '2026-01-02',
           icon: '🖼️',
         },
@@ -135,8 +133,6 @@ describe('rétro-attribution des badges au chargement du profil', () => {
       badges: [
         {
           id: BADGE_IDS.PREMIER_PAS,
-          name: 'Premier pas',
-          description: 'Terminer la première séance',
           earnedDate: '2026-01-02',
           icon: '🌱',
         },
@@ -154,8 +150,6 @@ describe('rétro-attribution des badges au chargement du profil', () => {
 function tableBadge(n: number) {
   return {
     id: `${BADGE_IDS.TABLE_PREFIX}${n}`,
-    name: `Table de ${n}`,
-    description: `Maîtriser la table de ${n}`,
     earnedDate: '2026-01-01',
     icon: `${n}️⃣`,
   };
@@ -187,8 +181,8 @@ describe('isRule11Unlocked (règle bonus ×11)', () => {
   it('ignore les badges non-TABLE_N dans le compte', () => {
     const badges = [
       ...[2, 3, 4, 5, 6, 7, 8, 9].map(tableBadge),
-      { id: BADGE_IDS.PREMIER_PAS, name: 'Premier pas', description: '', earnedDate: '2026-01-01', icon: '🌱' },
-      { id: BADGE_IDS.GENIE_MATHS, name: 'Génie', description: '', earnedDate: '2026-01-01', icon: '🏆' },
+      { id: BADGE_IDS.PREMIER_PAS, earnedDate: '2026-01-01', icon: '🌱' },
+      { id: BADGE_IDS.GENIE_MATHS, earnedDate: '2026-01-01', icon: '🏆' },
     ];
     expect(isRule11Unlocked(makeProfile({ badges }))).toBe(true);
   });

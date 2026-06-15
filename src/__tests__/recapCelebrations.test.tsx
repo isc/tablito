@@ -31,7 +31,7 @@ const baseProps = {
   onShowProgress: () => {},
 };
 
-const badge = (id: string): Badge => ({ id, name: id, description: '', earnedDate: '2026-06-05', icon: '🎓' });
+const badge = (id: string): Badge => ({ id, earnedDate: '2026-06-05', icon: '🎓' });
 
 describe('RecapScreen — célébration de complétion de table', () => {
   it('mode div : « divisions par N »', () => {

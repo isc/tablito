@@ -38,13 +38,13 @@ export interface DivisionFact {
 }
 
 export interface Badge {
+  // Un badge persisté ne porte que sa clé de progression (`id`), sa date et son
+  // `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par
+  // `id` selon la langue courante (cf. badgeName / visibleBadgeDefinitions) :
+  // pas de `name`/`description` figés. Les anciens profils peuvent en contenir,
+  // c'est sans effet — l'import ne valide pas la forme des badges et rien ne les
+  // lit.
   id: string;
-  // `name`/`description` sont des reliquats : depuis l'i18n, l'affichage résout
-  // toujours le libellé par `id` via les définitions localisées (cf. badgeName /
-  // visibleBadgeDefinitions). On ne les écrit plus à l'obtention, mais ils
-  // restent optionnels pour accepter les profils stockés/importés plus anciens.
-  name?: string;
-  description?: string;
   earnedDate: string;
   icon: string;
 }
