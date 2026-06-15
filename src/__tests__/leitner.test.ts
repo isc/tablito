@@ -26,13 +26,13 @@ describe('shouldIntroduceNew', () => {
     expect(shouldIntroduceNew(facts)).toBe(false);
   });
 
-  it('relâche la règle quand il ne reste que ≤ 2 faits à introduire', () => {
-    // 34 introduits dont 1 en boîte 1, 2 non introduits (typique post-placement)
+  it('relâche la règle quand il ne reste que ≤ 7 faits à introduire (fin de parcours)', () => {
+    // 33 introduits dont 1 en boîte 1, 3 non introduits (cas réel : trou de
+    // dominance du placement = 7×9/8×9/9×9). L'ancien seuil (2) bloquait ici.
     const facts = createInitialFacts();
-    for (let i = 0; i < 34; i++) {
+    for (let i = 0; i < 33; i++) {
       facts[i] = intro(facts[i], i === 0 ? 1 : 2);
     }
-    // facts[34] et facts[35] restent introduced=false
     expect(shouldIntroduceNew(facts)).toBe(true);
   });
 
@@ -44,12 +44,12 @@ describe('shouldIntroduceNew', () => {
     expect(shouldIntroduceNew(facts)).toBe(true);
   });
 
-  it('ne relâche PAS si 3 faits restent à introduire (encore en phase d\'apprentissage)', () => {
+  it('ne relâche PAS si beaucoup de faits restent à introduire (> 7, début de parcours)', () => {
     const facts = createInitialFacts();
-    for (let i = 0; i < 33; i++) {
+    for (let i = 0; i < 20; i++) {
       facts[i] = intro(facts[i], i === 0 ? 1 : 2);
     }
-    // 33 introduits dont 1 en boîte 1, 3 non introduits
+    // 20 introduits dont 1 en boîte 1, 16 non introduits → protection maintenue
     expect(shouldIntroduceNew(facts)).toBe(false);
   });
 });

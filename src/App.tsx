@@ -428,6 +428,8 @@ export default function App() {
           if (updated.history.length > 0) {
             updated.history[updated.history.length - 1].answeredWith = answered;
           }
+          // Pas d'`introducedAt` côté division : pas de fenêtre 48h ici (§11.6),
+          // l'anti-interférence passe par `questionConflict` (même dividende).
           if (!updated.introduced) updated.introduced = true;
           trackPromotion(getDivisionFactKey(dividend, divisor), current.box, updated.box);
           return {
@@ -444,7 +446,10 @@ export default function App() {
         if (updated.history.length > 0) {
           updated.history[updated.history.length - 1].answeredWith = answered;
         }
-        if (!updated.introduced) updated.introduced = true;
+        if (!updated.introduced) {
+          updated.introduced = true;
+          updated.introducedAt = today; // date d'intro réelle (cf. §1.2)
+        }
         trackPromotion(getFactKey(a, b), current.box, updated.box);
         return {
           ...prev,

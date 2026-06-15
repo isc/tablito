@@ -107,12 +107,17 @@ export function processAnswer<T extends Schedulable>(
 
 // Phase finale : seuil sous lequel on introduit les derniers faits restants
 // même si certains faits sont en boîte 1. Sans ça, un seul fait raté en
-// boîte 1 bloque indéfiniment l'intro des derniers faits (typiquement 8×9
-// et 9×9 après le seeding par dominance du test de placement, qui ne peuvent
-// être inférés par aucun fait du set placement). À ce stade, l'enfant
+// boîte 1 bloque indéfiniment l'intro des derniers faits après le seeding par
+// dominance du test de placement (qui ne peut inférer aucun fait du coin
+// difficile non couvert par les réponses correctes). À ce stade, l'enfant
 // maîtrise déjà la quasi-totalité ; la règle protectrice du début n'a plus
 // d'utilité.
-const TAIL_INTRO_THRESHOLD = 2;
+//
+// Le trou de dominance n'est pas limité à 8×9/9×9 : il couvre tout le coin
+// difficile au-delà du dernier fait réussi au placement (ex : 7×9, 8×9, 9×9 —
+// 3 faits). Le seuil englobe ce coin avec marge (≤ 7 restants ⇔ ≥ 29/36
+// introduits = clairement en fin de parcours).
+const TAIL_INTRO_THRESHOLD = 7;
 
 /**
  * Returns true if a new fact should be introduced.

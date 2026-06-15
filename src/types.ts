@@ -16,6 +16,10 @@ export interface MultiFact {
   nextDue: string;     // ISO date
   history: Attempt[];
   introduced: boolean; // le fait a-t-il été présenté conceptuellement ?
+  introducedAt?: string; // ISO date de l'écran d'intro réel (≠ 1ʳᵉ révision).
+                         // Absent pour les faits dominés au placement (jamais
+                         // introduits par un écran) → ils ne déclenchent pas
+                         // l'espacement 48h des intros similaires (§1.2).
 }
 
 // === Niveau 2 — division (cf. specs §11) ===

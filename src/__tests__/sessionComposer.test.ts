@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { composeSession } from '../lib/sessionComposer';
 import { createInitialFacts, getFactKey } from '../lib/facts';
-import { computeNextDue, addDays } from '../lib/leitner';
+import { computeNextDue, addDays, processAnswer } from '../lib/leitner';
 import {
   PLACEMENT_FACTS,
   seedFromPlacement,
@@ -36,6 +36,7 @@ function introduce(
 ): void {
   const fact = facts.find((f) => getFactKey(f.a, f.b) === getFactKey(a, b))!;
   fact.introduced = true;
+  fact.introducedAt = introDate; // date d'intro réelle → pilote la fenêtre 48h
   fact.box = box;
   fact.lastSeen = lastSeen;
   fact.nextDue = computeNextDue(box, lastSeen);
@@ -146,6 +147,47 @@ describe('composeSession — introduction des derniers faits', () => {
       .filter((q) => q.isIntroduction)
       .map((q) => getFactKey(q.fact.a, q.fact.b));
     expect(introducedKeys).not.toContain(getFactKey(9, 9));
+  });
+
+  it('introduit la queue (7×9/8×9/9×9) en quelques séances même si l\'enfant rate la table de 9 (régression feedback Gwennaelle)', () => {
+    // Profil réel reconstruit : 33 faits introduits par DOMINANCE au placement
+    // (donc SANS introducedAt), en boîte 2 et dus chaque jour ; 7×9/8×9/9×9
+    // jamais introduits (indominables). Avant le fix, deux verrous se cumulaient
+    // pour bloquer la queue à vie : (a) la table de 9 en révision active passait
+    // pour « introduite récemment » (history[0].date) et bloquait l'intro des
+    // faits similaires ; (b) la gate (seuil 2) refusait l'intro avec 3 restants.
+    const tail = [getFactKey(7, 9), getFactKey(8, 9), getFactKey(9, 9)];
+    const facts = createInitialFacts();
+    const yesterday = addDays(TODAY, -1);
+    for (const f of facts) {
+      if (tail.includes(getFactKey(f.a, f.b))) continue;
+      f.introduced = true; // dominance placement : volontairement PAS d'introducedAt
+      f.box = 2;
+      f.lastSeen = yesterday;
+      f.nextDue = computeNextDue(2, yesterday); // dus aujourd'hui
+    }
+    const profile = profileWith(facts);
+
+    // Rejoue 10 séances ; l'enfant rate systématiquement les faits ×9 (donc
+    // ils restent en boîte 1, révisés en permanence — le pire cas).
+    let day = TODAY;
+    for (let s = 0; s < 10; s++) {
+      for (const q of composeSession(profile, day)) {
+        const f = profile.facts.find((x) => x.a === q.fact.a && x.b === q.fact.b)!;
+        if (q.isIntroduction && !f.introduced) {
+          f.introduced = true;
+          f.introducedAt = day; // réplique le comportement de App.tsx
+        }
+        const isNine = f.a === 9 || f.b === 9;
+        Object.assign(f, processAnswer(f, !isNine, isNine ? 4000 : 2000, day, 'keypad'));
+      }
+      day = addDays(day, 1);
+    }
+
+    for (const k of tail) {
+      const f = profile.facts.find((x) => getFactKey(x.a, x.b) === k)!;
+      expect(f.introduced, `${k} doit finir introduit`).toBe(true);
+    }
   });
 });
 
