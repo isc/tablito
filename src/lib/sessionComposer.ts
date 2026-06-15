@@ -80,13 +80,14 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   // mode tail de shouldIntroduceNew.
   //
   // Similarité 48h (specs §1.2) : on espace les *introductions*, pas les
-  // révisions actives — l'interférence joue à l'apprentissage. Faits sans
-  // history (dominés au placement) exclus : sinon une table en révision
-  // active bloquerait à jamais l'intro de ses derniers faits.
-  const recentlyIntroduced = facts.filter((f) => {
-    const introDate = f.history[0]?.date;
-    return f.introduced && introDate && daysBetween(introDate, today) < 2;
-  });
+  // révisions actives — l'interférence joue à l'apprentissage. On s'appuie sur
+  // `introducedAt`, posé uniquement lors de l'écran d'intro réel. Un fait dominé
+  // au placement (introduit sans écran) n'a pas d'`introducedAt` → il n'entre
+  // jamais ici, même une fois révisé : sinon une table en révision active
+  // bloquerait à jamais l'intro de ses derniers faits (ex 7×9/8×9/9×9).
+  const recentlyIntroduced = facts.filter(
+    (f) => f.introducedAt && daysBetween(f.introducedAt, today) < 2,
+  );
 
   const newFacts: MultiFact[] = [];
   if (shouldIntroduceNew(facts)) {

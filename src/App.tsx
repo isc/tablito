@@ -428,7 +428,12 @@ export default function App() {
           if (updated.history.length > 0) {
             updated.history[updated.history.length - 1].answeredWith = answered;
           }
-          if (!updated.introduced) updated.introduced = true;
+          if (!updated.introduced) {
+            updated.introduced = true;
+            // Posé par symétrie avec la multiplication ; pas encore lu côté
+            // division (composeDivisionSession n'a pas de fenêtre 48h, §11.6).
+            updated.introducedAt = today;
+          }
           trackPromotion(getDivisionFactKey(dividend, divisor), current.box, updated.box);
           return {
             ...prev,
@@ -444,7 +449,10 @@ export default function App() {
         if (updated.history.length > 0) {
           updated.history[updated.history.length - 1].answeredWith = answered;
         }
-        if (!updated.introduced) updated.introduced = true;
+        if (!updated.introduced) {
+          updated.introduced = true;
+          updated.introducedAt = today; // date d'intro réelle (cf. §1.2)
+        }
         trackPromotion(getFactKey(a, b), current.box, updated.box);
         return {
           ...prev,

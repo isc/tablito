@@ -10,6 +10,12 @@ export interface ChangelogEntry {
 // parent. Garder court et concret.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-06-15',
+    items: [
+      "Image mystère qui ne se complétait jamais entièrement : les faits les plus difficiles (typiquement 7×9, 8×9, 9×9) pouvaient n'être jamais proposés à l'apprentissage, laissant quelques cases définitivement vides en bas de l'image — surtout si l'enfant butait sur la table de 9. Désormais ces derniers faits finissent toujours par être introduits, et l'image peut être dévoilée jusqu'au bout.",
+    ],
+  },
+  {
     date: '2026-06-11',
     items: [
       "Plusieurs enfants sur le même appareil : l'espace parent propose désormais « Ajouter un enfant » (section Profils). Chaque enfant a son propre profil — progression, badges, série et images mystère séparés. Dès deux profils, l'app demande « Qui joue ? » au lancement, et un bouton en haut de l'accueil permet de changer de joueur à tout moment. Les profils existants sont conservés tels quels.",
