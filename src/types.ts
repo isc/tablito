@@ -39,8 +39,12 @@ export interface DivisionFact {
 
 export interface Badge {
   id: string;
-  name: string;
-  description: string;
+  // `name`/`description` sont des reliquats : depuis l'i18n, l'affichage résout
+  // toujours le libellé par `id` via les définitions localisées (cf. badgeName /
+  // visibleBadgeDefinitions). On ne les écrit plus à l'obtention, mais ils
+  // restent optionnels pour accepter les profils stockés/importés plus anciens.
+  name?: string;
+  description?: string;
   earnedDate: string;
   icon: string;
 }

@@ -37,7 +37,10 @@ export function isDivisionUnlocked(profile: UserProfile): boolean {
 }
 
 function makeBadge(def: BadgeDefinition, now: string): Badge {
-  return { id: def.id, name: def.name, description: def.description, earnedDate: now, icon: def.icon };
+  // On ne persiste que ce qui est lu : `id` (clé de progression), `earnedDate`
+  // et `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par
+  // `id` selon la langue courante — inutile de figer un `name`/`description`.
+  return { id: def.id, earnedDate: now, icon: def.icon };
 }
 
 export function factsForTable(facts: MultiFact[], table: number): MultiFact[] {
