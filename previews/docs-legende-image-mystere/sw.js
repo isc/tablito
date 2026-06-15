@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260615115408"
+const CACHE = 'tablito-' + "20260615121224"
 const BASE = "/previews/docs-legende-image-mystere/"
 const ASSETS = [
   "/previews/docs-legende-image-mystere/CNAME",
@@ -55,6 +55,7 @@ const ASSETS = [
   "/previews/docs-legende-image-mystere/src/__tests__/leitner.test.js",
   "/previews/docs-legende-image-mystere/src/__tests__/mixedSessionTTS.test.js",
   "/previews/docs-legende-image-mystere/src/__tests__/multiProfile.test.js",
+  "/previews/docs-legende-image-mystere/src/__tests__/parseEnglishNumber.test.js",
   "/previews/docs-legende-image-mystere/src/__tests__/parseFrenchNumber.test.js",
   "/previews/docs-legende-image-mystere/src/__tests__/placement.test.js",
   "/previews/docs-legende-image-mystere/src/__tests__/recapCelebrations.test.js",
@@ -80,6 +81,7 @@ const ASSETS = [
   "/previews/docs-legende-image-mystere/src/components/FeedbackOverlay.js",
   "/previews/docs-legende-image-mystere/src/components/FeedbackStar.js",
   "/previews/docs-legende-image-mystere/src/components/FlameIcon.js",
+  "/previews/docs-legende-image-mystere/src/components/LanguageToggle.js",
   "/previews/docs-legende-image-mystere/src/components/LeitnerGrid.js",
   "/previews/docs-legende-image-mystere/src/components/Mascot.js",
   "/previews/docs-legende-image-mystere/src/components/Modal.js",
@@ -101,6 +103,21 @@ const ASSETS = [
   "/previews/docs-legende-image-mystere/src/hooks/useSpeechRecognition.test.js",
   "/previews/docs-legende-image-mystere/src/hooks/useTTS.js",
   "/previews/docs-legende-image-mystere/src/hooks/useWakeLock.js",
+  "/previews/docs-legende-image-mystere/src/i18n/LangProvider.js",
+  "/previews/docs-legende-image-mystere/src/i18n/app.js",
+  "/previews/docs-legende-image-mystere/src/i18n/badges.js",
+  "/previews/docs-legende-image-mystere/src/i18n/changelog.js",
+  "/previews/docs-legende-image-mystere/src/i18n/home.js",
+  "/previews/docs-legende-image-mystere/src/i18n/lang.js",
+  "/previews/docs-legende-image-mystere/src/i18n/language.js",
+  "/previews/docs-legende-image-mystere/src/i18n/onboarding.js",
+  "/previews/docs-legende-image-mystere/src/i18n/parent.js",
+  "/previews/docs-legende-image-mystere/src/i18n/privacy.js",
+  "/previews/docs-legende-image-mystere/src/i18n/progress.js",
+  "/previews/docs-legende-image-mystere/src/i18n/recap.js",
+  "/previews/docs-legende-image-mystere/src/i18n/session.js",
+  "/previews/docs-legende-image-mystere/src/i18n/strategies.js",
+  "/previews/docs-legende-image-mystere/src/i18n/voice.js",
   "/previews/docs-legende-image-mystere/src/lib/audioContext.js",
   "/previews/docs-legende-image-mystere/src/lib/badges.js",
   "/previews/docs-legende-image-mystere/src/lib/changelog.js",
@@ -114,11 +131,14 @@ const ASSETS = [
   "/previews/docs-legende-image-mystere/src/lib/install.js",
   "/previews/docs-legende-image-mystere/src/lib/leitner.js",
   "/previews/docs-legende-image-mystere/src/lib/micPreflight.js",
+  "/previews/docs-legende-image-mystere/src/lib/parseEnglishNumber.js",
   "/previews/docs-legende-image-mystere/src/lib/parseFrenchNumber.js",
+  "/previews/docs-legende-image-mystere/src/lib/parseSpokenNumber.js",
   "/previews/docs-legende-image-mystere/src/lib/placement.js",
   "/previews/docs-legende-image-mystere/src/lib/push.js",
   "/previews/docs-legende-image-mystere/src/lib/sessionComposer.js",
   "/previews/docs-legende-image-mystere/src/lib/similarity.js",
+  "/previews/docs-legende-image-mystere/src/lib/spokenNumber.js",
   "/previews/docs-legende-image-mystere/src/lib/storage.js",
   "/previews/docs-legende-image-mystere/src/lib/strategies.js",
   "/previews/docs-legende-image-mystere/src/lib/streak.js",
