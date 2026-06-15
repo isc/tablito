@@ -5,7 +5,8 @@ import Mascot from '../components/Mascot';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useConfetti } from '../hooks/useConfetti';
-import { pluralize } from '../lib/utils';
+import { useRecapStrings } from '../i18n/recap';
+import { badgeName } from '../lib/badges';
 
 interface RecapScreenProps {
   name: string;
@@ -79,9 +80,10 @@ export default function RecapScreen({
   const { playBadge, playTableComplete, playImageComplete } = useSound();
   const { speak } = useTTS();
   const { triggerConfetti } = useConfetti();
+  const t = useRecapStrings();
   const hasPlayedRef = useRef(false);
 
-  const noun = mode === 'div' ? 'divisions' : 'multiplications';
+  const noun = mode === 'div' ? t.divisions : t.multiplications;
   // Jalon majeur de la séance :
   // — div : « Maître de la division » (toutes les divisions en boîte 5, image complète) ;
   // — mult : déblocage du niveau 2 (8e badge de table). PAS « Génie » : Génie
@@ -127,8 +129,8 @@ export default function RecapScreen({
         <div className="recap-mascot-wrap">
           <Mascot mood={mascotMood} />
         </div>
-        <div className="recap-title">Séance terminée&nbsp;!</div>
-        <div className="recap-message">Bravo {name}, tu as bien travaillé.</div>
+        <div className="recap-title">{t.title}</div>
+        <div className="recap-message">{t.message(name)}</div>
       </div>
 
       {/* Carte « jalon » du niveau. En multiplication : déblocage du niveau 2,
@@ -144,14 +146,10 @@ export default function RecapScreen({
           </div>
           <div className="recap-milestone-text">
             <div className="recap-milestone-title">
-              {mode === 'div'
-                ? 'Tu maîtrises toutes les divisions !'
-                : 'Tu débloques les divisions !'}
+              {mode === 'div' ? t.milestoneDivTitle : t.milestoneMultTitle}
             </div>
             <div className="recap-milestone-subtitle">
-              {mode === 'div'
-                ? "Tu as révélé toute l'image des divisions — les 64 divisions sont en boîte 5. Un énorme accomplissement. Bravo !"
-                : "Tu connais toutes tes tables ! Tu vas maintenant les réviser autrement : en divisions (comme 56 ÷ 7). Une nouvelle image mystère t'attend."}
+              {mode === 'div' ? t.milestoneDivSubtitle : t.milestoneMultSubtitle}
             </div>
           </div>
         </div>
@@ -161,31 +159,21 @@ export default function RecapScreen({
         <div className="recap-card recap-table-complete">
           <div className="recap-table-complete-title">
             {mode === 'div'
-              ? `Tu as maîtrisé les divisions par ${newlyCompletedTables.join(' et ')} !`
-              : newlyCompletedTables.length === 1
-                ? `Tu as maîtrisé la table de ${newlyCompletedTables[0]} !`
-                : `Tu as maîtrisé les tables de ${newlyCompletedTables.join(' et ')} !`}
+              ? t.tableCompleteDivTitle(newlyCompletedTables)
+              : t.tableCompleteMultTitle(newlyCompletedTables)}
           </div>
           <div className="recap-table-complete-subtitle">
-            {mode === 'div'
-              ? 'Toutes ces divisions sont en boîte 5.'
-              : 'Toutes les multiplications sont en boîte 5.'}
+            {mode === 'div' ? t.tableCompleteDivSubtitle : t.tableCompleteMultSubtitle}
           </div>
         </div>
       )}
 
       {freezeJustUsed && (
-        <FreezeCard
-          title="Ton gel a sauvé ta série !"
-          subtitle={`Tu n'as pas joué hier, mais ta série de ${currentStreak} ${pluralize(currentStreak, 'jour')} continue.`}
-        />
+        <FreezeCard title={t.freezeUsedTitle} subtitle={t.freezeUsedSubtitle(currentStreak)} />
       )}
 
       {freezeJustEarned && (
-        <FreezeCard
-          title="Tu as gagné un gel de série !"
-          subtitle="Il te protégera la prochaine fois que tu manqueras un jour."
-        />
+        <FreezeCard title={t.freezeEarnedTitle} subtitle={t.freezeEarnedSubtitle} />
       )}
 
       {imageChanged && (
@@ -194,15 +182,15 @@ export default function RecapScreen({
             <ImageCardIcon />
           </div>
           <div className="recap-image-link-text">
-            <div className="recap-image-link-teaser">Ton image a changé&nbsp;!</div>
-            <div className="recap-image-link-cta">Viens la voir →</div>
+            <div className="recap-image-link-teaser">{t.imageChangedTeaser}</div>
+            <div className="recap-image-link-cta">{t.imageChangedCta}</div>
           </div>
         </button>
       )}
 
       <div className="recap-card recap-progress-card">
         <div className="recap-progress-row">
-          <span className="recap-progress-eyebrow">Tu connais</span>
+          <span className="recap-progress-eyebrow">{t.progressEyebrow}</span>
           <span className="recap-progress-count">
             <b>{knownFactsCount}</b> / {totalFacts} {noun}
           </span>
@@ -218,8 +206,8 @@ export default function RecapScreen({
             <div key={badge.id} className="recap-card recap-new-badge">
               <div className="recap-new-badge-medallion">{badge.icon}</div>
               <div>
-                <div className="recap-new-badge-eyebrow">Nouveau badge</div>
-                <div className="recap-new-badge-name">{badge.name}</div>
+                <div className="recap-new-badge-eyebrow">{t.newBadgeEyebrow}</div>
+                <div className="recap-new-badge-name">{badgeName(badge.id) ?? badge.name}</div>
               </div>
             </div>
           ))}
@@ -228,12 +216,12 @@ export default function RecapScreen({
 
       {!imageChanged && (
         <button className="recap-image-link-plain" onClick={onShowProgress}>
-          Voir mon image →
+          {t.seeImage}
         </button>
       )}
 
       <button className="recap-btn" onClick={onFinish}>
-        À demain&nbsp;!
+        {t.finish}
       </button>
     </div>
   );

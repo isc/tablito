@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useNumPadStrings } from '../i18n/session';
 
 interface NumPadProps {
   onSubmit: (value: number) => void;
@@ -6,6 +7,7 @@ interface NumPadProps {
 }
 
 export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
+  const t = useNumPadStrings();
   // `input` est miroré dans `inputRef` pour éviter les closures stales :
   // sous Preact, deux pressions clavier rapides peuvent voir la même closure
   // capturée si on dépend de `input` dans les useCallback.
@@ -101,7 +103,7 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
           className="numpad-btn numpad-btn-backspace"
           onClick={handleBackspace}
           disabled={disabled || input.length === 0}
-          aria-label="Effacer"
+          aria-label={t.backspace}
         >
           ⌫
         </button>
@@ -117,7 +119,7 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
           className="numpad-btn numpad-btn-ok"
           onClick={handleOk}
           disabled={disabled || input.length === 0}
-          aria-label="Valider"
+          aria-label={t.submit}
         >
           OK
         </button>

@@ -2,6 +2,8 @@ import type { BadgeDefinition } from '../lib/badges';
 import { getBadgeDetail, medallionColorFor, progressPercent } from '../lib/badges';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
+import { useBadgeDetailStrings } from '../i18n/progress';
+import { useLocale } from '../i18n/lang';
 
 interface BadgeDetailModalProps {
   badge: BadgeDefinition;
@@ -11,13 +13,6 @@ interface BadgeDetailModalProps {
   onClose: () => void;
 }
 
-function hintFor(current: number, remaining: number): string {
-  if (current === 0) return 'Tu n’as pas encore commencé celui-ci. À toi de jouer !';
-  if (remaining === 1) return 'Plus qu’un seul ! Tu y es presque.';
-  if (remaining <= 3) return `Plus que ${remaining} ! Tu y es presque.`;
-  return `Encore ${remaining} pour le débloquer.`;
-}
-
 export default function BadgeDetailModal({
   badge,
   earned,
@@ -25,6 +20,14 @@ export default function BadgeDetailModal({
   profile,
   onClose,
 }: BadgeDetailModalProps) {
+  const t = useBadgeDetailStrings();
+  const locale = useLocale();
+  const hintFor = (current: number, remaining: number): string => {
+    if (current === 0) return t.hintNotStarted;
+    if (remaining === 1) return t.hintOneLeft;
+    if (remaining <= 3) return t.hintFewLeft(remaining);
+    return t.hintMoreLeft(remaining);
+  };
   const detail = getBadgeDetail(badge.id, profile);
   const color = earned ? medallionColorFor(badge.id) : 'var(--ink-muted)';
   const progress = detail.progress;
@@ -67,23 +70,24 @@ export default function BadgeDetailModal({
       )}
 
       {showCallToAction && (
-        <p className="badge-detail-hint badge-detail-cta">À toi de jouer !</p>
+        <p className="badge-detail-hint badge-detail-cta">{t.callToAction}</p>
       )}
 
       {earned && earnedDate && (
         <div className="badge-detail-earned">
           <span className="badge-detail-earned-check" aria-hidden="true">✓</span>
-          Débloqué le{' '}
-          {new Date(earnedDate).toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
+          {t.unlockedOn(
+            new Date(earnedDate).toLocaleDateString(locale, {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            }),
+          )}
         </div>
       )}
 
       <button type="button" className="modal-close-btn" onClick={onClose}>
-        Fermer
+        {t.close}
       </button>
     </Modal>
   );

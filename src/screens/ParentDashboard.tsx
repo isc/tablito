@@ -11,6 +11,8 @@ import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
 import EvolutionChart from '../components/EvolutionChart';
 import NotificationSettings from '../components/NotificationSettings';
+import LanguageToggle from '../components/LanguageToggle';
+import { useParentDashboardStrings } from '../i18n/parent';
 
 const HARD_FACTS_WINDOW = 10;
 const EVOLUTION_WINDOW = 20;
@@ -42,6 +44,7 @@ export default function ParentDashboard({
   const [importJson, setImportJson] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const t = useParentDashboardStrings();
 
   const divisionUnlocked = useMemo(() => isDivisionUnlocked(profile), [profile]);
   const divisionFacts = useMemo(() => profile.divisionFacts ?? [], [profile.divisionFacts]);
@@ -59,7 +62,7 @@ export default function ParentDashboard({
       try {
         await navigator.share({
           title: 'Tablito',
-          text: 'Tablito — pour apprendre les tables de multiplication.',
+          text: t.shareText,
           url,
         });
       } catch {
@@ -107,10 +110,7 @@ export default function ParentDashboard({
     const accuracy: Array<{ date: string; value: number }> = [];
     const time: Array<{ date: string; value: number }> = [];
     for (const s of sessions) {
-      const date = new Date(s.date).toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-      });
+      const date = t.formatShortDate(new Date(s.date));
       accuracy.push({
         date,
         value: Math.round((s.correctCount / s.questionsCount) * 100),
@@ -122,7 +122,7 @@ export default function ParentDashboard({
     const timeYMax = Math.max(Math.ceil(Math.max(...time.map((t) => t.value))), 4);
 
     return { accuracy, time, timeYMax };
-  }, [profile.sessionHistory]);
+  }, [profile.sessionHistory, t]);
 
   // Compteurs de maîtrise (× et ÷) au même format — réutilisés par la carte
   // « Faits maîtrisés » (avant déblocage) et la carte de maîtrise (après).
@@ -146,12 +146,12 @@ export default function ParentDashboard({
   return (
     <div className="parent-dashboard">
       <div className="parent-header">
-        <button className="parent-back-btn" onClick={onBack} aria-label="Retour">
+        <button className="parent-back-btn" onClick={onBack} aria-label={t.back}>
           <BackChevron />
         </button>
         <div className="parent-header-titles">
-          <div className="parent-eyebrow">Espace parent</div>
-          <div className="parent-title">{profile.name}{' \u00b7 '}profil</div>
+          <div className="parent-eyebrow">{t.parentArea}</div>
+          <div className="parent-title">{t.profileSuffix(profile.name)}</div>
         </div>
       </div>
 
@@ -159,24 +159,24 @@ export default function ParentDashboard({
           donc valables pour × comme pour ÷. Les compteurs de maîtrise, eux,
           vivent plus bas sous le sélecteur (cf. carte de maîtrise). */}
       <div className="parent-section">
-        <h3>Vue d'ensemble</h3>
+        <h3>{t.overview}</h3>
         <div className={`parent-stats-grid${divisionUnlocked ? ' parent-stats-grid--three' : ''}`}>
           <div className="parent-stat-card">
             <div className="parent-stat-value">{profile.totalSessions}</div>
-            <div className="parent-stat-label">Séances</div>
+            <div className="parent-stat-label">{t.sessions}</div>
           </div>
           <div className="parent-stat-card">
             <div className="parent-stat-value">{getActiveStreak(profile, todayISO())}</div>
-            <div className="parent-stat-label">Série actuelle</div>
+            <div className="parent-stat-label">{t.currentStreak}</div>
           </div>
           <div className="parent-stat-card">
             <div className="parent-stat-value">{profile.longestStreak}</div>
-            <div className="parent-stat-label">Meilleure série</div>
+            <div className="parent-stat-label">{t.bestStreak}</div>
           </div>
           {!divisionUnlocked && (
             <div className="parent-stat-card">
               <div className="parent-stat-value">{multMastered}</div>
-              <div className="parent-stat-label">Faits maîtrisés</div>
+              <div className="parent-stat-label">{t.masteredFacts}</div>
             </div>
           )}
         </div>
@@ -189,20 +189,20 @@ export default function ParentDashboard({
           apparaître (specs §11.3). */}
       {divisionUnlocked && (
         <>
-          <div className="progress-tabs parent-op-tabs" role="tablist" aria-label="Opération">
+          <div className="progress-tabs parent-op-tabs" role="tablist" aria-label={t.operation}>
             <button
               type="button"
               className={`progress-tab ${!showDiv ? 'active' : ''}`}
               onClick={() => setGridView('mult')}
             >
-              Multiplications
+              {t.multiplications}
             </button>
             <button
               type="button"
               className={`progress-tab ${showDiv ? 'active' : ''}`}
               onClick={() => setGridView('div')}
             >
-              Divisions
+              {t.divisions}
             </button>
           </div>
 
@@ -215,7 +215,7 @@ export default function ParentDashboard({
                 {showDiv ? divMastered : multMastered}
               </div>
               <div className="parent-stat-label">
-                {showDiv ? 'Divisions maîtrisées' : 'Multiplications maîtrisées'}
+                {showDiv ? t.divisionsMastered : t.multiplicationsMastered}
               </div>
             </div>
           </div>
@@ -225,20 +225,19 @@ export default function ParentDashboard({
       {/* Box histogram */}
       <div className="parent-section">
         <h3>
-          Répartition par boîte
+          {t.boxDistribution}
           <a
             className="parent-section-help"
             href={`${import.meta.env.BASE_URL}guide/#principes`}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="En savoir plus sur le système de Leitner"
+            aria-label={t.learnMoreLeitner}
           >
             ?
           </a>
         </h3>
         <p className="parent-section-subtitle">
-          Combien de {showDiv ? 'divisions' : 'multiplications'} dans chaque
-          boîte de révision (B1 = à réviser souvent, B5 = bien ancrées).
+          {t.boxDistributionSubtitle(showDiv ? t.opDivisionsPlural : t.opMultiplicationsPlural)}
         </p>
         <div className="parent-histogram">
           {boxCounts.map((count, i) => (
@@ -261,21 +260,19 @@ export default function ParentDashboard({
           mystery image in §5.1 by showing the raw box state per fact) */}
       <div className="parent-section">
         <h3>
-          Grille Leitner
+          {t.leitnerGrid}
           <a
             className="parent-section-help"
             href={`${import.meta.env.BASE_URL}guide/#principes`}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="En savoir plus sur le système de Leitner"
+            aria-label={t.learnMoreLeitner}
           >
             ?
           </a>
         </h3>
         <p className="parent-section-subtitle">
-          Une case par {showDiv ? 'division' : 'multiplication'}, colorée selon
-          sa boîte. Le rouge signale les faits récents ou en difficulté, le vert
-          ceux bien ancrés.
+          {t.leitnerGridSubtitle(showDiv ? t.opDivision : t.opMultiplication)}
         </p>
         {showDiv ? (
           <DivisionProgressGrid facts={divisionFacts} />
@@ -288,7 +285,7 @@ export default function ParentDashboard({
       {evolution && (
         <>
           <div className="parent-section">
-            <h3>Taux de bonnes réponses</h3>
+            <h3>{t.correctAnswerRate}</h3>
             <EvolutionChart
               data={evolution.accuracy}
               yMin={0}
@@ -299,7 +296,7 @@ export default function ParentDashboard({
             />
           </div>
           <div className="parent-section">
-            <h3>Temps de réponse moyen</h3>
+            <h3>{t.averageResponseTime}</h3>
             <EvolutionChart
               data={evolution.time}
               yMin={0}
@@ -315,27 +312,26 @@ export default function ParentDashboard({
       {/* Hardest facts */}
       {hardFacts.length > 0 && (
         <div className="parent-section">
-          <h3>Faits les plus difficiles</h3>
+          <h3>{t.hardestFacts}</h3>
           <p className="parent-section-subtitle">
-            Sur les {HARD_FACTS_WINDOW} dernières séances.
+            {t.hardestFactsSubtitle(HARD_FACTS_WINDOW)}
           </p>
           <div className="parent-hard-facts">
             {hardFacts.map((f) => (
               <div key={`${f.kind}-${f.key}`} className="parent-hard-fact">
                 <span
                   className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`}
-                  aria-label={f.kind === 'div' ? 'Division' : 'Multiplication'}
+                  aria-label={f.kind === 'div' ? t.factDivision : t.factMultiplication}
                 >
-                  {f.kind === 'div' ? '\u00F7' : '\u00D7'}
+                  {f.kind === 'div' ? t.divSymbol : t.multSymbol}
                 </span>
                 <span className="parent-hard-fact-name">
                   {f.kind === 'div'
-                    ? `${f.dividend} \u00F7 ${f.divisor} = ${f.quotient}`
-                    : `${f.a} \u00D7 ${f.b} = ${f.product}`}
+                    ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
+                    : t.formatMultFact(f.a, f.b, f.product)}
                 </span>
                 <span className="parent-hard-fact-errors">
-                  {f.errorCount} erreur{f.errorCount > 1 ? 's' : ''} | Boîte{' '}
-                  {f.box}
+                  {t.errors(f.errorCount)} | {t.boxLabel(f.box)}
                 </span>
               </div>
             ))}
@@ -346,14 +342,10 @@ export default function ParentDashboard({
       {/* Session history */}
       {profile.sessionHistory.length > 0 && (
         <div className="parent-section">
-          <h3>Historique des séances</h3>
+          <h3>{t.sessionHistory}</h3>
           <div className="parent-session-history">
             {recentSessions.map((session) => {
-              const dateStr = new Date(session.date).toLocaleDateString('fr-FR', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'long',
-              });
+              const dateStr = t.formatLongDate(new Date(session.date));
               const avgSec = (session.averageTimeMs / 1000).toFixed(1);
               return (
                 <div key={session.date} className="parent-session-row">
@@ -371,22 +363,22 @@ export default function ParentDashboard({
 
       {/* Actions */}
       <div className="parent-section">
-        <h3>Sauvegarde</h3>
+        <h3>{t.backup}</h3>
         <div className="parent-actions">
           <button className="parent-action-btn" onClick={onExport}>
-            Exporter
+            {t.export}
           </button>
           <button
             className="parent-action-btn"
             onClick={() => setShowImport(!showImport)}
           >
-            Importer
+            {t.import}
           </button>
         </div>
       </div>
 
       <div className="parent-section">
-        <h3>Aide & retours</h3>
+        <h3>{t.helpAndFeedback}</h3>
         <div className="parent-actions">
           <a
             className="parent-action-btn"
@@ -394,13 +386,13 @@ export default function ParentDashboard({
             target="_blank"
             rel="noopener noreferrer"
           >
-            Guide utilisateur
+            {t.userGuide}
           </a>
           <button
             className="parent-action-btn"
             onClick={() => setShowFeedback(true)}
           >
-            Envoyer un avis
+            {t.sendFeedback}
           </button>
         </div>
       </div>
@@ -408,52 +400,53 @@ export default function ParentDashboard({
       <NotificationSettings />
 
       <div className="parent-section">
-        <h3>Partager Tablito</h3>
+        <h3>{t.shareTablito}</h3>
         <p className="parent-section-subtitle">
-          Envoyez le lien de l'app à un autre parent.
+          {t.shareSubtitle}
         </p>
         <div className="parent-actions">
           <button className="parent-action-btn" onClick={handleShare}>
-            {shareCopied ? 'Lien copié ✓' : 'Partager l’app'}
+            {shareCopied ? t.linkCopied : t.shareApp}
           </button>
         </div>
       </div>
 
       <div className="parent-section">
-        <h3>À propos</h3>
+        <LanguageToggle />
+      </div>
+
+      <div className="parent-section">
+        <h3>{t.about}</h3>
         <div className="parent-actions">
           <button
             className="parent-action-btn"
             onClick={onShowChangelog}
           >
-            Nouveautés
+            {t.whatsNew}
           </button>
           <button
             className="parent-action-btn"
             onClick={onShowPrivacy}
           >
-            Confidentialité
+            {t.privacy}
           </button>
         </div>
       </div>
 
       <div className="parent-section">
-        <h3>Profils</h3>
+        <h3>{t.profiles}</h3>
         <p className="parent-section-subtitle">
-          Plusieurs enfants sur le même appareil&nbsp;? Chacun a son profil&nbsp;:
-          progression, badges et images séparés. La suppression efface le profil
-          de {profile.name} de cet appareil — pour recommencer à zéro, supprimez
-          puis recréez le profil.
+          {t.profilesSubtitle(profile.name)}
         </p>
         <div className="parent-actions">
           <button className="parent-action-btn" onClick={onAddProfile}>
-            Ajouter un enfant
+            {t.addChild}
           </button>
           <button
             className="parent-action-btn parent-action-btn--danger"
             onClick={onDeleteProfile}
           >
-            Supprimer ce profil
+            {t.deleteThisProfile}
           </button>
         </div>
       </div>
@@ -462,7 +455,7 @@ export default function ParentDashboard({
         <div className="parent-import-area">
           <textarea
             className="parent-import-textarea"
-            placeholder="Collez le JSON ici..."
+            placeholder={t.pasteJsonHere}
             value={importJson}
             onChange={(e) => setImportJson(e.target.value)}
           />
@@ -471,7 +464,7 @@ export default function ParentDashboard({
             onClick={handleImport}
             disabled={!importJson.trim()}
           >
-            Confirmer l'import
+            {t.confirmImport}
           </button>
         </div>
       )}
@@ -480,7 +473,7 @@ export default function ParentDashboard({
         <FeedbackModal profile={profile} onClose={() => setShowFeedback(false)} />
       )}
 
-      <div className="parent-version" aria-label="Version de l'app">v{import.meta.env.VITE_APP_VERSION}</div>
+      <div className="parent-version" aria-label={t.appVersionLabel}>v{import.meta.env.VITE_APP_VERSION}</div>
     </div>
   );
 }

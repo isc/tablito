@@ -6,6 +6,7 @@ import DivisionStrategyHint from './DivisionStrategyHint';
 import { getStrategy } from '../lib/strategies';
 import { getDivisionStrategy } from '../lib/divisionStrategies';
 import { pickRandom } from '../lib/utils';
+import { useFeedbackOverlayStrings } from '../i18n/session';
 import type { SessionItem } from '../types';
 
 interface FeedbackOverlayProps {
@@ -19,18 +20,6 @@ interface FeedbackOverlayProps {
   onDismiss: () => void;
 }
 
-const CORRECT_MESSAGES = [
-  'Super !',
-  'Bravo !',
-  'Génial !',
-  'Bien joué !',
-  'Excellent !',
-  'Parfait !',
-  'Trop fort !',
-];
-
-const INCORRECT_MESSAGES = ['Presque !', 'Pas tout à fait…'];
-
 export default function FeedbackOverlay({
   item,
   correct,
@@ -38,8 +27,9 @@ export default function FeedbackOverlay({
   submittedValue,
   onDismiss,
 }: FeedbackOverlayProps) {
+  const t = useFeedbackOverlayStrings();
   const [message] = useState(() =>
-    pickRandom(correct ? CORRECT_MESSAGES : INCORRECT_MESSAGES),
+    pickRandom(correct ? t.correctMessages : t.incorrectMessages),
   );
 
   useEffect(() => {
@@ -83,14 +73,14 @@ export default function FeedbackOverlay({
   const gridEyebrow =
     item.kind === 'div'
       ? `${item.fact.divisor} × ${item.fact.quotient} = ${item.fact.dividend}`
-      : `${item.displayA} × ${item.displayB} = ${item.displayA} rangée${item.displayA > 1 ? 's' : ''} de ${item.displayB}`;
+      : `${item.displayA} × ${item.displayB} = ${t.rowsOf(item.displayA, item.displayB)}`;
 
   return (
     <div className="feedback-overlay incorrect">
       <div className="feedback-card">
         <div className="feedback-message incorrect">{message}</div>
         <div className="feedback-user-answer">
-          Tu as répondu <b>{submittedValue}</b>
+          {t.youAnswered} <b>{submittedValue}</b>
         </div>
         <div className="feedback-answer">
           {left} {op} {right} = <b>{answer}</b>
@@ -101,7 +91,7 @@ export default function FeedbackOverlay({
           <DotGrid a={gridA} b={gridB} animated={false} bare />
         </div>
         <button type="button" className="feedback-ok-btn" onClick={onDismiss}>
-          J'ai compris
+          {t.gotIt}
         </button>
       </div>
     </div>

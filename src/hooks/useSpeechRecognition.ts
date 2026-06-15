@@ -118,7 +118,13 @@ export function useSpeechRecognition({
   const isSupported = typeof window !== 'undefined' && isSpeechRecognitionSupported();
 
   const ensureRecognition = useCallback((): SpeechRecognitionLike | null => {
-    if (recognitionRef.current) return recognitionRef.current;
+    if (recognitionRef.current) {
+      // Garde la langue à jour si elle a changé depuis la création : le tag est
+      // lu au prochain start(). Sans ça, l'instance mise en cache resterait
+      // figée sur la langue initiale.
+      recognitionRef.current.lang = lang;
+      return recognitionRef.current;
+    }
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) return null;
 

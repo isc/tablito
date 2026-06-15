@@ -1,0 +1,39 @@
+.language-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.language-toggle-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.language-toggle-options {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--cream-deep, rgba(30, 26, 46, 0.06));
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.language-toggle-option {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.language-toggle-option.is-active {
+  background: var(--indigo);
+  color: #fff;
+}
