@@ -40,16 +40,17 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   (`home` uniquement). Évite tout reload mid-séance.
 - **i18n (fr/en)** : langue d'interface **globale** (pas par profil),
   persistée dans `localStorage` sous `multiplix-lang`, défaut = langue du
-  navigateur. Cœur dans `src/i18n/lang.tsx` (`LangProvider`, `useLang`,
-  `useStrings` pour React ; `getLang`/`pickStrings` pour le code hors-React
-  comme `lib/badges`, `lib/strategies`, `lib/changelog`). Chaque domaine a son
+  navigateur. Cœur dans `src/i18n/lang.ts` (`useLang`, `useStrings` pour React ;
+  `getLang`/`pickStrings` pour le code hors-React comme `lib/badges`,
+  `lib/strategies`, `lib/changelog`) ; le `LangProvider` est dans
+  `src/i18n/LangProvider.tsx`. Chaque domaine a son
   module de strings (`src/i18n/*.ts`) exposant un hook `useXStrings()` basé sur
   une table `{ fr, en }` typée. La landing statique de `index.html` est
   bilingue via des `<span data-lang>` togglés par CSS sur `html[lang]` (langue
-  fixée avant le 1er paint par l'inline script du `<head>`). Voix : MP3 anglais
-  sous `public/audio/tts/en/` (cf. `useTTS`), reconnaissance vocale et parsing
-  des nombres parlés branchés sur la langue (`lib/parseSpokenNumber`). Les
-  specs publiques et le guide utilisateur restent FR pour l'instant.
+  fixée avant le 1er paint par l'inline script du `<head>`). Voix : MP3 par
+  langue sous `public/audio/tts/<lang>/` (cf. `useTTS`), reconnaissance vocale
+  et parsing des nombres parlés branchés sur la langue (`lib/parseSpokenNumber`).
+  Les specs publiques et le guide utilisateur restent FR pour l'instant.
 - localStorage pour la persistance (pas de backend).
 - Déploiement : GitHub Pages via GitHub Actions (`BASE=/`).
 - Node minimum : 22.12+ (CI utilise Node 22).
