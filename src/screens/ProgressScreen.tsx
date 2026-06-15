@@ -76,8 +76,8 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
 
       <div className="progress-legend">
         {showDiv
-          ? "Chaque division que tu connais mieux dévoile un peu plus de cette image. Quand tu les maîtrises toutes, elle est complète !"
-          : "Chaque multiplication que tu connais mieux dévoile un peu plus de l'image. Quand tu les maîtrises toutes, l'image est complète !"}
+          ? "Chaque division que tu connais mieux dévoile un peu plus de cette image. Et si un fait a besoin d'être revu, sa case se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !"
+          : "Chaque multiplication que tu connais mieux dévoile un peu plus de l'image. Et si un fait a besoin d'être revu, sa case se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !"}
       </div>
     </div>
   );
