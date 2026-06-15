@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260615113009"
+const CACHE = 'tablito-' + "20260615120946"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -55,6 +55,7 @@ const ASSETS = [
   "/src/__tests__/leitner.test.js",
   "/src/__tests__/mixedSessionTTS.test.js",
   "/src/__tests__/multiProfile.test.js",
+  "/src/__tests__/parseEnglishNumber.test.js",
   "/src/__tests__/parseFrenchNumber.test.js",
   "/src/__tests__/placement.test.js",
   "/src/__tests__/recapCelebrations.test.js",
@@ -80,6 +81,7 @@ const ASSETS = [
   "/src/components/FeedbackOverlay.js",
   "/src/components/FeedbackStar.js",
   "/src/components/FlameIcon.js",
+  "/src/components/LanguageToggle.js",
   "/src/components/LeitnerGrid.js",
   "/src/components/Mascot.js",
   "/src/components/Modal.js",
@@ -101,6 +103,21 @@ const ASSETS = [
   "/src/hooks/useSpeechRecognition.test.js",
   "/src/hooks/useTTS.js",
   "/src/hooks/useWakeLock.js",
+  "/src/i18n/LangProvider.js",
+  "/src/i18n/app.js",
+  "/src/i18n/badges.js",
+  "/src/i18n/changelog.js",
+  "/src/i18n/home.js",
+  "/src/i18n/lang.js",
+  "/src/i18n/language.js",
+  "/src/i18n/onboarding.js",
+  "/src/i18n/parent.js",
+  "/src/i18n/privacy.js",
+  "/src/i18n/progress.js",
+  "/src/i18n/recap.js",
+  "/src/i18n/session.js",
+  "/src/i18n/strategies.js",
+  "/src/i18n/voice.js",
   "/src/lib/audioContext.js",
   "/src/lib/badges.js",
   "/src/lib/changelog.js",
@@ -114,11 +131,14 @@ const ASSETS = [
   "/src/lib/install.js",
   "/src/lib/leitner.js",
   "/src/lib/micPreflight.js",
+  "/src/lib/parseEnglishNumber.js",
   "/src/lib/parseFrenchNumber.js",
+  "/src/lib/parseSpokenNumber.js",
   "/src/lib/placement.js",
   "/src/lib/push.js",
   "/src/lib/sessionComposer.js",
   "/src/lib/similarity.js",
+  "/src/lib/spokenNumber.js",
   "/src/lib/storage.js",
   "/src/lib/strategies.js",
   "/src/lib/streak.js",

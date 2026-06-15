@@ -33,6 +33,14 @@
          déjà cliqué : l'app va monter directement sur Home/Welcome, pas la
          landing. On masque la landing statique pour éviter qu'elle flash. */
       html.skip-static-landing #static-landing { display: none; }
+      /* Texte bilingue de la landing : chaque chaîne existe en deux éléments
+         (data-lang fr/en). On affiche celui de la langue de <html lang>, fixée
+         avant le 1er paint par le script inline du <head> — donc pas de flash.
+         `revert` rend à l'élément son display naturel (span inline, li
+         list-item), pour pouvoir taguer aussi bien des spans que des <li>. */
+      [data-lang="en"] { display: none; }
+      html[lang="en"] [data-lang="fr"] { display: none; }
+      html[lang="en"] [data-lang="en"] { display: revert; }
     </style>
 
     <!-- Décide AVANT le 1er paint si la landing statique doit être affichée
@@ -54,6 +62,23 @@
           try { hasImport = location.hash.indexOf('import=') !== -1; } catch (e) {}
           if (standalone || profile || skipped || hasImport) {
             document.documentElement.classList.add('skip-static-landing');
+          }
+          // Langue de l'interface (globale) : préférence explicite stockée,
+          // sinon langue du navigateur. ⚠ Même clé/logique que detectLang() dans
+          // src/i18n/lang.ts — garder les deux en phase. Fixé AVANT le 1er paint
+          // pour que la landing statique (texte dual fr/en piloté par CSS sur
+          // html[lang]) s'affiche directement dans la bonne langue, sans flash.
+          var lang = 'fr';
+          try {
+            var stored = localStorage.getItem('multiplix-lang');
+            if (stored === 'fr' || stored === 'en') lang = stored;
+            else if ((navigator.language || '').toLowerCase().indexOf('en') === 0) lang = 'en';
+          } catch (e) {}
+          document.documentElement.lang = lang;
+          if (lang === 'en') {
+            document.title = 'Tablito — Practise the times tables (free, no ads)';
+            var desc = document.querySelector('meta[name="description"]');
+            if (desc) desc.setAttribute('content', 'Free, ad-free app to learn the multiplication tables gently, from age 7. Leitner method, no grades or rankings, works offline. Data stays on the device.');
           }
           var ua = navigator.userAgent;
           var isIOS = /iPhone|iPod|iPad/.test(ua)
@@ -177,11 +202,23 @@
             </div>
           </div>
           <h1 class="landing-title">Tablito</h1>
-          <p class="landing-tagline">Apprendre les tables de multiplication, en douceur.</p>
+          <p class="landing-tagline">
+            <span data-lang="fr">Apprendre les tables de multiplication, en douceur.</span>
+            <span data-lang="en">Learn the times tables, gently.</span>
+          </p>
           <ul class="landing-badges">
-            <li class="landing-badge">100&nbsp;% gratuit</li>
-            <li class="landing-badge">dès le CE1&nbsp;· 7–11 ans</li>
-            <li class="landing-badge">tables &amp; division</li>
+            <li class="landing-badge">
+              <span data-lang="fr">100&nbsp;% gratuit</span>
+              <span data-lang="en">100&nbsp;% free</span>
+            </li>
+            <li class="landing-badge">
+              <span data-lang="fr">dès le CE1&nbsp;· 7–11 ans</span>
+              <span data-lang="en">ages 7–11</span>
+            </li>
+            <li class="landing-badge">
+              <span data-lang="fr">tables &amp; division</span>
+              <span data-lang="en">tables &amp; division</span>
+            </li>
           </ul>
         </div>
 
@@ -190,27 +227,42 @@
             <span class="landing-principle-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </span>
-            <span><strong>Méthode Leitner.</strong> Chaque multiplication revient juste avant que l'enfant l'oublie — la mémoire s'ancre durablement.</span>
+            <span data-lang="fr"><strong>Méthode Leitner.</strong> Chaque multiplication revient juste avant que l'enfant l'oublie — la mémoire s'ancre durablement.</span>
+            <span data-lang="en"><strong>Leitner method.</strong> Each multiplication comes back right before your child forgets it — memory sticks for good.</span>
           </li>
           <li>
             <span class="landing-principle-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.5-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </span>
-            <span><strong>Pas de notes, pas de classement.</strong> On célèbre le progrès, pas la performance. Aucun message négatif.</span>
+            <span data-lang="fr"><strong>Pas de notes, pas de classement.</strong> On célèbre le progrès, pas la performance. Aucun message négatif.</span>
+            <span data-lang="en"><strong>No grades, no rankings.</strong> We celebrate progress, not performance. Never a negative message.</span>
           </li>
           <li>
             <span class="landing-principle-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M8 12l3 3 5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </span>
-            <span><strong>Hors-ligne, sans pub, sans compte.</strong> Une fois installé, plus besoin de connexion. Les données restent sur l'appareil.</span>
+            <span data-lang="fr"><strong>Hors-ligne, sans pub, sans compte.</strong> Une fois installé, plus besoin de connexion. Les données restent sur l'appareil.</span>
+            <span data-lang="en"><strong>Offline, no ads, no account.</strong> Once installed, no connection needed. Data stays on the device.</span>
           </li>
         </ul>
 
         <div class="landing-cta">
-          <button type="button" class="landing-install-btn">Installer Tablito</button>
-          <p class="landing-install-hint">L'app s'installera comme n'importe quelle autre application.</p>
-          <button type="button" class="landing-skip-btn">Essayer dans le navigateur</button>
-          <p class="landing-skip-warning">Attention&nbsp;: si tu installes Tablito plus tard sur iPhone ou iPad, la progression du navigateur ne sera pas conservée.</p>
+          <button type="button" class="landing-install-btn">
+            <span data-lang="fr">Installer Tablito</span>
+            <span data-lang="en">Install Tablito</span>
+          </button>
+          <p class="landing-install-hint">
+            <span data-lang="fr">L'app s'installera comme n'importe quelle autre application.</span>
+            <span data-lang="en">The app installs just like any other app.</span>
+          </p>
+          <button type="button" class="landing-skip-btn">
+            <span data-lang="fr">Essayer dans le navigateur</span>
+            <span data-lang="en">Try it in the browser</span>
+          </button>
+          <p class="landing-skip-warning">
+            <span data-lang="fr">Attention&nbsp;: si tu installes Tablito plus tard sur iPhone ou iPad, la progression du navigateur ne sera pas conservée.</span>
+            <span data-lang="en">Heads up: if you install Tablito later on an iPhone or iPad, your browser progress won't carry over.</span>
+          </p>
         </div>
 
         <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif.
@@ -220,20 +272,37 @@
              tout ça n'est détectable côté web. Un repli ••• couvre le cas où le
              partage est replié dans le menu (Safari compact). -->
         <div id="ios-install-help" class="install-help">
-          <h2>Installer sur iPhone / iPad</h2>
+          <h2>
+            <span data-lang="fr">Installer sur iPhone / iPad</span>
+            <span data-lang="en">Install on iPhone / iPad</span>
+          </h2>
           <!-- Préambule montré uniquement hors Safari (cf. html.ios-other-browser) :
                en Safari, inutile de dire au visiteur d'ouvrir Safari. -->
-          <p class="ios-open-in-safari">Tu es dans Chrome ou Firefox&nbsp;? Ouvre d'abord cette page dans <strong>Safari</strong> (le menu de ton navigateur propose <strong>« Ouvrir dans Safari »</strong>), puis&nbsp;:</p>
-          <p class="ios-intro">Ajoute l'app à ton écran d'accueil en 3 touches&nbsp;:</p>
+          <p class="ios-open-in-safari">
+            <span data-lang="fr">Tu es dans Chrome ou Firefox ? Ouvre d'abord cette page dans <strong>Safari</strong> (le menu de ton navigateur propose <strong>« Ouvrir dans Safari »</strong>), puis :</span>
+            <span data-lang="en">In Chrome or Firefox? First open this page in <strong>Safari</strong> (your browser menu has <strong>“Open in Safari”</strong>), then:</span>
+          </p>
+          <p class="ios-intro">
+            <span data-lang="fr">Ajoute l'app à ton écran d'accueil en 3 touches :</span>
+            <span data-lang="en">Add the app to your Home Screen in 3 taps:</span>
+          </p>
           <ol>
-            <li>
+            <li data-lang="fr">
               Touche l'icône <strong>Partager</strong>
               <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
               dans la barre d'outils de Safari (<strong>en bas</strong> sur iPhone, <strong>en haut</strong> sur iPad).
-              <span class="ios-step-hint">Tu ne la vois pas&nbsp;? Touche d'abord <strong>•••</strong>, puis <strong>« Partager »</strong>.</span>
+              <span class="ios-step-hint">Tu ne la vois pas ? Touche d'abord <strong>•••</strong>, puis <strong>« Partager »</strong>.</span>
             </li>
-            <li>Fais défiler, puis choisis <strong>« Sur l'écran d'accueil »</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
-            <li>Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran&nbsp;!</li>
+            <li data-lang="en">
+              Tap the <strong>Share</strong> icon
+              <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
+              in Safari's toolbar (<strong>at the bottom</strong> on iPhone, <strong>at the top</strong> on iPad).
+              <span class="ios-step-hint">Can't see it? Tap <strong>•••</strong> first, then <strong>“Share”</strong>.</span>
+            </li>
+            <li data-lang="fr">Fais défiler, puis choisis <strong>« Sur l'écran d'accueil »</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
+            <li data-lang="en">Scroll down, then choose <strong>“Add to Home Screen”</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
+            <li data-lang="fr">Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran !</li>
+            <li data-lang="en">Tap <strong>“Add”</strong> at the top right. The Tablito icon appears on your screen!</li>
           </ol>
         </div>
 
@@ -242,13 +311,28 @@
              iOS. Volontairement court et honnête : sur ordinateur l'install est
              un bonus, le vrai CTA utile est "Essayer dans le navigateur". -->
         <div id="desktop-install-help" class="install-help">
-          <h2>Installer sur ordinateur</h2>
-          <p>Selon ton navigateur&nbsp;:</p>
+          <h2>
+            <span data-lang="fr">Installer sur ordinateur</span>
+            <span data-lang="en">Install on desktop</span>
+          </h2>
+          <p>
+            <span data-lang="fr">Selon ton navigateur&nbsp;:</span>
+            <span data-lang="en">Depending on your browser:</span>
+          </p>
           <ol>
-            <li>Avec <strong>Chrome</strong> ou <strong>Edge</strong>, une icône d'installation apparaît à droite de la barre d'adresse — clique dessus.</li>
-            <li>Sur <strong>Safari (Mac)</strong>, ouvre le menu <strong>Fichier</strong> puis <strong>« Ajouter au Dock »</strong>.</li>
+            <li>
+              <span data-lang="fr">Avec <strong>Chrome</strong> ou <strong>Edge</strong>, une icône d'installation apparaît à droite de la barre d'adresse — clique dessus.</span>
+              <span data-lang="en">In <strong>Chrome</strong> or <strong>Edge</strong>, an install icon appears at the right of the address bar — click it.</span>
+            </li>
+            <li>
+              <span data-lang="fr">Sur <strong>Safari (Mac)</strong>, ouvre le menu <strong>Fichier</strong> puis <strong>« Ajouter au Dock »</strong>.</span>
+              <span data-lang="en">In <strong>Safari (Mac)</strong>, open the <strong>File</strong> menu, then <strong>“Add to Dock”</strong>.</span>
+            </li>
           </ol>
-          <p class="install-note">Pas d'installation possible&nbsp;? Clique sur <strong>« Essayer dans le navigateur »</strong> ci-dessus pour commencer tout de suite.</p>
+          <p class="install-note">
+            <span data-lang="fr">Pas d'installation possible&nbsp;? Clique sur <strong>« Essayer dans le navigateur »</strong> ci-dessus pour commencer tout de suite.</span>
+            <span data-lang="en">Can't install? Click <strong>“Try it in the browser”</strong> above to start right away.</span>
+          </p>
         </div>
       </div>
     </div>
