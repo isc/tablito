@@ -4,14 +4,11 @@ import { getLang } from '../i18n/lang';
 
 const BASE = import.meta.env.BASE_URL;
 
-// Sous-dossier audio selon la langue : le français (langue d'origine) reste à
-// la racine de audio/tts/ ; l'anglais vit sous audio/tts/en/. Les clés passées
-// à speak()/preload() restent identiques d'une langue à l'autre (`q-3-4`…),
-// seul le chemin résolu diffère.
+// Sous-dossier audio par langue : chaque langue vit sous audio/tts/<lang>/
+// (fr, en, …). Les clés passées à speak()/preload() restent identiques d'une
+// langue à l'autre (`q-3-4`…), seul le chemin résolu diffère.
 function audioPath(key: string): string {
-  const lang = getLang();
-  const dir = lang === 'fr' ? '' : `${lang}/`;
-  return `${BASE}audio/tts/${dir}${key}.mp3`;
+  return `${BASE}audio/tts/${getLang()}/${key}.mp3`;
 }
 
 // La clé de cache est préfixée par la langue : changer de langue ne doit pas

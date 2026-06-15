@@ -7,8 +7,8 @@
  *   MISTRAL_API_KEY=... node scripts/generate-tts.mjs            # toutes les langues
  *   MISTRAL_API_KEY=... TTS_LANGS=en node scripts/generate-tts.mjs  # une seule
  *
- * Output:
- *   public/audio/tts/*.mp3        (français — langue d'origine, à la racine)
+ * Output (un sous-dossier par langue) :
+ *   public/audio/tts/fr/*.mp3     (français)
  *   public/audio/tts/en/*.mp3     (anglais)
  *
  * Skips files that already exist (delete a file to regenerate it).
@@ -333,7 +333,7 @@ function buildEntriesEn() {
 }
 
 const LANGS = {
-  fr: { dir: TTS_ROOT, voice: VOICE_ID_FR, build: buildEntriesFr },
+  fr: { dir: join(TTS_ROOT, 'fr'), voice: VOICE_ID_FR, build: buildEntriesFr },
   en: { dir: join(TTS_ROOT, 'en'), voice: VOICE_ID_EN, build: buildEntriesEn },
 };
 
