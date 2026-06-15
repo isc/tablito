@@ -12,6 +12,7 @@ import FeedbackModal from '../components/FeedbackModal';
 import EvolutionChart from '../components/EvolutionChart';
 import NotificationSettings from '../components/NotificationSettings';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
 
 const HARD_FACTS_WINDOW = 10;
@@ -45,6 +46,10 @@ export default function ParentDashboard({
   const [showFeedback, setShowFeedback] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const t = useParentDashboardStrings();
+  const { lang } = useLang();
+  // Le guide est bilingue : FR à `/guide/`, autres langues sous `/guide/<lang>/`
+  // (cf. scripts/generate-user-guide.mjs). On pointe vers la version courante.
+  const guideBase = `${import.meta.env.BASE_URL}guide/${lang === 'fr' ? '' : `${lang}/`}`;
 
   const divisionUnlocked = useMemo(() => isDivisionUnlocked(profile), [profile]);
   const divisionFacts = useMemo(() => profile.divisionFacts ?? [], [profile.divisionFacts]);
@@ -228,7 +233,7 @@ export default function ParentDashboard({
           {t.boxDistribution}
           <a
             className="parent-section-help"
-            href={`${import.meta.env.BASE_URL}guide/#principes`}
+            href={`${guideBase}#principes`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t.learnMoreLeitner}
@@ -263,7 +268,7 @@ export default function ParentDashboard({
           {t.leitnerGrid}
           <a
             className="parent-section-help"
-            href={`${import.meta.env.BASE_URL}guide/#principes`}
+            href={`${guideBase}#principes`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t.learnMoreLeitner}
@@ -382,7 +387,7 @@ export default function ParentDashboard({
         <div className="parent-actions">
           <a
             className="parent-action-btn"
-            href={`${import.meta.env.BASE_URL}guide/`}
+            href={guideBase}
             target="_blank"
             rel="noopener noreferrer"
           >
