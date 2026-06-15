@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-06-15',
+    items: [
+      "Image mystère qui ne se complétait jamais entièrement : les faits les plus difficiles (typiquement 7×9, 8×9, 9×9) pouvaient n'être jamais proposés à l'apprentissage, laissant quelques cases définitivement vides en bas de l'image — surtout si l'enfant butait sur la table de 9. Désormais ces derniers faits finissent toujours par être introduits, et l'image peut être dévoilée jusqu'au bout.",
+    ],
+  },
+  {
     date: '2026-06-14',
     items: [
       "Tablito parle désormais anglais : l'interface est disponible en français et en anglais. La langue suit celle de l'appareil au premier lancement, et se change à tout moment dans l'espace parent (« Langue de l'application »). Tout est traduit — écrans, règles, badges, astuces — et même la voix : les questions et explications sont lues en anglais quand cette langue est choisie.",
@@ -141,6 +147,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-06-15',
+    items: [
+      'Mystery picture that never fully completed: the hardest facts (typically 7×9, 8×9, 9×9) could end up never being offered for learning, leaving a few tiles permanently blank at the bottom of the picture — especially if your child got stuck on the 9 times table. Now these last facts always get introduced eventually, and the picture can be revealed all the way.',
+    ],
+  },
   {
     date: '2026-06-14',
     items: [

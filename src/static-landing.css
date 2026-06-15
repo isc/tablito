@@ -224,13 +224,48 @@
   color: var(--indigo-ink);
 }
 
-/* Par défaut on montre la variante "modern" (Safari iOS 26+, ~66 % des
-   iPhones en 2026). L'inline script du <head> pose `html.ios-classic`
-   pour iOS < 26 (Version/<26 dans l'UA Safari) — l'autre variante prend
-   la main alors. */
-.install-help .ios-steps-classic { display: none; }
-html.ios-classic .install-help .ios-steps-modern { display: none; }
-html.ios-classic .install-help .ios-steps-classic { display: block; }
+/* On décrit l'action par son ICÔNE plutôt que par sa position : le bouton de
+   partage iOS est en bas (iPhone) ou en haut (iPad), et son emplacement dépend
+   en plus du réglage « barre d'adresse » — impossible à détecter côté web. Une
+   instruction unique, centrée sur l'icône, marche dans tous les cas. */
+.install-help .ios-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  margin: 0 1px;
+  vertical-align: -6px;
+  color: var(--indigo-ink);
+  background: var(--indigo-soft);
+  border-radius: 7px;
+}
+
+/* Présentation commune aux deux glyphes (partage, « + ») : factorisée ici pour
+   que le markup inline ne porte que le viewBox + le tracé. */
+.install-help .ios-icon svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.install-help .ios-step-hint {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
+
+/* « Ouvre dans Safari » : utile seulement hors Safari. Par défaut on suppose
+   Safari (préambule masqué, intro directe), et l'inline script du <head> pose
+   `html.ios-other-browser` pour Chrome/Firefox/Edge… iOS — on inverse alors. */
+.install-help .ios-open-in-safari { display: none; }
+html.ios-other-browser .install-help .ios-open-in-safari { display: block; }
+html.ios-other-browser .install-help .ios-intro { display: none; }
 
 .install-note {
   font-size: 12px;

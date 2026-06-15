@@ -33,18 +33,19 @@
          déjà cliqué : l'app va monter directement sur Home/Welcome, pas la
          landing. On masque la landing statique pour éviter qu'elle flash. */
       html.skip-static-landing #static-landing { display: none; }
-      /* Texte bilingue de la landing : chaque chaîne existe en deux <span>
+      /* Texte bilingue de la landing : chaque chaîne existe en deux éléments
          (data-lang fr/en). On affiche celui de la langue de <html lang>, fixée
-         avant le 1er paint par le script inline du <head> — donc pas de flash. */
-      span[data-lang="en"] { display: none; }
-      html[lang="en"] span[data-lang="fr"] { display: none; }
-      html[lang="en"] span[data-lang="en"] { display: inline; }
+         avant le 1er paint par le script inline du <head> — donc pas de flash.
+         `revert` rend à l'élément son display naturel (span inline, li
+         list-item), pour pouvoir taguer aussi bien des spans que des <li>. */
+      [data-lang="en"] { display: none; }
+      html[lang="en"] [data-lang="fr"] { display: none; }
+      html[lang="en"] [data-lang="en"] { display: revert; }
     </style>
 
-    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée,
-         et quelle variante du flow d'install iOS afficher (Safari < 26 vs ≥ 26
-         où Apple a déplacé le bouton de partage derrière "•••"). Inline + sync
-         pour tourner avant le rendu du <body>. -->
+    <!-- Décide AVANT le 1er paint si la landing statique doit être affichée
+         (et marque iOS, pour choisir le bon panneau d'aide à l'installation).
+         Inline + sync pour tourner avant le rendu du <body>. -->
     <script>
       (function() {
         try {
@@ -64,7 +65,7 @@
           }
           // Langue de l'interface (globale) : préférence explicite stockée,
           // sinon langue du navigateur. ⚠ Même clé/logique que detectLang() dans
-          // src/i18n/lang.tsx — garder les deux en phase. Fixé AVANT le 1er paint
+          // src/i18n/lang.ts — garder les deux en phase. Fixé AVANT le 1er paint
           // pour que la landing statique (texte dual fr/en piloté par CSS sur
           // html[lang]) s'affiche directement dans la bonne langue, sans flash.
           var lang = 'fr';
@@ -86,10 +87,14 @@
             // Sert au handler "Installer" à choisir le bon panneau d'aide
             // (iOS share-sheet vs desktop) quand il n'y a pas de prompt natif.
             document.documentElement.classList.add('is-ios');
-            var v = ua.match(/Version\/(\d+)/);
-            var major = v ? parseInt(v[1], 10) : 0;
-            if (major > 0 && major < 26) {
-              document.documentElement.classList.add('ios-classic');
+            // Hors Safari (Chrome/Firefox/Edge… iOS), le partage n'expose pas
+            // « Sur l'écran d'accueil » : on affichera un préambule "ouvre dans
+            // Safari". Détection fail-safe : par défaut on suppose Safari (le
+            // visiteur n'a pas à se voir dire d'ouvrir Safari s'il y est déjà).
+            // ⚠ Même denylist que isIOSSafari() dans src/lib/install.ts — ce
+            // script inline tourne pré-paint (avant tout module), d'où la copie.
+            if (/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua)) {
+              document.documentElement.classList.add('ios-other-browser');
             }
           }
         } catch (e) {}
@@ -260,53 +265,44 @@
         </div>
 
         <!-- Instructions iOS, montrées au clic "Installer" si pas de prompt natif.
-             Deux variantes selon la version Safari (cf. inline script en <head>
-             qui pose `html.ios-classic` pour iOS < 26). -->
+             Une seule liste, centrée sur l'ICÔNE de partage plutôt que sur sa
+             position : le bouton est en bas (iPhone) ou en haut (iPad), et son
+             emplacement dépend aussi du réglage « barre d'adresse » — rien de
+             tout ça n'est détectable côté web. Un repli ••• couvre le cas où le
+             partage est replié dans le menu (Safari compact). -->
         <div id="ios-install-help" class="install-help">
           <h2>
             <span data-lang="fr">Installer sur iPhone / iPad</span>
             <span data-lang="en">Install on iPhone / iPad</span>
           </h2>
-          <p>
-            <span data-lang="fr">Ouvre cette page dans Safari, puis ajoute l'app à l'écran d'accueil&nbsp;:</span>
-            <span data-lang="en">Open this page in Safari, then add the app to your Home Screen:</span>
+          <!-- Préambule montré uniquement hors Safari (cf. html.ios-other-browser) :
+               en Safari, inutile de dire au visiteur d'ouvrir Safari. -->
+          <p class="ios-open-in-safari">
+            <span data-lang="fr">Tu es dans Chrome ou Firefox ? Ouvre d'abord cette page dans <strong>Safari</strong> (le menu de ton navigateur propose <strong>« Ouvrir dans Safari »</strong>), puis :</span>
+            <span data-lang="en">In Chrome or Firefox? First open this page in <strong>Safari</strong> (your browser menu has <strong>“Open in Safari”</strong>), then:</span>
           </p>
-          <ol class="ios-steps-modern">
-            <li>
-              <span data-lang="fr">Touche le bouton <strong>•••</strong> en bas à droite de Safari (en mode compact, c'est lui qui cache le partage).</span>
-              <span data-lang="en">Tap the <strong>•••</strong> button at the bottom right of Safari (in compact mode it hides the Share option).</span>
-            </li>
-            <li>
-              <span data-lang="fr">Choisis <strong>« Partager »</strong> dans le menu qui s'ouvre.</span>
-              <span data-lang="en">Choose <strong>“Share”</strong> in the menu that opens.</span>
-            </li>
-            <li>
-              <span data-lang="fr">Touche <strong>« Plus »</strong> pour afficher toutes les actions.</span>
-              <span data-lang="en">Tap <strong>“More”</strong> to show all the actions.</span>
-            </li>
-            <li>
-              <span data-lang="fr">Choisis <strong>« Sur l'écran d'accueil »</strong> puis touche <strong>« Ajouter »</strong>. L'icône Tablito apparaît sur ton écran.</span>
-              <span data-lang="en">Choose <strong>“Add to Home Screen”</strong>, then tap <strong>“Add”</strong>. The Tablito icon appears on your screen.</span>
-            </li>
-          </ol>
-          <ol class="ios-steps-classic">
-            <li>
-              <span data-lang="fr">Touche le bouton <strong>de partage</strong> en bas de l'écran (icône avec une flèche vers le haut).</span>
-              <span data-lang="en">Tap the <strong>Share</strong> button at the bottom of the screen (the icon with an upward arrow).</span>
-            </li>
-            <li>
-              <span data-lang="fr">Choisis <strong>« Sur l'écran d'accueil »</strong> dans la liste.</span>
-              <span data-lang="en">Choose <strong>“Add to Home Screen”</strong> in the list.</span>
-            </li>
-            <li>
-              <span data-lang="fr">Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran d'accueil.</span>
-              <span data-lang="en">Tap <strong>“Add”</strong> at the top right. The Tablito icon appears on your Home Screen.</span>
-            </li>
-          </ol>
-          <p class="install-note">
-            <span data-lang="fr">Astuce&nbsp;: dans Chrome ou Firefox sur iOS, l'ajout n'est pas disponible — ouvre cette page dans Safari.</span>
-            <span data-lang="en">Tip: on iOS, adding to the Home Screen isn't available in Chrome or Firefox — open this page in Safari.</span>
+          <p class="ios-intro">
+            <span data-lang="fr">Ajoute l'app à ton écran d'accueil en 3 touches :</span>
+            <span data-lang="en">Add the app to your Home Screen in 3 taps:</span>
           </p>
+          <ol>
+            <li data-lang="fr">
+              Touche l'icône <strong>Partager</strong>
+              <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
+              dans la barre d'outils de Safari (<strong>en bas</strong> sur iPhone, <strong>en haut</strong> sur iPad).
+              <span class="ios-step-hint">Tu ne la vois pas ? Touche d'abord <strong>•••</strong>, puis <strong>« Partager »</strong>.</span>
+            </li>
+            <li data-lang="en">
+              Tap the <strong>Share</strong> icon
+              <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V4"/><path d="M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/></svg></span>
+              in Safari's toolbar (<strong>at the bottom</strong> on iPhone, <strong>at the top</strong> on iPad).
+              <span class="ios-step-hint">Can't see it? Tap <strong>•••</strong> first, then <strong>“Share”</strong>.</span>
+            </li>
+            <li data-lang="fr">Fais défiler, puis choisis <strong>« Sur l'écran d'accueil »</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
+            <li data-lang="en">Scroll down, then choose <strong>“Add to Home Screen”</strong> <span class="ios-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>.</li>
+            <li data-lang="fr">Touche <strong>« Ajouter »</strong> en haut à droite. L'icône Tablito apparaît sur ton écran !</li>
+            <li data-lang="en">Tap <strong>“Add”</strong> at the top right. The Tablito icon appears on your screen!</li>
+          </ol>
         </div>
 
         <!-- Desktop sans prompt natif (Safari macOS, Firefox…). Montré au clic

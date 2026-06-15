@@ -16,6 +16,7 @@ import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
+import { preflightMicPermission } from '../lib/micPreflight';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useSessionStrings } from '../i18n/session';
 
@@ -99,6 +100,16 @@ export default function SessionScreen({
   const { inputMode, setInputMode } = useInputMode();
   const t = useSessionStrings();
   useWakeLock(true);
+
+  // Bascule clavier → micro en cours de séance. On pré-arme la permission en
+  // consommant le geste du clic (requis par iOS) AVANT de monter VoiceInput :
+  // sinon le tout premier SpeechRecognition.start() coïncide avec le prompt
+  // natif et, sur iOS, déclenche le glitch « onend immédiat » au premier
+  // octroi. On reproduit ici le preflight déjà fait au démarrage de séance.
+  const switchToVoice = useCallback(async () => {
+    await preflightMicPermission();
+    setInputMode('voice');
+  }, [setInputMode]);
 
   const questionStartTime = useRef(0);
   const correctCount = useRef(0);
@@ -409,7 +420,7 @@ export default function SessionScreen({
                   <button
                     type="button"
                     className="session-input-switch"
-                    onClick={() => setInputMode('voice')}
+                    onClick={switchToVoice}
                     disabled={numpadDisabled}
                   >
                     {'🎤'} {t.useMic}
