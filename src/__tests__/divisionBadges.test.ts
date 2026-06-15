@@ -8,7 +8,7 @@ import {
   visibleBadgeDefinitions,
   factsForDivisionTable,
   getCompletedDivisionTables,
-  DIVISION_BADGE_DEFINITIONS,
+  getDivisionBadgeDefinitions,
 } from '../lib/badges';
 import { createNewProfile } from '../lib/storage';
 
@@ -58,7 +58,7 @@ describe('visibleBadgeDefinitions', () => {
     expect(ids.has(BADGE_IDS.DIV_GENIE)).toBe(true);
     expect(ids.has(BADGE_IDS.DIV_PREMIERE_MAITRISE)).toBe(true);
     // 1 + 8 tables + 1 = 10 badges division
-    expect(DIVISION_BADGE_DEFINITIONS).toHaveLength(10);
+    expect(getDivisionBadgeDefinitions()).toHaveLength(10);
   });
 });
 

@@ -17,59 +17,7 @@ export interface Strategy {
   lines: string[];
 }
 
-interface StrategyTemplate {
-  kind: StrategyKind;
-  title: string;
-  lines: (other: number, product: number) => string[];
-}
-
-// Ordre = priorité pédagogique quand plusieurs pivots s'appliquent.
-const STRATEGIES: ReadonlyArray<readonly [pivot: number, StrategyTemplate]> = [
-  [9, {
-    kind: 'near-ten',
-    title: '× 9, c’est comme × 10 mais on enlève une fois.',
-    lines: (n, p) => [`${n} × 9 = ${n} × 10 − ${n}`, `= ${n * 10} − ${n}`, `= ${p}`],
-  }],
-  [5, {
-    kind: 'skip-count',
-    title: '× 5, c’est compter par 5.',
-    lines: (n, p) => {
-      const sequence = Array.from({ length: n }, (_, i) => (i + 1) * 5).join(' → ');
-      const sum = Array.from({ length: n }, () => '5').join(' + ');
-      return [`${n} × 5 = ${sum}`, `On compte : ${sequence}`, `= ${p}`];
-    },
-  }],
-  [3, {
-    kind: 'double-add',
-    title: '× 3, c’est × 2 plus une fois.',
-    lines: (n, p) => [`${n} × 3 = ${n} × 2 + ${n}`, `= ${n * 2} + ${n}`, `= ${p}`],
-  }],
-  [4, {
-    kind: 'double-double',
-    title: '× 4, c’est le double de × 2.',
-    lines: (n, p) => [`${n} × 4 = (${n} × 2) × 2`, `= ${n * 2} × 2`, `= ${p}`],
-  }],
-  [6, {
-    kind: 'five-plus-one',
-    title: '× 6, c’est × 5 plus une fois.',
-    lines: (n, p) => [`${n} × 6 = ${n} × 5 + ${n}`, `= ${n * 5} + ${n}`, `= ${p}`],
-  }],
-  [7, {
-    kind: 'five-plus-two',
-    title: '× 7, c’est × 5 plus × 2.',
-    lines: (n, p) => [`${n} × 7 = ${n} × 5 + ${n} × 2`, `= ${n * 5} + ${n * 2}`, `= ${p}`],
-  }],
-  [8, {
-    kind: 'double-double-double',
-    title: '× 8, c’est doubler trois fois.',
-    lines: (n, p) => [
-      `${n} × 8 = ${n} × 2 × 2 × 2`,
-      `= ${n * 2} × 2 × 2`,
-      `= ${n * 4} × 2`,
-      `= ${p}`,
-    ],
-  }],
-];
+import { getStrategyTemplates } from '../i18n/strategies';
 
 /**
  * Retourne une stratégie de dérivation adaptée au fait (a, b), ou null
@@ -85,7 +33,7 @@ export function getStrategy(a: number, b: number): Strategy | null {
   if (lo === 2) return null;
   if (lo === hi && lo === 3) return null;
 
-  for (const [pivot, template] of STRATEGIES) {
+  for (const [pivot, template] of getStrategyTemplates()) {
     if (lo === pivot || hi === pivot) {
       const other = pivot === lo ? hi : lo;
       return {

@@ -1,5 +1,26 @@
 import { Component, type ReactNode } from 'react';
 import { getActiveProfileRaw } from '../lib/storage';
+import { getLang } from '../i18n/lang';
+
+// ErrorBoundary est un composant classe : pas de hooks, donc pas de
+// useStrings(). On lit la langue courante via le singleton getLang() au moment
+// du render et on sélectionne dans un dico local { fr, en } (même forme).
+const strings = {
+  fr: {
+    title: 'Oups, un petit bug',
+    text: "L'application a rencontré un problème. Ta progression est enregistrée sur cet appareil — rechargez la page pour reprendre.",
+    reload: 'Recharger',
+    downloadBackup: 'Télécharger une sauvegarde',
+    technicalDetails: 'Détails techniques',
+  },
+  en: {
+    title: 'Oops, a little bug',
+    text: 'The app ran into a problem. Your progress is saved on this device — reload the page to continue.',
+    reload: 'Reload',
+    downloadBackup: 'Download a backup',
+    technicalDetails: 'Technical details',
+  },
+};
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -47,25 +68,23 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
   render(): ReactNode {
     if (!this.state.hasError) return this.props.children;
+    const t = strings[getLang()];
     return (
       <div className="error-boundary">
         <div className="error-boundary-card">
-          <h1 className="error-boundary-title">Oups, un petit bug</h1>
-          <p className="error-boundary-text">
-            L'application a rencontré un problème. Ta progression est enregistrée
-            sur cet appareil — rechargez la page pour reprendre.
-          </p>
+          <h1 className="error-boundary-title">{t.title}</h1>
+          <p className="error-boundary-text">{t.text}</p>
           <div className="error-boundary-actions">
             <button type="button" className="error-boundary-primary" onClick={this.handleReload}>
-              Recharger
+              {t.reload}
             </button>
             <button type="button" className="error-boundary-secondary" onClick={this.handleDownloadBackup}>
-              Télécharger une sauvegarde
+              {t.downloadBackup}
             </button>
           </div>
           {this.state.message && (
             <details className="error-boundary-details">
-              <summary>Détails techniques</summary>
+              <summary>{t.technicalDetails}</summary>
               <pre>{this.state.message}</pre>
             </details>
           )}

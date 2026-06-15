@@ -1,6 +1,8 @@
 import type { UserProfile, Badge, MultiFact, DivisionFact } from '../types';
 import { BADGE_IDS } from '../types';
 import { todayISO, daysBetween } from './utils';
+import { getBadgeI18n } from '../i18n/badges';
+import { getLang, type Lang } from '../i18n/lang';
 
 function hasBadge(profile: UserProfile, id: string): boolean {
   return profile.badges.some((b) => b.id === id);
@@ -100,186 +102,199 @@ export interface BadgeDefinition {
   progressFor?: (profile: UserProfile) => { current: number; target: number; unitLabel: string };
 }
 
-export const ALL_BADGE_DEFINITIONS: BadgeDefinition[] = [
-  {
-    id: BADGE_IDS.PREMIER_PAS,
-    name: 'Premier pas',
-    description: 'Terminer la première séance',
-    icon: '🌱',
-    color: 'var(--sage)',
-    conditionText: 'Termine ta toute première séance.',
-    progressFor: (p) => ({ current: Math.min(p.totalSessions, 1), target: 1, unitLabel: 'séance' }),
-  },
-  {
-    id: BADGE_IDS.PREMIERE_CASE,
-    name: 'Première case révélée',
-    description: 'Une multiplication presque maîtrisée',
-    icon: '🖼️',
-    color: 'var(--sky)',
-    conditionText: 'Place ta toute première multiplication en boîte 4 — une case s’éclaircit sur ton image mystère !',
-    progressFor: (p) => {
-      const ready = p.facts.filter((f) => f.box >= 4).length;
-      return { current: Math.min(ready, 1), target: 1, unitLabel: 'en boîte 4' };
+// Définitions des badges de multiplication, construites pour la langue
+// d'interface courante (les chaînes viennent de i18n/badges, le reste — icône,
+// couleur, logique de progression — est figé ici).
+function buildAllBadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  const u = i.units;
+  return [
+    {
+      id: BADGE_IDS.PREMIER_PAS,
+      ...i.premierPas,
+      icon: '🌱',
+      color: 'var(--sage)',
+      progressFor: (p) => ({ current: Math.min(p.totalSessions, 1), target: 1, unitLabel: u.session }),
     },
-  },
-  {
-    id: BADGE_IDS.PREMIERE_MAITRISE,
-    name: 'Première multiplication maîtrisée',
-    description: 'Une multiplication au top niveau',
-    icon: '🥇',
-    color: 'var(--honey)',
-    conditionText: 'Place ta toute première multiplication en boîte 5 — la case est complètement dévoilée !',
-    progressFor: (p) => {
-      const ready = p.facts.filter((f) => f.box === 5).length;
-      return { current: Math.min(ready, 1), target: 1, unitLabel: 'en boîte 5' };
-    },
-  },
-  {
-    id: BADGE_IDS.REGULIER,
-    name: 'Régularité',
-    description: '7 jours consécutifs',
-    icon: '🔥',
-    color: 'var(--coral)',
-    conditionText: 'Joue 7 jours d’affilée sans en sauter un seul.',
-    progressFor: (p) => ({ current: Math.min(p.currentStreak, 7), target: 7, unitLabel: 'jours' }),
-  },
-  {
-    id: BADGE_IDS.MACHINE,
-    name: 'Machine',
-    description: '10 bonnes réponses de suite',
-    icon: '⚡',
-    color: 'var(--honey)',
-    conditionText: 'Enchaîne 10 bonnes réponses de suite, sans aucune faute, dans une même séance.',
-  },
-  {
-    id: BADGE_IDS.EXPLORATION,
-    name: 'Exploration',
-    description: 'Avoir vu tous les faits',
-    icon: '🗺️',
-    color: 'var(--sky)',
-    conditionText: 'Découvre toutes les multiplications du jeu.',
-    progressFor: (p) => ({
-      current: p.facts.filter((f) => f.introduced).length,
-      target: p.facts.length,
-      unitLabel: 'découvertes',
-    }),
-  },
-  ...Array.from({ length: NUM_TABLE_BADGES }, (_, i) => {
-    const n = i + 2;
-    return {
-      id: `${BADGE_IDS.TABLE_PREFIX}${n}`,
-      name: `Table de ${n}`,
-      description: `Maîtriser la table de ${n}`,
-      icon: `${n}️⃣`,
-      color: 'var(--indigo)',
-      conditionText: `Place toutes les multiplications de la table de ${n} dans la boîte 4 ou 5.`,
-      progressFor: (p: UserProfile) => {
-        const tableFacts = factsForTable(p.facts, n);
-        return {
-          current: tableFacts.filter((f) => f.box >= 4).length,
-          target: tableFacts.length,
-          unitLabel: 'en boîte 4+',
-        };
+    {
+      id: BADGE_IDS.PREMIERE_CASE,
+      ...i.premiereCase,
+      icon: '🖼️',
+      color: 'var(--sky)',
+      progressFor: (p) => {
+        const ready = p.facts.filter((f) => f.box >= 4).length;
+        return { current: Math.min(ready, 1), target: 1, unitLabel: u.box4 };
       },
-    };
-  }),
-  {
-    id: BADGE_IDS.GENIE_MATHS,
-    name: 'Génie de la multiplication',
-    description: 'Toutes les multiplications maîtrisées',
-    icon: '🏆',
-    color: 'var(--honey)',
-    conditionText: 'Place toutes les multiplications dans la boîte 5 (le top niveau !).',
-    progressFor: (p) => ({
-      current: p.facts.filter((f) => f.box === 5).length,
-      target: p.facts.length,
-      unitLabel: 'en boîte 5',
-    }),
-  },
-  {
-    id: BADGE_IDS.VELOCE,
-    name: 'Véloce',
-    description: '5 étoiles dorées de suite',
-    icon: '🚀',
-    color: 'var(--coral)',
-    conditionText: 'Décroche 5 étoiles dorées d’affilée — une réponse rapide ET correcte à la suite, sans faute ni hésitation.',
-  },
-  {
-    id: BADGE_IDS.PERSEVERANCE,
-    name: 'Persévérance',
-    description: 'Revenir après 3+ jours',
-    icon: '💪',
-    color: 'var(--sage)',
-    conditionText: 'Reviens jouer après une pause de 3 jours ou plus. Le retour du champion !',
-  },
-  {
-    id: BADGE_IDS.FLAMME_ETERNELLE,
-    name: 'Flamme éternelle',
-    description: '30 jours consécutifs',
-    icon: '🌟',
-    color: 'var(--coral)',
-    conditionText: 'Joue 30 jours d’affilée. La grande flamme !',
-    progressFor: (p) => ({ current: Math.min(p.currentStreak, 30), target: 30, unitLabel: 'jours' }),
-  },
-];
-
-// Badges du niveau 2 — division. Tenus à part d'ALL_BADGE_DEFINITIONS pour
-// rester MASQUÉS tant que le niveau n'est pas débloqué (cf.
-// visibleBadgeDefinitions), mais inclus dans BADGE_MAP pour pouvoir être
-// attribués par checkBadges.
-export const DIVISION_BADGE_DEFINITIONS: BadgeDefinition[] = [
-  {
-    id: BADGE_IDS.DIV_PREMIERE_MAITRISE,
-    name: 'Première division maîtrisée',
-    description: 'Une division au top niveau',
-    icon: '🥈',
-    color: 'var(--honey)',
-    conditionText: 'Place ta toute première division en boîte 5.',
-    progressFor: (p) => {
-      const ready = (p.divisionFacts ?? []).filter((f) => f.box === 5).length;
-      return { current: Math.min(ready, 1), target: 1, unitLabel: 'en boîte 5' };
     },
-  },
-  ...Array.from({ length: NUM_DIV_TABLE_BADGES }, (_, i) => {
-    const n = i + 2;
-    return {
-      id: `${BADGE_IDS.DIV_TABLE_PREFIX}${n}`,
-      name: `Divisions par ${n}`,
-      description: `Maîtriser les divisions par ${n}`,
-      icon: '➗',
-      color: 'var(--indigo)',
-      conditionText: `Place toutes les divisions par ${n} dans la boîte 4 ou 5.`,
-      progressFor: (p: UserProfile) => {
-        const tableFacts = factsForDivisionTable(p.divisionFacts ?? [], n);
-        return {
-          current: tableFacts.filter((f) => f.box >= 4).length,
-          target: tableFacts.length,
-          unitLabel: 'en boîte 4+',
-        };
+    {
+      id: BADGE_IDS.PREMIERE_MAITRISE,
+      ...i.premiereMaitrise,
+      icon: '🥇',
+      color: 'var(--honey)',
+      progressFor: (p) => {
+        const ready = p.facts.filter((f) => f.box === 5).length;
+        return { current: Math.min(ready, 1), target: 1, unitLabel: u.box5 };
       },
-    };
-  }),
-  {
-    id: BADGE_IDS.DIV_GENIE,
-    name: 'Maître de la division',
-    description: 'Toutes les divisions en boîte 5',
-    icon: '🎓',
-    color: 'var(--honey)',
-    conditionText: 'Place toutes les divisions dans la boîte 5 (le top niveau !).',
-    progressFor: (p) => {
-      const facts = p.divisionFacts ?? [];
+    },
+    {
+      id: BADGE_IDS.REGULIER,
+      ...i.regulier,
+      icon: '🔥',
+      color: 'var(--coral)',
+      progressFor: (p) => ({ current: Math.min(p.currentStreak, 7), target: 7, unitLabel: u.days }),
+    },
+    {
+      id: BADGE_IDS.MACHINE,
+      ...i.machine,
+      icon: '⚡',
+      color: 'var(--honey)',
+    },
+    {
+      id: BADGE_IDS.EXPLORATION,
+      ...i.exploration,
+      icon: '🗺️',
+      color: 'var(--sky)',
+      progressFor: (p) => ({
+        current: p.facts.filter((f) => f.introduced).length,
+        target: p.facts.length,
+        unitLabel: u.discovered,
+      }),
+    },
+    ...Array.from({ length: NUM_TABLE_BADGES }, (_, idx) => {
+      const n = idx + 2;
       return {
-        current: facts.filter((f) => f.box === 5).length,
-        target: facts.length,
-        unitLabel: 'en boîte 5',
+        id: `${BADGE_IDS.TABLE_PREFIX}${n}`,
+        ...i.table(n),
+        icon: `${n}️⃣`,
+        color: 'var(--indigo)',
+        progressFor: (p: UserProfile) => {
+          const tableFacts = factsForTable(p.facts, n);
+          return {
+            current: tableFacts.filter((f) => f.box >= 4).length,
+            target: tableFacts.length,
+            unitLabel: u.box4plus,
+          };
+        },
       };
+    }),
+    {
+      id: BADGE_IDS.GENIE_MATHS,
+      ...i.genieMaths,
+      icon: '🏆',
+      color: 'var(--honey)',
+      progressFor: (p) => ({
+        current: p.facts.filter((f) => f.box === 5).length,
+        target: p.facts.length,
+        unitLabel: u.box5,
+      }),
     },
-  },
-];
+    {
+      id: BADGE_IDS.VELOCE,
+      ...i.veloce,
+      icon: '🚀',
+      color: 'var(--coral)',
+    },
+    {
+      id: BADGE_IDS.PERSEVERANCE,
+      ...i.perseverance,
+      icon: '💪',
+      color: 'var(--sage)',
+    },
+    {
+      id: BADGE_IDS.FLAMME_ETERNELLE,
+      ...i.flammeEternelle,
+      icon: '🌟',
+      color: 'var(--coral)',
+      progressFor: (p) => ({ current: Math.min(p.currentStreak, 30), target: 30, unitLabel: u.days }),
+    },
+  ];
+}
 
-const BADGE_MAP = new Map(
-  [...ALL_BADGE_DEFINITIONS, ...DIVISION_BADGE_DEFINITIONS].map((d) => [d.id, d]),
-);
+// Badges du niveau 2 — division. Tenus à part des badges multiplication pour
+// rester MASQUÉS tant que le niveau n'est pas débloqué (cf.
+// visibleBadgeDefinitions), mais inclus dans la map pour pouvoir être
+// attribués par checkBadges.
+function buildDivisionBadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  const u = i.units;
+  return [
+    {
+      id: BADGE_IDS.DIV_PREMIERE_MAITRISE,
+      ...i.divPremiereMaitrise,
+      icon: '🥈',
+      color: 'var(--honey)',
+      progressFor: (p) => {
+        const ready = (p.divisionFacts ?? []).filter((f) => f.box === 5).length;
+        return { current: Math.min(ready, 1), target: 1, unitLabel: u.box5 };
+      },
+    },
+    ...Array.from({ length: NUM_DIV_TABLE_BADGES }, (_, idx) => {
+      const n = idx + 2;
+      return {
+        id: `${BADGE_IDS.DIV_TABLE_PREFIX}${n}`,
+        ...i.divTable(n),
+        icon: '➗',
+        color: 'var(--indigo)',
+        progressFor: (p: UserProfile) => {
+          const tableFacts = factsForDivisionTable(p.divisionFacts ?? [], n);
+          return {
+            current: tableFacts.filter((f) => f.box >= 4).length,
+            target: tableFacts.length,
+            unitLabel: u.box4plus,
+          };
+        },
+      };
+    }),
+    {
+      id: BADGE_IDS.DIV_GENIE,
+      ...i.divGenie,
+      icon: '🎓',
+      color: 'var(--honey)',
+      progressFor: (p) => {
+        const facts = p.divisionFacts ?? [];
+        return {
+          current: facts.filter((f) => f.box === 5).length,
+          target: facts.length,
+          unitLabel: u.box5,
+        };
+      },
+    },
+  ];
+}
+
+// Cache mémoïsé par langue : les définitions ne dépendent que de la langue
+// (les chaînes), pas du profil (passé en argument à progressFor). On les
+// reconstruit donc seulement au changement de langue, pas à chaque appel —
+// medallionColorFor/getBadgeDetail sont appelés une fois par badge dans les
+// boucles de rendu de BadgesScreen.
+let cacheLang: Lang | null = null;
+let cachedAll: BadgeDefinition[] = [];
+let cachedDivision: BadgeDefinition[] = [];
+let cachedMap: Map<string, BadgeDefinition> = new Map();
+
+function ensureCache(): void {
+  const lang = getLang();
+  if (cacheLang === lang) return;
+  cachedAll = buildAllBadgeDefinitions();
+  cachedDivision = buildDivisionBadgeDefinitions();
+  cachedMap = new Map([...cachedAll, ...cachedDivision].map((d) => [d.id, d]));
+  cacheLang = lang;
+}
+
+export function getAllBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedAll;
+}
+
+export function getDivisionBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedDivision;
+}
+
+function badgeMap(): Map<string, BadgeDefinition> {
+  ensureCache();
+  return cachedMap;
+}
 
 /**
  * Définitions de badges à afficher pour ce profil : les badges multiplication
@@ -289,8 +304,8 @@ const BADGE_MAP = new Map(
  */
 export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[] {
   return isDivisionUnlocked(profile)
-    ? [...ALL_BADGE_DEFINITIONS, ...DIVISION_BADGE_DEFINITIONS]
-    : ALL_BADGE_DEFINITIONS;
+    ? [...getAllBadgeDefinitions(), ...getDivisionBadgeDefinitions()]
+    : getAllBadgeDefinitions();
 }
 
 /**
@@ -307,8 +322,9 @@ export function checkBadges(
   const now = todayISO();
   const newBadges: Badge[] = [];
 
+  const map = badgeMap();
   function earn(id: string) {
-    const def = BADGE_MAP.get(id);
+    const def = map.get(id);
     if (def && !hasBadge(profile, id)) {
       newBadges.push(makeBadge(def, now));
     }
@@ -374,7 +390,17 @@ function hasConsecutiveTrue(values: boolean[], count: number): boolean {
 }
 
 export function medallionColorFor(id: string): string {
-  return BADGE_MAP.get(id)?.color ?? 'var(--honey)';
+  return badgeMap().get(id)?.color ?? 'var(--honey)';
+}
+
+/**
+ * Nom localisé d'un badge par son id (langue d'interface courante). Sert à
+ * afficher un badge stocké (dont le nom a pu être figé dans une autre langue
+ * au moment du gain) toujours dans la langue active. Renvoie null si l'id est
+ * inconnu.
+ */
+export function badgeName(id: string): string | null {
+  return badgeMap().get(id)?.name ?? null;
 }
 
 export interface BadgeDetail {
@@ -388,7 +414,7 @@ export function progressPercent(progress: { current: number; target: number }): 
 }
 
 export function getBadgeDetail(badgeId: string, profile: UserProfile): BadgeDetail {
-  const def = BADGE_MAP.get(badgeId);
+  const def = badgeMap().get(badgeId);
   if (!def) return { conditionText: '' };
   return { conditionText: def.conditionText, progress: def.progressFor?.(profile) };
 }

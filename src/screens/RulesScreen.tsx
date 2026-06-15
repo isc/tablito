@@ -1,4 +1,5 @@
 import BackChevron from '../components/BackChevron';
+import { useRulesStrings } from '../i18n/home';
 
 interface RulesScreenProps {
   onBack: () => void;
@@ -6,18 +7,19 @@ interface RulesScreenProps {
 }
 
 export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenProps) {
+  const t = useRulesStrings();
   return (
     <div className="rules-screen">
       <div className="rules-header">
-        <button className="rules-back-btn" onClick={onBack} aria-label="Retour">
+        <button className="rules-back-btn" onClick={onBack} aria-label={t.back}>
           <BackChevron />
         </button>
-        <div className="rules-title">Mes règles</div>
+        <div className="rules-title">{t.title}</div>
       </div>
 
       <div className="rules-content">
         <div className="rules-intro">
-          Tes raccourcis à connaître par cœur. Après, ce sera facile&nbsp;!
+          {t.intro}
         </div>
 
         {/* Règle ×1 */}
@@ -25,12 +27,12 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
           <div className="rule-card-head">
             <div className="rule-card-badge">×1</div>
             <div>
-              <div className="rule-card-eyebrow">Règle n°1</div>
-              <div className="rule-card-heading">Multiplier par 1</div>
+              <div className="rule-card-eyebrow">{t.ruleNumber(1)}</div>
+              <div className="rule-card-heading">{t.multiplyBy(1)}</div>
             </div>
           </div>
           <div className="rule-card-message">
-            Tout nombre multiplié par 1 <b>reste le même</b>&nbsp;!
+            {t.rule1Message.before}<b>{t.rule1Message.bold}</b>{t.rule1Message.after}
           </div>
           <div className="rule-examples">
             <div className="rule-example">
@@ -47,7 +49,7 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
             </div>
           </div>
           <div className="rule-card-tip">
-            Ça marche avec tous les nombres, même les très grands&nbsp;!
+            {t.rule1Tip}
           </div>
         </div>
 
@@ -56,12 +58,12 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
           <div className="rule-card-head">
             <div className="rule-card-badge">×10</div>
             <div>
-              <div className="rule-card-eyebrow">Règle n°2</div>
-              <div className="rule-card-heading">Multiplier par 10</div>
+              <div className="rule-card-eyebrow">{t.ruleNumber(2)}</div>
+              <div className="rule-card-heading">{t.multiplyBy(10)}</div>
             </div>
           </div>
           <div className="rule-card-message">
-            Les chiffres glissent d'une place vers la gauche : un <b>0</b> vient prendre la place des unités&nbsp;!
+            {t.rule10Message.before}<b>{t.rule10Message.bold}</b>{t.rule10Message.after}
           </div>
           <div className="rule-glisse">
             <div className="rule-glisse-row">
@@ -80,7 +82,7 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
             <div className="rule-example">25 {'×'} 10 = <span className="rule-example-highlight">250</span></div>
           </div>
           <div className="rule-card-tip">
-            Astuce : tous les résultats de la table de 10 se terminent par 0&nbsp;!
+            {t.rule10Tip}
           </div>
         </div>
 
@@ -91,12 +93,12 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
             <div className="rule-card-head">
               <div className="rule-card-badge">×11</div>
               <div>
-                <div className="rule-card-eyebrow">Règle bonus</div>
-                <div className="rule-card-heading">Multiplier par 11</div>
+                <div className="rule-card-eyebrow">{t.bonusRule}</div>
+                <div className="rule-card-heading">{t.multiplyBy(11)}</div>
               </div>
             </div>
             <div className="rule-card-message">
-              De 1 à 9, il suffit de <b>répéter le chiffre</b>&nbsp;!
+              {t.rule11Message.before}<b>{t.rule11Message.bold}</b>{t.rule11Message.after}
             </div>
             <div className="rule-glisse">
               <div className="rule-glisse-row">
@@ -114,7 +116,7 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
               <div className="rule-example">9 {'×'} 11 = <span className="rule-example-highlight">99</span></div>
             </div>
             <div className="rule-card-tip">
-              Tu l'as débloquée en maîtrisant toutes tes tables. Joli&nbsp;!
+              {t.rule11Tip}
             </div>
           </div>
         )}

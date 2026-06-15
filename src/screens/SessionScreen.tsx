@@ -18,6 +18,7 @@ import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { preflightMicPermission } from '../lib/micPreflight';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { useSessionStrings } from '../i18n/session';
 
 // Borne dure sur la longueur d'une session : la composition vise 12-15
 // questions, chaque erreur peut insérer une retry. Sans cap, des erreurs en
@@ -97,6 +98,7 @@ export default function SessionScreen({
   const { playCorrect, playIncorrect } = useSound();
   const { speak, stop: stopSpeech, preload, isSpeaking } = useTTS();
   const { inputMode, setInputMode } = useInputMode();
+  const t = useSessionStrings();
   useWakeLock(true);
 
   // Bascule clavier → micro en cours de séance. On pré-arme la permission en
@@ -321,7 +323,7 @@ export default function SessionScreen({
       {/* Introduction — multiplication (grille / commutativité / astuce) */}
       {showIntro && currentItem.kind === 'mult' && (
         <div className="session-intro">
-          <div className="session-intro-title">Nouveau&nbsp;!</div>
+          <div className="session-intro-title">{t.new}</div>
 
           {introStep === 'grid' ? (
             <>
@@ -338,34 +340,34 @@ export default function SessionScreen({
                 <strong>
                   {currentItem.fact.a} {'×'} {currentItem.fact.b}
                 </strong>
-                , c'est{' '}
+                , {t.isShort}{' '}
                 {Array.from({ length: currentItem.fact.a })
                   .map(() => currentItem.fact.b.toString())
                   .join(' + ')}{' '}
                 = <strong>{currentItem.fact.product}</strong>
               </div>
               <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
-                Suivant →
+                {t.next}
               </button>
             </>
           ) : introStep === 'commute' ? (
             <>
               <DotGrid a={currentItem.fact.a} b={currentItem.fact.b} animated={false} showRotation size="normal" />
               <div className="session-intro-commutativity">
-                {currentItem.fact.b} {'×'} {currentItem.fact.a}, c'est pareil&nbsp;!
+                {currentItem.fact.b} {'×'} {currentItem.fact.a}{t.sameThing}
                 <br />
-                C'est aussi <strong>{currentItem.fact.product}</strong>
+                {t.alsoEquals} <strong>{currentItem.fact.product}</strong>
               </div>
               <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
-                Suivant →
+                {t.next}
               </button>
             </>
           ) : (
             <>
               {introStrategy && <StrategyHint strategy={introStrategy} variant="intro" />}
-              <div className="session-intro-explanation">Une petite astuce pour s'en souvenir&nbsp;!</div>
+              <div className="session-intro-explanation">{t.littleTrick}</div>
               <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
-                J'ai compris&nbsp;!
+                {t.gotIt}
               </button>
             </>
           )}
@@ -375,7 +377,7 @@ export default function SessionScreen({
       {/* Introduction — division (« pense à la multiplication ») */}
       {showIntro && currentItem.kind === 'div' && (
         <div className="session-intro">
-          <div className="session-intro-title">Nouveau&nbsp;!</div>
+          <div className="session-intro-title">{t.new}</div>
           <div className="session-intro-formula">
             {v.left}
             <span className="session-intro-operator">{v.op}</span>
@@ -383,12 +385,11 @@ export default function SessionScreen({
           </div>
           <DotGrid a={currentItem.fact.divisor} b={currentItem.fact.quotient} animated size="normal" bare groupReveal />
           <div className="session-intro-explanation">
-            On partage {currentItem.fact.dividend} en {currentItem.fact.divisor} lots
-            égaux — combien dans chaque&nbsp;?
+            {t.shareInto(currentItem.fact.dividend, currentItem.fact.divisor)}
           </div>
           {divIntroStrategy && <DivisionStrategyHint strategy={divIntroStrategy} variant="intro" />}
           <button className="btn btn--ink session-intro-btn" onClick={handleIntroNext}>
-            J'ai compris&nbsp;!
+            {t.gotIt}
           </button>
         </div>
       )}
@@ -422,7 +423,7 @@ export default function SessionScreen({
                     onClick={switchToVoice}
                     disabled={numpadDisabled}
                   >
-                    {'🎤'} Utiliser le micro
+                    {'🎤'} {t.useMic}
                   </button>
                 )}
               </>

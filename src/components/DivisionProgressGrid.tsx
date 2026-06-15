@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { DivisionFact } from '../types';
 import LeitnerGrid, { type LeitnerGridCell } from './LeitnerGrid';
+import { useFactCellStrings } from '../i18n/progress';
 
 interface DivisionProgressGridProps {
   facts: DivisionFact[];
@@ -10,6 +11,7 @@ interface DivisionProgressGridProps {
 // SANS canonicalisation — les cases miroir évoluent indépendamment, fidèle à
 // la non-commutativité (specs §11.5). Pas de diagonale particulière.
 export default function DivisionProgressGrid({ facts }: DivisionProgressGridProps) {
+  const t = useFactCellStrings();
   const factMap = useMemo(() => {
     const m = new Map<string, DivisionFact>();
     for (const f of facts) m.set(`${f.divisor},${f.quotient}`, f);
@@ -22,7 +24,7 @@ export default function DivisionProgressGrid({ facts }: DivisionProgressGridProp
     return {
       box: fact?.box ?? 1,
       introduced: fact?.introduced ?? false,
-      ariaLabel: `${row * col} divisé par ${row}`,
+      ariaLabel: t.divLabel(row * col, row),
       diagonal: false,
       modal: {
         title: fact ? `${fact.dividend} ÷ ${fact.divisor} = ${fact.quotient}` : '',

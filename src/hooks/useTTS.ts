@@ -1,7 +1,21 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { getAudioContext } from '../lib/audioContext';
+import { getLang } from '../i18n/lang';
 
 const BASE = import.meta.env.BASE_URL;
+
+// Sous-dossier audio par langue : chaque langue vit sous audio/tts/<lang>/
+// (fr, en, …). Les clés passées à speak()/preload() restent identiques d'une
+// langue à l'autre (`q-3-4`…), seul le chemin résolu diffère.
+function audioPath(key: string): string {
+  return `${BASE}audio/tts/${getLang()}/${key}.mp3`;
+}
+
+// La clé de cache est préfixée par la langue : changer de langue ne doit pas
+// servir le buffer français déjà décodé pour la même clé logique.
+function cacheKey(key: string): string {
+  return `${getLang()}:${key}`;
+}
 
 // Cache des buffers décodés au niveau module : on ne re-fetch + re-décode
 // pas le même MP3 deux fois pendant une session, et on évite la latence
@@ -10,25 +24,26 @@ const bufferCache = new Map<string, AudioBuffer>();
 const inflightLoads = new Map<string, Promise<AudioBuffer | null>>();
 
 async function loadBuffer(key: string, ctx: AudioContext): Promise<AudioBuffer | null> {
-  const cached = bufferCache.get(key);
+  const ck = cacheKey(key);
+  const cached = bufferCache.get(ck);
   if (cached) return cached;
-  const inflight = inflightLoads.get(key);
+  const inflight = inflightLoads.get(ck);
   if (inflight) return inflight;
   const promise = (async () => {
     try {
-      const res = await fetch(`${BASE}audio/tts/${key}.mp3`);
+      const res = await fetch(audioPath(key));
       if (!res.ok) return null;
       const arrayBuf = await res.arrayBuffer();
       const audioBuf = await ctx.decodeAudioData(arrayBuf);
-      bufferCache.set(key, audioBuf);
+      bufferCache.set(ck, audioBuf);
       return audioBuf;
     } catch {
       return null;
     } finally {
-      inflightLoads.delete(key);
+      inflightLoads.delete(ck);
     }
   })();
-  inflightLoads.set(key, promise);
+  inflightLoads.set(ck, promise);
   return promise;
 }
 
@@ -125,7 +140,7 @@ export function useTTS() {
       // Crucial — sinon un `await` cède la main d'ici le démarrage, et un
       // stop() déclenché entre-temps (l'enfant répond avant d'avoir entendu
       // une question qu'il connaît) annule une lecture jamais commencée.
-      const cached = bufferCache.get(key);
+      const cached = bufferCache.get(cacheKey(key));
       if (cached) {
         playBuffer(cached, ctx, myGen, onEnd);
         return;
@@ -153,7 +168,7 @@ export function useTTS() {
   const preload = useCallback((keys: string[]) => {
     const ctx = getAudioContext();
     for (const key of keys) {
-      if (!bufferCache.has(key)) void loadBuffer(key, ctx);
+      if (!bufferCache.has(cacheKey(key))) void loadBuffer(key, ctx);
     }
   }, []);
 

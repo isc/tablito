@@ -28,7 +28,12 @@ jobs:
         env:
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
 
+      # if: always() — on commit même si la génération a échoué sur quelques
+      # fichiers (ex. rate limit résiduel). Le script est idempotent : un
+      # re-run ne régénère que les manquants, donc la progression n'est jamais
+      # perdue entre deux exécutions.
       - name: Commit and push new MP3s
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { DivisionFact, MysteryTheme } from '../types';
 import MysteryGrid, { type MysteryCell } from './MysteryGrid';
+import { useFactCellStrings } from '../i18n/progress';
 
 interface DivisionMysteryImageProps {
   facts: DivisionFact[];
@@ -11,6 +12,7 @@ interface DivisionMysteryImageProps {
 // SANS canonicalisation — les cases miroir évoluent indépendamment, fidèle à la
 // non-commutativité (specs §11.5).
 export default function DivisionMysteryImage({ facts, theme }: DivisionMysteryImageProps) {
+  const t = useFactCellStrings();
   const factMap = useMemo(() => {
     const m = new Map<string, DivisionFact>();
     for (const f of facts) m.set(`${f.divisor},${f.quotient}`, f);
@@ -22,7 +24,7 @@ export default function DivisionMysteryImage({ facts, theme }: DivisionMysteryIm
     return {
       level: fact?.introduced ? fact.box : 0,
       introduced: fact?.introduced ?? false,
-      ariaLabel: `${row * col} divisé par ${row}`,
+      ariaLabel: t.divLabel(row * col, row),
       detailHeading: fact ? `${fact.dividend} ÷ ${fact.divisor} = ${fact.quotient}` : '',
       gridA: fact?.divisor ?? row,
       gridB: fact?.quotient ?? col,

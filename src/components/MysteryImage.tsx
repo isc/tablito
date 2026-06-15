@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { MultiFact, MysteryTheme } from '../types';
 import MysteryGrid, { type MysteryCell } from './MysteryGrid';
+import { useFactCellStrings } from '../i18n/progress';
 
 interface MysteryImageProps {
   facts: MultiFact[];
@@ -10,6 +11,7 @@ interface MysteryImageProps {
 // Image mystère de la multiplication : la case (row, col) porte le fait
 // canonique (min × max) — les cases miroir se révèlent en synchrone (§5.1).
 export default function MysteryImage({ facts, theme }: MysteryImageProps) {
+  const t = useFactCellStrings();
   const factMap = useMemo(() => {
     const m = new Map<string, MultiFact>();
     for (const f of facts) m.set(`${f.a},${f.b}`, f);
@@ -23,7 +25,7 @@ export default function MysteryImage({ facts, theme }: MysteryImageProps) {
     return {
       level: fact?.introduced ? fact.box : 0,
       introduced: fact?.introduced ?? false,
-      ariaLabel: `${row} fois ${col} = ${row * col}`,
+      ariaLabel: t.multLabel(row, col, row * col),
       detailHeading: fact ? `${fact.a} × ${fact.b} = ${fact.product}` : '',
       gridA: fact?.a ?? a,
       gridB: fact?.b ?? b,

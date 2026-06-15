@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { submitFeedback, buildContext, feedbackEnabled } from '../lib/feedback';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
+import { useFeedbackModalStrings } from '../i18n/parent';
 
 interface FeedbackModalProps {
   profile: UserProfile | null;
@@ -16,6 +17,7 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
   const [includeProfile, setIncludeProfile] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const t = useFeedbackModalStrings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,15 +33,15 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setErrorMsg(err instanceof Error ? err.message : 'Envoi impossible');
+      setErrorMsg(err instanceof Error ? err.message : t.sendFailed);
     }
   };
 
   if (!feedbackEnabled) {
     return (
       <Modal onClose={onClose} className="feedback-modal">
-        <p className="feedback-unavailable">Le formulaire n'est pas configuré.</p>
-        <button type="button" className="modal-close-btn" onClick={onClose}>Fermer</button>
+        <p className="feedback-unavailable">{t.notConfigured}</p>
+        <button type="button" className="modal-close-btn" onClick={onClose}>{t.close}</button>
       </Modal>
     );
   }
@@ -51,24 +53,24 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
       className="feedback-modal"
       disableClose={status === 'sending'}
     >
-      <h2 id="feedback-title" className="feedback-title">Votre avis</h2>
+      <h2 id="feedback-title" className="feedback-title">{t.title}</h2>
 
       {status === 'success' ? (
         <div className="feedback-success">
-          <p className="feedback-success-text">Merci, c'est bien reçu&nbsp;!</p>
-          <button type="button" className="modal-close-btn" onClick={onClose}>Fermer</button>
+          <p className="feedback-success-text">{t.thanks}</p>
+          <button type="button" className="modal-close-btn" onClick={onClose}>{t.close}</button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="feedback-form">
           <label className="feedback-label" htmlFor="feedback-message">
-            Dites-nous ce qui va, ce qui ne va pas, ou ce que vous aimeriez voir
+            {t.messageLabel}
           </label>
           <textarea
             id="feedback-message"
             className="feedback-textarea"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Votre message…"
+            placeholder={t.messagePlaceholder}
             maxLength={5000}
             rows={6}
             required
@@ -76,7 +78,7 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
           />
 
           <label className="feedback-label" htmlFor="feedback-email">
-            Email (optionnel, si vous souhaitez une réponse)
+            {t.emailLabel}
           </label>
           <input
             id="feedback-email"
@@ -84,7 +86,7 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
             className="feedback-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="vous@exemple.com"
+            placeholder={t.emailPlaceholder}
             maxLength={320}
             disabled={status === 'sending'}
           />
@@ -98,18 +100,16 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
                 disabled={status === 'sending'}
               />
               <span>
-                <strong>Joindre l'historique détaillé du profil</strong>
+                <strong>{t.attachHistory}</strong>
                 <span className="feedback-checkbox-hint">
-                  Si vous signalez un bug précis, ça aide à reproduire. Inclut
-                  les multiplications posées et les réponses données — pas le
-                  prénom.
+                  {t.attachHistoryHint}
                 </span>
               </span>
             </label>
           )}
 
           {status === 'error' && (
-            <p className="feedback-error">Erreur : {errorMsg}</p>
+            <p className="feedback-error">{t.errorPrefix(errorMsg)}</p>
           )}
 
           <div className="feedback-actions">
@@ -119,14 +119,14 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
               onClick={onClose}
               disabled={status === 'sending'}
             >
-              Annuler
+              {t.cancel}
             </button>
             <button
               type="submit"
               className="feedback-submit-btn"
               disabled={!message.trim() || status === 'sending'}
             >
-              {status === 'sending' ? 'Envoi…' : 'Envoyer'}
+              {status === 'sending' ? t.sending : t.send}
             </button>
           </div>
         </form>

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary'
+import { LangProvider } from './i18n/LangProvider'
 import { importProfileFromUrl } from './lib/storage'
 
 // Migration cross-origin (ancien domaine → tablito.app) : si on arrive avec un
@@ -14,7 +15,9 @@ async function boot() {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary>
-        <App />
+        <LangProvider>
+          <App />
+        </LangProvider>
       </ErrorBoundary>
     </StrictMode>,
   )

@@ -4,6 +4,7 @@ import MysteryImage from '../components/MysteryImage';
 import DivisionMysteryImage from '../components/DivisionMysteryImage';
 import BackChevron from '../components/BackChevron';
 import { isDivisionUnlocked } from '../lib/badges';
+import { useProgressScreenStrings } from '../i18n/progress';
 
 interface ProgressScreenProps {
   profile: UserProfile;
@@ -14,6 +15,7 @@ interface ProgressScreenProps {
 }
 
 export default function ProgressScreen({ profile, onBack, initialView = 'mult' }: ProgressScreenProps) {
+  const t = useProgressScreenStrings();
   const unlocked = isDivisionUnlocked(profile);
   const [view, setView] = useState<'mult' | 'div'>(unlocked ? initialView : 'mult');
 
@@ -28,10 +30,10 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
   return (
     <div className="progress-screen">
       <div className="progress-header">
-        <button className="progress-back-btn" onClick={onBack} aria-label="Retour">
+        <button className="progress-back-btn" onClick={onBack} aria-label={t.back}>
           <BackChevron />
         </button>
-        <div className="progress-title">{unlocked ? 'Mes images' : 'Mon image mystère'}</div>
+        <div className="progress-title">{unlocked ? t.myPictures : t.myMysteryPicture}</div>
       </div>
 
       {unlocked && (
@@ -41,14 +43,14 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
             className={`progress-tab ${view === 'mult' ? 'active' : ''}`}
             onClick={() => setView('mult')}
           >
-            Multiplications
+            {t.multiplications}
           </button>
           <button
             type="button"
             className={`progress-tab ${view === 'div' ? 'active' : ''}`}
             onClick={() => setView('div')}
           >
-            Divisions
+            {t.divisions}
           </button>
         </div>
       )}
@@ -56,15 +58,15 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
       <div className="progress-stats-summary">
         <div className="progress-stat">
           <div className="progress-stat-value">{introduced}</div>
-          <div className="progress-stat-label">{showDiv ? 'découvertes' : 'découverts'}</div>
+          <div className="progress-stat-label">{showDiv ? t.discoveredDiv : t.discoveredMult}</div>
         </div>
         <div className="progress-stat">
           <div className="progress-stat-value">{mastered}</div>
-          <div className="progress-stat-label">{showDiv ? 'maîtrisées' : 'maîtrisés'}</div>
+          <div className="progress-stat-label">{showDiv ? t.masteredDiv : t.masteredMult}</div>
         </div>
         <div className="progress-stat">
           <div className="progress-stat-value">{total}</div>
-          <div className="progress-stat-label">au total</div>
+          <div className="progress-stat-label">{t.total}</div>
         </div>
       </div>
 
@@ -75,9 +77,7 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
       )}
 
       <div className="progress-legend">
-        {showDiv
-          ? "Chaque division que tu connais mieux dévoile un peu plus de cette image. Quand tu les maîtrises toutes, elle est complète !"
-          : "Chaque multiplication que tu connais mieux dévoile un peu plus de l'image. Quand tu les maîtrises toutes, l'image est complète !"}
+        {showDiv ? t.legendDiv : t.legendMult}
       </div>
     </div>
   );

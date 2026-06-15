@@ -7,6 +7,7 @@ import {
   type PlacementResult,
 } from '../lib/placement';
 import { useTTS } from '../hooks/useTTS';
+import { useWelcomeStrings } from '../i18n/onboarding';
 
 export type { PlacementResult };
 
@@ -23,6 +24,7 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ onComplete, onImport, onCancel }: WelcomeScreenProps) {
+  const t = useWelcomeStrings();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [showImport, setShowImport] = useState(false);
@@ -219,10 +221,10 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
                 disabled={numpadDisabled}
               >
                 <span className="welcome-dontknow-mark">?</span>
-                <span>Je ne sais pas</span>
+                <span>{t.dontKnow}</span>
               </button>
               <div className="welcome-test-hint">
-                Réponds du mieux que tu peux&nbsp;!
+                {t.testHint}
               </div>
             </>
           )}
@@ -236,24 +238,24 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
       {step === 0 && !showImport && (
         <div className="welcome-step" key="step0">
           <Mascot mood="idle" />
-          <div className="welcome-title">Bonjour&nbsp;!</div>
+          <div className="welcome-title">{t.helloTitle}</div>
           <div className="welcome-subtitle">
-            Je suis Piou, ton petit copain d'apprentissage.
+            {t.helloSubtitlePart1}
             <br />
-            On va apprendre les tables de multiplication ensemble&nbsp;!
+            {t.helloSubtitlePart2}
           </div>
           <button className="btn btn--ink welcome-btn" onClick={handleNext}>
-            Suivant →
+            {t.next}
           </button>
           <button
             className="welcome-import-link"
             onClick={() => setShowImport(true)}
           >
-            Déjà une progression&nbsp;? L'importer
+            {t.alreadyHaveProgress}
           </button>
           {onCancel && (
             <button className="welcome-btn-skip" onClick={onCancel}>
-              Annuler
+              {t.cancel}
             </button>
           )}
         </div>
@@ -261,9 +263,9 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
 
       {step === 0 && showImport && (
         <div className="welcome-step" key="import">
-          <div className="welcome-title">Ta progression</div>
+          <div className="welcome-title">{t.importTitle}</div>
           <div className="welcome-subtitle">
-            Récupère la progression copiée depuis l'ancienne app.
+            {t.importSubtitle}
           </div>
           {!manualPaste ? (
             <>
@@ -271,20 +273,20 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
                 className="btn btn--ink welcome-btn"
                 onClick={handlePasteFromClipboard}
               >
-                Coller depuis le presse-papiers
+                {t.pasteFromClipboard}
               </button>
               <button
                 className="welcome-import-link"
                 onClick={() => setManualPaste(true)}
               >
-                Coller à la main
+                {t.pasteManually}
               </button>
             </>
           ) : (
             <>
               <textarea
                 className="welcome-import-textarea"
-                placeholder="Colle ta progression ici (appui long → Coller)"
+                placeholder={t.importPlaceholder}
                 value={importText}
                 onChange={(e) => {
                   setImportText(e.currentTarget.value);
@@ -294,7 +296,7 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
               />
               {importError && (
                 <div className="welcome-import-error">
-                  Progression non reconnue. Vérifie le copier-coller.
+                  {t.importNotRecognized}
                 </div>
               )}
               <button
@@ -302,7 +304,7 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
                 onClick={handleImportConfirm}
                 disabled={!importText.trim()}
               >
-                Importer ma progression
+                {t.importConfirm}
               </button>
             </>
           )}
@@ -315,7 +317,7 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
               setImportText('');
             }}
           >
-            Annuler
+            {t.cancel}
           </button>
         </div>
       )}
@@ -323,11 +325,11 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
       {step === 1 && (
         <div className="welcome-step welcome-step-name" key="step1">
           <Mascot mood="happy" />
-          <div className="welcome-title">Comment tu t'appelles&nbsp;?</div>
+          <div className="welcome-title">{t.nameTitle}</div>
           <input
             className="welcome-input"
             type="text"
-            placeholder="Ton prénom"
+            placeholder={t.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -339,7 +341,7 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
             onClick={handleNext}
             disabled={!name.trim()}
           >
-            C'est moi&nbsp;! →
+            {t.itsMe}
           </button>
         </div>
       )}
@@ -348,20 +350,19 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
         <div className="welcome-step" key="step2">
           <Mascot mood="celebrate" />
           <div className="welcome-title">
-            Salut {name}&nbsp;!
+            {t.greeting(name)}
           </div>
           <div className="welcome-subtitle">
-            Avant de commencer, je vais te poser quelques questions
-            pour voir ce que tu connais déjà.
+            {t.testIntroPart1}
             <br />
             <br />
-            Pas de stress : si tu ne sais pas, tape sur «&nbsp;Je ne sais pas&nbsp;».
+            {t.testIntroPart2}
           </div>
           <button className="btn btn--ink welcome-btn" onClick={handleNext}>
-            C'est parti&nbsp;! →
+            {t.letsGo}
           </button>
           <button className="welcome-btn-skip" onClick={handleSkipTest}>
-            Passer le test
+            {t.skipTest}
           </button>
         </div>
       )}

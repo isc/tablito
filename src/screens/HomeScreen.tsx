@@ -6,7 +6,8 @@ import ParentGate from '../components/ParentGate';
 import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
 import { getActiveStreak, isStreakProtectedByFreeze } from '../lib/streak';
-import { todayISO, pluralize } from '../lib/utils';
+import { todayISO } from '../lib/utils';
+import { useHomeStrings } from '../i18n/home';
 
 interface HomeScreenProps {
   profile: UserProfile;
@@ -59,12 +60,17 @@ function IconBadge() {
   );
 }
 
-function buildStreakLabel(activeStreak: number, protectedByFreeze: boolean, freezes: number): string {
-  if (activeStreak === 0) return 'Série interrompue — voir les détails';
-  const days = `${activeStreak} ${pluralize(activeStreak, 'jour')}`;
-  if (protectedByFreeze) return `Série de ${days} protégée par un gel — voir les détails`;
-  const reserve = freezes > 0 ? `, ${freezes} ${pluralize(freezes, 'gel')} en réserve` : '';
-  return `Série de ${days}${reserve} — voir les détails`;
+function buildStreakLabel(
+  t: ReturnType<typeof useHomeStrings>,
+  activeStreak: number,
+  protectedByFreeze: boolean,
+  freezes: number,
+): string {
+  if (activeStreak === 0) return t.streakBroken;
+  const days = t.days(activeStreak);
+  if (protectedByFreeze) return t.streakProtected(days);
+  const reserve = freezes > 0 ? t.streakReserve(freezes) : '';
+  return t.streakNormal(days, reserve);
 }
 
 // Easter egg : chatouiller Piou 4 fois sur la home le fait s'envoler. Il
@@ -111,6 +117,7 @@ export default function HomeScreen({
   onShowParent,
   onSwitchProfile,
 }: HomeScreenProps) {
+  const t = useHomeStrings();
   const [showParentGate, setShowParentGate] = useState(false);
   const [showStreakDetail, setShowStreakDetail] = useState(false);
   const [mascotMood, setMascotMood] = useState<MascotMood>('idle');
@@ -164,7 +171,11 @@ export default function HomeScreen({
   const freezes = profile.streakFreezes;
   const showStreakPill = streakActive || profile.totalSessions > 0;
   const showFreezeBadge = streakActive && freezes > 0;
-  const streakLabel = buildStreakLabel(activeStreak, protectedByFreeze, freezes);
+  const streakLabel = buildStreakLabel(t, activeStreak, protectedByFreeze, freezes);
+  // Le prénom est mis en couleur via un <span> : on découpe le libellé
+  // localisé autour du prénom pour garder le markup tout en traduisant.
+  const [greetingBefore, greetingAfter] = t.greeting(profile.name).split(profile.name);
+  const greetingParts = { before: greetingBefore, after: greetingAfter ?? '' };
 
   return (
     <div className="home-screen">
@@ -182,7 +193,7 @@ export default function HomeScreen({
                 <>
                   <span className="home-streak-pill-count">{activeStreak}</span>
                   <span className="home-streak-pill-label">
-                    {pluralize(activeStreak, 'jour')}
+                    {t.days(activeStreak).replace(`${activeStreak} `, '')}
                   </span>
                   {showFreezeBadge && (
                     <span className="home-streak-pill-freeze" aria-hidden="true">
@@ -192,7 +203,7 @@ export default function HomeScreen({
                   )}
                 </>
               ) : (
-                <span className="home-streak-pill-prompt">On s'y remet&nbsp;?</span>
+                <span className="home-streak-pill-prompt">{t.backToIt}</span>
               )}
             </button>
           )}
@@ -202,7 +213,7 @@ export default function HomeScreen({
             <button
               className="home-chrome-btn home-switch-btn"
               onClick={onSwitchProfile}
-              aria-label="Changer de joueur"
+              aria-label={t.switchPlayer}
             >
               <IconUsers />
             </button>
@@ -210,7 +221,7 @@ export default function HomeScreen({
           <button
             className="home-chrome-btn home-parent-btn"
             onClick={() => setShowParentGate(true)}
-            aria-label="Accès parent"
+            aria-label={t.parentAccess}
           >
             <IconGear />
           </button>
@@ -231,14 +242,14 @@ export default function HomeScreen({
                   type="button"
                   className="home-mascot-tickle"
                   onClick={handleMascotTickle}
-                  aria-label="Chatouiller la mascotte"
+                  aria-label={t.tickleMascot}
                 >
                   <Mascot mood={mascotMood} />
                 </button>
               </>
             )}
             <div className="home-greeting">
-              Salut <span>{profile.name}</span>&nbsp;!
+              {greetingParts.before}<span>{profile.name}</span>{greetingParts.after}
             </div>
           </div>
         </div>
@@ -246,29 +257,29 @@ export default function HomeScreen({
         <div className="home-cta-wrap">
           {hasSessionAvailable ? (
             <button className="btn btn--indigo home-start-btn" onClick={onStart}>
-              {'▶'} C'est parti&nbsp;!
+              {'▶'} {t.letsGo}
             </button>
           ) : (
-            <div className="home-done-msg">Bravo, c'est fait pour aujourd'hui&nbsp;!</div>
+            <div className="home-done-msg">{t.doneForToday}</div>
           )}
         </div>
 
         <div className="home-nav">
           <button className="home-nav-btn" onClick={onShowProgress}>
             <span className="home-nav-btn-icon"><IconImage /></span>
-            <span className="home-nav-btn-label">{divisionUnlocked ? 'Mes images' : 'Mon image'}</span>
+            <span className="home-nav-btn-label">{divisionUnlocked ? t.myPictures : t.myPicture}</span>
           </button>
           <button className="home-nav-btn" onClick={onShowBadges}>
             <span className="home-nav-btn-icon"><IconBadge /></span>
-            <span className="home-nav-btn-label">Badges</span>
+            <span className="home-nav-btn-label">{t.badges}</span>
           </button>
           <button
             className="home-nav-btn"
             onClick={onShowRules}
-            aria-label={hasNewRule ? 'Règles — nouvelle règle débloquée' : 'Règles'}
+            aria-label={hasNewRule ? t.rulesWithNew : t.rules}
           >
             <span className="home-nav-btn-icon"><IconRuler /></span>
-            <span className="home-nav-btn-label">Règles</span>
+            <span className="home-nav-btn-label">{t.rules}</span>
             {hasNewRule && <span className="home-nav-btn-dot" aria-hidden="true" />}
           </button>
         </div>

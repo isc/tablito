@@ -34,6 +34,7 @@ import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { syncLastSession } from './lib/push';
 import { isVoiceMode } from './hooks/useInputMode';
+import { useAppStrings } from './i18n/app';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
 // écrans sont hit par tout utilisateur, souvent plusieurs fois par jour
 // (Session/Recap surtout) — pas de gain à les lazy-loader, et ça
@@ -104,6 +105,7 @@ function isDisposableScreen(screen: Screen): boolean {
 const RESHOW_PICKER_AFTER_HIDDEN_MS = 15 * 60 * 1000;
 
 export default function App() {
+  const appStrings = useAppStrings();
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile, listProfiles().length));
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
@@ -593,9 +595,7 @@ export default function App() {
 
   const handleDeleteProfile = useCallback(() => {
     if (!profile) return;
-    const ok = window.confirm(
-      `Supprimer le profil de ${profile.name} ?\n\nLe prénom, les séances, les badges et la série seront effacés de cet appareil. Cette action est irréversible.`,
-    );
+    const ok = window.confirm(appStrings.confirmDeleteProfile(profile.name));
     if (!ok) return;
     deleteActiveProfile();
     // Même décision qu'au boot : plusieurs enfants → « Qui joue ? » ; un seul
@@ -603,7 +603,7 @@ export default function App() {
     const next = loadProfile();
     setProfile(next);
     setScreen(initialScreen(next, listProfiles().length));
-  }, [profile]);
+  }, [profile, appStrings]);
 
   return (
     <div className="app">

@@ -1,3 +1,4 @@
+import { useMascotStrings } from '../i18n/progress';
 
 interface MascotProps {
   mood: 'happy' | 'idle' | 'celebrate' | 'flyaway';
@@ -15,11 +16,12 @@ interface MascotProps {
 const MASCOT_NAME = 'Piou';
 
 export default function Mascot({ mood }: MascotProps) {
+  const t = useMascotStrings();
   return (
     <div
       className={`mascot ${mood}`}
       role="img"
-      aria-label={`Mascotte ${MASCOT_NAME}, humeur: ${mood}`}
+      aria-label={t.ariaLabel(MASCOT_NAME, mood)}
     >
       <svg
         viewBox="0 0 100 100"
