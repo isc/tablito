@@ -1,0 +1,3 @@
+function s(){return new Date().toISOString().slice(0,10)}function h(n,r){const t=new Date(n),e=new Date(r);return Math.round((e.getTime()-t.getTime())/(1e3*60*60*24))}function u(n){const r=[...n];for(let t=r.length-1;t>0;t--){const e=Math.floor(Math.random()*(t+1));[r[t],r[e]]=[r[e],r[t]]}return r}function c(n){return n[Math.floor(Math.random()*n.length)]}function f(n,r){if(n.length<=1)return n;const t=[...n],e=[],i=Math.floor(Math.random()*t.length);for(e.push(t.splice(i,1)[0]);t.length>0;){const l=e[e.length-1];let a=!1;for(let o=0;o<t.length;o++)if(!r(l,t[o])){e.push(t.splice(o,1)[0]),a=!0;break}a||e.push(t.shift())}return e}export{h as daysBetween,f as interleaveGreedy,c as pickRandom,u as shuffle,s as todayISO};
+
+//# sourceMappingURL=utils.js.map
