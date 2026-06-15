@@ -85,6 +85,15 @@
     transition: background 0.15s;
   }
   header .back-link:hover { background: var(--cream-deep); }
+  header .header-links {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  header .header-links .back-link { margin-top: 0; }
+  header .lang-switch { color: var(--ink-soft); }
   main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
   nav.toc {
     background: var(--paper);
@@ -274,7 +283,10 @@
 <header>
   <div class="eyebrow">Guide d'utilisation</div>
   <h1>Tablito<em>.</em></h1>
-  <a class="back-link" href="../">← Retour à l'application</a>
+  <div class="header-links">
+    <a class="back-link" href="../">← Retour à l'application</a>
+    <a class="back-link lang-switch" href="en/">English</a>
+  </div>
 </header>
 <main>
   <nav class="toc">
