@@ -17,6 +17,7 @@ App d'apprentissage des tables de multiplication pour enfants, basée sur la rec
 ## Guide utilisateur
 
 Captures d'écran de chaque écran de l'app : **https://tablito.app/guide/**
+(version anglaise : **https://tablito.app/guide/en/**)
 
 ## Stack
 

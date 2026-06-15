@@ -26,8 +26,30 @@ import { chromium } from 'playwright';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const OUT_DIR = join(ROOT, 'dist', 'guide');
-const SHOTS_DIR = join(OUT_DIR, 'screenshots');
+const GUIDE_DIR = join(ROOT, 'dist', 'guide');
+
+// Langues du guide. Une passe complète (captures + HTML) par langue.
+// Surchargeable via GUIDE_LANGS (ex: `GUIDE_LANGS=en`). Note : le sélecteur de
+// langue de l'en-tête (UI[lang].langSwitchHref) suppose la topologie actuelle
+// à deux langues (fr à la racine, autre en sous-dossier) — l'étendre à 3+
+// langues demanderait de revoir ces liens.
+const LANGS = (process.env.GUIDE_LANGS ?? 'fr,en')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+// Le français reste à la racine `/guide/` (URL canonique, lien du README) ;
+// les autres langues vont dans un sous-dossier `/guide/<lang>/`.
+function outDirFor(lang) {
+  return lang === 'fr' ? GUIDE_DIR : join(GUIDE_DIR, lang);
+}
+
+// Mutables : positionnés au début de chaque passe de langue (cf. main). Lus
+// implicitement par tx()/shot()/shotHash()/seedProfile() — les passes DOIVENT
+// donc rester séquentielles (boucle `for...of await` dans main).
+let LANG = 'fr';
+let OUT_DIR = GUIDE_DIR;
+let SHOTS_DIR = join(GUIDE_DIR, 'screenshots');
 
 const PORT = Number(process.env.GUIDE_PORT ?? 4173);
 // Matches the base baked in at build time (see scripts/build.mjs). For main
@@ -41,6 +63,38 @@ const BASE_URL = `http://localhost:${PORT}${BASE_PATH}`;
 // line up without rescaling tricks.
 const VIEWPORT = { width: 360, height: 760 };
 const DEVICE_SCALE = 2;
+
+// Textes d'UI sur lesquels les sélecteurs Playwright `:has-text(...)` s'appuient.
+// Doivent rester synchronisés avec les strings i18n de l'app (src/i18n/*).
+const TEXT = {
+  fr: {
+    greeting: 'Salut',     // src/i18n/onboarding.ts → greeting "Salut <name> !"
+    myPicture: 'Mon image',
+    myPictures: 'Mes images',
+    rules: 'Règles',
+    badges: 'Badges',
+    consistency: 'Régularité', // src/i18n/badges.ts (badge streak)
+    divisions: 'Divisions',
+  },
+  en: {
+    greeting: 'Hi',        // greeting "Hi <name> !"
+    myPicture: 'My picture',
+    myPictures: 'My pictures',
+    rules: 'Rules',
+    badges: 'Badges',
+    consistency: 'Consistency',
+    divisions: 'Divisions',
+  },
+};
+
+/** Texte d'UI localisé pour la langue de la passe courante. */
+function tx(key) {
+  return TEXT[LANG][key];
+}
+
+// BCP-47 par langue : aligné sur `localeFor` (src/i18n/lang.ts) pour que le
+// formatage des dates côté navigateur corresponde à ce que l'app afficherait.
+const LOCALE = { fr: 'fr-FR', en: 'en-GB' };
 
 // Anchor date for seed data — single source of truth for every capture.
 const SEED_TODAY = '2026-04-12';
@@ -230,7 +284,7 @@ function buildUnlockedDivisionProfile() {
 // --- Page helpers -----------------------------------------------------------
 
 async function seedProfile(page, profile) {
-  await page.addInitScript(({ p, mockTodayIso }) => {
+  await page.addInitScript(({ p, mockTodayIso, lang }) => {
     // Deterministic Math.random so session composition / fact ordering is
     // stable across CI runs. Seeded mulberry32.
     let rngState = 0x5EED1337;
@@ -274,7 +328,10 @@ async function seedProfile(page, profile) {
     // Bypass the install landing : on est en headless, l'install PWA n'a
     // aucun sens, on capture les écrans de l'app directement.
     localStorage.setItem('multiplix-skip-install', '1');
-  }, { p: profile, mockTodayIso: SEED_TODAY });
+    // Langue d'interface de la passe courante (cf. src/i18n/lang.ts) : fixée
+    // avant le boot pour que toute l'app rende dans la bonne langue.
+    localStorage.setItem('multiplix-lang', lang);
+  }, { p: profile, mockTodayIso: SEED_TODAY, lang: LANG });
 }
 
 /**
@@ -390,8 +447,8 @@ async function captureWelcomeScreens(page) {
 
   await page.fill('.welcome-input', 'Léa');
   await page.click('.welcome-btn');
-  // Step 2: "Salut Léa"
-  await page.waitForSelector('.welcome-title:has-text("Salut")');
+  // Step 2: greeting "Salut Léa" / "Hi Léa"
+  await page.waitForSelector(`.welcome-title:has-text("${tx('greeting')}")`);
   await shot(page, '03-welcome-ready');
 
   // Placement test
@@ -408,12 +465,12 @@ async function captureHome(page) {
 }
 
 const NAV_SCREENS = [
-  { navText: 'Mon image', screenSel: '.progress-screen', backSel: '.progress-back-btn', shot: '10-progress' },
-  { navText: 'Règles',  screenSel: '.rules-screen',    backSel: '.rules-back-btn',    shot: '12-rules'    },
+  { navKey: 'myPicture', screenSel: '.progress-screen', backSel: '.progress-back-btn', shot: '10-progress' },
+  { navKey: 'rules',     screenSel: '.rules-screen',    backSel: '.rules-back-btn',    shot: '12-rules'    },
 ];
 
-async function captureNavScreen(page, { navText, screenSel, backSel, shot: shotName }) {
-  await page.click(`.home-nav-btn:has-text("${navText}")`);
+async function captureNavScreen(page, { navKey, screenSel, backSel, shot: shotName }) {
+  await page.click(`.home-nav-btn:has-text("${tx(navKey)}")`);
   await page.waitForSelector(screenSel);
   await shot(page, shotName);
   await page.click(backSel);
@@ -421,13 +478,14 @@ async function captureNavScreen(page, { navText, screenSel, backSel, shot: shotN
 }
 
 async function captureBadgesScreen(page) {
-  await page.click('.home-nav-btn:has-text("Badges")');
+  await page.click(`.home-nav-btn:has-text("${tx('badges')}")`);
   await page.waitForSelector('.badges-screen');
   await shot(page, '11-badges');
 
-  // Open the detail modal on a locked badge with progression (Régularité —
-  // streak 5/7) so the guide can showcase the explanation + progress bar.
-  await page.click('.badges-grid .badge:has-text("Régularité")');
+  // Open the detail modal on a locked badge with progression (Régularité /
+  // Consistency — streak 5/7) so the guide can showcase the explanation +
+  // progress bar.
+  await page.click(`.badges-grid .badge:has-text("${tx('consistency')}")`);
   await page.waitForSelector('.badge-detail-modal');
   await shot(page, '11-badges-detail');
   await page.click('.badge-detail-modal .modal-close-btn');
@@ -723,9 +781,9 @@ async function captureDivisionScreens(page) {
 
   // Image mystère dédiée à la division : tuile « Mes images » puis onglet
   // « Divisions » de l'écran progression.
-  await page.click('.home-nav-btn:has-text("Mes images")');
+  await page.click(`.home-nav-btn:has-text("${tx('myPictures')}")`);
   await page.waitForSelector('.progress-screen');
-  await page.click('.progress-tab:has-text("Divisions")');
+  await page.click(`.progress-tab:has-text("${tx('divisions')}")`);
   await shot(page, '18-division-progress');
   await page.click('.progress-back-btn');
   await page.waitForSelector('.home-screen');
@@ -776,7 +834,7 @@ async function captureMultiProfileScreens(page) {
 
 // --- HTML guide generator ---------------------------------------------------
 
-const SECTIONS = [
+const SECTIONS_FR = [
   {
     id: 'principes',
     title: 'Les principes',
@@ -1015,7 +1073,274 @@ const SECTIONS = [
   },
 ];
 
-async function buildHtml({ generatedAt }) {
+const SECTIONS_EN = [
+  {
+    id: 'principes',
+    title: 'The principles',
+    body: `
+      <p>Tablito is not just a quiz. Every design choice is grounded in
+      research from cognitive psychology and mathematics education. Five
+      pillars hold the app together:</p>
+      <ul class="principles">
+        <li>
+          <strong>Spaced repetition — the Leitner boxes.</strong> Each fact
+          lives in one of five boxes numbered from 1 (just learned) to 5
+          (firmly anchored). A new fact starts in box 1: it is reviewed the
+          same day. A correct answer moves it up one box and pushes the next
+          review further out: 1 day in box 2, 3 days in box 3, 7 days in box
+          4, 21 days in box 5. A mistake sends it back to box 1, long enough
+          to re-anchor it. The child reviews each fact just before forgetting
+          it, with longer and longer intervals — far more durable than
+          cramming in a single evening.
+          <span class="cite">Kang (2016) ; Cepeda et al. (2008) ; Rea &amp; Modigliani (1985)</span>
+        </li>
+        <li>
+          <strong>Low interference.</strong> Facts that look alike (same
+          operand, close answers) are never introduced in the same week. A
+          session contains only facts dissimilar enough that the child won't
+          confuse them in memory.
+          <span class="cite">Dotan &amp; Zviran-Ginat (2022)</span>
+        </li>
+        <li>
+          <strong>Interleaving.</strong> The tables are mixed within a single
+          session rather than worked through one after another. The child has
+          to reach for the right operation at every question, which solidifies
+          long-term recall.
+          <span class="cite">Rohrer &amp; Taylor (2007) ; Rohrer, Dedrick &amp; Burgess (2014)</span>
+        </li>
+        <li>
+          <strong>Understand before memorizing.</strong> Each new fact is
+          first shown as a grid of dots (repeated addition), then through
+          commutativity (3 × 5 = 5 × 3), and finally with a derivation trick
+          suited to it (× 9 = × 10 − n, × 4 = double-double, × 6 = × 5 + n,
+          etc.). A few anchor facts (doubles, × 5, × 9, squares) support the
+          derived ones. The scaffolding fades away once recall becomes
+          automatic.
+          <span class="cite">Van de Walle via Wichita Public Schools (2014) ; Brendefur et al. (2015)</span>
+        </li>
+        <li>
+          <strong>Progress-oriented feedback, not performance.</strong> No
+          numeric score on the child's side, no stars computed from a success
+          rate: only steady encouragement and a spotlight on the facts
+          learned. The goal is intrinsic motivation and mastery, not the
+          grade. The raw numbers stay available in the parent area.
+          <span class="cite">Butler (1988) ; Hattie &amp; Timperley (2007)</span>
+        </li>
+      </ul>
+      <p class="principles-footer">Details and rationale in the
+      <a href="../../specs/">functional specifications</a> (in French).</p>
+    `,
+    shots: [],
+  },
+  {
+    id: 'welcome',
+    title: 'Welcome',
+    description: `On the very first launch, Tablito runs a four-step welcome
+      flow: a greeting from the mascot, entering the child's name, an
+      introduction to the placement test, then the test itself (15 well-spread
+      questions). The result is used to place already-known facts directly in
+      the higher Leitner boxes.`,
+    shots: [
+      { file: '01-welcome-intro', caption: 'The mascot introduces itself to the child.' },
+      { file: '02-welcome-name', caption: 'Entering the name.' },
+      { file: '03-welcome-ready', caption: 'Announcing the placement test.' },
+      { file: '04-welcome-test', caption: 'Placement test (15 questions).' },
+    ],
+  },
+  {
+    id: 'home',
+    title: 'Home screen',
+    description: `The daily hub. The mascot is a steady companion — it
+      welcomes the child at every session, reacts to correct answers,
+      encourages after a mistake, and never judges. The flame shows the
+      current streak. The big button starts the day's session, and the bottom
+      bar opens progress, badges and the ×1 / ×10 rules. The gear icon opens
+      the parent area, after a short multiplication gate to keep curious
+      fingers out. When all the tables are mastered, level 2 (division)
+      unlocks — with no second button and no new tile: the « My picture »
+      tile becomes « My pictures » and the day's session switches to division
+      (see level 2 below).`,
+    shots: [
+      { file: '05-home', caption: 'Home screen with the mascot and the 5-day streak.' },
+    ],
+  },
+  {
+    id: 'session',
+    title: 'The session',
+    description: `A session has 12 to 15 questions. When a new fact appears,
+      it is introduced in three steps: a grid of dots showing the
+      multiplication as repeated addition, the commutativity property
+      (3×5 = 5×3, except for squares), and a derivation trick suited to the
+      fact (for example « × 9 = × 10 minus one »). Then come the questions.
+      The child can answer with the keypad or with their voice — a button
+      below the keypad switches mode mid-session, and the choice is remembered
+      for later sessions. A quick correct answer earns a golden star. After a
+      mistake, the correct answer is shown with the grid of dots and — while
+      the fact is still early in learning — the derivation trick is recalled.
+      The fact is asked again a little later in the session.`,
+    shots: [
+      { file: '06-session-intro', caption: 'Introducing a new fact — step 1: grid of dots and repeated addition.' },
+      { file: '06b-session-intro-strategy', caption: 'Introduction — step 3: a derivation trick to memorize the fact.' },
+      { file: '07-session-question', caption: 'Standard question and keypad.' },
+      { file: '07b-session-voice', caption: 'Voice mode — the child says their answer out loud. Switchable at any time.' },
+      { file: '08-session-feedback-correct', caption: 'Quick correct answer — golden star.' },
+      { file: '09-session-feedback-incorrect', caption: 'Incorrect answer — grid of dots and a reminder of the trick.' },
+    ],
+  },
+  {
+    id: 'recap',
+    title: 'Session recap',
+    description: `At the end of a session, the recap screen shows any new
+      facts, invites the child to go see the mystery picture (with a special
+      mention when it has changed), and triggers confetti when a table is
+      fully mastered, when the mystery picture is completed, or for a new
+      badge. Overall progress is shown with a « X facts known out of 36 » bar.`,
+    shots: [
+      { file: '14-recap', caption: 'Recap of a session with a progress bar.' },
+    ],
+  },
+  {
+    id: 'progress',
+    title: 'My mystery picture',
+    description: `An 8×8 grid (tables 2 to 9) where each cell is a fragment of
+      a hidden picture. The better the child knows a fact, the sharper its
+      fragment gets — blurry silhouette, flat color, colors, shadows, full
+      detail, mirroring the 5 Leitner boxes. A forgotten fact sees its
+      fragment blur a little again, with no notion of failure. When all 36
+      facts are mastered, the picture is fully revealed. The
+      « discovered / mastered / total » counts are shown at the top.`,
+    shots: [
+      { file: '10-progress', caption: 'The mystery picture revealing itself as progress is made.' },
+    ],
+  },
+  {
+    id: 'division',
+    title: 'Level 2 — division',
+    description: `Once the child has mastered all their tables (the « Times
+      tables genius » badge), a level unlocks: reviewing the same facts, but
+      as divisions (« 56 ÷ 7 = ? »), with its own mystery picture — the tables
+      picture stays earned. The « My picture » tile becomes « My pictures »:
+      you switch between the multiplication picture and the division one. There
+      is still a single « Let's go » button: the day's session becomes
+      division, and the few tables due for maintenance are slipped in along the
+      way (× and ÷ in the same session). Divisions arrive gradually (not all at
+      once), in the same carefully designed order as the tables — from easiest
+      to hardest — and the app explicitly teaches the key trick: for 56 ÷ 7,
+      you look for « 7 times what makes 56? ». Everything else — Leitner boxes,
+      the picture revealing itself, encouragement without judgment — works
+      exactly like multiplication.`,
+    shots: [
+      { file: '15-division-home', caption: 'Once the tables are mastered, « My picture » becomes « My pictures » (multiplications + divisions).' },
+      { file: '13b-parent-dashboard-division', caption: 'Parent dashboard once division is unlocked: a « Divisions mastered » card, a ×/÷ selector on the histogram and the grid, and a unified list of the hardest facts with a per-operation marker.' },
+      { file: '16-division-intro', caption: 'Introducing a division: « think of the multiplication ».' },
+      { file: '17-division-question', caption: 'Division question on the keypad.' },
+      { file: '18-division-progress', caption: 'A mystery picture dedicated to division, distinct from the tables one.' },
+    ],
+  },
+  {
+    id: 'badges',
+    title: 'The badges',
+    description: `Eighteen badges for the tables, across three families:
+      milestones (first session, 7 days, 30 days), performance (10 answers in
+      a row, 5 answers under 2 s), and mastery (first fact in box 4, first in
+      box 5, one badge per table + a « times tables genius » badge when
+      everything is in box 5). Once all the tables are mastered, a set of
+      badges dedicated to division joins the collection. Each thumbnail is
+      clickable and opens a card explaining the unlock condition. For locked
+      badges, a progress bar shows where the child stands — the icons alone
+      aren't self-explanatory for anyone new to the gamification.`,
+    shots: [
+      { file: '11-badges', caption: 'Badge collection — earned and still to unlock.' },
+      { file: '11-badges-detail', caption: 'Tapping a locked badge reveals the condition and the progress.' },
+    ],
+  },
+  {
+    id: 'rules',
+    title: 'The ×1 and ×10 rules',
+    description: `Two rules the app highlights from the start to lighten the
+      memory load: multiplying by 1 (the number doesn't change) and
+      multiplying by 10 (the digits slide one place to the left, a 0 takes the
+      place of the ones). These tables are therefore not part of the 36 facts
+      to learn. A third « bonus » rule, ×11 (just repeat the digit: 3×11 = 33,
+      7×11 = 77…), appears later, once all the tables from 2 to 9 are mastered
+      — signaled by a discreet « New » dot on the Rules button.`,
+    shots: [
+      { file: '12-rules', caption: 'Rules for ×1 and ×10.' },
+    ],
+  },
+  {
+    id: 'parent',
+    title: 'Parent area',
+    description: `Reachable from the home screen via the gear, after a small
+      multiplication (one operand between 11 and 19, the other between 3 and 9)
+      to confirm an adult is behind the screen. You'll find: general
+      statistics, a histogram of the Leitner boxes, the success-rate trend,
+      the hardest facts, average response times per table, the history of the
+      last 10 sessions, the profile export / import actions (JSON), and profile
+      management — adding a child or deleting the displayed profile (see
+      « Several children » below).`,
+    shots: [
+      { file: '13-parent-dashboard', caption: 'The full parent dashboard.' },
+    ],
+  },
+  {
+    id: 'profils',
+    title: 'Several children',
+    description: `One tablet for the whole family: each child has their own
+      profile — progress, badges, streak and mystery pictures fully separate.
+      You add a child from the parent area (« Add a child », Profiles section)
+      or straight from the player-selection screen. With two or more profiles,
+      the app asks « Who's playing? » on launch, and a dedicated button at the
+      top of the home screen lets you switch player at any time. With a single
+      profile, nothing changes: no extra screen or button. Deleting a profile
+      happens in the parent area, after confirmation — and backup export /
+      import stays available profile by profile.`,
+    shots: [
+      { file: '19-profile-select', caption: '« Who\'s playing? » — the selection screen shown on launch with two or more profiles.' },
+      { file: '20-home-multi', caption: 'The « switch player » button appears at the top of the home screen, next to the gear.' },
+    ],
+  },
+];
+
+const SECTIONS_BY_LANG = { fr: SECTIONS_FR, en: SECTIONS_EN };
+
+// Chrome de la page (en-tête, sommaire, pied) par langue.
+const UI = {
+  fr: {
+    htmlLang: 'fr',
+    pageTitle: "Tablito — Guide d'utilisation",
+    eyebrow: "Guide d'utilisation",
+    backToApp: "← Retour à l'application",
+    tocLabel: 'Sommaire',
+    footerMoreLabel: 'Pour aller plus loin :',
+    footerSpecs: 'spécifications fonctionnelles',
+    footerSource: 'code source',
+    footerGenerated: (date) => `Guide généré automatiquement le ${date}.`,
+    langSwitchHref: 'en/',
+    langSwitchLabel: 'English',
+    // Chemins relatifs depuis /guide/ vers la racine du site.
+    rootPrefix: '../',
+  },
+  en: {
+    htmlLang: 'en',
+    pageTitle: 'Tablito — User guide',
+    eyebrow: 'User guide',
+    backToApp: '← Back to the app',
+    tocLabel: 'Contents',
+    footerMoreLabel: 'Going further:',
+    footerSpecs: 'functional specifications',
+    footerSource: 'source code',
+    footerGenerated: (date) => `Guide generated automatically on ${date}.`,
+    langSwitchHref: '../',
+    langSwitchLabel: 'Français',
+    // Chemins relatifs depuis /guide/en/ vers la racine du site.
+    rootPrefix: '../../',
+  },
+};
+
+async function buildHtml({ generatedAt, lang }) {
+  const SECTIONS = SECTIONS_BY_LANG[lang];
+  const ui = UI[lang];
   const allShotFiles = [...new Set(SECTIONS.flatMap((s) => s.shots.map((sh) => sh.file)))];
   const hashEntries = await Promise.all(allShotFiles.map(async (f) => [f, await shotHash(f)]));
   const hashByFile = new Map(hashEntries);
@@ -1061,12 +1386,12 @@ async function buildHtml({ generatedAt }) {
   const toc = SECTIONS.map((s) => `<li><a href="#${s.id}">${s.title}</a></li>`).join('');
 
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${ui.htmlLang}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Tablito — Guide d'utilisation</title>
-<link rel="icon" href="../favicon.svg" />
+<title>${ui.pageTitle}</title>
+<link rel="icon" href="${ui.rootPrefix}favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;600;700;800&display=swap" />
@@ -1147,6 +1472,15 @@ async function buildHtml({ generatedAt }) {
     transition: background 0.15s;
   }
   header .back-link:hover { background: var(--cream-deep); }
+  header .header-links {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  header .header-links .back-link { margin-top: 0; }
+  header .lang-switch { color: var(--ink-soft); }
   main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
   nav.toc {
     background: var(--paper);
@@ -1334,25 +1668,28 @@ async function buildHtml({ generatedAt }) {
 </head>
 <body>
 <header>
-  <div class="eyebrow">Guide d'utilisation</div>
+  <div class="eyebrow">${ui.eyebrow}</div>
   <h1>Tablito<em>.</em></h1>
-  <a class="back-link" href="../">← Retour à l'application</a>
+  <div class="header-links">
+    <a class="back-link" href="${ui.rootPrefix}">${ui.backToApp}</a>
+    <a class="back-link lang-switch" href="${ui.langSwitchHref}">${ui.langSwitchLabel}</a>
+  </div>
 </header>
 <main>
   <nav class="toc">
-    <div class="toc-label">Sommaire</div>
+    <div class="toc-label">${ui.tocLabel}</div>
     <ul>${toc}</ul>
   </nav>
   ${sectionHtml}
 </main>
 <footer>
   <p>
-    Pour aller plus loin :
-    <a href="../specs/">spécifications fonctionnelles</a> ·
-    <a href="https://github.com/isc/tablito">code source</a>
+    ${ui.footerMoreLabel}
+    <a href="${ui.rootPrefix}specs/">${ui.footerSpecs}</a> ·
+    <a href="https://github.com/isc/tablito">${ui.footerSource}</a>
   </p>
   <p>
-    Guide généré automatiquement le ${generatedAt}.
+    ${ui.footerGenerated(generatedAt)}
   </p>
 </footer>
 </body>
@@ -1361,14 +1698,61 @@ async function buildHtml({ generatedAt }) {
 
 // --- Main -------------------------------------------------------------------
 
+// One full pass for a language: drive the app (in that language), capture every
+// screenshot into OUT_DIR/screenshots, then write the localized HTML.
+async function generateForLang(browser, lang) {
+  LANG = lang;
+  OUT_DIR = outDirFor(lang);
+  SHOTS_DIR = join(OUT_DIR, 'screenshots');
+  await mkdir(SHOTS_DIR, { recursive: true });
+  log(`=== generating ${lang} guide → ${OUT_DIR}`);
+
+  const context = await browser.newContext({
+    viewport: VIEWPORT,
+    deviceScaleFactor: DEVICE_SCALE,
+    locale: LOCALE[lang],
+    timezoneId: 'Europe/Paris',
+  });
+  const page = await context.newPage();
+
+  // Fail fast on unexpected page errors.
+  page.on('pageerror', (err) => log('PAGE ERROR:', err.message));
+
+  await captureWelcomeScreens(page);
+  await captureHome(page);
+  await captureNavScreen(page, NAV_SCREENS[0]); // My picture
+  await captureBadgesScreen(page);
+  await captureNavScreen(page, NAV_SCREENS[1]); // Rules
+  await captureParentDashboard(page);
+  await captureSessionScreens(page);
+  await captureRecap(page);
+  await captureDivisionScreens(page);
+  await captureMultiProfileScreens(page);
+  // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
+  // the input mode to 'voice' via addInitScript, both of which would
+  // pollute any subsequent capture (especially captureRecap which drives
+  // a full session via keyboard).
+  await captureVoiceInput(page);
+
+  await context.close();
+
+  const html = await buildHtml({
+    generatedAt: new Date().toISOString().slice(0, 10),
+    lang,
+  });
+  await writeFile(join(OUT_DIR, 'index.html'), html);
+  log(`wrote ${join(OUT_DIR, 'index.html')}`);
+}
+
 async function main() {
   if (!existsSync(join(ROOT, 'dist', 'index.html'))) {
     console.error('ERROR: dist/index.html not found. Run `npm run build` first.');
     process.exit(1);
   }
 
-  await rm(OUT_DIR, { recursive: true, force: true });
-  await mkdir(SHOTS_DIR, { recursive: true });
+  // Wipe the whole guide tree once, before any language pass — non-fr langs
+  // live in subdirs of GUIDE_DIR, so per-pass rm would clobber siblings.
+  await rm(GUIDE_DIR, { recursive: true, force: true });
 
   const server = startPreviewServer();
   const cleanup = () => {
@@ -1381,40 +1765,10 @@ async function main() {
     await waitForUrl(BASE_URL);
 
     const browser = await chromium.launch();
-    const context = await browser.newContext({
-      viewport: VIEWPORT,
-      deviceScaleFactor: DEVICE_SCALE,
-      locale: 'fr-FR',
-      timezoneId: 'Europe/Paris',
-    });
-    const page = await context.newPage();
-
-    // Fail fast on unexpected page errors.
-    page.on('pageerror', (err) => log('PAGE ERROR:', err.message));
-
-    await captureWelcomeScreens(page);
-    await captureHome(page);
-    await captureNavScreen(page, NAV_SCREENS[0]); // Mon image
-    await captureBadgesScreen(page);
-    await captureNavScreen(page, NAV_SCREENS[1]); // Règles
-    await captureParentDashboard(page);
-    await captureSessionScreens(page);
-    await captureRecap(page);
-    await captureDivisionScreens(page);
-    await captureMultiProfileScreens(page);
-    // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
-    // the input mode to 'voice' via addInitScript, both of which would
-    // pollute any subsequent capture (especially captureRecap which drives
-    // a full session via keyboard).
-    await captureVoiceInput(page);
-
+    for (const lang of LANGS) {
+      await generateForLang(browser, lang);
+    }
     await browser.close();
-
-    const html = await buildHtml({
-      generatedAt: new Date().toISOString().slice(0, 10),
-    });
-    await writeFile(join(OUT_DIR, 'index.html'), html);
-    log(`wrote ${join(OUT_DIR, 'index.html')}`);
   } finally {
     cleanup();
   }

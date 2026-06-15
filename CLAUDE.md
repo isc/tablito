@@ -82,7 +82,7 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 
 ## Guide utilisateur
 
-Un guide HTML avec captures d'écran est généré par `npm run user-guide` (script `scripts/generate-user-guide.mjs`) et déployé à `/guide/`.
+Un guide HTML avec captures d'écran est généré par `npm run user-guide` (script `scripts/generate-user-guide.mjs`). **Bilingue** : une passe par langue (captures pilotées avec l'app dans la langue + HTML localisé). Le FR est à `/guide/`, l'EN à `/guide/en/` ; restreindre avec `GUIDE_LANGS=en`. Les textes de section/légendes vivent dans `SECTIONS_FR`/`SECTIONS_EN` et le chrome de page dans `UI` (objet par langue) du script ; les sélecteurs Playwright qui dépendent de la langue passent par la table `TEXT`.
 
 ## Changelog in-app
 
