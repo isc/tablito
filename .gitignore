@@ -18,6 +18,12 @@ CLAUDE.local.md
 .claude/*.lock
 .claude/settings.local.json
 
+# Skills installées via `npx skills add` (HyperFrames & co) : tooling local
+# vendoré dans .agents/, symlinké dans .claude/skills/. Hors périmètre app.
+.agents/
+.claude/skills/
+skills-lock.json
+
 # Playwright tooling artifacts
 .playwright-mcp/
 .playwright-cli/
