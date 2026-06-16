@@ -4897,6 +4897,14 @@ input, select, textarea {
 /* ===== static-landing.css ===== */
 .landing {
   flex: 1;
+  /* #root est un shell `100dvh; overflow:hidden` (les écrans de l'app scrollent
+     en interne). Depuis l'ajout de la section démo, la landing dépasse un écran :
+     on en fait son propre conteneur scrollable plutôt que de toucher au shell.
+     `min-height: 0` lève le min-height:auto du flex ; `max-height: 100dvh` borne
+     la hauteur (sans ça le flex grandit à hauteur du contenu = pas de scroll). */
+  min-height: 0;
+  max-height: 100dvh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   background: var(--cream);
@@ -5002,8 +5010,47 @@ input, select, textarea {
   justify-content: center;
 }
 
+/* Démo vidéo 9:16 (aperçu de l'app). La vidéo a un fond crème identique à la
+   landing, donc le mockup téléphone qu'elle contient « flotte » sur la page ;
+   on enrobe juste d'un coin arrondi + ombre douce pour délimiter l'écran. */
+.landing-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 0 28px;
+}
+
+.landing-demo-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.landing-demo-frame {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 9 / 16;
+  border-radius: 26px;
+  overflow: hidden;
+  background: var(--cream-deep);
+  box-shadow: var(--shadow-md);
+}
+
+.landing-demo-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Plus de bottom-pin (`margin-top: auto`) : la section démo allonge toujours la
+   page au-delà du viewport, donc le pin ne ferait que créer un trou avant le
+   CTA. Flux naturel, séparé du bloc démo par sa marge basse. */
 .landing-cta {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
