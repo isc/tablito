@@ -63,12 +63,12 @@ const welcomeFr: WelcomeStrings = {
 
 const welcomeEn: WelcomeStrings = {
   dontKnow: "I don't know",
-  testHint: 'Do your best\u00a0!',
-  helloTitle: 'Hi there\u00a0!',
+  testHint: 'Do your best!',
+  helloTitle: 'Hi there!',
   helloSubtitlePart1: "I'm Piou, your little learning buddy.",
-  helloSubtitlePart2: "We're going to learn the times tables together\u00a0!",
+  helloSubtitlePart2: "We're going to learn the times tables together!",
   next: 'Next →',
-  alreadyHaveProgress: 'Already have progress\u00a0? Import it',
+  alreadyHaveProgress: 'Already have progress? Import it',
   cancel: 'Cancel',
   importTitle: 'Your progress',
   importSubtitle: 'Get the progress you copied from the old app.',
@@ -77,15 +77,15 @@ const welcomeEn: WelcomeStrings = {
   importPlaceholder: 'Paste your progress here (long press → Paste)',
   importNotRecognized: 'Progress not recognized. Check your copy-paste.',
   importConfirm: 'Import my progress',
-  nameTitle: "What's your name\u00a0?",
+  nameTitle: "What's your name?",
   namePlaceholder: 'Your name',
-  itsMe: "That's me\u00a0! →",
-  greeting: (name: string) => `Hi ${name}\u00a0!`,
+  itsMe: "That's me! →",
+  greeting: (name: string) => `Hi ${name}!`,
   testIntroPart1:
     "Before we start, I'll ask you a few questions to see what you already know.",
   testIntroPart2:
-    "No worries: if you don't know, just tap «\u00a0I don't know\u00a0».",
-  letsGo: "Let's go\u00a0! →",
+    "No worries: if you don't know, just tap “I don't know”.",
+  letsGo: "Let's go! →",
   skipTest: 'Skip the test',
 };
 
@@ -139,24 +139,24 @@ const rulesIntroFr: RulesIntroStrings = {
 };
 
 const rulesIntroEn: RulesIntroStrings = {
-  introTitle: (name: string) => `Before we start, ${name}\u00a0!`,
+  introTitle: (name: string) => `Before we start, ${name}!`,
   introSubtitlePart1: "I'll show you two really simple rules",
   introSubtitlePart2Prefix: 'to multiply by ',
   introSubtitlePart2Middle: ' and by ',
   introSubtitlePart2Suffix: '.',
   introSubtitlePart3:
-    "No need to learn them by heart: you're going to understand how they work\u00a0!",
-  letsGo: "Let's go\u00a0!",
+    "No need to learn them by heart: you're going to understand how they work!",
+  letsGo: "Let's go!",
   x1Title: 'Multiplying by 1',
-  x1Message: 'Any number times 1 stays the same\u00a0!',
-  x1Tip: 'Easy, right\u00a0?',
+  x1Message: 'Any number times 1 stays the same!',
+  x1Tip: 'Easy, right?',
   next: 'Next',
   x10Title: 'Multiplying by 10',
-  x10MessagePart1: 'The digits slide one spot to the left\u00a0!',
+  x10MessagePart1: 'The digits slide one spot to the left!',
   x10MessagePart2Prefix: 'A ',
   x10MessagePart2Suffix: ' takes the place of the ones.',
-  x10Tip: 'Tip: every answer in the 10 times table ends in 0\u00a0!',
-  gotIt: 'Got it\u00a0!',
+  x10Tip: 'Tip: every answer in the 10 times table ends in 0!',
+  gotIt: 'Got it!',
 };
 
 export const rulesIntroStrings = { fr: rulesIntroFr, en: rulesIntroEn };
@@ -178,7 +178,7 @@ const profileSelectFr: ProfileSelectStrings = {
 };
 
 const profileSelectEn: ProfileSelectStrings = {
-  title: "Who's playing\u00a0?",
+  title: "Who's playing?",
   addChild: '+ Add a child',
 };
 

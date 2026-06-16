@@ -1157,8 +1157,8 @@ const SECTIONS_EN = [
       bar opens progress, badges and the ×1 / ×10 rules. The gear icon opens
       the parent area, after a short multiplication gate to keep curious
       fingers out. When all the tables are mastered, level 2 (division)
-      unlocks — with no second button and no new tile: the « My picture »
-      tile becomes « My pictures » and the day's session switches to division
+      unlocks — with no second button and no new tile: the “My picture”
+      tile becomes “My pictures” and the day's session switches to division
       (see level 2 below).`,
     shots: [
       { file: '05-home', caption: 'Home screen with the mascot and the 5-day streak.' },
@@ -1171,7 +1171,7 @@ const SECTIONS_EN = [
       it is introduced in three steps: a grid of dots showing the
       multiplication as repeated addition, the commutativity property
       (3×5 = 5×3, except for squares), and a derivation trick suited to the
-      fact (for example « × 9 = × 10 minus one »). Then come the questions.
+      fact (for example “× 9 = × 10 minus one”). Then come the questions.
       The child can answer with the keypad or with their voice — a button
       below the keypad switches mode mid-session, and the choice is remembered
       for later sessions. A quick correct answer earns a golden star. After a
@@ -1194,7 +1194,7 @@ const SECTIONS_EN = [
       facts, invites the child to go see the mystery picture (with a special
       mention when it has changed), and triggers confetti when a table is
       fully mastered, when the mystery picture is completed, or for a new
-      badge. Overall progress is shown with a « X facts known out of 36 » bar.`,
+      badge. Overall progress is shown with a “X facts known out of 36” bar.`,
     shots: [
       { file: '14-recap', caption: 'Recap of a session with a progress bar.' },
     ],
@@ -1208,7 +1208,7 @@ const SECTIONS_EN = [
       detail, mirroring the 5 Leitner boxes. A forgotten fact sees its
       fragment blur a little again, with no notion of failure. When all 36
       facts are mastered, the picture is fully revealed. The
-      « discovered / mastered / total » counts are shown at the top.`,
+      “discovered / mastered / total” counts are shown at the top.`,
     shots: [
       { file: '10-progress', caption: 'The mystery picture revealing itself as progress is made.' },
     ],
@@ -1216,23 +1216,23 @@ const SECTIONS_EN = [
   {
     id: 'division',
     title: 'Level 2 — division',
-    description: `Once the child has mastered all their tables (the « Times
-      tables genius » badge), a level unlocks: reviewing the same facts, but
-      as divisions (« 56 ÷ 7 = ? »), with its own mystery picture — the tables
-      picture stays earned. The « My picture » tile becomes « My pictures »:
+    description: `Once the child has mastered all their tables (the “Times
+      tables genius” badge), a level unlocks: reviewing the same facts, but
+      as divisions (“56 ÷ 7 = ?”), with its own mystery picture — the tables
+      picture stays earned. The “My picture” tile becomes “My pictures”:
       you switch between the multiplication picture and the division one. There
-      is still a single « Let's go » button: the day's session becomes
+      is still a single “Let's go” button: the day's session becomes
       division, and the few tables due for maintenance are slipped in along the
       way (× and ÷ in the same session). Divisions arrive gradually (not all at
       once), in the same carefully designed order as the tables — from easiest
       to hardest — and the app explicitly teaches the key trick: for 56 ÷ 7,
-      you look for « 7 times what makes 56? ». Everything else — Leitner boxes,
+      you look for “7 times what makes 56?”. Everything else — Leitner boxes,
       the picture revealing itself, encouragement without judgment — works
       exactly like multiplication.`,
     shots: [
-      { file: '15-division-home', caption: 'Once the tables are mastered, « My picture » becomes « My pictures » (multiplications + divisions).' },
-      { file: '13b-parent-dashboard-division', caption: 'Parent dashboard once division is unlocked: a « Divisions mastered » card, a ×/÷ selector on the histogram and the grid, and a unified list of the hardest facts with a per-operation marker.' },
-      { file: '16-division-intro', caption: 'Introducing a division: « think of the multiplication ».' },
+      { file: '15-division-home', caption: 'Once the tables are mastered, “My picture” becomes “My pictures” (multiplications + divisions).' },
+      { file: '13b-parent-dashboard-division', caption: 'Parent dashboard once division is unlocked: a “Divisions mastered” card, a ×/÷ selector on the histogram and the grid, and a unified list of the hardest facts with a per-operation marker.' },
+      { file: '16-division-intro', caption: 'Introducing a division: “think of the multiplication”.' },
       { file: '17-division-question', caption: 'Division question on the keypad.' },
       { file: '18-division-progress', caption: 'A mystery picture dedicated to division, distinct from the tables one.' },
     ],
@@ -1243,7 +1243,7 @@ const SECTIONS_EN = [
     description: `Eighteen badges for the tables, across three families:
       milestones (first session, 7 days, 30 days), performance (10 answers in
       a row, 5 answers under 2 s), and mastery (first fact in box 4, first in
-      box 5, one badge per table + a « times tables genius » badge when
+      box 5, one badge per table + a “times tables genius” badge when
       everything is in box 5). Once all the tables are mastered, a set of
       badges dedicated to division joins the collection. Each thumbnail is
       clickable and opens a card explaining the unlock condition. For locked
@@ -1261,9 +1261,9 @@ const SECTIONS_EN = [
       memory load: multiplying by 1 (the number doesn't change) and
       multiplying by 10 (the digits slide one place to the left, a 0 takes the
       place of the ones). These tables are therefore not part of the 36 facts
-      to learn. A third « bonus » rule, ×11 (just repeat the digit: 3×11 = 33,
+      to learn. A third “bonus” rule, ×11 (just repeat the digit: 3×11 = 33,
       7×11 = 77…), appears later, once all the tables from 2 to 9 are mastered
-      — signaled by a discreet « New » dot on the Rules button.`,
+      — signaled by a discreet “New” dot on the Rules button.`,
     shots: [
       { file: '12-rules', caption: 'Rules for ×1 and ×10.' },
     ],
@@ -1278,7 +1278,7 @@ const SECTIONS_EN = [
       the hardest facts, average response times per table, the history of the
       last 10 sessions, the profile export / import actions (JSON), and profile
       management — adding a child or deleting the displayed profile (see
-      « Several children » below).`,
+      “Several children” below).`,
     shots: [
       { file: '13-parent-dashboard', caption: 'The full parent dashboard.' },
     ],
@@ -1288,16 +1288,16 @@ const SECTIONS_EN = [
     title: 'Several children',
     description: `One tablet for the whole family: each child has their own
       profile — progress, badges, streak and mystery pictures fully separate.
-      You add a child from the parent area (« Add a child », Profiles section)
+      You add a child from the parent area (“Add a child”, Profiles section)
       or straight from the player-selection screen. With two or more profiles,
-      the app asks « Who's playing? » on launch, and a dedicated button at the
+      the app asks “Who's playing?” on launch, and a dedicated button at the
       top of the home screen lets you switch player at any time. With a single
       profile, nothing changes: no extra screen or button. Deleting a profile
       happens in the parent area, after confirmation — and backup export /
       import stays available profile by profile.`,
     shots: [
-      { file: '19-profile-select', caption: '« Who\'s playing? » — the selection screen shown on launch with two or more profiles.' },
-      { file: '20-home-multi', caption: 'The « switch player » button appears at the top of the home screen, next to the gear.' },
+      { file: '19-profile-select', caption: '“Who\'s playing?” — the selection screen shown on launch with two or more profiles.' },
+      { file: '20-home-multi', caption: 'The “switch player” button appears at the top of the home screen, next to the gear.' },
     ],
   },
 ];
