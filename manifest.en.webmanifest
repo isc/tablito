@@ -1,8 +1,8 @@
 {
   "name": "Tablito",
   "short_name": "Tablito",
-  "lang": "fr",
-  "description": "Apprendre les tables de multiplication, en douceur.",
+  "lang": "en",
+  "description": "Learn the times tables, gently.",
   "theme_color": "#4F46BA",
   "background_color": "#FBF6EC",
   "display": "standalone",

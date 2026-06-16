@@ -79,6 +79,13 @@
             document.title = 'Tablito — Practise the times tables (free, no ads)';
             var desc = document.querySelector('meta[name="description"]');
             if (desc) desc.setAttribute('content', 'Free, ad-free app to learn the multiplication tables gently, from age 7. Leitner method, no grades or rankings, works offline. Data stays on the device.');
+            // Manifest localisé : le standard n'a pas de description multilingue,
+            // donc un fichier par langue, basculé ici (le <link rel="manifest">
+            // existe déjà plus haut). Seule la `description` diffère ; le nom et
+            // les icônes sont identiques. Pointé avant le 1er paint → c'est ce
+            // manifest que le navigateur lira pour le prompt d'installation.
+            var mani = document.querySelector('link[rel="manifest"]');
+            if (mani) mani.setAttribute('href', 'manifest.en.webmanifest');
           }
           var ua = navigator.userAgent;
           var isIOS = /iPhone|iPod|iPad/.test(ua)
