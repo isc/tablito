@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* Fontes de l'app, self-hostées (copiées de public/fonts/) → render
+         identique à l'app et fonctionne offline/sandbox. Variables : une seule
+         woff2 par famille couvre toute la plage de poids. */
+      @font-face {
+        font-family: "Fraunces";
+        font-style: normal;
+        font-weight: 400 700;
+        src: url("assets/fonts/fraunces.woff2") format("woff2");
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Nunito";
+        font-style: normal;
+        font-weight: 400 800;
+        src: url("assets/fonts/nunito.woff2") format("woff2");
+        font-display: block;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; }
+      body {
+        font-family: "Nunito", system-ui, sans-serif;
+        color: #1e1a2e;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(900px 760px at 82% 6%, #f7e9c4 0%, rgba(247,233,196,0) 56%),
+          radial-gradient(820px 720px at 8% 99%, #fbe4da 0%, rgba(251,228,218,0) 54%),
+          #fbf6ec;
+      }
+
+      /* Scène portrait : accroche en haut, téléphone en grand dessous. */
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 100px 90px 0;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+      .copy { width: 100%; }
+      .chip {
+        display: inline-block;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #4f46ba;
+        background: #f7e9c4;
+        padding: 14px 30px;
+        border-radius: 999px;
+        margin-bottom: 30px;
+      }
+      .scene h1 {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 78px;
+        line-height: 1.05;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0 auto 22px;
+        max-width: 16ch;
+      }
+      .scene h1 .accent { color: #4f46ba; }
+      .scene p {
+        font-size: 36px;
+        line-height: 1.36;
+        font-weight: 600;
+        color: #6b6678;
+        max-width: 22ch;
+        margin: 0 auto;
+      }
+
+      /* Mockup téléphone portrait — ratio ≈ 9:19, identique au viewport de
+         capture (360×760), donc la capture remplit l'écran sans recadrage. */
+      .phone {
+        flex: 0 0 auto;
+        width: 560px;
+        height: 1138px;
+        margin-top: 56px;
+        background: #1e1a2e;
+        border-radius: 58px;
+        padding: 20px;
+        box-shadow: 0 48px 110px rgba(30, 26, 46, 0.2);
+        will-change: transform, opacity;
+      }
+      .phone__screen {
+        width: 100%;
+        height: 100%;
+        border-radius: 40px;
+        overflow: hidden;
+        background: #fbf6ec;
+      }
+      .phone__screen img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+      /* Brand scene */
+      .brand {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        text-align: center;
+        padding: 0 100px;
+        will-change: opacity;
+      }
+      .brand__lockup { display: flex; align-items: center; gap: 30px; }
+      .brand__lockup .mascot { width: 150px; height: 150px; }
+      .brand__lockup .wordmark {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 120px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        color: #1e1a2e;
+      }
+      .brand h2 {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 60px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        color: #1e1a2e;
+        max-width: 18ch;
+        line-height: 1.14;
+      }
+      .brand__cta {
+        margin-top: 14px;
+        font-size: 46px;
+        font-weight: 800;
+        color: #fff;
+        background: #4f46ba;
+        padding: 26px 56px;
+        border-radius: 20px;
+      }
+
+      /* Piou — SVG inline (dupliqué de src/components/Mascot.tsx, couleurs app). */
+      .mascot-feet path { stroke: #1e1a2e; stroke-width: 3; fill: none; stroke-linecap: round; }
+      .mascot-fill-body { fill: #f0b43a; stroke: #1e1a2e; stroke-width: 2.5; }
+      .mascot-fill-belly { fill: #fbd96c; }
+      .mascot-eye-iris { fill: #1e1a2e; }
+      .mascot-eye-shine { fill: #fff; }
+      .mascot-beak { fill: #f0843a; stroke: none; }
+      .mascot-cheek { fill: #fbe4da; }
+      .mascot-wing { fill: #fbd96c; stroke: #1e1a2e; stroke-width: 2; }
+      .mascot-tuft { fill: none; stroke: #1e1a2e; stroke-width: 2.5; stroke-linecap: round; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="17.4" style="position: relative; width: 1080px; height: 1920px; overflow: hidden">
+      <div class="bg"></div>
+
+      <!-- Scene 1 — La séance du jour -->
+      <div class="scene clip" id="s1" data-start="0" data-duration="3.6" data-track-index="1">
+        <div class="copy" id="s1-copy">
+          <span class="chip" data-cap="s1.chip">La séance du jour</span>
+          <h1 data-cap="s1.title">Une multiplication <span class="accent">à la fois.</span></h1>
+          <p data-cap="s1.body">Des séances courtes, jamais de surcharge.</p>
+        </div>
+        <div class="phone" id="s1-phone"><div class="phone__screen"><img src="assets/s1.png" alt=""></div></div>
+      </div>
+
+      <!-- Scene 2 — Bonne réponse, étoile dorée -->
+      <div class="scene clip" id="s2" data-start="3.4" data-duration="3.6" data-track-index="2">
+        <div class="copy" id="s2-copy">
+          <span class="chip" data-cap="s2.chip">Sans pression</span>
+          <h1 data-cap="s2.title">Bonne réponse, <span class="accent">étoile dorée.</span></h1>
+          <p data-cap="s2.body">On célèbre chaque réussite, jamais l’échec.</p>
+        </div>
+        <div class="phone" id="s2-phone"><div class="phone__screen"><img src="assets/s2.png" alt=""></div></div>
+      </div>
+
+      <!-- Scene 3 — L'image mystère qui se dévoile — plan signature -->
+      <div class="scene clip" id="s3" data-start="6.8" data-duration="3.6" data-track-index="3">
+        <div class="copy" id="s3-copy">
+          <span class="chip" data-cap="s3.chip">Image mystère</span>
+          <h1 data-cap="s3.title">Chaque table maîtrisée <span class="accent">dévoile l’image.</span></h1>
+          <p data-cap="s3.body">Un objectif visuel qui donne envie de continuer.</p>
+        </div>
+        <div class="phone" id="s3-phone"><div class="phone__screen"><img src="assets/s3.png" alt=""></div></div>
+      </div>
+
+      <!-- Scene 4 — Progrès sans notes ni classement -->
+      <div class="scene clip" id="s4" data-start="10.2" data-duration="3.6" data-track-index="4">
+        <div class="copy" id="s4-copy">
+          <span class="chip" data-cap="s4.chip">Sans notes ni classement</span>
+          <h1 data-cap="s4.title">Le progrès, <span class="accent">pas la performance.</span></h1>
+          <p data-cap="s4.body">Badges et série du jour, à son rythme.</p>
+        </div>
+        <div class="phone" id="s4-phone"><div class="phone__screen"><img src="assets/s4.png" alt=""></div></div>
+      </div>
+
+      <!-- Scene 5 — Lockup Piou + Tablito -->
+      <div class="brand clip" id="s5" data-start="13.6" data-duration="3.8" data-track-index="5">
+        <div class="brand__lockup" id="s5-lockup">
+          <div class="mascot" role="img" aria-label="Piou">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <g class="mascot-feet">
+                <path d="M40 68 L 40 94 M 36 94 L 44 94" />
+                <path d="M60 68 L 60 94 M 56 94 L 64 94" />
+              </g>
+              <ellipse cx="50" cy="60" rx="28" ry="28" class="mascot-fill-body" />
+              <path d="M32 60 Q 50 82 68 60" class="mascot-fill-belly" />
+              <circle cx="43" cy="54" r="3" class="mascot-eye-iris" />
+              <circle cx="44" cy="53" r="0.9" class="mascot-eye-shine" />
+              <circle cx="57" cy="54" r="3" class="mascot-eye-iris" />
+              <circle cx="58" cy="53" r="0.9" class="mascot-eye-shine" />
+              <path d="M46 63 L 54 63 L 50 68 Z" class="mascot-beak" />
+              <circle cx="38" cy="62" r="2.5" class="mascot-cheek" />
+              <circle cx="62" cy="62" r="2.5" class="mascot-cheek" />
+              <path d="M30 58 Q 26 70 36 74 Q 40 68 38 60 Z" class="mascot-wing" />
+              <path d="M48 34 L 50 28 L 52 34" class="mascot-tuft" />
+            </svg>
+          </div>
+          <span class="wordmark">Tablito</span>
+        </div>
+        <h2 id="s5-tag" data-cap="brand.tag">Apprendre les tables de multiplication, en douceur.</h2>
+        <div class="brand__cta" id="s5-cta" data-cap="brand.cta">tablito.app</div>
+      </div>
+    </div>
+
+    <!-- Remplit les captions de la langue active (caps.active.js réexporte le
+         catalogue choisi ; le build le swappe par langue). Les défauts dans le
+         HTML gardent `npm run dev` fonctionnel sans build. -->
+    <script type="module">
+      import { CAPS } from './caps.active.js';
+      for (const el of document.querySelectorAll('[data-cap]')) {
+        const v = CAPS[el.dataset.cap];
+        if (v != null) el.innerHTML = v;
+      }
+    </script>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // Quatre scènes contenu : même chorégraphie entrée / drift / sortie.
+      const SCENES = [
+        { id: "s1", t: 0.0 },
+        { id: "s2", t: 3.4 },
+        { id: "s3", t: 6.8 },
+        { id: "s4", t: 10.2 },
+      ];
+      SCENES.forEach((sc) => {
+        const first = sc.id === "s1";
+        // Crossfade d'entrée (sauf 1re scène, déjà visible au t=0).
+        if (!first) tl.fromTo("#" + sc.id, { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, sc.t + 0.05);
+        // Le téléphone monte + léger zoom.
+        tl.from("#" + sc.id + "-phone", { y: 80, scale: 0.96, opacity: first ? 0 : 1, duration: 0.95, ease: "power3.out" }, sc.t + (first ? 0.25 : 0.15));
+        // Copie : chip → titre → sous-titre en cascade.
+        tl.from("#" + sc.id + "-copy .chip", { y: 38, opacity: 0, duration: 0.6, ease: "power3.out" }, sc.t + 0.32);
+        tl.from("#" + sc.id + "-copy h1", { y: 48, opacity: 0, duration: 0.7, ease: "power3.out" }, sc.t + 0.44);
+        tl.from("#" + sc.id + "-copy p", { y: 38, opacity: 0, duration: 0.6, ease: "power3.out" }, sc.t + 0.6);
+        // Drift Ken-Burns pendant le hold.
+        tl.to("#" + sc.id + "-phone", { y: -20, duration: 2.3, ease: "sine.inOut" }, sc.t + 0.85);
+        // Sortie en fondu.
+        tl.to("#" + sc.id, { opacity: 0, duration: 0.55, ease: "power2.in" }, sc.t + 3.05);
+      });
+
+      // Scène marque.
+      const b = 13.6;
+      tl.fromTo("#s5", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, b + 0.05);
+      tl.from("#s5-lockup", { y: 48, opacity: 0, duration: 0.8, ease: "power3.out" }, b + 0.25);
+      tl.from("#s5-tag", { y: 42, opacity: 0, duration: 0.7, ease: "power3.out" }, b + 0.5);
+      tl.from("#s5-cta", { y: 36, opacity: 0, scale: 0.94, duration: 0.6, ease: "back.out(1.7)" }, b + 0.72);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

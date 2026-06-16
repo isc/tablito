@@ -1,0 +1,7 @@
+# Derived assets — regenerable from the user-guide screenshots + a render.
+# Only the final hero.<lang>.mp4 + poster (committed under ../public/) ship.
+composition/assets/*.png
+composition/renders/
+composition/snapshots/
+.work/
+node_modules/

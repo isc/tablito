@@ -9,10 +9,11 @@ interface MascotProps {
 // un rendu identique sur tous les navigateurs et pour animer les parties
 // (corps, ailes, yeux) indépendamment.
 //
-// ⚠ Le SVG ci-dessous est dupliqué dans index.html (#static-landing) pour
-// que la landing reste 100 % HTML sans charger Preact. Si tu modifies
-// Piou (ajout d'une partie, repositionnement), mets à jour les deux
-// fichiers. Aucun outil ne détecte le drift.
+// ⚠ Le SVG ci-dessous est dupliqué à deux autres endroits : index.html
+// (#static-landing, pour que la landing reste 100 % HTML sans charger Preact)
+// et landing-video/composition/index.html (scène de marque de la vidéo hero,
+// rendue hors de l'app). Si tu modifies Piou (ajout d'une partie,
+// repositionnement), mets à jour les trois copies. Aucun outil ne détecte le drift.
 const MASCOT_NAME = 'Piou';
 
 export default function Mascot({ mood }: MascotProps) {

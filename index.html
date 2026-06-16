@@ -179,8 +179,9 @@
           <div class="landing-mascot">
             <!-- ⚠ SVG dupliqué de src/components/Mascot.tsx (l'inliner ici
                  permet à la landing de rester 100 % HTML, sans charger Preact
-                 pour afficher Piou). Si tu modifies le SVG, mets à jour les
-                 deux fichiers. Aucun outil ne le détectera automatiquement. -->
+                 pour afficher Piou). 3e copie dans landing-video/composition/
+                 index.html (vidéo hero). Si tu modifies le SVG, mets à jour les
+                 trois fichiers. Aucun outil ne le détectera automatiquement. -->
             <div class="mascot happy" role="img" aria-label="Mascotte Piou, humeur: happy">
               <svg viewBox="0 0 100 100" class="mascot-svg" xmlns="http://www.w3.org/2000/svg">
                 <g class="mascot-feet">
@@ -251,6 +252,28 @@
             <span data-lang="en"><strong>Offline, no ads, no account.</strong> Once installed, no connection needed. Data stays on the device.</span>
           </li>
         </ul>
+
+        <!-- Démo vidéo : un aperçu 9:16 de l'app (hero.<lang>.mp4, généré par
+             landing-video/). Poster-first + lazy : le poster (~45 KB) s'affiche,
+             la vidéo (~470 KB) n'est chargée qu'à l'approche du bloc, et jamais
+             en prefers-reduced-motion (cf. bootstrap inline en bas de body). La
+             vidéo n'est PAS précachée par le SW (inutile à la PWA installée). -->
+        <section class="landing-demo" aria-labelledby="landing-demo-title">
+          <h2 class="landing-demo-title" id="landing-demo-title">
+            <span data-lang="fr">Voir l'app en action</span>
+            <span data-lang="en">See the app in action</span>
+          </h2>
+          <div class="landing-demo-frame">
+            <!-- Pas d'attribut `poster` en dur : il serait fetché eagerly (même
+                 avec preload="none") dans la langue FR avant que le script ne le
+                 corrige → un visiteur EN paierait le poster FR pour rien. Le
+                 script ci-dessous le pose dans la bonne langue ; en attendant, le
+                 fond crème du cadre (.landing-demo-frame) tient lieu de repli. -->
+            <video class="landing-demo-video" id="hero-video"
+                   muted loop playsinline preload="none">
+            </video>
+          </div>
+        </section>
 
         <div class="landing-cta">
           <button type="button" class="landing-install-btn">
@@ -405,6 +428,28 @@
           try { localStorage.setItem('multiplix-skip-install', '1'); } catch (e) {}
           bootApp();
         });
+
+        // Démo vidéo : poster-first + lazy. On sert le poster/MP4 de la langue
+        // (html[lang] est fixé par le script du <head>), et on ne charge le MP4
+        // qu'à l'approche du bloc — un visiteur qui repart en haut paie 0 KB de
+        // vidéo. prefers-reduced-motion : on reste sur le poster, pas d'autoplay.
+        var heroVideo = document.getElementById('hero-video');
+        if (heroVideo) {
+          var vlang = document.documentElement.lang === 'en' ? 'en' : 'fr';
+          heroVideo.poster = 'img/hero-poster.' + vlang + '.jpg';
+          var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!reduce && 'IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+              entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                heroVideo.src = 'video/hero.' + vlang + '.mp4';
+                heroVideo.play().catch(function () {});
+                io.disconnect();
+              });
+            }, { rootMargin: '200px' });
+            io.observe(heroVideo);
+          }
+        }
       })();
     </script>
   </body>
