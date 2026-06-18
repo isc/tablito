@@ -19,11 +19,15 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 - **TypeScript** vérifié par `tsc -b` (noEmit). esbuild fait la
   transformation .tsx → .js (à la volée en dev, en pré-build pour
   prod). Aucune autre étape de transpilation.
-- **Lazy-loading** : les écrans secondaires (Progress, Badges, Rules,
+- **Lazy-loading** : les écrans secondaires (Badges, Rules,
   ParentDashboard, Privacy, Changelog) sont chargés via `lazy()` +
   `Suspense`. Les écrans du parcours principal (Welcome, RulesIntro,
-  Home, Session, Recap) restent eager pour préserver la fluidité de
-  la boucle quotidienne et la synchronicité des tests d'intégration.
+  Home, Session, Recap, Progress) restent eager pour préserver la
+  fluidité de la boucle quotidienne et la synchronicité des tests
+  d'intégration. Progress est eager car c'est l'image mystère, la
+  récompense tapée à la fin de chaque séance (depuis le Recap) : la
+  laisser lazy faisait dépendre cette récompense d'un fetch de chunk
+  au moment le plus fragile (fin de séance, WiFi souvent faible).
 - **CSS concaténé** : les ~30 fichiers `.css` sources sont mergés en
   un seul `dist/styles.css` au build (1 requête HTTP au lieu de 30).
   En dev, le serveur sert chaque fichier individuellement. Le split

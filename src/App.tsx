@@ -50,11 +50,17 @@ import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionScreen from './screens/SessionScreen';
 import RecapScreen from './screens/RecapScreen';
+// ProgressScreen est eager : c'est l'image mystère, la récompense tapée à la
+// fin de CHAQUE séance (depuis le Recap), donc de facto dans la boucle
+// quotidienne. La garder lazy faisait dépendre cette récompense d'un fetch de
+// chunk au moment le plus fragile (fin de séance, enfant souvent sur un WiFi
+// faible) → "Failed to fetch dynamically imported module" → écran de crash.
+// En eager elle est dans le graphe initial, chargée au démarrage avec le shell.
+import ProgressScreen from './screens/ProgressScreen';
 // Lazy : écrans secondaires (consultation, parent, infos) — ouverts
 // occasionnellement, leur coût parse/CPU au cold launch est gaspillé
 // pour la majorité des sessions. Précachés par le SW → cache hit
 // instantané quand l'utilisateur clique.
-const ProgressScreen   = lazy(() => import('./screens/ProgressScreen'));
 const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
 const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
