@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260616210447"
+const CACHE = 'tablito-' + "20260618193659"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -166,12 +166,20 @@ const ASSETS = [
   "/vendor/preact/preact.module.js"
 ]
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then((c) => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+// Précache tolérant aux échecs. `cache.addAll()` est ATOMIQUE : un seul asset
+// qui échoue à se télécharger (fréquent sur WiFi faible — l'environnement où le
+// cache offline est justement le plus utile) rejette TOUT le précache, l'install
+// échoue, et l'appareil reste sans cache pour cette version. On cache donc asset
+// par asset : ce qui passe est gardé, le reste sera lazy-caché à la 1re requête
+// réseau réussie (cf. fetch handler). L'install réussit toujours.
+function precache() {
+  return caches.open(CACHE).then((c) =>
+    Promise.allSettled(ASSETS.map((a) => c.add(a)))
   )
+}
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(precache().then(() => self.skipWaiting()))
 })
 
 self.addEventListener('activate', (e) => {
