@@ -3,8 +3,10 @@ import { daysBetween } from './utils';
 
 // Gel de série : 1 gagné tous les 7 jours d'affilée, plafonné à 2 en réserve
 // (pour borner le feature et éviter qu'un enfant régulier accumule
-// indéfiniment une protection invisible). Un gel couvre 1 jour d'absence ;
-// au-delà la série casse même avec des gels en réserve.
+// indéfiniment une protection invisible). Un gel couvre 1 jour d'absence, et
+// les gels se consomment un par jour manqué (modèle Duolingo) : 2 gels en
+// réserve protègent donc 2 jours d'absence consécutifs. Au-delà du nombre de
+// gels disponibles, la série casse.
 export const STREAK_FREEZE_INTERVAL = 7;
 export const STREAK_FREEZE_MAX = 2;
 
@@ -13,23 +15,26 @@ export const STREAK_FREEZE_MAX = 2;
 // décroît pas toute seule — sans cette dérivation, un utilisateur qui rate
 // plusieurs jours voit toujours sa vieille série affichée jusqu'à ce qu'une
 // nouvelle séance se termine. La série est « active » si la dernière séance
-// date d'aujourd'hui/hier, OU si elle date d'avant-hier ET qu'un gel est
-// disponible (la série est alors « protégée » : la prochaine séance d'aujourd'hui
-// consommera le gel silencieusement et la fera repartir).
+// date d'aujourd'hui/hier, OU si les jours manqués depuis sont couverts par
+// autant de gels en réserve (la série est alors « protégée » : la prochaine
+// séance d'aujourd'hui consommera les gels silencieusement et la fera repartir).
 export function getActiveStreak(profile: UserProfile, today: string): number {
   if (!profile.lastSessionDate) return 0;
   const diff = daysBetween(profile.lastSessionDate, today);
   if (diff <= 1) return profile.currentStreak;
-  if (diff === 2 && profile.streakFreezes > 0) return profile.currentStreak;
+  const missedDays = diff - 1;
+  if (profile.streakFreezes >= missedDays) return profile.currentStreak;
   return 0;
 }
 
-// Vrai si la série est encore là uniquement parce qu'un gel la protège
-// (= l'enfant a manqué hier, mais a un gel en réserve). Utile pour signaler
-// visuellement « ton gel va te sauver si tu joues aujourd'hui ».
+// Vrai si la série est encore là uniquement parce que des gels la protègent
+// (= l'enfant a manqué au moins 1 jour, mais a assez de gels en réserve pour
+// les couvrir). Utile pour signaler visuellement « tes gels vont te sauver si
+// tu joues aujourd'hui ».
 export function isStreakProtectedByFreeze(profile: UserProfile, today: string): boolean {
   if (!profile.lastSessionDate || profile.streakFreezes <= 0) return false;
-  return daysBetween(profile.lastSessionDate, today) === 2;
+  const missedDays = daysBetween(profile.lastSessionDate, today) - 1;
+  return missedDays >= 1 && profile.streakFreezes >= missedDays;
 }
 
 export interface StreakUpdate {
@@ -46,9 +51,10 @@ export interface StreakUpdate {
 // Règles :
 //   - même jour (diff=0) : aucun changement (séance bonus, pas de double comptage)
 //   - +1 jour : série++ ; si la nouvelle série atteint un multiple de 7, +1 gel (cap 2)
-//   - +2 jours avec un gel : gel consommé, série++ (comme si pas de trou) ;
-//     un nouveau gel peut être gagné au même tour si on retombe sur un multiple de 7
-//   - +2 jours sans gel, ou +3 jours et plus : série repart à 1, gels conservés
+//   - jours manqués couverts par autant de gels : 1 gel consommé par jour manqué,
+//     série++ (comme si pas de trou) ; un nouveau gel peut être gagné au même tour
+//     si on retombe sur un multiple de 7. Ex : 2 gels couvrent 2 jours manqués.
+//   - jours manqués > gels disponibles : série repart à 1, gels conservés
 //   - jamais joué : série = 1
 export function applyStreakUpdate(profile: UserProfile, today: string): StreakUpdate {
   let currentStreak = profile.currentStreak;
@@ -65,10 +71,12 @@ export function applyStreakUpdate(profile: UserProfile, today: string): StreakUp
       // Séance multiple le même jour : on ne touche à rien.
       return { currentStreak, streakFreezes, freezeJustUsed, freezeJustEarned };
     }
+    const missedDays = diff - 1;
     if (diff === 1) {
       currentStreak += 1;
-    } else if (diff === 2 && streakFreezes > 0) {
-      streakFreezes -= 1;
+    } else if (streakFreezes >= missedDays) {
+      // Jours manqués entièrement couverts : 1 gel consommé par jour manqué.
+      streakFreezes -= missedDays;
       freezeJustUsed = true;
       currentStreak += 1;
     } else {

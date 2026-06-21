@@ -40,8 +40,18 @@ describe('getActiveStreak', () => {
     expect(getActiveStreak(profile, '2026-04-30')).toBe(7);
   });
 
-  it('renvoie 0 si la dernière séance date d\'il y a 3 jours, même avec des gels (un gel ne couvre qu\'1 jour)', () => {
+  it('renvoie la valeur stockée si 2 jours manqués sont couverts par 2 gels (série protégée)', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 12, streakFreezes: 2 });
+    expect(getActiveStreak(profile, '2026-04-30')).toBe(12);
+  });
+
+  it('renvoie 0 si 2 jours manqués mais 1 seul gel (couverture insuffisante)', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 12, streakFreezes: 1 });
+    expect(getActiveStreak(profile, '2026-04-30')).toBe(0);
+  });
+
+  it('renvoie 0 si 3 jours manqués, même avec le cap de 2 gels', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-26', currentStreak: 12, streakFreezes: 2 });
     expect(getActiveStreak(profile, '2026-04-30')).toBe(0);
   });
 
@@ -70,6 +80,16 @@ describe('isStreakProtectedByFreeze', () => {
   it('est vrai si la dernière séance est avant-hier ET qu\'un gel est disponible', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-28', streakFreezes: 1 });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(true);
+  });
+
+  it('est vrai si 2 jours manqués sont couverts par 2 gels', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-27', streakFreezes: 2 });
+    expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(true);
+  });
+
+  it('est faux si 2 jours manqués mais 1 seul gel (couverture insuffisante)', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-27', streakFreezes: 1 });
+    expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(false);
   });
 
   it('est faux si la dernière séance est avant-hier mais aucun gel', () => {
@@ -144,8 +164,25 @@ describe('applyStreakUpdate', () => {
     expect(r.freezeJustUsed).toBe(false);
   });
 
-  it('reset la série à 1 après 2+ jours manqués, même avec des gels en réserve (1 gel = 1 jour seulement)', () => {
+  it('consomme 2 gels et préserve la série après 2 jours manqués', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 10, streakFreezes: 2 });
+    const r = applyStreakUpdate(profile, '2026-04-30');
+    expect(r.currentStreak).toBe(11);
+    expect(r.streakFreezes).toBe(0);
+    expect(r.freezeJustUsed).toBe(true);
+    expect(r.freezeJustEarned).toBe(false);
+  });
+
+  it('reset la série à 1 après 2 jours manqués avec 1 seul gel (couverture insuffisante)', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 10, streakFreezes: 1 });
+    const r = applyStreakUpdate(profile, '2026-04-30');
+    expect(r.currentStreak).toBe(1);
+    expect(r.streakFreezes).toBe(1);
+    expect(r.freezeJustUsed).toBe(false);
+  });
+
+  it('reset la série à 1 après 3 jours manqués, même avec le cap de 2 gels', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-26', currentStreak: 10, streakFreezes: 2 });
     const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.currentStreak).toBe(1);
     expect(r.streakFreezes).toBe(2);

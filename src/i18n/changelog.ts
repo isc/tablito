@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-06-21',
+    items: [
+      "Les gels de série protègent désormais plusieurs jours d'absence consécutifs : chaque gel couvre un jour manqué, donc avec 2 gels en réserve une série survit à 2 jours d'absence d'affilée (avant, un seul jour était couvert et la série cassait dès le deuxième). La séance de retour consomme les gels en silence et le récap célèbre l'événement.",
+    ],
+  },
+  {
     date: '2026-06-15',
     items: [
       "Image mystère qui ne se complétait jamais entièrement : les faits les plus difficiles (typiquement 7×9, 8×9, 9×9) pouvaient n'être jamais proposés à l'apprentissage, laissant quelques cases définitivement vides en bas de l'image — surtout si l'enfant butait sur la table de 9. Désormais ces derniers faits finissent toujours par être introduits, et l'image peut être dévoilée jusqu'au bout.",
@@ -147,6 +153,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-06-21',
+    items: [
+      'Streak freezes now protect several consecutive days off: each freeze covers one missed day, so with 2 freezes in reserve a streak survives 2 days off in a row (before, only a single day was covered and the streak broke on the second). The comeback session quietly spends the freezes and the recap celebrates it.',
+    ],
+  },
   {
     date: '2026-06-15',
     items: [
