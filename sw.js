@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260701070943"
+const CACHE = 'tablito-' + "20260701204914"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -64,6 +64,7 @@ const ASSETS = [
   "/src/__tests__/setup.js",
   "/src/__tests__/strategies.test.js",
   "/src/__tests__/streak.test.js",
+  "/src/__tests__/transfer.test.js",
   "/src/__tests__/userJourney.test.js",
   "/src/assets/hero.png",
   "/src/assets/react.svg",
@@ -122,6 +123,7 @@ const ASSETS = [
   "/src/lib/audioContext.js",
   "/src/lib/badges.js",
   "/src/lib/changelog.js",
+  "/src/lib/codec.js",
   "/src/lib/dailyComposer.js",
   "/src/lib/divisionComposer.js",
   "/src/lib/divisionFacts.js",
@@ -143,6 +145,8 @@ const ASSETS = [
   "/src/lib/storage.js",
   "/src/lib/strategies.js",
   "/src/lib/streak.js",
+  "/src/lib/supabase.js",
+  "/src/lib/transfer.js",
   "/src/lib/utils.js",
   "/src/main.js",
   "/src/screens/BadgesScreen.js",
@@ -159,6 +163,7 @@ const ASSETS = [
   "/src/screens/WelcomeScreen.js",
   "/src/types.js",
   "/styles.css",
+  "/vendor/lean-qr/index.mjs",
   "/vendor/preact/compat-client.mjs",
   "/vendor/preact/compat.module.js",
   "/vendor/preact/hooks.module.js",

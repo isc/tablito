@@ -8,6 +8,31 @@
   min-height: 100dvh;
 }
 
+/* Bannière « le transfert a échoué » (boot avec #transfer= invalide) */
+.app-transfer-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--box-red);
+  border-radius: 12px;
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.app-transfer-error-close {
+  margin-left: auto;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0 2px;
+}
+
 .app-loading {
   flex: 1;
   display: flex;
@@ -3143,6 +3168,46 @@ input, select, textarea {
 .parent-import-area {
   margin-top: 10px;
   padding: 0 20px;
+}
+
+/* Panneau de transfert vers un autre appareil (QR + lien) */
+.parent-transfer-area {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.parent-transfer-qr {
+  /* Le canvas fait ~1 px par module : on l'agrandit en préservant les bords
+     nets (pixelated), avec une marge blanche réglementaire autour. */
+  width: 220px;
+  height: 220px;
+  image-rendering: pixelated;
+  background: #fff;
+  padding: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+}
+
+.parent-transfer-hint {
+  margin: 0;
+  max-width: 360px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.parent-transfer-status {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.parent-transfer-status--error {
+  color: var(--box-red);
 }
 
 .parent-import-textarea {

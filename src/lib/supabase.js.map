@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["lib/supabase.ts"],
+  "sourcesContent": ["// Plumbing Supabase partag\u00E9 (PostgREST + publishable key), consomm\u00E9 par\n// feedback.ts, push.ts et transfer.ts \u2014 un seul endroit \u00E0 toucher si la\n// convention d'auth change.\n\n/**\n * Config Supabase, ou null si absente (contributeur sans .env : les features\n * r\u00E9seau se d\u00E9sactivent au runtime, sans crash). Lecture paresseuse : permet\n * de stubber l'env dans les tests.\n */\nexport function supabaseEnv(): { url: string; key: string } | null {\n  const url = import.meta.env.VITE_SUPABASE_URL;\n  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;\n  return url && key ? { url, key } : null;\n}\n\n/** Headers communs des appels PostgREST (tables et RPC). */\nexport function supabaseHeaders(key: string): Record<string, string> {\n  return {\n    apikey: key,\n    Authorization: `Bearer ${key}`,\n    'Content-Type': 'application/json',\n  };\n}\n"],
+  "mappings": "AASO,SAASA,GAAmD,CACjE,MAAMC,EAAM,2CACNC,EAAM,iDACZ,OAAOD,GAAOC,EAAM,CAAE,IAAAD,EAAK,IAAAC,CAAI,EAAI,IACrC,CAGO,SAASC,EAAgBD,EAAqC,CACnE,MAAO,CACL,OAAQA,EACR,cAAe,UAAUA,CAAG,GAC5B,eAAgB,kBAClB,CACF",
+  "names": ["supabaseEnv", "url", "key", "supabaseHeaders"]
+}

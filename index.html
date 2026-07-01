@@ -56,10 +56,11 @@
           // `multiplix-profile` (ancien schéma mono-profil, migré au boot).
           try { profile = !!(localStorage.getItem('multiplix-profiles') || localStorage.getItem('multiplix-profile')); } catch (e) {}
           try { skipped = localStorage.getItem('multiplix-skip-install') === '1'; } catch (e) {}
-          // Migration cross-origin : on arrive de l'ancien domaine avec le profil
-          // dans le fragment (#import=…) → on boote l'app directement (pas la
-          // landing). L'import réel a lieu dans main.tsx (importProfileFromUrl).
-          try { hasImport = location.hash.indexOf('import=') !== -1; } catch (e) {}
+          // Profil dans le fragment d'URL → on boote l'app directement (pas la
+          // landing) : #import= (migration cross-origin depuis l'ancien domaine)
+          // ou #transfer= (transfert depuis un autre appareil, QR de l'espace
+          // parent). L'import réel a lieu dans main.tsx.
+          try { hasImport = location.hash.indexOf('import=') !== -1 || location.hash.indexOf('transfer=') !== -1; } catch (e) {}
           if (standalone || profile || skipped || hasImport) {
             document.documentElement.classList.add('skip-static-landing');
           }
@@ -155,6 +156,7 @@
         "react":               "/vendor/preact/compat.module.js",
         "react-dom":           "/vendor/preact/compat.module.js",
         "react-dom/client":    "/vendor/preact/compat-client.mjs",
+        "lean-qr":             "/vendor/lean-qr/index.mjs",
         "virtual:pwa-register":"/pwa-register.js"
       }
     }
