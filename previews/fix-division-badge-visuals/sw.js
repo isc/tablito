@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260701055846"
+const CACHE = 'tablito-' + "20260701065605"
 const BASE = "/previews/fix-division-badge-visuals/"
 const ASSETS = [
   "/previews/fix-division-badge-visuals/CNAME",
