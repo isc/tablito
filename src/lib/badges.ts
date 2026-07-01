@@ -236,7 +236,12 @@ function buildDivisionBadgeDefinitions(): BadgeDefinition[] {
       return {
         id: `${BADGE_IDS.DIV_TABLE_PREFIX}${n}`,
         ...i.divTable(n),
-        icon: '➗',
+        // Glyphe texte « ÷N » (rendu blanc serif par .badge-medallion) plutôt
+        // que l'emoji ➗ : sur iOS celui-ci s'affiche en sombre — quasi noir sur
+        // le médaillon indigo (#4F46BA) — et les 8 badges étaient tous
+        // identiques. « ÷2 »… « ÷9 » les rend lisibles ET distincts, en miroir
+        // des badges multiplication numérotés.
+        icon: `÷${n}`,
         color: 'var(--indigo)',
         progressFor: (p: UserProfile) => {
           const tableFacts = factsForDivisionTable(p.divisionFacts ?? [], n);
