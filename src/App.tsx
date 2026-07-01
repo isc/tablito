@@ -609,6 +609,14 @@ export default function App({ transferResult = null }: AppProps) {
     return true;
   }, []);
 
+  // Transfert scanné depuis le Welcome (QR de l'ancien appareil) : le profil
+  // est déjà installé et actif (lib/transfer → storage.installProfile), il ne
+  // reste qu'à refléter l'état et naviguer.
+  const handleTransferImported = useCallback((imported: UserProfile) => {
+    setProfile(imported);
+    setScreen(profileHome(imported));
+  }, []);
+
   const handleDeleteProfile = useCallback(() => {
     if (!profile) return;
     const ok = window.confirm(appStrings.confirmDeleteProfile(profile.name));
@@ -649,6 +657,7 @@ export default function App({ transferResult = null }: AppProps) {
         <WelcomeScreen
           onComplete={handleWelcomeComplete}
           onImport={handleWelcomeImport}
+          onTransferImported={handleTransferImported}
           // Annulable uniquement en mode « ajout d'un enfant » (il existe
           // déjà au moins un profil) : au tout premier onboarding il n'y a
           // nulle part où revenir.

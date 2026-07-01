@@ -7,6 +7,15 @@ import { useStrings } from './lang';
 
 // === WelcomeScreen ===
 
+// « Récupération de la progression… » : la même étape du même flux (transfert
+// entre appareils) a deux chemins d'entrée — lien ouvert (main.tsx, affiché
+// AVANT le montage de l'app, donc hors LangProvider) et QR scanné in-app
+// (WelcomeScreen). Une seule table pour que le wording ne diverge jamais.
+export const transferFetchingStrings = {
+  fr: 'Récupération de la progression…',
+  en: 'Fetching your progress…',
+};
+
 interface WelcomeStrings {
   dontKnow: string;
   testHint: string;
@@ -18,6 +27,11 @@ interface WelcomeStrings {
   cancel: string;
   importTitle: string;
   importSubtitle: string;
+  scanQr: string;
+  scanPrompt: string;
+  scanCameraError: string;
+  scanTransferError: string;
+  transferFetching: string;
   pasteFromClipboard: string;
   pasteManually: string;
   importPlaceholder: string;
@@ -44,7 +58,16 @@ const welcomeFr: WelcomeStrings = {
   cancel: 'Annuler',
   importTitle: 'Ta progression',
   importSubtitle:
-    "Le plus simple : sur l'ancien appareil, ouvre Espace parent → « Transférer » et scanne le QR code avec celui-ci. Ou colle ici une sauvegarde exportée.",
+    "Sur l'ancien appareil, ouvre Espace parent → « Transférer », puis scanne le QR affiché avec le bouton ci-dessous. Ou colle une sauvegarde exportée.",
+  scanQr: "Scanner le QR de l'ancien appareil",
+  scanPrompt: "Vise le QR code affiché sur l'ancien appareil.",
+  scanCameraError:
+    'Caméra indisponible ou accès refusé. Tu peux coller la sauvegarde à la place.',
+  // ⚠ Variante (tutoiement, « QR ») de appStrings.transferFailed (i18n/app.ts,
+  // chemin lien ouvert au boot) — garder le diagnostic en phase.
+  scanTransferError:
+    "Le transfert n'a pas abouti : le QR a peut-être expiré ou déjà servi. Relance un transfert sur l'ancien appareil et réessaie.",
+  transferFetching: transferFetchingStrings.fr,
   pasteFromClipboard: 'Coller depuis le presse-papiers',
   pasteManually: 'Coller à la main',
   importPlaceholder: 'Colle ta progression ici (appui long → Coller)',
@@ -73,7 +96,14 @@ const welcomeEn: WelcomeStrings = {
   cancel: 'Cancel',
   importTitle: 'Your progress',
   importSubtitle:
-    'Easiest: on the old device, open Parent area → "Transfer" and scan the QR code with this one. Or paste an exported backup here.',
+    'On the old device, open Parent area → "Transfer", then scan the QR it shows using the button below. Or paste an exported backup.',
+  scanQr: "Scan the old device's QR code",
+  scanPrompt: 'Point at the QR code shown on the old device.',
+  scanCameraError: 'Camera unavailable or access denied. You can paste the backup instead.',
+  // ⚠ Variant of appStrings.transferFailed (i18n/app.ts) — keep the diagnosis in sync.
+  scanTransferError:
+    "The transfer didn't go through: the QR may have expired or already been used. Start a new transfer on the old device and try again.",
+  transferFetching: transferFetchingStrings.en,
   pasteFromClipboard: 'Paste from clipboard',
   pasteManually: 'Paste by hand',
   importPlaceholder: 'Paste your progress here (long press → Paste)',

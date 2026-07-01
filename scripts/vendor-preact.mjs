@@ -28,6 +28,17 @@ const packages = {
     out: 'vendor/lean-qr',
     files: { 'index.mjs': 'index.mjs' },
   },
+  // Lecteur de QR code (scan in-app du transfert, côté nouvel appareil) —
+  // chargé en import() dynamique par WelcomeScreen. Le worker est résolu par
+  // la lib via un import() relatif : les deux fichiers doivent rester côte à
+  // côte.
+  'qr-scanner': {
+    out: 'vendor/qr-scanner',
+    files: {
+      'qr-scanner.min.js':        'qr-scanner.min.js',
+      'qr-scanner-worker.min.js': 'qr-scanner-worker.min.js',
+    },
+  },
 }
 
 // On ne vendore PAS les `.map` (sources d'origine non publiées) : on retire

@@ -252,6 +252,23 @@
   padding: 8px;
 }
 
+/* Scan du QR de transfert (caméra in-app) */
+.welcome-scan-video {
+  width: min(300px, 78vw);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: #000;
+}
+
+.welcome-scan-status {
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+  max-width: 320px;
+}
+
 .welcome-import-textarea {
   width: 100%;
   max-width: 320px; /* aligné sur .welcome-btn */

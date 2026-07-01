@@ -11,7 +11,7 @@ const fr: ChangelogEntry[] = [
   {
     date: '2026-07-01',
     items: [
-      "Changement de téléphone simplifié : l'espace parent propose un bouton « Transférer » (section Sauvegarde). Un QR code s'affiche, on le scanne avec l'appareil photo du nouveau téléphone, et la progression s'y installe toute seule — fini le copier-coller de la sauvegarde. Le transfert est chiffré de bout en bout, valable 15 minutes et utilisable une seule fois. L'export/import classique reste disponible.",
+      "Changement de téléphone simplifié : l'espace parent propose un bouton « Transférer » (section Sauvegarde). Un QR code s'affiche, on le scanne avec l'appareil photo du nouveau téléphone, et la progression s'y installe toute seule — fini le copier-coller de la sauvegarde. Sur iPhone, scannez plutôt le QR depuis l'app : écran d'accueil → « Déjà une progression ? » → « Scanner le QR de l'ancien appareil ». Le transfert est chiffré de bout en bout, valable 15 minutes et utilisable une seule fois. L'export/import classique reste disponible.",
     ],
   },
   {
@@ -162,7 +162,7 @@ const en: ChangelogEntry[] = [
   {
     date: '2026-07-01',
     items: [
-      'Switching phones made simple: the parent area now offers a "Transfer" button (Backup section). A QR code appears, you scan it with the new phone\'s camera, and the progress installs itself there — no more copy-pasting the backup. The transfer is end-to-end encrypted, valid for 15 minutes and usable only once. The classic export/import remains available.',
+      'Switching phones made simple: the parent area now offers a "Transfer" button (Backup section). A QR code appears, you scan it with the new phone\'s camera, and the progress installs itself there — no more copy-pasting the backup. On iPhone, scan the QR from within the app instead: welcome screen → "Already have progress?" → "Scan the old device\'s QR code". The transfer is end-to-end encrypted, valid for 15 minutes and usable only once. The classic export/import remains available.',
     ],
   },
   {

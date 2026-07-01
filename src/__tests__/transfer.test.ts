@@ -10,6 +10,8 @@ import {
   unpackProfile,
   createTransfer,
   importTransferFromUrl,
+  importTransferFromLink,
+  parseTransferLink,
 } from '../lib/transfer';
 
 // jsdom expose parfois un `crypto` sans SubtleCrypto : on garantit l'API
@@ -117,6 +119,22 @@ describe('createTransfer + importTransferFromUrl', () => {
     window.location.hash = '#transfer=abcdefgh12345678.aaaabbbbccccdddd';
     expect(await importTransferFromUrl()).toBe('error');
     expect(listProfiles()).toHaveLength(0);
+  });
+
+  it('importe depuis un lien scanné/collé (importTransferFromLink)', async () => {
+    const profile = makeProfile('Sacha');
+    const { payload, keyB64 } = await packProfile(profile);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(payload), { status: 200 })),
+    );
+    const link = `https://tablito.app/#transfer=abcdefgh12345678.${keyB64}`;
+    const imported = await importTransferFromLink(link);
+    expect(imported?.name).toBe('Sacha');
+    expect(loadProfile()?.name).toBe('Sacha');
+    // Un texte quelconque (QR étranger) est refusé sans appel réseau.
+    expect(parseTransferLink('https://example.com/menu-du-jour')).toBeNull();
+    expect(await importTransferFromLink('hello')).toBeNull();
   });
 
   it('ne fait rien sans fragment #transfer=', async () => {

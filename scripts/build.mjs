@@ -190,6 +190,7 @@ for await (const f of walk(OUT)) {
   if (rel.startsWith('/mystery/')) continue
   if (rel.startsWith('/splash/')) continue
   if (rel.startsWith('/video/')) continue // démo de la landing : la PWA installée saute la landing (skip-static-landing), inutile à précacher
+  if (rel.startsWith('/vendor/qr-scanner/')) continue // scan de transfert : ~58 KB utilisés au plus une fois par appareil, et le transfert exige le réseau de toute façon — lazy-cache au premier usage
   if (rel.startsWith('/img/hero-poster')) continue // idem : poster de la démo, hors shell de l'app
   shellAssets.push(BASE.replace(/\/$/, '') + rel)
 }

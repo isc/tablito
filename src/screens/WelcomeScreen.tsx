@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import type QrScanner from 'qr-scanner';
+import type { UserProfile } from '../types';
 import Mascot from '../components/Mascot';
 import NumPad from '../components/NumPad';
 import {
@@ -11,19 +13,31 @@ import { useWelcomeStrings } from '../i18n/onboarding';
 
 export type { PlacementResult };
 
+// États du scan de QR de transfert (caméra in-app). 'on' filme, 'fetching'
+// récupère/déchiffre après détection, les erreurs ramènent aux options.
+type ScanState = 'off' | 'on' | 'fetching' | 'cameraError' | 'transferError';
+
 interface WelcomeScreenProps {
   onComplete: (name: string, placementResults: PlacementResult[]) => void;
   // Restaure une progression (changement d'appareil, migration). Renvoie false
   // si le JSON collé est invalide, pour afficher une erreur. En cas de succès,
   // App navigue vers l'écran adapté au profil (ce composant est alors démonté).
   onImport: (json: string) => boolean;
+  // Un transfert scanné (QR de l'ancien appareil) a installé ce profil : App
+  // navigue vers son écran d'arrivée, ce composant est démonté.
+  onTransferImported: (profile: UserProfile) => void;
   // Présent uniquement en mode « ajouter un enfant » (il existe déjà au moins
   // un profil) : permet de revenir en arrière sans créer de profil. Absent au
   // tout premier onboarding.
   onCancel?: () => void;
 }
 
-export default function WelcomeScreen({ onComplete, onImport, onCancel }: WelcomeScreenProps) {
+export default function WelcomeScreen({
+  onComplete,
+  onImport,
+  onTransferImported,
+  onCancel,
+}: WelcomeScreenProps) {
   const t = useWelcomeStrings();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
@@ -33,6 +47,49 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
   // Repli manuel : la zone de collage n'apparaît que si la lecture du
   // presse-papiers échoue (refus, navigateur non supporté) ou sur demande.
   const [manualPaste, setManualPaste] = useState(false);
+  const [scan, setScan] = useState<ScanState>('off');
+  const scanVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Scan du QR de transfert affiché par l'ancien appareil. La caméra tourne
+  // tant que `scan === 'on'` ; qr-scanner (vendoré) est chargé à la demande.
+  // On ignore les QR étrangers (l'utilisateur vise peut-être encore à côté)
+  // et on ne consomme le code — lecture unique côté serveur — qu'une fois le
+  // scanner arrêté.
+  useEffect(() => {
+    if (scan !== 'on') return;
+    let scanner: QrScanner | null = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ default: QrScanner }, transfer] = await Promise.all([
+          import('qr-scanner'),
+          import('../lib/transfer'),
+        ]);
+        if (cancelled || !scanVideoRef.current) return;
+        const qr = new QrScanner(
+          scanVideoRef.current,
+          async ({ data }) => {
+            if (!transfer.parseTransferLink(data)) return;
+            qr.stop();
+            setScan('fetching');
+            const profile = await transfer.importTransferFromLink(data);
+            if (profile) onTransferImported(profile);
+            else setScan('transferError');
+          },
+          { returnDetailedScanResult: true },
+        );
+        scanner = qr;
+        await qr.start();
+      } catch {
+        // Caméra absente, refusée, ou lib introuvable → repli sur le collage.
+        if (!cancelled) setScan('cameraError');
+      }
+    })();
+    return () => {
+      cancelled = true;
+      scanner?.destroy(); // destroy() arrête aussi la caméra
+    };
+  }, [scan, onTransferImported]);
 
   const { speak, stop: stopSpeech } = useTTS();
 
@@ -267,58 +324,82 @@ export default function WelcomeScreen({ onComplete, onImport, onCancel }: Welcom
           <div className="welcome-subtitle">
             {t.importSubtitle}
           </div>
-          {!manualPaste ? (
+          {scan === 'on' || scan === 'fetching' ? (
             <>
-              <button
-                className="btn btn--ink welcome-btn"
-                onClick={handlePasteFromClipboard}
-              >
-                {t.pasteFromClipboard}
-              </button>
-              <button
-                className="welcome-import-link"
-                onClick={() => setManualPaste(true)}
-              >
-                {t.pasteManually}
+              <video ref={scanVideoRef} className="welcome-scan-video" />
+              <div className="welcome-scan-status">
+                {scan === 'fetching' ? t.transferFetching : t.scanPrompt}
+              </div>
+              <button className="welcome-btn-skip" onClick={() => setScan('off')}>
+                {t.cancel}
               </button>
             </>
           ) : (
             <>
-              <textarea
-                className="welcome-import-textarea"
-                placeholder={t.importPlaceholder}
-                value={importText}
-                onChange={(e) => {
-                  setImportText(e.currentTarget.value);
-                  setImportError(false);
-                }}
-                autoFocus
-              />
-              {importError && (
-                <div className="welcome-import-error">
-                  {t.importNotRecognized}
-                </div>
+              {scan === 'cameraError' && (
+                <div className="welcome-import-error">{t.scanCameraError}</div>
+              )}
+              {scan === 'transferError' && (
+                <div className="welcome-import-error">{t.scanTransferError}</div>
+              )}
+              <button className="btn btn--ink welcome-btn" onClick={() => setScan('on')}>
+                {t.scanQr}
+              </button>
+              {!manualPaste ? (
+                <>
+                  <button
+                    className="welcome-import-link"
+                    onClick={handlePasteFromClipboard}
+                  >
+                    {t.pasteFromClipboard}
+                  </button>
+                  <button
+                    className="welcome-import-link"
+                    onClick={() => setManualPaste(true)}
+                  >
+                    {t.pasteManually}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <textarea
+                    className="welcome-import-textarea"
+                    placeholder={t.importPlaceholder}
+                    value={importText}
+                    onChange={(e) => {
+                      setImportText(e.currentTarget.value);
+                      setImportError(false);
+                    }}
+                    autoFocus
+                  />
+                  {importError && (
+                    <div className="welcome-import-error">
+                      {t.importNotRecognized}
+                    </div>
+                  )}
+                  <button
+                    className="btn btn--ink welcome-btn"
+                    onClick={handleImportConfirm}
+                    disabled={!importText.trim()}
+                  >
+                    {t.importConfirm}
+                  </button>
+                </>
               )}
               <button
-                className="btn btn--ink welcome-btn"
-                onClick={handleImportConfirm}
-                disabled={!importText.trim()}
+                className="welcome-btn-skip"
+                onClick={() => {
+                  setShowImport(false);
+                  setManualPaste(false);
+                  setImportError(false);
+                  setImportText('');
+                  setScan('off');
+                }}
               >
-                {t.importConfirm}
+                {t.cancel}
               </button>
             </>
           )}
-          <button
-            className="welcome-btn-skip"
-            onClick={() => {
-              setShowImport(false);
-              setManualPaste(false);
-              setImportError(false);
-              setImportText('');
-            }}
-          >
-            {t.cancel}
-          </button>
         </div>
       )}
 

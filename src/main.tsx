@@ -5,6 +5,7 @@ import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LangProvider } from './i18n/LangProvider'
 import { importProfileFromUrl } from './lib/storage'
+import { transferFetchingStrings } from './i18n/onboarding'
 import type { TransferImportResult } from './lib/transfer'
 
 // Deux imports par fragment d'URL, AVANT de monter l'app pour que
@@ -26,9 +27,7 @@ async function boot() {
     const wait = document.createElement('div')
     wait.className = 'app-loading'
     wait.textContent =
-      document.documentElement.lang === 'en'
-        ? 'Fetching your progress…'
-        : 'Récupération de la progression…'
+      transferFetchingStrings[document.documentElement.lang === 'en' ? 'en' : 'fr']
     root.replaceChildren(wait)
     transferResult = await (await import('./lib/transfer')).importTransferFromUrl()
     root.replaceChildren()

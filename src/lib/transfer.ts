@@ -102,36 +102,59 @@ export async function createTransfer(profile: UserProfile): Promise<string | nul
 // le nom du fragment change, mettre à jour les deux.
 const TRANSFER_HASH_RE = /[#&]transfer=([A-Za-z0-9_-]{16,64})\.([A-Za-z0-9_-]+)/;
 
-export type TransferImportResult = 'imported' | 'error' | null;
+/** Extrait {code, clé} d'un lien/fragment de transfert, null si absent. */
+export function parseTransferLink(text: string): { code: string; key: string } | null {
+  const match = text.match(TRANSFER_HASH_RE);
+  return match ? { code: match[1], key: match[2] } : null;
+}
 
-/**
- * Au boot du nouvel appareil, consomme un éventuel `#transfer=` : récupère le
- * blob (lecture unique côté serveur), le déchiffre avec la clé du fragment et
- * installe le profil, qui devient actif (dédup re-transfert : cf.
- * storage.installProfile). À appeler avant de monter l'app. Renvoie null si le
- * fragment est absent, 'error' si le transfert a échoué (code expiré/consommé,
- * déchiffrement impossible, hors-ligne).
- */
-export async function importTransferFromUrl(): Promise<TransferImportResult> {
-  const match = window.location.hash.match(TRANSFER_HASH_RE);
-  if (!match) return null;
+// Récupère le blob (lecture unique côté serveur), le déchiffre et installe le
+// profil, qui devient actif (dédup re-transfert : cf. storage.installProfile).
+// Null si échec : code expiré/consommé, déchiffrement impossible, hors-ligne.
+async function consumeTransfer(code: string, key: string): Promise<UserProfile | null> {
   const env = supabaseEnv();
-  if (!env) return 'error';
+  if (!env) return null;
   try {
     const res = await fetch(`${env.url}/rest/v1/rpc/read_transfer`, {
       method: 'POST',
       headers: supabaseHeaders(env.key),
-      body: JSON.stringify({ p_code: match[1] }),
+      body: JSON.stringify({ p_code: code }),
     });
-    if (!res.ok) return 'error';
+    if (!res.ok) return null;
     const payload = (await res.json()) as string | null;
-    if (!payload) return 'error'; // code inconnu, expiré ou déjà consommé
-    const profile = await unpackProfile(payload, match[2]);
-    if (!profile) return 'error';
+    if (!payload) return null; // code inconnu, expiré ou déjà consommé
+    const profile = await unpackProfile(payload, key);
+    if (!profile) return null;
     installProfile(profile);
-    return 'imported';
+    return profile;
   } catch {
-    return 'error';
+    return null;
+  }
+}
+
+/**
+ * Consomme un lien de transfert scanné par la caméra in-app (WelcomeScreen) —
+ * indispensable sur iPhone, où un lien n'ouvre jamais la web app installée et
+ * où son stockage est cloisonné de Safari. Renvoie le profil installé, null si
+ * le texte n'est pas un lien de transfert ou si le transfert échoue.
+ */
+export async function importTransferFromLink(text: string): Promise<UserProfile | null> {
+  const parsed = parseTransferLink(text);
+  return parsed ? consumeTransfer(parsed.code, parsed.key) : null;
+}
+
+export type TransferImportResult = 'imported' | 'error' | null;
+
+/**
+ * Au boot du nouvel appareil, consomme un éventuel `#transfer=` dans l'URL.
+ * À appeler avant de monter l'app. Renvoie null si le fragment est absent,
+ * 'error' si le transfert a échoué.
+ */
+export async function importTransferFromUrl(): Promise<TransferImportResult> {
+  const parsed = parseTransferLink(window.location.hash);
+  if (!parsed) return null;
+  try {
+    return (await consumeTransfer(parsed.code, parsed.key)) ? 'imported' : 'error';
   } finally {
     // Retire le fragment pour qu'un refresh ne re-déclenche pas l'import.
     clearUrlHash();
