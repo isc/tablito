@@ -15,16 +15,30 @@ import type { TransferImportResult } from './lib/transfer'
 //    (l'immense majorité) garde son graphe de modules eager inchangé.
 async function boot() {
   await importProfileFromUrl()
+  const root = document.getElementById('root')!
   let transferResult: TransferImportResult = null
   if (window.location.hash.includes('transfer=')) {
+    // La récupération (réseau + déchiffrement) prend un instant : l'afficher
+    // tout de suite, sinon l'utilisateur qui vient de scanner le QR regarde un
+    // écran vide — ou l'accueil vierge si la PWA était déjà ouverte — et doute
+    // que le scan ait marché. Hors LangProvider (rien n'est monté) : on lit la
+    // langue posée sur <html> par l'inline script d'index.html, pré-paint.
+    const wait = document.createElement('div')
+    wait.className = 'app-loading'
+    wait.textContent =
+      document.documentElement.lang === 'en'
+        ? 'Fetching your progress…'
+        : 'Récupération de la progression…'
+    root.replaceChildren(wait)
     transferResult = await (await import('./lib/transfer')).importTransferFromUrl()
+    root.replaceChildren()
   }
   registerSW()
-  createRoot(document.getElementById('root')!).render(
+  createRoot(root).render(
     <StrictMode>
       <ErrorBoundary>
         <LangProvider>
-          <App transferError={transferResult === 'error'} />
+          <App transferResult={transferResult} />
         </LangProvider>
       </ErrorBoundary>
     </StrictMode>,

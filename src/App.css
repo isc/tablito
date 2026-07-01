@@ -7,14 +7,15 @@
   min-height: 100dvh;
 }
 
-/* Bannière « le transfert a échoué » (boot avec #transfer= invalide) */
-.app-transfer-error {
+/* Bannière de boot après un #transfer= : confirmation d'arrivée (success)
+   ou échec (error, lien expiré/déjà servi). */
+.app-boot-banner {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   margin: 12px 16px 0;
   padding: 12px 14px;
-  border: 1.5px solid var(--box-red);
+  border: 1.5px solid var(--line);
   border-radius: 12px;
   background: var(--paper);
   font-family: var(--sans);
@@ -22,7 +23,15 @@
   color: var(--ink);
 }
 
-.app-transfer-error-close {
+.app-boot-banner--error {
+  border-color: var(--box-red);
+}
+
+.app-boot-banner--success {
+  border-color: var(--sage);
+}
+
+.app-boot-banner-close {
   margin-left: auto;
   border: none;
   background: none;

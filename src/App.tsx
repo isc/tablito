@@ -111,15 +111,17 @@ function isDisposableScreen(screen: Screen): boolean {
 const RESHOW_PICKER_AFTER_HIDDEN_MS = 15 * 60 * 1000;
 
 interface AppProps {
-  // Un #transfer= était présent au boot mais l'import a échoué (code expiré,
-  // déjà consommé, hors-ligne…) : on l'annonce une fois, quel que soit l'écran
-  // d'arrivée — sans ça l'utilisateur croit que le scan a marché.
-  transferError?: boolean;
+  // Issue d'un #transfer= présent au boot : 'imported' confirme que la
+  // progression est bien arrivée (sans ça, l'utilisateur qui atterrit sur
+  // l'accueil doute que le scan ait marché), 'error' signale l'échec (code
+  // expiré, déjà consommé, hors-ligne…). Annoncé une fois, quel que soit
+  // l'écran d'arrivée.
+  transferResult?: 'imported' | 'error' | null;
 }
 
-export default function App({ transferError = false }: AppProps) {
+export default function App({ transferResult = null }: AppProps) {
   const appStrings = useAppStrings();
-  const [showTransferError, setShowTransferError] = useState(transferError);
+  const [transferNotice, setTransferNotice] = useState(transferResult);
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile, listProfiles().length));
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
@@ -621,12 +623,17 @@ export default function App({ transferError = false }: AppProps) {
 
   return (
     <div className="app">
-      {showTransferError && (
-        <div className="app-transfer-error" role="alert">
-          <span>{appStrings.transferFailed}</span>
+      {transferNotice && (
+        <div
+          className={`app-boot-banner app-boot-banner--${transferNotice === 'error' ? 'error' : 'success'}`}
+          role={transferNotice === 'error' ? 'alert' : 'status'}
+        >
+          <span>
+            {transferNotice === 'error' ? appStrings.transferFailed : appStrings.transferImported}
+          </span>
           <button
-            className="app-transfer-error-close"
-            onClick={() => setShowTransferError(false)}
+            className="app-boot-banner-close"
+            onClick={() => setTransferNotice(null)}
             aria-label={appStrings.dismiss}
           >
             ✕

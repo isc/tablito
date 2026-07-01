@@ -112,7 +112,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   backup: 'Sauvegarde',
   export: 'Exporter',
   import: 'Importer',
-  transfer: 'Transférer vers un autre appareil',
+  transfer: 'Transférer',
   transferPreparing: 'Préparation du transfert…',
   transferError:
     "Transfert impossible pour le moment. Vérifiez la connexion internet, ou passez par Exporter / Importer.",
@@ -188,7 +188,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   backup: 'Backup',
   export: 'Export',
   import: 'Import',
-  transfer: 'Transfer to another device',
+  transfer: 'Transfer',
   transferPreparing: 'Preparing the transfer…',
   transferError:
     "Can't transfer right now. Check the internet connection, or use Export / Import instead.",
