@@ -356,6 +356,46 @@
   padding: 0 20px;
 }
 
+/* Panneau de transfert vers un autre appareil (QR + lien) */
+.parent-transfer-area {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.parent-transfer-qr {
+  /* Le canvas fait ~1 px par module : on l'agrandit en préservant les bords
+     nets (pixelated), avec une marge blanche réglementaire autour. */
+  width: 220px;
+  height: 220px;
+  image-rendering: pixelated;
+  background: #fff;
+  padding: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+}
+
+.parent-transfer-hint {
+  margin: 0;
+  max-width: 360px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.parent-transfer-status {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.parent-transfer-status--error {
+  color: var(--box-red);
+}
+
 .parent-import-textarea {
   width: 100%;
   padding: 12px;

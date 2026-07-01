@@ -9,19 +9,18 @@
 //
 // Même conventions réseau que src/lib/feedback.ts (PostgREST + publishable key).
 
+import { urlBase64ToUint8Array } from './codec';
+import { supabaseEnv, supabaseHeaders } from './supabase';
+
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // Push activable seulement si la conf complète est présente (URL + clés).
-export const pushConfigured = Boolean(url && publishableKey && vapidPublicKey);
+export const pushConfigured = Boolean(supabaseEnv() && vapidPublicKey);
 
 const TABLE = `${url}/rest/v1/push_subscriptions`;
-const baseHeaders = {
-  apikey: publishableKey,
-  Authorization: `Bearer ${publishableKey}`,
-  'Content-Type': 'application/json',
-};
+const baseHeaders = supabaseHeaders(publishableKey);
 
 /** Le navigateur supporte-t-il le Web Push ? (faux sur iOS Safari non installé). */
 export function pushSupported(): boolean {
@@ -40,18 +39,6 @@ export function pushSupported(): boolean {
 // partage ce fuseau — donc on reste dans le même référentiel.
 function localToday(): string {
   return new Date().toLocaleDateString('en-CA'); // en-CA → YYYY-MM-DD
-}
-
-// Convertit une chaîne base64url en Uint8Array. Utilisé pour la clé VAPID
-// publique (`applicationServerKey`) et pour décoder le profil transmis par le
-// redirecteur lors de la migration cross-origin (cf. storage.importProfileFromUrl).
-export function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  const output = new Uint8Array(new ArrayBuffer(raw.length));
-  for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
-  return output;
 }
 
 function serialize(sub: PushSubscription): { endpoint: string; p256dh: string; auth: string } {

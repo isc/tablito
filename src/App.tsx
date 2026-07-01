@@ -110,8 +110,16 @@ function isDisposableScreen(screen: Screen): boolean {
 // rapide), on ne touche à rien.
 const RESHOW_PICKER_AFTER_HIDDEN_MS = 15 * 60 * 1000;
 
-export default function App() {
+interface AppProps {
+  // Un #transfer= était présent au boot mais l'import a échoué (code expiré,
+  // déjà consommé, hors-ligne…) : on l'annonce une fois, quel que soit l'écran
+  // d'arrivée — sans ça l'utilisateur croit que le scan a marché.
+  transferError?: boolean;
+}
+
+export default function App({ transferError = false }: AppProps) {
   const appStrings = useAppStrings();
+  const [showTransferError, setShowTransferError] = useState(transferError);
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<Screen>(() => initialScreen(profile, listProfiles().length));
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
@@ -613,6 +621,18 @@ export default function App() {
 
   return (
     <div className="app">
+      {showTransferError && (
+        <div className="app-transfer-error" role="alert">
+          <span>{appStrings.transferFailed}</span>
+          <button
+            className="app-transfer-error-close"
+            onClick={() => setShowTransferError(false)}
+            aria-label={appStrings.dismiss}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       {/* Suspense pour les écrans lazy. Fallback à null : le SW précache
           tous les chunks donc l'attente est imperceptible (cache hit), et
           en 1re visite réseau, un écran vide bref vaut mieux qu'un spinner

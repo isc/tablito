@@ -43,7 +43,8 @@ const welcomeFr: WelcomeStrings = {
   alreadyHaveProgress: "Déjà une progression\u00a0? L'importer",
   cancel: 'Annuler',
   importTitle: 'Ta progression',
-  importSubtitle: "Récupère la progression copiée depuis l'ancienne app.",
+  importSubtitle:
+    "Le plus simple : sur l'ancien appareil, ouvre Espace parent → « Transférer vers un autre appareil » et scanne le QR code avec celui-ci. Ou colle ici une sauvegarde exportée.",
   pasteFromClipboard: 'Coller depuis le presse-papiers',
   pasteManually: 'Coller à la main',
   importPlaceholder: 'Colle ta progression ici (appui long → Coller)',
@@ -71,7 +72,8 @@ const welcomeEn: WelcomeStrings = {
   alreadyHaveProgress: 'Already have progress? Import it',
   cancel: 'Cancel',
   importTitle: 'Your progress',
-  importSubtitle: 'Get the progress you copied from the old app.',
+  importSubtitle:
+    'Easiest: on the old device, open Parent area → "Transfer to another device" and scan the QR code with this one. Or paste an exported backup here.',
   pasteFromClipboard: 'Paste from clipboard',
   pasteManually: 'Paste by hand',
   importPlaceholder: 'Paste your progress here (long press → Paste)',

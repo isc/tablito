@@ -1,10 +1,11 @@
 import type { UserProfile } from '../types';
 import { countMastered } from './leitner';
+import { supabaseEnv, supabaseHeaders } from './supabase';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export const feedbackEnabled = Boolean(url && publishableKey);
+export const feedbackEnabled = Boolean(supabaseEnv());
 
 export interface FeedbackContext {
   app_version: string;
@@ -72,12 +73,7 @@ export async function submitFeedback(args: {
   if (!feedbackEnabled) throw new Error('Feedback désactivé (configuration manquante)');
   const res = await fetch(`${url}/rest/v1/feedback`, {
     method: 'POST',
-    headers: {
-      apikey: publishableKey,
-      Authorization: `Bearer ${publishableKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    },
+    headers: { ...supabaseHeaders(publishableKey), Prefer: 'return=minimal' },
     body: JSON.stringify({
       message: args.message,
       email: args.email && args.email.trim() ? args.email.trim() : null,

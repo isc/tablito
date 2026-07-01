@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-07-01',
+    items: [
+      "Changement de téléphone simplifié : l'espace parent propose « Transférer vers un autre appareil ». Un QR code s'affiche, on le scanne avec l'appareil photo du nouveau téléphone, et la progression s'y installe toute seule — fini le copier-coller de la sauvegarde. Le transfert est chiffré de bout en bout, valable 15 minutes et utilisable une seule fois. L'export/import classique reste disponible.",
+    ],
+  },
+  {
     date: '2026-06-21',
     items: [
       "Les gels de série protègent désormais plusieurs jours d'absence consécutifs : chaque gel couvre un jour manqué, donc avec 2 gels en réserve une série survit à 2 jours d'absence d'affilée (avant, un seul jour était couvert et la série cassait dès le deuxième). La séance de retour consomme les gels en silence et le récap célèbre l'événement.",
@@ -153,6 +159,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-07-01',
+    items: [
+      'Switching phones made simple: the parent area now offers "Transfer to another device". A QR code appears, you scan it with the new phone\'s camera, and the progress installs itself there — no more copy-pasting the backup. The transfer is end-to-end encrypted, valid for 15 minutes and usable only once. The classic export/import remains available.',
+    ],
+  },
   {
     date: '2026-06-21',
     items: [

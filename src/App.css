@@ -7,6 +7,31 @@
   min-height: 100dvh;
 }
 
+/* Bannière « le transfert a échoué » (boot avec #transfer= invalide) */
+.app-transfer-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--box-red);
+  border-radius: 12px;
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.app-transfer-error-close {
+  margin-left: auto;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0 2px;
+}
+
 .app-loading {
   flex: 1;
   display: flex;

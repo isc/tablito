@@ -42,6 +42,12 @@ interface ParentDashboardStrings {
   backup: string;
   export: string;
   import: string;
+  transfer: string;
+  transferPreparing: string;
+  transferError: string;
+  transferHint: (minutes: number) => string;
+  transferCopyLink: string;
+  transferQrAlt: string;
   helpAndFeedback: string;
   userGuide: string;
   sendFeedback: string;
@@ -106,6 +112,14 @@ const parentDashboardFr: ParentDashboardStrings = {
   backup: 'Sauvegarde',
   export: 'Exporter',
   import: 'Importer',
+  transfer: 'Transférer vers un autre appareil',
+  transferPreparing: 'Préparation du transfert…',
+  transferError:
+    "Transfert impossible pour le moment. Vérifiez la connexion internet, ou passez par Exporter / Importer.",
+  transferHint: (minutes) =>
+    `Scannez ce QR code avec l'appareil photo du nouvel appareil : Tablito s'y ouvrira avec la progression. Valable ${minutes} minutes, une seule fois.`,
+  transferCopyLink: 'Ou copier le lien',
+  transferQrAlt: 'QR code de transfert vers un autre appareil',
   helpAndFeedback: 'Aide & retours',
   userGuide: 'Guide utilisateur',
   sendFeedback: 'Envoyer un avis',
@@ -174,6 +188,14 @@ const parentDashboardEn: ParentDashboardStrings = {
   backup: 'Backup',
   export: 'Export',
   import: 'Import',
+  transfer: 'Transfer to another device',
+  transferPreparing: 'Preparing the transfer…',
+  transferError:
+    "Can't transfer right now. Check the internet connection, or use Export / Import instead.",
+  transferHint: (minutes) =>
+    `Scan this QR code with the new device's camera: Tablito will open there with the progress. Valid for ${minutes} minutes, one use only.`,
+  transferCopyLink: 'Or copy the link',
+  transferQrAlt: 'QR code to transfer to another device',
   helpAndFeedback: 'Help & feedback',
   userGuide: 'User guide',
   sendFeedback: 'Send feedback',

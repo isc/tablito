@@ -22,6 +22,8 @@ interface PrivacyStrings {
   reminderIntro: ReactNode;
   reminderItems: ReactNode[];
   reminderOutro: ReactNode;
+  transferTitle: string;
+  transferBody: ReactNode;
   notCollectedTitle: string;
   notCollectedItems: ReactNode[];
   rightsTitle: string;
@@ -49,9 +51,10 @@ const fr: PrivacyStrings = {
       streak) et ses préférences (son, mode vocal) sont stockés
       localement dans le navigateur (<code>localStorage</code>).
       L'application fonctionne entièrement hors-ligne après le premier
-      chargement. Par défaut, rien n'est envoyé sur un serveur : les deux
-      seules exceptions sont opt-in et décrites ci-dessous (l'envoi d'un
-      avis et l'activation du rappel quotidien).
+      chargement. Par défaut, rien n'est envoyé sur un serveur : les seules
+      exceptions sont déclenchées par vous et décrites ci-dessous (l'envoi
+      d'un avis, l'activation du rappel quotidien, et le transfert vers un
+      autre appareil).
     </>
   ),
   feedbackTitle: "Ce qui est envoyé en cas d'avis",
@@ -107,6 +110,18 @@ const fr: PrivacyStrings = {
       supprime l'abonnement de la base.
     </>
   ),
+  transferTitle: 'Ce qui est envoyé lors d’un transfert vers un autre appareil',
+  transferBody: (
+    <>
+      Le bouton <strong>«&nbsp;Transférer vers un autre appareil&nbsp;»</strong>{' '}
+      (espace parent) dépose le profil, <strong>chiffré sur l'appareil</strong>{' '}
+      avant l'envoi, sur la même base Supabase, le temps que le nouvel appareil
+      le récupère. La clé de déchiffrement vit uniquement dans le QR code / le
+      lien : elle n'est jamais transmise au serveur, qui ne peut donc pas lire
+      le contenu. Le dépôt est utilisable une seule fois et s'efface
+      automatiquement au bout de 15&nbsp;minutes, récupéré ou non.
+    </>
+  ),
   notCollectedTitle: "Ce qui n'est pas collecté",
   notCollectedItems: [
     <>Aucun cookie de suivi, aucun analytics tiers.</>,
@@ -154,8 +169,9 @@ const en: PrivacyStrings = {
       streak) and their preferences (sound, voice mode) are stored
       locally in the browser (<code>localStorage</code>). The app works
       entirely offline after the first load. By default, nothing is sent to
-      a server: the only two exceptions are opt-in and described below
-      (sending feedback and turning on the daily reminder).
+      a server: the only exceptions are triggered by you and described below
+      (sending feedback, turning on the daily reminder, and transferring to
+      another device).
     </>
   ),
   feedbackTitle: 'What is sent when you send feedback',
@@ -208,6 +224,18 @@ const en: PrivacyStrings = {
       the browser), as with any web notification. You can turn off the
       reminder at any time from the same button, which removes the
       subscription from the database.
+    </>
+  ),
+  transferTitle: 'What is sent when transferring to another device',
+  transferBody: (
+    <>
+      The <strong>"Transfer to another device"</strong> button (parent area)
+      uploads the profile, <strong>encrypted on the device</strong> before
+      sending, to the same Supabase database, just long enough for the new
+      device to pick it up. The decryption key only lives in the QR code /
+      link: it is never sent to the server, which therefore cannot read the
+      content. The upload can be used once and deletes itself after
+      15&nbsp;minutes, picked up or not.
     </>
   ),
   notCollectedTitle: 'What is not collected',

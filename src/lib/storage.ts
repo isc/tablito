@@ -6,7 +6,7 @@ import { createInitialDivisionFacts } from './divisionFacts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
-import { urlBase64ToUint8Array } from './push';
+import { gunzip, urlBase64ToUint8Array } from './codec';
 
 // Tire un thème d'image mystère pour la division, distinct de celui de la
 // multiplication quand le pool le permet — l'image multiplication conquise ne
@@ -233,13 +233,21 @@ async function decodeImportPayload(payload: string): Promise<string> {
   const flag = payload[0];
   const bytes = urlBase64ToUint8Array(payload.slice(1));
   if (flag === 'z' && 'DecompressionStream' in globalThis) {
-    const ds = new (globalThis as unknown as {
-      DecompressionStream: new (f: string) => ReadableWritablePair<Uint8Array, Uint8Array>;
-    }).DecompressionStream('gzip');
-    const stream = new Blob([bytes]).stream().pipeThrough(ds);
-    return await new Response(stream).text();
+    return new TextDecoder().decode(await gunzip(bytes));
   }
   return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Retire le fragment de l'URL courante, pour qu'un refresh ne re-déclenche pas
+ * un import par fragment (#import= ici, #transfer= dans lib/transfer).
+ */
+export function clearUrlHash(): void {
+  try {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  } catch {
+    // ignore
+  }
 }
 
 /**
@@ -259,12 +267,27 @@ export async function importProfileFromUrl(): Promise<void> {
     // Best-effort : en cas d'échec on laisse l'utilisateur repartir sur
     // l'accueil normal plutôt que de planter le boot.
   } finally {
-    // Retire le fragment pour qu'un refresh ne re-déclenche pas l'import.
-    try {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    } catch {
-      // ignore
-    }
+    clearUrlHash();
+  }
+}
+
+/**
+ * Installe un profil reçu d'un autre appareil (transfert par QR) : si le même
+ * enfant existe déjà ici — même prénom ET même date de début, cas du
+ * re-transfert — son profil est mis à jour au lieu d'être dupliqué ; sinon le
+ * profil est ajouté. Dans les deux cas il devient le profil actif. (L'import
+ * par collage depuis le Welcome, lui, crée toujours un nouveau profil : on ne
+ * devine pas l'identité sur une sauvegarde éditable à la main.)
+ */
+export function installProfile(profile: UserProfile): void {
+  const existing = listProfiles().find(
+    (p) => p.name === profile.name && loadProfileById(p.id)?.startDate === profile.startDate,
+  );
+  if (existing) {
+    setActiveProfile(existing.id);
+    saveProfile(profile);
+  } else {
+    addProfile(profile);
   }
 }
 

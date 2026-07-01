@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
 import { isDivisionUnlocked } from '../lib/badges';
 import { countMastered } from '../lib/leitner';
@@ -14,6 +14,7 @@ import NotificationSettings from '../components/NotificationSettings';
 import LanguageToggle from '../components/LanguageToggle';
 import { useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
+import { createTransfer, transferConfigured, TRANSFER_TTL_MINUTES } from '../lib/transfer';
 
 const HARD_FACTS_WINDOW = 10;
 const EVOLUTION_WINDOW = 20;
@@ -45,6 +46,26 @@ export default function ParentDashboard({
   const [importJson, setImportJson] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  // Transfert vers un autre appareil : un seul état, l'objet {link} valant
+  // « prêt, QR à afficher » (cf. lib/transfer) — aucune combinaison incohérente
+  // possible entre statut et lien.
+  const [transfer, setTransfer] = useState<'idle' | 'loading' | 'error' | { link: string }>('idle');
+  const transferLink = typeof transfer === 'object' ? transfer.link : null;
+  const [transferCopied, setTransferCopied] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // « Copié ✓ » pendant 2 s — partagé par « Partager l'app » et le lien de
+  // transfert. Échec silencieux : clipboard indisponible (contexte non
+  // sécurisé), l'utilisateur a d'autres chemins (feuille de partage, QR).
+  const copyWithFeedback = async (text: string, setFlag: (v: boolean) => void) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setFlag(true);
+      setTimeout(() => setFlag(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
   const t = useParentDashboardStrings();
   const { lang } = useLang();
   // Le guide est bilingue : FR à `/guide/`, autres langues sous `/guide/<lang>/`
@@ -76,14 +97,39 @@ export default function ParentDashboard({
       }
       return;
     }
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    } catch {
-      // Clipboard indisponible (contexte non sécurisé).
-    }
+    await copyWithFeedback(url, setShareCopied);
   };
+
+  const handleTransfer = async () => {
+    if (transfer !== 'idle') {
+      // Second clic : replie le panneau. Le code déposé expirera tout seul.
+      setTransfer('idle');
+      setTransferCopied(false);
+      return;
+    }
+    setTransfer('loading');
+    const link = await createTransfer(profile);
+    setTransfer(link ? { link } : 'error');
+  };
+
+  // Dessine le QR quand le lien est prêt. lean-qr est chargé à la demande :
+  // inutile d'alourdir le chunk du dashboard pour une action rare.
+  useEffect(() => {
+    if (!transferLink) return;
+    let cancelled = false;
+    import('lean-qr')
+      .then(({ generate }) => {
+        if (!cancelled && qrCanvasRef.current) {
+          generate(transferLink).toCanvas(qrCanvasRef.current);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setTransfer('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [transferLink]);
 
   // Histogramme de l'opération sélectionnée par le parent (× / ÷).
   const { boxCounts, maxBoxCount } = useMemo(() => {
@@ -370,6 +416,11 @@ export default function ParentDashboard({
       <div className="parent-section">
         <h3>{t.backup}</h3>
         <div className="parent-actions">
+          {transferConfigured() && (
+            <button className="parent-action-btn" onClick={handleTransfer}>
+              {t.transfer}
+            </button>
+          )}
           <button className="parent-action-btn" onClick={onExport}>
             {t.export}
           </button>
@@ -380,6 +431,37 @@ export default function ParentDashboard({
             {t.import}
           </button>
         </div>
+        {transfer !== 'idle' && (
+          <div className="parent-transfer-area">
+            {transfer === 'loading' && (
+              <p className="parent-transfer-status">{t.transferPreparing}</p>
+            )}
+            {transfer === 'error' && (
+              <p className="parent-transfer-status parent-transfer-status--error">
+                {t.transferError}
+              </p>
+            )}
+            {transferLink && (
+              <>
+                <canvas
+                  ref={qrCanvasRef}
+                  className="parent-transfer-qr"
+                  role="img"
+                  aria-label={t.transferQrAlt}
+                />
+                <p className="parent-transfer-hint">
+                  {t.transferHint(TRANSFER_TTL_MINUTES)}
+                </p>
+                <button
+                  className="parent-action-btn"
+                  onClick={() => copyWithFeedback(transferLink, setTransferCopied)}
+                >
+                  {transferCopied ? t.linkCopied : t.transferCopyLink}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="parent-section">

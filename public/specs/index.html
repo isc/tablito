@@ -775,8 +775,9 @@ interface Badge {
   <p><strong>Une fois la division débloquée (§11) :</strong> le dashboard reflète aussi le niveau 2, masqué jusque-là (même principe que côté enfant — on ne montre rien de la division avant le déblocage). La vue d'ensemble gagne une carte <em>Divisions maîtrisées</em> (l'existante est renommée <em>Multiplications maîtrisées</em>). Un sélecteur <strong>Multiplications / Divisions</strong> bascule l'<strong>histogramme par boîte</strong> et la <strong>grille Leitner</strong> entre les deux opérations (ouvert par défaut sur la division, l'activité du moment). Et les <strong>faits les plus difficiles</strong> deviennent une liste <strong>unifiée × + ÷</strong> : un seul top 5 mélangeant les deux opérations, chaque ligne marquée de son signe, pour montrer où l'enfant bute en ce moment sans cloisonner artificiellement les opérations.</p>
   <p><strong>Actions parent :</strong></p>
   <ul>
+    <li><strong>Transférer vers un autre appareil</strong> : affiche un QR code à scanner avec l'appareil photo du nouvel appareil, qui ouvre Tablito avec la progression pré-installée. Le profil est gzippé puis chiffré côté client (AES-GCM), déposé dans une table Supabase sous un code haute entropie ; la clé de déchiffrement voyage uniquement dans le fragment d'URL du QR (jamais envoyée au serveur). Dépôt à lecture unique, expiration 15 minutes</li>
     <li>Exporter les données (JSON)</li>
-    <li>Importer les données (pour changer de téléphone)</li>
+    <li>Importer les données (collage d'une sauvegarde exportée)</li>
     <li><strong>Guide utilisateur</strong> : ouvre <code>/guide/</code> dans un nouvel onglet (page statique servie depuis la même origine, générée par <code>scripts/generate-user-guide.mjs</code>)</li>
     <li><strong>Envoyer un avis</strong> : formulaire texte libre + email optionnel. Les envois atterrissent dans une table Supabase (policy RLS insert-only via la publishable key). Un contexte anonyme (user-agent, viewport, stats agrégées du profil — nombre de séances, faits maîtrisés, streak) est joint pour faciliter le triage. Lecture réservée au propriétaire de l'app via la secret key (stockée en local, hors du repo)</li>
     <li><strong>Partager l'app</strong> : ouvre la feuille de partage native du téléphone (iMessage, WhatsApp, mail…) pour envoyer le lien de Tablito ; sur ordinateur, le lien est copié dans le presse-papiers</li>
@@ -874,7 +875,7 @@ interface Badge {
     <li><strong>manifest.json</strong> pour l'installation sur l'écran d'accueil</li>
     <li>Icône d'app avec la mascotte</li>
     <li>Toutes les données d'apprentissage en localStorage — l'app se joue 100 % hors-ligne ; les seuls échanges réseau (avis, abonnements push) sont annexes et optionnels</li>
-    <li>Export/import JSON pour la sauvegarde et le transfert</li>
+    <li>Export/import JSON pour la sauvegarde, et transfert direct entre appareils par QR code (§7)</li>
   </ul>
 
   <h3 id="pwa-rappel"><span class="num">8.1</span>Rappel quotidien (notification push)</h3>
@@ -1000,6 +1001,7 @@ interface Badge {
   <h3 id="profils-stockage"><span class="num">12.2</span>Stockage et migration</h3>
   <p>Chaque profil vit sous sa propre clé localStorage (<code>multiplix-profile:&lt;id&gt;</code>) ; un index léger (<code>multiplix-profiles</code>) liste les profils (id, prénom) et le profil actif. L'ancien schéma mono-clé (<code>multiplix-profile</code>) est migré automatiquement et silencieusement au premier lancement : le profil existant devient le premier profil de l'index, rien n'est perdu.</p>
   <p>L'export/import de sauvegarde reste par-profil : l'export produit le JSON du profil actif (format inchangé, compatible avec les sauvegardes antérieures) ; l'import depuis l'écran d'accueil crée un <em>nouveau</em> profil (jamais d'écrasement d'un autre enfant), tandis que l'import depuis l'espace parent restaure le profil actif.</p>
+  <p>Le <strong>transfert par QR code</strong> (§7) est lui aussi par-profil : le profil reçu devient un nouveau profil actif sur l'appareil de destination — sauf si le même enfant (prénom + date de début identiques) y existe déjà, auquel cas son profil est mis à jour au lieu d'être dupliqué (cas du re-transfert). Un transfert échoué (lien expiré ou déjà servi) est signalé par une bannière au lancement.</p>
 </section>
 
 <section class="chapter" id="evolutions">
