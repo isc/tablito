@@ -168,7 +168,10 @@ function buildAllBadgeDefinitions(): BadgeDefinition[] {
       return {
         id: `${BADGE_IDS.TABLE_PREFIX}${n}`,
         ...i.table(n),
-        icon: `${n}️⃣`,
+        // Glyphe texte « ×N » blanc serif, cohérent avec les badges de
+        // division « ÷N » : plutôt que le keycap emoji ${n}️⃣ (sticker coloré
+        // qui jurait à côté des médaillons de division épurés).
+        icon: `×${n}`,
         color: 'var(--indigo)',
         progressFor: (p: UserProfile) => {
           const tableFacts = factsForTable(p.facts, n);
