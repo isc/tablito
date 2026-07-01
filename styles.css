@@ -2206,6 +2206,11 @@
 html, body {
   height: 100%;
   overflow-x: hidden;
+  /* Pas de pull-to-refresh (Android : un enfant qui glisse vers le bas en
+     haut de l'accueil rechargerait l'app en pleine utilisation) ni d'effet
+     de sur-défilement en bord de page. Le scroll normal des écrans longs
+     (espace parent, badges…) n'est pas affecté. */
+  overscroll-behavior-y: none;
 }
 
 body {
