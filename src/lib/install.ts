@@ -1,6 +1,8 @@
-// Détection du contexte d'exécution et de la plateforme pour piloter le parcours
+// Détection du contexte d'exécution et de la plateforme (module de référence
+// pour tout sniffing iOS/Android), historiquement pour piloter le parcours
 // d'installation PWA. Côté iOS Safari, l'utilisateur DOIT installer manuellement
 // via le menu de partage ; côté Android/Chromium, on capture beforeinstallprompt.
+// isAndroid() sert aussi à la stratégie micro de la saisie vocale (VoiceInput).
 
 // ⚠ Cette clé est aussi référencée en dur dans l'inline script de
 // index.html (pour décider si la landing statique doit s'afficher).
@@ -22,6 +24,11 @@ export function isIOS(): boolean {
   // iPadOS 13+ se déclare comme Mac : on combine plateforme + multitouch.
   if (/iPad/.test(ua)) return true;
   return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+}
+
+export function isAndroid(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /Android/i.test(navigator.userAgent);
 }
 
 export function isIOSSafari(): boolean {

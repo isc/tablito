@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import NumPad from './NumPad';
 import { parseSpokenAnswer, speechRecognitionLang } from '../lib/parseSpokenNumber';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { isAndroid } from '../lib/install';
 import { useInputMode } from '../hooks/useInputMode';
 import { useLang } from '../i18n/lang';
 import { useVoiceStrings } from '../i18n/voice';
@@ -34,6 +35,15 @@ const POST_SUBMIT_DEAF_MS = 800;
 // Safety net for the expectTrailingFinal flag: if for some reason the final
 // never arrives (recognizer error, abort), don't keep dropping events forever.
 const TRAILING_FINAL_TIMEOUT_MS = 5000;
+// Sur Android, la Web Speech API est adossée au SpeechRecognizer natif :
+// sessions mono-énoncé (bip système à chaque démarrage) et pas d'annulation
+// d'écho. Micro ouvert pendant la voix de synthèse, le recognizer capture la
+// question elle-même, termine sa session dessus, et la réponse de l'enfant
+// tombe dans le trou mort entre deux sessions — l'app « bipe et attend ».
+// On coupe donc le micro pendant la TTS et on le rouvre dès qu'elle finit :
+// le bip de démarrage devient un signal « à toi de parler ». Sur iOS (reco
+// on-device + annulation d'écho, ding à chaque toggle), on garde au contraire
+// le micro ouvert toute la séance et on filtre l'écho par fenêtre de grâce.
 
 function pickBestNumber(
   primary: string,
@@ -57,6 +67,7 @@ export default function VoiceInput({
 }: VoiceInputProps) {
   const [showKeypad, setShowKeypad] = useState(false);
   const [, setParseFails] = useState(0);
+  const pauseMicDuringTTS = isAndroid();
   const { setInputMode } = useInputMode();
   const { lang } = useLang();
   const t = useVoiceStrings();
@@ -99,6 +110,14 @@ export default function VoiceInput({
     return Date.now() - lastSubmitAtRef.current < POST_SUBMIT_DEAF_MS;
   }, []);
 
+  const clearTrailingFinal = useCallback(() => {
+    expectTrailingFinalRef.current = false;
+    if (trailingTimeoutRef.current) {
+      clearTimeout(trailingTimeoutRef.current);
+      trailingTimeoutRef.current = null;
+    }
+  }, []);
+
   const handleFinal = useCallback(
     (transcript: string, alternatives: string[]) => {
       const expected = expectedRef.current;
@@ -109,11 +128,7 @@ export default function VoiceInput({
       // submit — and on iOS it can arrive 2-3 s later (TTS of the next question
       // delays silence detection), well past any reasonable time window.
       if (expectTrailingFinalRef.current) {
-        expectTrailingFinalRef.current = false;
-        if (trailingTimeoutRef.current) {
-          clearTimeout(trailingTimeoutRef.current);
-          trailingTimeoutRef.current = null;
-        }
+        clearTrailingFinal();
         return;
       }
       if (disabledRef.current) return;
@@ -131,7 +146,10 @@ export default function VoiceInput({
         bestEffective = expected;
       }
       if (isEchoOfLastSubmit(bestEffective)) return;
-      const withinGrace = sinceSpeakEndMs < POST_TTS_GRACE_MS;
+      // Micro coupé pendant la TTS (Android) : aucun écho possible, et jeter
+      // les finals post-TTS avalerait la réponse rapide d'un enfant qui se
+      // trompe. La fenêtre de grâce ne s'applique qu'au mode micro-ouvert.
+      const withinGrace = !pauseMicDuringTTS && sinceSpeakEndMs < POST_TTS_GRACE_MS;
       if (withinGrace && (bestEffective === null || bestEffective !== expected)) {
         // Drop echo silently — don't count it as a user parse failure,
         // otherwise 3 consecutive echoes would flip us to the keypad.
@@ -152,7 +170,7 @@ export default function VoiceInput({
         });
       }
     },
-    [onSubmit, isEchoOfLastSubmit],
+    [onSubmit, isEchoOfLastSubmit, pauseMicDuringTTS, clearTrailingFinal],
   );
 
   const handleInterim = useCallback(
@@ -192,21 +210,27 @@ export default function VoiceInput({
   // start/stop, so toggling per question makes a beep storm. Echoes from the
   // TTS are dropped by the POST_TTS_GRACE_MS window, and the disabledRef
   // guard in handleFinal prevents accidental submissions during feedback.
+  //
+  // Sur Android en revanche, micPaused coupe le micro pendant la synthèse
+  // (voir le commentaire de tête de fichier) : la dépendance dérivée reste
+  // constamment false sur iOS, donc les toggles TTS n'y re-déclenchent jamais
+  // l'effet. Chaque abort lève aussi l'attente d'un final traînant : après
+  // abort(), ce final n'arrivera jamais, et le flag laissé armé avalerait la
+  // première vraie réponse à la réouverture du micro.
+  const micPaused = pauseMicDuringTTS && isSpeaking;
   useEffect(() => {
     if (!isSupported) return;
-    if (showKeypad) {
+    if (showKeypad || micPaused) {
       abort();
+      clearTrailingFinal();
       return;
     }
     start();
     return () => {
       abort();
-      if (trailingTimeoutRef.current) {
-        clearTimeout(trailingTimeoutRef.current);
-        trailingTimeoutRef.current = null;
-      }
+      clearTrailingFinal();
     };
-  }, [isSupported, showKeypad, start, abort]);
+  }, [isSupported, showKeypad, micPaused, start, abort, clearTrailingFinal]);
 
   // If unsupported, fall through to the keypad.
   if (!isSupported) {
@@ -245,8 +269,12 @@ export default function VoiceInput({
         className={`voice-mic${isListening ? ' listening' : ''}${disabled ? ' disabled' : ''}`}
         onClick={() => {
           if (disabled) return;
-          if (isListening) abort();
-          else start();
+          if (isListening) {
+            abort();
+            clearTrailingFinal();
+          } else {
+            start();
+          }
         }}
         aria-label={isListening ? t.listening : t.speak}
         aria-pressed={isListening}
