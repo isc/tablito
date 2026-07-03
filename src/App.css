@@ -4,7 +4,8 @@
   flex-direction: column;
   background: var(--cream);
   min-height: 100vh;
-  min-height: 100dvh;
+  /* svh, pas dvh : cf. le commentaire sur #root dans index.css. */
+  min-height: 100svh;
 }
 
 /* Bannière de boot après un #transfer= : confirmation d'arrivée (success)

@@ -22,3 +22,8 @@ Suivi léger des évolutions techniques envisagées mais non encore tranchées.
 
 - **Mots isolés ratés sur Android** — le `SpeechRecognizer` Android (via Web Speech) ne détecte souvent pas un mot court isolé (« quatre ») : son VAD exige une parole soutenue, calibré Assistant/dictée. Mitigations en place : astuce « réponds par une phrase » (Android) + acceptation du nombre répété (« quatre quatre »). Pour la vraie parité iOS : re-tester `SpeechRecognition.available({processLocally: true})` à chaque version majeure de Chrome Android (« unavailable » en 2026 — quand Google embarquera les modèles on-device, le problème peut disparaître gratuitement) ; sinon moteur local WASM dédié aux ~100 mots-nombres (rejoint le point offline ci-dessus). Priorité moyenne.
   - Pointeur : `src/components/VoiceInput.tsx` (`pauseMicDuringTTS`), `src/lib/spokenNumber.ts` (heuristique répétition)
+
+## Plateforme Android
+
+- **Migration edge-to-edge (Chrome Android 135+)** — le contenu web peut s'étendre sous la barre de navigation gestuelle. Aujourd'hui on l'esquive : `#root` en `100svh` (fix du scroll parasite post-reload, où `100dvh` restait collé au large viewport — mesuré à la sonde `?layoutdebug=1` : `dvh=898` pour une fenêtre de 841). La migration propre : `viewport-fit=cover` dans le meta viewport + `env(safe-area-inset-bottom)` sur les éléments ancrés en bas (cartes de l'accueil, pavé numérique de séance…) pour occuper tout l'écran sans masquer de contenu. Priorité moyenne.
+  - Pointeur : `index.html` (meta viewport), `src/index.css` (#root), `src/lib/layoutDebug.ts` (sonde)

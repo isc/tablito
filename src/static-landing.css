@@ -1,12 +1,13 @@
 .landing {
   flex: 1;
-  /* #root est un shell `100dvh; overflow:hidden` (les écrans de l'app scrollent
+  /* #root est un shell `100svh; overflow:hidden` (les écrans de l'app scrollent
      en interne). Depuis l'ajout de la section démo, la landing dépasse un écran :
      on en fait son propre conteneur scrollable plutôt que de toucher au shell.
-     `min-height: 0` lève le min-height:auto du flex ; `max-height: 100dvh` borne
-     la hauteur (sans ça le flex grandit à hauteur du contenu = pas de scroll). */
+     `min-height: 0` lève le min-height:auto du flex ; `max-height: 100svh` borne
+     la hauteur (sans ça le flex grandit à hauteur du contenu = pas de scroll ;
+     svh et pas dvh : cf. le commentaire sur #root dans index.css). */
   min-height: 0;
-  max-height: 100dvh;
+  max-height: 100svh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

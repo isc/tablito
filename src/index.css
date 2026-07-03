@@ -105,7 +105,15 @@ body {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  min-height: 100dvh;
+  /* svh (small viewport), PAS dvh : après un location.reload() en PWA
+     installée, Chrome Android (edge-to-edge, 135+) laisse 100dvh collé au
+     large viewport (sous la barre gestuelle) alors que la fenêtre visible
+     est plus petite → ~57px de scroll parasite sur des écrans qui ne
+     doivent jamais scroller. 100svh ne peut par définition pas dépasser la
+     fenêtre visible. L'éventuelle bande sous le contenu (barre d'URL
+     repliée en mode navigateur) est invisible : body et #root partagent le
+     même fond crème. Cf. TODO.md « migration edge-to-edge ». */
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   position: relative;
