@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260703194104"
+const CACHE = 'tablito-' + "20260703194338"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -134,7 +134,6 @@ const ASSETS = [
   "/src/lib/feedback.js",
   "/src/lib/hardestFacts.js",
   "/src/lib/install.js",
-  "/src/lib/layoutDebug.js",
   "/src/lib/leitner.js",
   "/src/lib/micPreflight.js",
   "/src/lib/parseEnglishNumber.js",
