@@ -38,10 +38,13 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   conservée offline.
 - **Service Worker** maison (`scripts/sw.js`) : précache shell +
   lazy-cache média + **cache-first** sur les navigations (cold launch
-  instantané). Pas de `skipWaiting()` automatique : un nouveau SW
-  reste en `waiting` jusqu'à ce que la page envoie `SKIP_WAITING` via
-  `pwa-register.js`/`setBusy` quand `App` est sur un écran "safe"
-  (`home` uniquement). Évite tout reload mid-séance.
+  instantané). Un nouveau SW fait `skipWaiting()` + `clients.claim()`
+  immédiatement (robuste même si le page-side est dégradé) ; c'est le
+  **reload** qui est différé par `pwa-register.js`/`setBusy` tant que
+  `App` n'est pas sur un écran "safe" (`home` uniquement). Détection
+  des updates : fetch de `/sw.js` au boot (`updateViaCache: 'none'`)
+  + `reg.update()` à chaque retour en foreground (cooldown 1 min).
+  Évite tout reload mid-séance.
 - **i18n (fr/en)** : langue d'interface **globale** (pas par profil),
   persistée dans `localStorage` sous `multiplix-lang`, défaut = langue du
   navigateur. Cœur dans `src/i18n/lang.ts` (`useLang`, `useStrings` pour React ;
