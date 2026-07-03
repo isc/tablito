@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { voiceLog } from '../lib/voiceDebug';
 
 // Minimal typings for the Web Speech API (not in lib.dom.d.ts).
 interface SpeechRecognitionResultItem {
@@ -138,6 +139,7 @@ export function useSpeechRecognition({
     rec.maxAlternatives = 5;
 
     rec.onstart = () => {
+      voiceLog('reco:onstart');
       setIsListening(true);
       setError(null);
     };
@@ -152,14 +154,17 @@ export function useSpeechRecognition({
             const alt = (result as unknown as Record<number, SpeechRecognitionResultItem>)[j];
             if (alt?.transcript) alternatives.push(alt.transcript);
           }
+          voiceLog('reco:final', JSON.stringify(alternatives));
           onFinalRef.current(primary, alternatives);
         } else if (onInterimRef.current) {
+          voiceLog('reco:interim', JSON.stringify(primary));
           onInterimRef.current(primary);
         }
       }
     };
 
     rec.onerror = (event: SpeechRecognitionErrorEvent) => {
+      voiceLog('reco:error', event.error);
       // "no-speech", "aborted", "audio-capture", "not-allowed", "network", ...
       if (event.error === 'no-speech' || event.error === 'aborted') {
         // benign — we'll auto-restart via onend if wantListening
@@ -183,8 +188,10 @@ export function useSpeechRecognition({
       } else {
         emptyRestartCountRef.current = 0;
       }
+      voiceLog('reco:onend', `ranFor=${ranForMs}ms empty=${emptyRestartCountRef.current}`);
 
       if (emptyRestartCountRef.current >= MAX_RAPID_RESTARTS) {
+        voiceLog('reco:giveup');
         wantListeningRef.current = false;
         emptyRestartCountRef.current = 0;
         return;
@@ -225,6 +232,7 @@ export function useSpeechRecognition({
       setError('not-supported');
       return;
     }
+    voiceLog('reco:start');
     wantListeningRef.current = true;
     // Démarrage explicite (geste utilisateur / nouvelle séance) : on repart
     // d'un compteur vierge pour le garde-fou anti-boucle.
@@ -246,6 +254,7 @@ export function useSpeechRecognition({
   }, []);
 
   const abort = useCallback(() => {
+    voiceLog('reco:abort');
     wantListeningRef.current = false;
     clearRestartTimer();
     const rec = recognitionRef.current;

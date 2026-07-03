@@ -3,6 +3,7 @@ import NumPad from './NumPad';
 import { parseSpokenAnswer, speechRecognitionLang } from '../lib/parseSpokenNumber';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { isAndroid } from '../lib/install';
+import { voiceLog } from '../lib/voiceDebug';
 import { useInputMode } from '../hooks/useInputMode';
 import { useLang } from '../i18n/lang';
 import { useVoiceStrings } from '../i18n/voice';
@@ -95,6 +96,7 @@ export default function VoiceInput({
     expectedRef.current = expectedValue;
   }, [expectedValue]);
   useEffect(() => {
+    voiceLog('tts', isSpeaking ? 'speaking' : 'ended');
     if (!isSpeaking) {
       lastSpeakEndRef.current = Date.now();
     }
@@ -128,10 +130,14 @@ export default function VoiceInput({
       // submit — and on iOS it can arrive 2-3 s later (TTS of the next question
       // delays silence detection), well past any reasonable time window.
       if (expectTrailingFinalRef.current) {
+        voiceLog('drop:trailing-final');
         clearTrailingFinal();
         return;
       }
-      if (disabledRef.current) return;
+      if (disabledRef.current) {
+        voiceLog('drop:disabled');
+        return;
+      }
       // Heuristique "chiffre redoublé" : quand l'enfant répète son chiffre
       // ("huit huit"), iOS fusionne souvent les digits en un seul nombre
       // ("88"). Si expected est 1..9 et best vaut exactement 11×expected,
@@ -145,7 +151,10 @@ export default function VoiceInput({
       ) {
         bestEffective = expected;
       }
-      if (isEchoOfLastSubmit(bestEffective)) return;
+      if (isEchoOfLastSubmit(bestEffective)) {
+        voiceLog('drop:echo-of-submit', String(bestEffective));
+        return;
+      }
       // Micro coupé pendant la TTS (Android) : aucun écho possible, et jeter
       // les finals post-TTS avalerait la réponse rapide d'un enfant qui se
       // trompe. La fenêtre de grâce ne s'applique qu'au mode micro-ouvert.
@@ -153,14 +162,17 @@ export default function VoiceInput({
       if (withinGrace && (bestEffective === null || bestEffective !== expected)) {
         // Drop echo silently — don't count it as a user parse failure,
         // otherwise 3 consecutive echoes would flip us to the keypad.
+        voiceLog('drop:grace', `best=${bestEffective} sinceTTS=${sinceSpeakEndMs}ms`);
         return;
       }
       if (bestEffective !== null) {
+        voiceLog('submit:final', String(bestEffective));
         setParseFails(0);
         lastSubmitAtRef.current = Date.now();
         lastSubmittedValueRef.current = bestEffective;
         onSubmit(bestEffective);
       } else {
+        voiceLog('parse-fail');
         setParseFails((n) => {
           const next = n + 1;
           if (next >= MAX_PARSE_FAILS_BEFORE_KEYPAD) {
@@ -184,6 +196,7 @@ export default function VoiceInput({
       // below — feedback comes from the session UI once the answer is in.
       if (expected === undefined || disabledRef.current) return;
       if (parsed === expected) {
+        voiceLog('submit:interim-fast-path', String(expected));
         setParseFails(0);
         lastSubmitAtRef.current = Date.now();
         lastSubmittedValueRef.current = expected;
@@ -221,6 +234,7 @@ export default function VoiceInput({
   useEffect(() => {
     if (!isSupported) return;
     if (showKeypad || micPaused) {
+      voiceLog('mic:closed', micPaused ? 'tts-speaking' : 'keypad');
       abort();
       clearTrailingFinal();
       return;
