@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260703123046"
+const CACHE = 'tablito-' + "20260703124346"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -149,6 +149,7 @@ const ASSETS = [
   "/src/lib/supabase.js",
   "/src/lib/transfer.js",
   "/src/lib/utils.js",
+  "/src/lib/voiceDebug.js",
   "/src/main.js",
   "/src/screens/BadgesScreen.js",
   "/src/screens/ChangelogScreen.js",
