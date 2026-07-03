@@ -1,9 +1,7 @@
-// Pilote le vrai Chrome Android de l'émulateur (AVD `tablito-pixel`) via le
-// support Android expérimental de Playwright (adb + CDP). Usage type :
+// Pilote le vrai Chrome Android de l'émulateur (AVD global `pixel-16`) via le
+// support Android expérimental de Playwright (adb + CDP). Boot de l'émulateur,
+// prérequis set-debug-app et limites : voir ~/.claude/ANDROID.md. Usage :
 //
-//   ANDROID_HOME=~/Library/Android/sdk \
-//   "$ANDROID_HOME/emulator/emulator" -avd tablito-pixel -no-window -no-audio &
-//   adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 2; done'
 //   node scripts/android-emu-check.mjs [url]
 //
 // Par défaut : charge l'URL (tablito.app sinon), mesure le viewport (même
