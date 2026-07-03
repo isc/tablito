@@ -167,4 +167,18 @@ describe('parseFrenchAnswer', () => {
     expect(parseFrenchAnswer('vin et un')).toBe(21);
     expect(parseFrenchAnswer('quatre vint')).toBe(80);
   });
+
+  it('accepte un nombre répété à l\'identique (mot isolé raté par le VAD Android)', () => {
+    expect(parseFrenchAnswer('quatre quatre')).toBe(4);
+    expect(parseFrenchAnswer('six six')).toBe(6);
+    // Les variantes multi-mots et chiffres passent par d'autres fallbacks
+    // (boucle des derniers tokens, préfixe en chiffres) — on fige le
+    // comportement d'ensemble, pas seulement la règle 2-tokens.
+    expect(parseFrenchAnswer('vingt-quatre vingt-quatre')).toBe(24);
+    expect(parseFrenchAnswer('4 4')).toBe(4);
+    // Deux nombres différents ne valent toujours pas un compound.
+    expect(parseFrenchAnswer('deux trois')).toBeNull();
+    // L'écho de question reste rejeté.
+    expect(parseFrenchAnswer('deux fois deux')).toBeNull();
+  });
 });

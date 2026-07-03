@@ -69,6 +69,11 @@ export default function VoiceInput({
   const [showKeypad, setShowKeypad] = useState(false);
   const [, setParseFails] = useState(0);
   const pauseMicDuringTTS = isAndroid();
+  // Même plateforme, autre motif : le recognizer Android rate souvent un mot
+  // isolé (« quatre ») mais capte très bien les phrases — on coache la
+  // formulation. Flag distinct de la politique micro pour que chacun porte
+  // sa propre raison si l'un des deux évolue.
+  const coachSentenceAnswer = isAndroid();
   const { setInputMode } = useInputMode();
   const { lang } = useLang();
   const t = useVoiceStrings();
@@ -141,7 +146,9 @@ export default function VoiceInput({
       // Heuristique "chiffre redoublé" : quand l'enfant répète son chiffre
       // ("huit huit"), iOS fusionne souvent les digits en un seul nombre
       // ("88"). Si expected est 1..9 et best vaut exactement 11×expected,
-      // on interprète comme une répétition de la bonne réponse.
+      // on interprète comme une répétition de la bonne réponse. (La
+      // répétition mot-à-mot non fusionnée — "huit huit" tel quel — est
+      // gérée sans contexte dans spokenNumber.ts.)
       let bestEffective = best;
       if (
         expected !== undefined
@@ -299,7 +306,7 @@ export default function VoiceInput({
       </button>
 
       <div className="voice-transcript" aria-live="polite">
-        {isListening ? t.listeningHint : t.tapToSpeak}
+        {isListening ? (coachSentenceAnswer ? t.sentenceHint : t.listeningHint) : t.tapToSpeak}
       </div>
 
       {permissionBlocked && (

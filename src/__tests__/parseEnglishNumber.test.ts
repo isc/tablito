@@ -142,4 +142,18 @@ describe('parseEnglishAnswer', () => {
     // But we still reject the question echo even in digits.
     expect(parseEnglishAnswer('6 times 5')).toBeNull();
   });
+
+  it('accepts an identically repeated number (isolated word missed by Android VAD)', () => {
+    expect(parseEnglishAnswer('four four')).toBe(4);
+    expect(parseEnglishAnswer('six six')).toBe(6);
+    // Multi-word and digit variants go through other fallbacks (trailing
+    // tokens loop, digits-only prefix) — this pins the overall behavior,
+    // not just the 2-token rule.
+    expect(parseEnglishAnswer('twenty-four twenty-four')).toBe(24);
+    expect(parseEnglishAnswer('4 4')).toBe(4);
+    // Two different numbers still never form a compound.
+    expect(parseEnglishAnswer('two three')).toBeNull();
+    // The question echo stays rejected.
+    expect(parseEnglishAnswer('two times two')).toBeNull();
+  });
 });

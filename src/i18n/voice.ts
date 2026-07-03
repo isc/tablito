@@ -10,6 +10,9 @@ const fr = {
   listening: 'Écoute en cours',
   speak: 'Parler',
   listeningHint: "Je t'écoute…",
+  // Android : le recognizer rate souvent un mot isolé (« quatre ») mais capte
+  // très bien les phrases — on coache la formulation.
+  sentenceHint: 'Réponds par une phrase : « ça fait… »',
   tapToSpeak: 'Appuie pour parler',
   micBlocked: 'Le micro est bloqué. Autorise-le dans les paramètres du navigateur.',
   needsInternet: "La reconnaissance vocale a besoin d'internet.",
@@ -24,6 +27,7 @@ const en: Strings = {
   listening: 'Listening',
   speak: 'Speak',
   listeningHint: "I'm listening…",
+  sentenceHint: 'Answer with a sentence: "the answer is…"',
   tapToSpeak: 'Tap to speak',
   micBlocked: 'The microphone is blocked. Allow it in your browser settings.',
   needsInternet: 'Voice recognition needs an internet connection.',

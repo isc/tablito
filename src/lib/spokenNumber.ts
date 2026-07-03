@@ -82,6 +82,20 @@ export function makeSpokenNumberParser(config: SpokenNumberConfig): SpokenNumber
     }
 
     const tokens = normalize(input).split(/\s+/).filter(Boolean);
+
+    // Mot-nombre répété à l'identique (« quatre quatre ») : répéter sa
+    // réponse est le réflexe naturel quand l'app n'a pas réagi — et sur
+    // Android, un mot isolé ne déclenche souvent pas le détecteur d'activité
+    // vocale alors que le même mot répété passe. Les répétitions multi-mots
+    // (« vingt quatre vingt quatre ») sont déjà couvertes par la boucle des
+    // derniers tokens ci-dessous. La variante où le STT fusionne les digits
+    // (« huit huit » → "88") dépend de la réponse attendue et vit dans
+    // VoiceInput (heuristique ×11).
+    if (tokens.length === 2 && tokens[0] === tokens[1]) {
+      const n = parseNumber(tokens[0]);
+      if (n !== null && n >= 0 && n <= 100) return n;
+    }
+
     for (let k = 2; k <= Math.min(3, tokens.length); k++) {
       const tail = tokens.slice(-k).join(' ');
       const n = parseNumber(tail);

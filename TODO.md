@@ -19,3 +19,6 @@ Suivi léger des évolutions techniques envisagées mais non encore tranchées.
   - Pointeur : `src/screens/SessionScreen.tsx`
 
 - **Support offline strict du mode vocal** — `SpeechRecognition` (Chrome) nécessite une connexion. Si on veut un mode vocal hors-ligne, évaluer un moteur local (Whisper.cpp WASM, Vosk français compact). Attention au coût en taille de bundle. Priorité faible.
+
+- **Mots isolés ratés sur Android** — le `SpeechRecognizer` Android (via Web Speech) ne détecte souvent pas un mot court isolé (« quatre ») : son VAD exige une parole soutenue, calibré Assistant/dictée. Mitigations en place : astuce « réponds par une phrase » (Android) + acceptation du nombre répété (« quatre quatre »). Pour la vraie parité iOS : re-tester `SpeechRecognition.available({processLocally: true})` à chaque version majeure de Chrome Android (« unavailable » en 2026 — quand Google embarquera les modèles on-device, le problème peut disparaître gratuitement) ; sinon moteur local WASM dédié aux ~100 mots-nombres (rejoint le point offline ci-dessus). Priorité moyenne.
+  - Pointeur : `src/components/VoiceInput.tsx` (`pauseMicDuringTTS`), `src/lib/spokenNumber.ts` (heuristique répétition)
