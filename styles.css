@@ -5,7 +5,8 @@
   flex-direction: column;
   background: var(--cream);
   min-height: 100vh;
-  min-height: 100dvh;
+  /* svh, pas dvh : cf. le commentaire sur #root dans index.css. */
+  min-height: 100svh;
 }
 
 /* Bannière de boot après un #transfer= : confirmation d'arrivée (success)
@@ -488,7 +489,8 @@
 /* ===== components/ErrorBoundary.css ===== */
 .error-boundary {
   min-height: 100vh;
-  min-height: 100dvh;
+  /* svh, pas dvh : cf. le commentaire sur #root dans index.css. */
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2229,7 +2231,15 @@ body {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  min-height: 100dvh;
+  /* svh (small viewport), PAS dvh : après un location.reload() en PWA
+     installée, Chrome Android (edge-to-edge, 135+) laisse 100dvh collé au
+     large viewport (sous la barre gestuelle) alors que la fenêtre visible
+     est plus petite → ~57px de scroll parasite sur des écrans qui ne
+     doivent jamais scroller. 100svh ne peut par définition pas dépasser la
+     fenêtre visible. L'éventuelle bande sous le contenu (barre d'URL
+     repliée en mode navigateur) est invisible : body et #root partagent le
+     même fond crème. Cf. TODO.md « migration edge-to-edge ». */
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -4995,13 +5005,14 @@ input, select, textarea {
 /* ===== static-landing.css ===== */
 .landing {
   flex: 1;
-  /* #root est un shell `100dvh; overflow:hidden` (les écrans de l'app scrollent
+  /* #root est un shell `100svh; overflow:hidden` (les écrans de l'app scrollent
      en interne). Depuis l'ajout de la section démo, la landing dépasse un écran :
      on en fait son propre conteneur scrollable plutôt que de toucher au shell.
-     `min-height: 0` lève le min-height:auto du flex ; `max-height: 100dvh` borne
-     la hauteur (sans ça le flex grandit à hauteur du contenu = pas de scroll). */
+     `min-height: 0` lève le min-height:auto du flex ; `max-height: 100svh` borne
+     la hauteur (sans ça le flex grandit à hauteur du contenu = pas de scroll ;
+     svh et pas dvh : cf. le commentaire sur #root dans index.css). */
   min-height: 0;
-  max-height: 100dvh;
+  max-height: 100svh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
