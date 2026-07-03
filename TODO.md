@@ -26,4 +26,4 @@ Suivi léger des évolutions techniques envisagées mais non encore tranchées.
 ## Plateforme Android
 
 - **Migration edge-to-edge (Chrome Android 135+)** — le contenu web peut s'étendre sous la barre de navigation gestuelle. Aujourd'hui on l'esquive : `#root` en `100svh` (fix du scroll parasite post-reload, où `100dvh` restait collé au large viewport — mesuré à la sonde `?layoutdebug=1` : `dvh=898` pour une fenêtre de 841). La migration propre : `viewport-fit=cover` dans le meta viewport + `env(safe-area-inset-bottom)` sur les éléments ancrés en bas (cartes de l'accueil, pavé numérique de séance…) pour occuper tout l'écran sans masquer de contenu. Priorité moyenne.
-  - Pointeur : `index.html` (meta viewport), `src/index.css` (#root), `src/lib/layoutDebug.ts` (sonde)
+  - Pointeur : `index.html` (meta viewport), `src/index.css` (#root), `scripts/android-emu-check.mjs` (mesures sur le vrai Chrome Android)

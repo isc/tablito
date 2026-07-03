@@ -5,7 +5,6 @@ import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LangProvider } from './i18n/LangProvider'
 import { importProfileFromUrl } from './lib/storage'
-import { initLayoutDebug } from './lib/layoutDebug'
 import { transferFetchingStrings } from './i18n/onboarding'
 import type { TransferImportResult } from './lib/transfer'
 
@@ -16,9 +15,6 @@ import type { TransferImportResult } from './lib/transfer'
 //    lib/transfer n'est chargé que si le fragment est là : un boot ordinaire
 //    (l'immense majorité) garde son graphe de modules eager inchangé.
 async function boot() {
-  // Sonde layout en tout premier : elle doit couvrir la fenêtre de boot
-  // (c'est là que l'anomalie de scroll post-reload peut naître).
-  initLayoutDebug()
   await importProfileFromUrl()
   const root = document.getElementById('root')!
   let transferResult: TransferImportResult = null

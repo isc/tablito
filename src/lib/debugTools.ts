@@ -1,4 +1,4 @@
-// Boîte à outils des diagnostics activables (voiceDebug, layoutDebug) :
+// Boîte à outils des diagnostics activables (voiceDebug aujourd'hui) :
 // flag par URL persisté en localStorage + overlay bandeau fixe avec bouton
 // « Copier », utilisables sur téléphone sans câble ni chrome://inspect.
 // Volontairement en DOM vanilla : appelé depuis du code non-React,
