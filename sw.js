@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260701214146"
+const CACHE = 'tablito-' + "20260703123046"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -97,6 +97,7 @@ const ASSETS = [
   "/src/components/StrategyHintShell.js",
   "/src/components/StreakDetailModal.js",
   "/src/components/VoiceInput.js",
+  "/src/components/VoiceInput.test.js",
   "/src/env.d.js",
   "/src/hooks/useConfetti.js",
   "/src/hooks/useInputMode.js",
