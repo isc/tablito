@@ -42,7 +42,7 @@ export default function BadgeDetailModal({
   return (
     <Modal onClose={onClose} labelledBy="badge-detail-title" className="badge-detail-modal">
       <div
-        className={`badge-detail-medallion ${earned ? 'earned' : 'locked'}`}
+        className={`medallion badge-detail-medallion ${earned ? 'earned' : 'locked'}`}
         style={{ '--medallion-color': color } as React.CSSProperties}
       >
         {badge.icon}

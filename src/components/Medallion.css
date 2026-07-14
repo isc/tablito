@@ -1,0 +1,22 @@
+/* Disque de badge, partagé par les trois surfaces qui l'affichent : la grille
+   (.badge-medallion), la modale de détail (.badge-detail-medallion) et le
+   récap de fin de séance (.recap-new-badge-medallion). Chacune garde sa taille
+   et sa bordure ; seule l'apparence commune vit ici.
+
+   La couleur du badge arrive en inline style (--medallion-color, cf.
+   medallionColorFor dans lib/badges.ts). Le fond est un pastel dérivé de cette
+   couleur : les emoji ont leurs propres couleurs et se noyaient dans un aplat
+   saturé. Le 14 % reproduit les tokens *-soft de la palette tout en marchant
+   pour n'importe quelle couleur. Les glyphes texte (×N / ÷N) reprennent la
+   couleur du badge, assombrie vers l'encre pour garder du contraste. */
+.medallion {
+  --medallion: var(--medallion-color, var(--honey));
+  background: color-mix(in srgb, var(--medallion) 14%, var(--paper));
+  color: color-mix(in srgb, var(--medallion) 88%, var(--ink));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-weight: 700;
+}

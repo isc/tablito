@@ -6,7 +6,7 @@ import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useConfetti } from '../hooks/useConfetti';
 import { useRecapStrings } from '../i18n/recap';
-import { badgeName } from '../lib/badges';
+import { badgeName, medallionColorFor } from '../lib/badges';
 
 interface RecapScreenProps {
   name: string;
@@ -204,7 +204,12 @@ export default function RecapScreen({
         <div className="recap-new-badges">
           {newBadges.map((badge) => (
             <div key={badge.id} className="recap-card recap-new-badge">
-              <div className="recap-new-badge-medallion">{badge.icon}</div>
+              <div
+                className="medallion recap-new-badge-medallion"
+                style={{ '--medallion-color': medallionColorFor(badge.id) } as React.CSSProperties}
+              >
+                {badge.icon}
+              </div>
               <div>
                 <div className="recap-new-badge-eyebrow">{t.newBadgeEyebrow}</div>
                 <div className="recap-new-badge-name">{badgeName(badge.id)}</div>

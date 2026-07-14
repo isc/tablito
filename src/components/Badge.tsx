@@ -43,7 +43,7 @@ export default function Badge({ badge, earned, earnedDate, progress, onClick }: 
       aria-label={label}
     >
       <div
-        className="badge-medallion"
+        className="medallion badge-medallion"
         style={{ '--medallion-color': color } as React.CSSProperties}
       >
         {badge.icon}

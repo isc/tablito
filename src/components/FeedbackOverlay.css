@@ -21,7 +21,9 @@
   flex-direction: column;
   justify-content: flex-start;
   gap: 10px;
-  padding-top: 120px;
+  /* Le bloc (étoile 180px + message + fait) mesure ~340px : sur un écran
+     court, 120px fixes le feraient déborder par le bas, sans scroll. */
+  padding-top: min(120px, 18vh);
 }
 
 .feedback-overlay.incorrect {
@@ -121,18 +123,18 @@
   margin-bottom: 12px;
 }
 
+/* Le rappel du fait est la vraie récompense pédagogique de l'écran : il doit
+   se lire comme la question (même serif, taille proche des 52px de
+   .formula-text) pour ancrer « 7 × 8 = 56 », pas comme une légende. */
 .feedback-overlay.correct .feedback-answer {
-  font-size: 22px;
+  font-size: 38px;
   font-weight: 500;
-  font-family: var(--sans);
-  color: var(--ink);
   margin: 0;
 }
 
 .feedback-overlay.correct .feedback-answer b {
-  color: var(--ink);
-  font-weight: 800;
-  font-family: var(--sans);
+  color: var(--indigo);
+  font-weight: 700;
 }
 
 .feedback-overlay.incorrect .feedback-answer b {
