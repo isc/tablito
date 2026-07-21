@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-07-20',
+    items: [
+      "Espace parent : la liste « Faits les plus difficiles » oubliait les erreurs commises pendant les révisions bonus (les questions ajoutées pour compléter une séance courte). Le taux de bonnes réponses pouvait montrer des séances imparfaites alors que presque aucune erreur n'était listée. La liste reflète désormais toutes les erreurs des dernières séances, révisions bonus comprises.",
+    ],
+  },
+  {
     date: '2026-07-01',
     items: [
       "Changement de téléphone simplifié : l'espace parent propose un bouton « Transférer » (section Sauvegarde). Un QR code s'affiche, on le scanne avec l'appareil photo du nouveau téléphone, et la progression s'y installe toute seule — fini le copier-coller de la sauvegarde. Sur iPhone, scannez plutôt le QR depuis l'app : écran d'accueil → « Déjà une progression ? » → « Scanner le QR de l'ancien appareil ». Le transfert est chiffré de bout en bout, valable 15 minutes et utilisable une seule fois. L'export/import classique reste disponible.",
@@ -159,6 +165,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-07-20',
+    items: [
+      'Parent area: the "Hardest facts" list was missing mistakes made during bonus reviews (the extra questions added to fill out a short session). The accuracy chart could show imperfect sessions while almost no mistakes were listed. The list now reflects every mistake from recent sessions, bonus reviews included.',
+    ],
+  },
   {
     date: '2026-07-01',
     items: [
