@@ -47,8 +47,9 @@ function makeQuestion(
  * Compose une séance de division (12-15 questions), miroir de composeSession
  * adapté au niveau 2 (specs §11) :
  *
- * - Introduction GATÉE sur la maîtrise multiplicative : un fait de division
- *   n'est introduit que si son parent multiplicatif est en boîte 5 (§11.3).
+ * - Introduction GATÉE sur la solidité multiplicative : un fait de division
+ *   n'est introduit que si son parent multiplicatif est en boîte 4+ (§11.3),
+ *   même seuil que l'ouverture du niveau (isDivisionUnlocked).
  * - Anti-interférence renforcée : jamais deux faits de même dividende
  *   adjacents (§11.6).
  * - Pas de variation d'ordre : la division n'est pas commutative (§11.2).
@@ -63,19 +64,24 @@ export function composeDivisionSession(
   const divisionFacts = profile.divisionFacts ?? [];
   const today = now.slice(0, 10);
 
-  // Faits multiplicatifs maîtrisés (boîte 5) → leurs clés canoniques.
-  const masteredKeys = new Set(
-    profile.facts.filter((f) => f.box === 5).map((f) => getFactKey(f.a, f.b)),
+  // Faits multiplicatifs prêts (boîte 4+) → leurs clés canoniques.
+  // Même seuil que l'ouverture du niveau 2 (badges « Table de N » = boîte 4+,
+  // cf. isDivisionUnlocked) : sinon un parent bloqué en boîte 4 gèle
+  // indéfiniment l'intro de ses divisions (56÷7/56÷8 derrière 7×8 têtu), et
+  // pire, un profil avec toutes les tables en boîte 4 mais aucune en boîte 5
+  // ouvrirait la division sans aucun fait introductible (specs §11.3).
+  const parentReadyKeys = new Set(
+    profile.facts.filter((f) => f.box >= 4).map((f) => getFactKey(f.a, f.b)),
   );
 
-  // Intros : faits non introduits dont le parent multiplicatif est maîtrisé.
+  // Intros : faits non introduits dont le parent multiplicatif est prêt.
   // Même pacing que la multiplication (specs §11.6, §3.4bis) : on n'introduit
   // de nouveaux faits que si tous ceux déjà introduits sont en boîte ≥ 2 — sinon
   // un enfant en difficulté accumulerait des faits en boîte 1.
   const newFacts: DivisionFact[] = [];
   if (shouldIntroduceNew(divisionFacts)) {
     const eligible = divisionFacts
-      .filter((f) => !f.introduced && masteredKeys.has(parentMultiplicationKey(f)))
+      .filter((f) => !f.introduced && parentReadyKeys.has(parentMultiplicationKey(f)))
       .sort(
         (a, b) =>
           vanDeWalleStage(a.divisor, a.quotient) - vanDeWalleStage(b.divisor, b.quotient) ||

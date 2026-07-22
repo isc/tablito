@@ -8,12 +8,13 @@ import { composeDivisionSession } from '../lib/divisionComposer';
 import { processAnswer, isDue } from '../lib/leitner';
 import { getFactKey } from '../lib/facts';
 
-// Marque les paires multiplicatives données comme maîtrisées (boîte 5).
-function withMastered(masteredPairs: [number, number][]): UserProfile {
+// Marque les paires multiplicatives données comme prêtes (boîte 4+, boîte 5 par
+// défaut). Le gate d'intro division est aligné sur boîte ≥ 4 (isDivisionUnlocked).
+function withMastered(masteredPairs: [number, number][], box: 4 | 5 = 5): UserProfile {
   const p = createNewProfile('Zoé');
   const keys = new Set(masteredPairs.map(([a, b]) => getFactKey(a, b)));
   p.facts = p.facts.map((f) =>
-    keys.has(getFactKey(f.a, f.b)) ? { ...f, box: 5, introduced: true } : f,
+    keys.has(getFactKey(f.a, f.b)) ? { ...f, box, introduced: true } : f,
   );
   return p;
 }
@@ -35,6 +36,16 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     expect(session[0].fact.divisor).toBe(2);
   });
 
+  it('rend éligible un fait de division dès que son parent est en boîte 4', () => {
+    // Aligné sur l'ouverture du niveau (badges Table = boîte 4+) : un parent
+    // en boîte 4, pas encore en boîte 5, débloque déjà sa division.
+    const p = withMastered([[2, 2]], 4); // parent de 4÷2=2, en boîte 4
+    const session = composeDivisionSession(p, NOW);
+    expect(session).toHaveLength(1);
+    expect(session[0].isIntroduction).toBe(true);
+    expect(session[0].fact.dividend).toBe(4);
+  });
+
   it('n\'introduit jamais ensemble les deux orientations d\'un même dividende (§11.6)', () => {
     // Seul 7×8 maîtrisé → 56÷7 et 56÷8 éligibles, mais même dividende.
     const p = withMastered([[7, 8]]);
@@ -51,14 +62,14 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     expect(intros.length).toBe(2);
   });
 
-  it('tout fait introduit a bien un parent multiplicatif maîtrisé', () => {
-    const p = withMastered([[2, 2], [3, 3]]);
+  it('tout fait introduit a bien un parent multiplicatif prêt (boîte 4+)', () => {
+    const p = withMastered([[2, 2], [3, 3]], 4);
     const session = composeDivisionSession(p, NOW);
-    const masteredKeys = new Set(
-      p.facts.filter((f) => f.box === 5).map((f) => getFactKey(f.a, f.b)),
+    const parentReadyKeys = new Set(
+      p.facts.filter((f) => f.box >= 4).map((f) => getFactKey(f.a, f.b)),
     );
     for (const q of session) {
-      expect(masteredKeys.has(parentMultiplicationKey(q.fact))).toBe(true);
+      expect(parentReadyKeys.has(parentMultiplicationKey(q.fact))).toBe(true);
     }
   });
 
