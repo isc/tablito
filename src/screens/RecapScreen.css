@@ -140,6 +140,11 @@
   border-color: var(--honey);
 }
 
+.recap-milestone--rem {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+}
+
 .recap-milestone-icon {
   font-size: 28px;
   line-height: 1;

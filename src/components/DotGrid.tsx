@@ -19,6 +19,11 @@ interface DotGridProps {
    *  distincts, en met un en avant, et révèle son compte (= `b`, le quotient =
    *  la réponse de la division). Modèle partitif relié à la table (specs §11.4). */
   groupReveal?: boolean;
+  /** Niveau 3 (division avec reste) : rangée incomplète de `remainderDots`
+   *  points mis à part sous la grille — « le reste, c'est ce qui ne rentre
+   *  pas ». Modèle quotitif : les rangées pleines sont les fois du diviseur,
+   *  les points isolés l'écart (specs §12.4). */
+  remainderDots?: number;
 }
 
 export default function DotGrid({
@@ -29,6 +34,7 @@ export default function DotGrid({
   size = 'normal',
   bare = false,
   groupReveal = false,
+  remainderDots = 0,
 }: DotGridProps) {
   const [visibleRows, setVisibleRows] = useState(animated ? 0 : a);
   const [showResult, setShowResult] = useState(!animated);
@@ -135,6 +141,17 @@ export default function DotGrid({
             </div>
           );
         })}
+        {remainderDots > 0 && (
+          <div
+            className={`dot-grid-row dot-grid-row--rest ${
+              !animated ? 'no-animation' : showResult ? '' : 'hidden'
+            }`}
+          >
+            {Array.from({ length: remainderDots }, (_, i) => (
+              <div key={i} className="dot dot--rest" />
+            ))}
+          </div>
+        )}
       </div>
       {!bare && (
         <div className={`dot-grid-result ${showResult ? 'visible' : ''}`}>

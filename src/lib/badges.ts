@@ -1,4 +1,4 @@
-import type { UserProfile, Badge, MultiFact, DivisionFact } from '../types';
+import type { UserProfile, Badge, MultiFact, DivisionFact, RemainderFact } from '../types';
 import { BADGE_IDS } from '../types';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
@@ -36,6 +36,47 @@ export function isDivisionUnlocked(profile: UserProfile): boolean {
   return hasAllTableBadges(profile);
 }
 
+// Zones de division avec reste d'une « table » (regroupées par diviseur).
+export function factsForRemainderTable(facts: RemainderFact[], divisor: number): RemainderFact[] {
+  return facts.filter((f) => f.divisor === divisor);
+}
+
+const NUM_REM_TABLE_BADGES = 8;
+
+/**
+ * Vrai quand les 8 badges « Divisions par N » (toutes les divisions exactes en
+ * boîte 4+) ont été obtenus. Compté sur les badges (permanents) — même logique
+ * que hasAllTableBadges pour le déblocage du niveau 2.
+ */
+export function hasAllDivisionTableBadges(profile: UserProfile): boolean {
+  const badges = profile.badges.filter((b) => b.id.startsWith(BADGE_IDS.DIV_TABLE_PREFIX));
+  return badges.length === NUM_DIV_TABLE_BADGES;
+}
+
+/**
+ * Vrai quand le niveau 3 (division avec reste) est débloqué : les 8 badges
+ * « Divisions par N » — même logique, translatée d'un niveau, que le déblocage
+ * de la division par les 8 badges « Table de N » (specs §12.3). On n'exige pas
+ * « Maître de la division » (boîte 5 partout) : ce serait un long palier de
+ * pur grind sans contenu nouveau ; le passage boîte 4→5 des divisions continue
+ * via l'entretien intégré aux séances du niveau 3, et « Maître de la
+ * division » devient un trophée décroché en route.
+ */
+export function isRemainderUnlocked(profile: UserProfile): boolean {
+  return hasAllDivisionTableBadges(profile);
+}
+
+/**
+ * Niveau d'apprentissage ACTIF du profil — l'activité de la séance du jour et
+ * l'onglet ouvert par défaut sur les écrans à sélecteur. Source unique de la
+ * règle de précédence entre niveaux (specs §11.3, §12.3).
+ */
+export function activeLevel(profile: UserProfile): 'mult' | 'div' | 'rem' {
+  if (isRemainderUnlocked(profile)) return 'rem';
+  if (isDivisionUnlocked(profile)) return 'div';
+  return 'mult';
+}
+
 function makeBadge(def: BadgeDefinition, now: string): Badge {
   // On ne persiste que ce qui est lu : `id` (clé de progression), `earnedDate`
   // et `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par
@@ -70,6 +111,19 @@ export function getCompletedDivisionTables(facts: DivisionFact[]): Set<number> {
   const completed = new Set<number>();
   for (let n = 2; n <= 9; n++) {
     const tf = factsForDivisionTable(facts, n);
+    if (tf.length > 0 && tf.every((f) => f.box >= 5)) {
+      completed.add(n);
+    }
+  }
+  return completed;
+}
+
+// Pendant niveau 3 : les zones d'un même diviseur, complètes quand toutes en
+// boîte 5. Alimente la célébration du récap en mode 'rem'.
+export function getCompletedRemainderTables(facts: RemainderFact[]): Set<number> {
+  const completed = new Set<number>();
+  for (let n = 2; n <= 9; n++) {
+    const tf = factsForRemainderTable(facts, n);
     if (tf.length > 0 && tf.every((f) => f.box >= 5)) {
       completed.add(n);
     }
@@ -273,6 +327,61 @@ function buildDivisionBadgeDefinitions(): BadgeDefinition[] {
   ];
 }
 
+// Badges du niveau 3 — division avec reste. Même logique que les badges de
+// division : tenus à part pour rester MASQUÉS tant que le niveau n'est pas
+// débloqué, mais inclus dans la map pour pouvoir être attribués par checkBadges.
+function buildRemainderBadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  const u = i.units;
+  return [
+    {
+      id: BADGE_IDS.REM_PREMIERE_MAITRISE,
+      ...i.remPremiereMaitrise,
+      icon: '🥉',
+      color: 'var(--honey)',
+      progressFor: (p) => {
+        const ready = (p.remainderFacts ?? []).filter((f) => f.box === 5).length;
+        return { current: Math.min(ready, 1), target: 1, unitLabel: u.box5 };
+      },
+    },
+    ...Array.from({ length: NUM_REM_TABLE_BADGES }, (_, idx) => {
+      const n = idx + 2;
+      return {
+        id: `${BADGE_IDS.REM_TABLE_PREFIX}${n}`,
+        ...i.remTable(n),
+        // Glyphe texte « ÷Nʳ » (le ʳ de « reste » en exposant) : distinct des
+        // badges « ÷N » de la division exacte tout en restant dans la même
+        // famille visuelle que les médaillons ×N / ÷N (cf. le choix anti-emoji
+        // documenté sur les badges de division).
+        icon: `÷${n}ʳ`,
+        color: 'var(--coral)',
+        progressFor: (p: UserProfile) => {
+          const tableFacts = factsForRemainderTable(p.remainderFacts ?? [], n);
+          return {
+            current: tableFacts.filter((f) => f.box >= 4).length,
+            target: tableFacts.length,
+            unitLabel: u.box4plus,
+          };
+        },
+      };
+    }),
+    {
+      id: BADGE_IDS.REM_GENIE,
+      ...i.remGenie,
+      icon: '👑',
+      color: 'var(--honey)',
+      progressFor: (p) => {
+        const facts = p.remainderFacts ?? [];
+        return {
+          current: facts.filter((f) => f.box === 5).length,
+          target: facts.length,
+          unitLabel: u.box5,
+        };
+      },
+    },
+  ];
+}
+
 // Cache mémoïsé par langue : les définitions ne dépendent que de la langue
 // (les chaînes), pas du profil (passé en argument à progressFor). On les
 // reconstruit donc seulement au changement de langue, pas à chaque appel —
@@ -281,6 +390,7 @@ function buildDivisionBadgeDefinitions(): BadgeDefinition[] {
 let cacheLang: Lang | null = null;
 let cachedAll: BadgeDefinition[] = [];
 let cachedDivision: BadgeDefinition[] = [];
+let cachedRemainder: BadgeDefinition[] = [];
 let cachedMap: Map<string, BadgeDefinition> = new Map();
 
 function ensureCache(): void {
@@ -288,7 +398,10 @@ function ensureCache(): void {
   if (cacheLang === lang) return;
   cachedAll = buildAllBadgeDefinitions();
   cachedDivision = buildDivisionBadgeDefinitions();
-  cachedMap = new Map([...cachedAll, ...cachedDivision].map((d) => [d.id, d]));
+  cachedRemainder = buildRemainderBadgeDefinitions();
+  cachedMap = new Map(
+    [...cachedAll, ...cachedDivision, ...cachedRemainder].map((d) => [d.id, d]),
+  );
   cacheLang = lang;
 }
 
@@ -300,6 +413,11 @@ export function getAllBadgeDefinitions(): BadgeDefinition[] {
 export function getDivisionBadgeDefinitions(): BadgeDefinition[] {
   ensureCache();
   return cachedDivision;
+}
+
+export function getRemainderBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedRemainder;
 }
 
 function badgeMap(): Map<string, BadgeDefinition> {
@@ -314,9 +432,10 @@ function badgeMap(): Map<string, BadgeDefinition> {
  * logique que la révélation différée de la règle ×11, specs §2.3).
  */
 export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[] {
-  return isDivisionUnlocked(profile)
-    ? [...getAllBadgeDefinitions(), ...getDivisionBadgeDefinitions()]
-    : getAllBadgeDefinitions();
+  const defs = [...getAllBadgeDefinitions()];
+  if (isDivisionUnlocked(profile)) defs.push(...getDivisionBadgeDefinitions());
+  if (isRemainderUnlocked(profile)) defs.push(...getRemainderBadgeDefinitions());
+  return defs;
 }
 
 /**
@@ -380,6 +499,19 @@ export function checkBadges(
       const tableFacts = factsForDivisionTable(divFacts, n);
       if (tableFacts.length > 0 && tableFacts.every((f) => f.box >= 4)) {
         earn(`${BADGE_IDS.DIV_TABLE_PREFIX}${n}`);
+      }
+    }
+  }
+
+  // Niveau 3 — badges division avec reste. Même garde que le niveau 2.
+  const remFacts = profile.remainderFacts;
+  if (remFacts && remFacts.length > 0 && isRemainderUnlocked(profile)) {
+    if (remFacts.some((f) => f.box === 5)) earn(BADGE_IDS.REM_PREMIERE_MAITRISE);
+    if (remFacts.every((f) => f.box === 5)) earn(BADGE_IDS.REM_GENIE);
+    for (let n = 2; n <= 9; n++) {
+      const tableFacts = factsForRemainderTable(remFacts, n);
+      if (tableFacts.length > 0 && tableFacts.every((f) => f.box >= 4)) {
+        earn(`${BADGE_IDS.REM_TABLE_PREFIX}${n}`);
       }
     }
   }

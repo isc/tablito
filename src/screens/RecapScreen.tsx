@@ -17,6 +17,10 @@ interface RecapScreenProps {
   // niveau 2 division. Découplé de « Génie de la multiplication » (boîte 5
   // partout), qui reste un trophée décroché plus tard, pendant le niveau 2.
   divisionJustUnlocked: boolean;
+  // Mode div uniquement : le 8e badge « Divisions par N » vient de tomber →
+  // déblocage du niveau 3 (division avec reste). Même logique, translatée
+  // d'un niveau (specs §12.3).
+  remainderJustUnlocked?: boolean;
   currentStreak: number;
   freezeJustUsed: boolean;
   freezeJustEarned: boolean;
@@ -24,9 +28,9 @@ interface RecapScreenProps {
   totalFacts: number;
   onFinish: () => void;
   onShowProgress: () => void;
-  // 'div' pour une séance de division : change le nom affiché et le badge de
-  // complétion d'image surveillé (specs §11). Défaut 'mult'.
-  mode?: 'mult' | 'div';
+  // 'div'/'rem' selon la séance : change le nom affiché et le jalon surveillé
+  // (specs §11, §12). Défaut 'mult'.
+  mode?: 'mult' | 'div' | 'rem';
 }
 
 function ImageCardIcon() {
@@ -68,6 +72,7 @@ export default function RecapScreen({
   newBadges,
   newlyCompletedTables,
   divisionJustUnlocked,
+  remainderJustUnlocked = false,
   currentStreak,
   freezeJustUsed,
   freezeJustEarned,
@@ -83,14 +88,30 @@ export default function RecapScreen({
   const t = useRecapStrings();
   const hasPlayedRef = useRef(false);
 
-  const noun = mode === 'div' ? t.divisions : t.multiplications;
-  // Jalon majeur de la séance :
-  // — div : « Maître de la division » (toutes les divisions en boîte 5, image complète) ;
+  const noun = mode === 'rem' ? t.remainders : mode === 'div' ? t.divisions : t.multiplications;
+  // Jalon majeur de la séance, par mode :
   // — mult : déblocage du niveau 2 (8e badge de table). PAS « Génie » : Génie
   //   (boîte 5 partout) arrive plus tard, pendant le niveau 2, et n'affiche
-  //   qu'une carte « Nouveau badge » classique.
-  const milestoneReached =
-    mode === 'div' ? newBadges.some((b) => b.id === BADGE_IDS.DIV_GENIE) : divisionJustUnlocked;
+  //   qu'une carte « Nouveau badge » classique ;
+  // — div : déblocage du niveau 3 (8e badge « Divisions par N »), sinon
+  //   « Maître de la division » (toutes les divisions en boîte 5) ;
+  // — rem : « Grand maître de la division » (les 64 zones en boîte 5, image
+  //   complète — le jalon ultime du parcours).
+  const milestone =
+    mode === 'rem'
+      ? newBadges.some((b) => b.id === BADGE_IDS.REM_GENIE)
+        ? { icon: '👑', title: t.milestoneRemTitle, subtitle: t.milestoneRemSubtitle }
+        : null
+      : mode === 'div'
+        ? remainderJustUnlocked
+          ? { icon: '🧮', title: t.milestoneRemUnlockTitle, subtitle: t.milestoneRemUnlockSubtitle }
+          : newBadges.some((b) => b.id === BADGE_IDS.DIV_GENIE)
+            ? { icon: '🎓', title: t.milestoneDivTitle, subtitle: t.milestoneDivSubtitle }
+            : null
+        : divisionJustUnlocked
+          ? { icon: '➗', title: t.milestoneMultTitle, subtitle: t.milestoneMultSubtitle }
+          : null;
+  const milestoneReached = milestone !== null;
   const imageChanged = result.factsPromoted > 0;
 
   useEffect(() => {
@@ -133,24 +154,16 @@ export default function RecapScreen({
         <div className="recap-message">{t.message(name)}</div>
       </div>
 
-      {/* Carte « jalon » du niveau. En multiplication : déblocage du niveau 2,
-          déclenché à l'obtention du 8e badge de table (toutes les tables
-          maîtrisées — l'image n'est pas forcément 100 % révélée, la boîte 5
-          continue ensuite). En division : le jalon ultime, image entièrement
-          révélée (badge Maître de la division). Même carte, contenu et teinte
-          par mode. */}
-      {milestoneReached && (
+      {/* Carte « jalon » du niveau (déblocage du niveau suivant ou complétion
+          d'image) — même carte, contenu et teinte par mode, cf. `milestone`. */}
+      {milestone && (
         <div className={`recap-card recap-milestone recap-milestone--${mode}`}>
           <div className="recap-milestone-icon" aria-hidden="true">
-            {mode === 'div' ? '🎓' : '➗'}
+            {milestone.icon}
           </div>
           <div className="recap-milestone-text">
-            <div className="recap-milestone-title">
-              {mode === 'div' ? t.milestoneDivTitle : t.milestoneMultTitle}
-            </div>
-            <div className="recap-milestone-subtitle">
-              {mode === 'div' ? t.milestoneDivSubtitle : t.milestoneMultSubtitle}
-            </div>
+            <div className="recap-milestone-title">{milestone.title}</div>
+            <div className="recap-milestone-subtitle">{milestone.subtitle}</div>
           </div>
         </div>
       )}
@@ -158,12 +171,18 @@ export default function RecapScreen({
       {newlyCompletedTables.length > 0 && (
         <div className="recap-card recap-table-complete">
           <div className="recap-table-complete-title">
-            {mode === 'div'
-              ? t.tableCompleteDivTitle(newlyCompletedTables)
-              : t.tableCompleteMultTitle(newlyCompletedTables)}
+            {mode === 'rem'
+              ? t.tableCompleteRemTitle(newlyCompletedTables)
+              : mode === 'div'
+                ? t.tableCompleteDivTitle(newlyCompletedTables)
+                : t.tableCompleteMultTitle(newlyCompletedTables)}
           </div>
           <div className="recap-table-complete-subtitle">
-            {mode === 'div' ? t.tableCompleteDivSubtitle : t.tableCompleteMultSubtitle}
+            {mode === 'rem'
+              ? t.tableCompleteRemSubtitle
+              : mode === 'div'
+                ? t.tableCompleteDivSubtitle
+                : t.tableCompleteMultSubtitle}
           </div>
         </div>
       )}
