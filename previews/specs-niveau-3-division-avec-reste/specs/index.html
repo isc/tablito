@@ -703,7 +703,7 @@ interface Badge {
       <tr><td>Flamme éternelle</td><td>30 jours consécutifs</td><td>🌟</td></tr>
     </tbody>
   </table>
-  <p>Le <strong>niveau 2</strong> (§11) ajoute un jeu de badges symétrique pour la division (Première division maîtrisée, Divisions par N, Maître de la division), <strong>masqué</strong> tant que le niveau n'est pas débloqué — détaillé en §11.5. Le <strong>niveau 3</strong> (§12, spécifié non implémenté) prévoit le même principe pour la division avec reste — détaillé en §12.6.</p>
+  <p>Le <strong>niveau 2</strong> (§11) ajoute un jeu de badges symétrique pour la division (Première division maîtrisée, Divisions par N, Maître de la division), <strong>masqué</strong> tant que le niveau n'est pas débloqué — détaillé en §11.5. Le <strong>niveau 3</strong> (§12) ajoute de même son propre jeu pour la division avec reste — détaillé en §12.6.</p>
   <p>Les deux badges <em>Première case révélée</em> et <em>Première multiplication maîtrisée</em> jalonnent la zone intermédiaire, entre les badges du tout début (Premier pas, Machine, Exploration) et la maîtrise complète d'une table : ils se déclenchent au moment précis où l'image mystère §5.1 change visiblement de finesse pour la 1ère fois.</p>
   <p>Sur l'écran <em>Badges</em>, <strong>chaque vignette est cliquable</strong> et ouvre une modale qui explicite le badge :</p>
   <ul>
@@ -898,7 +898,7 @@ interface Badge {
     <li>Pas de collecte de données personnelles</li>
   </ul>
   <blockquote class="note">
-    <p><strong>Division :</strong> exclue du cœur v1 (focus unique sur la mémorisation des tables), elle n'est plus écartée sur le principe — elle est spécifiée comme <strong>niveau 2 optionnel</strong> (§11) : un track séparé qui révise les mêmes faits sous forme de division, déclenché uniquement après maîtrise multiplicative. Un enfant qui travaille encore ses tables ne le voit pas, donc le focus unique de la v1 est préservé. Le <strong>niveau 3</strong> (§12, spécifié non implémenté) prolonge la même logique vers la division avec reste, après maîtrise des divisions exactes.</p>
+    <p><strong>Division :</strong> exclue du cœur v1 (focus unique sur la mémorisation des tables), elle n'est plus écartée sur le principe — elle est spécifiée comme <strong>niveau 2 optionnel</strong> (§11) : un track séparé qui révise les mêmes faits sous forme de division, déclenché uniquement après maîtrise multiplicative. Un enfant qui travaille encore ses tables ne le voit pas, donc le focus unique de la v1 est préservé. Le <strong>niveau 3</strong> (§12) prolonge la même logique vers la division avec reste, après maîtrise des divisions exactes.</p>
   </blockquote>
 </section>
 
@@ -989,7 +989,7 @@ interface Badge {
   <h2><span class="num">12</span>Niveau 3 — La division avec reste</h2>
   <p>Le niveau 2 (§11) s'arrête aux divisions <strong>exactes</strong> : 64 faits dont le quotient tombe toujours juste. L'attendu scolaire — et l'usage réel des tables pour les années qui suivent — est plus large : <strong>trouver le quotient et le reste</strong> quand le dividende ne tombe pas juste (« 45 ÷ 7 = 6, reste 3 »). Le <strong>niveau 3</strong> prolonge le parcours par ce geste, l'<strong>encadrement par les multiples</strong>. Comme le niveau 2, il ne rouvre aucun chantier : il re-mobilise le même réseau multiplicatif par une <strong>troisième porte d'entrée</strong> — pour répondre à 45 ÷ 7, l'enfant récupère le fait de table immédiatement inférieur (7 × 6 = 42), puis compte l'écart. La progression se lit ainsi : niveau 1 « je connais mes tables », niveau 2 « je les traverse dans l'autre sens », niveau 3 « je m'en sers quand ça ne tombe pas juste ».</p>
   <blockquote class="note">
-    <p><strong>Statut.</strong> Chapitre spécifié, <strong>non implémenté</strong>. Comme le niveau 2, le niveau 3 est invisible tant qu'il n'est pas débloqué : un enfant qui travaille encore ses tables ou ses divisions exactes n'en voit rien — le focus des niveaux précédents est préservé.</p>
+    <p><strong>Statut.</strong> Comme le niveau 2, le niveau 3 est invisible tant qu'il n'est pas débloqué : un enfant qui travaille encore ses tables ou ses divisions exactes n'en voit rien — le focus des niveaux précédents est préservé.</p>
   </blockquote>
 
   <h3 id="reste-pourquoi"><span class="num">12.1</span>Pourquoi ce niveau, et pourquoi à ce moment</h3>
@@ -1001,7 +1001,7 @@ interface Badge {
   <p>L'unité de maîtrise n'est plus un fait isolé mais une <strong>zone</strong> : la case <code>(d, q)</code> — diviseur d, quotient q, tous deux de 2 à 9 — couvre les dividendes compris entre d×q inclus et d×(q+1) exclu. La case (7, 6) couvre ainsi les dividendes 42 à 48 divisés par 7 ; la case (7, 7) prend le relais à 49. Pour un diviseur donné, les zones partitionnent l'intervalle des dividendes sans chevauchement.</p>
   <ul>
     <li><strong>64 cases</strong> (8 diviseurs × 8 quotients), <strong>non commutatives</strong> comme au niveau 2 : (7, 6) porte « 42-48 ÷ 7 », (6, 7) porte « 42-47 ÷ 6 » — deux questions distinctes.</li>
-    <li><strong>Le reste est tiré au sort à chaque présentation</strong> : r uniforme dans 0..d−1, dividende = d×q + r. Le cas r = 0 (probabilité 1/d) garde vivante la discrimination « est-ce que ça tombe juste ? » — sans lui, l'enfant apprendrait le méta-pattern « il y a toujours un reste » — et entretient au passage les divisions exactes du niveau 2.</li>
+    <li><strong>Le reste est tiré au sort à chaque révision</strong> : r uniforme dans 0..d−1, dividende = d×q + r. Le cas r = 0 (probabilité 1/d) garde vivante la discrimination « est-ce que ça tombe juste ? » — sans lui, l'enfant apprendrait le méta-pattern « il y a toujours un reste » — et entretient au passage les divisions exactes du niveau 2. Seule exception : l'<strong>écran d'introduction</strong> d'une zone utilise un reste <strong>canonique</strong> déterministe (max(1, ⌊d/2⌋), ex : 45 ÷ 7 pour la zone (7,6)) — non nul pour montrer le concept, et fixe pour que l'audio pré-généré colle aux nombres affichés.</li>
     <li><strong>Les réponses restent à un chiffre</strong> : quotient de 2 à 9, reste de 0 à 8. Comme au niveau 2, la saisie est plus simple qu'en multiplication — jamais de nombre à deux chiffres à taper.</li>
     <li>Les divisions par 1 et par 10 restent des <strong>règles</strong> (§2.3, §11.2), jamais mémorisées ; le reste d'une division par 10 se lit directement au chiffre des unités (glisse-nombre inversé).</li>
   </ul>
@@ -1033,7 +1033,7 @@ interface Badge {
 
   <h3 id="reste-image"><span class="num">12.6</span>Image mystère et badges</h3>
   <p>Une <strong>troisième image mystère</strong> propre au niveau, sur la même grille 8×8 : la case (d, q) de l'image porte la zone (d, q), en bijection parfaite — 64 maîtrises indépendantes, sans symétrie miroir (non-commutativité, comme en §11.5). Les images des niveaux 1 et 2 restent affichées, complètes, en témoins des réussites passées ; le sélecteur de l'écran « Mes images » gagne une troisième entrée, ouvert par défaut sur l'image du niveau actif.</p>
-  <p><strong>Badges</strong>, masqués tant que le niveau n'est pas débloqué (même logique de révélation différée qu'aux §2.3 et §11.5) : <em>Premier reste maîtrisé</em> (🥉, première case en boîte 5), huit badges <em>Division avec reste par N</em> (🧮, n = diviseur 2..9, les 8 cases du diviseur en boîte 4+) et <em>Grand maître de la division</em> (👑, les 64 cases en boîte 5).</p>
+  <p><strong>Badges</strong>, masqués tant que le niveau n'est pas débloqué (même logique de révélation différée qu'aux §2.3 et §11.5) : <em>Premier reste maîtrisé</em> (🥉, première case en boîte 5), huit badges <em>Division avec reste par N</em> (glyphe « ÷Nʳ », n = diviseur 2..9, les 8 cases du diviseur en boîte 4+ — même famille visuelle que les médaillons ×N / ÷N) et <em>Grand maître de la division</em> (👑, les 64 cases en boîte 5).</p>
   <p><strong>Tableau de bord parent :</strong> le sélecteur Multiplications / Divisions (§5.2) gagne une troisième position « Divisions avec reste » (histogramme par boîte + grille Leitner, ouvert par défaut sur le niveau actif), la vue d'ensemble une carte « Zones maîtrisées », et la liste unifiée des faits les plus difficiles intègre la nouvelle opération avec son marqueur (« 45 ÷ 7 » affiché avec la mention <em>reste</em>).</p>
 
   <h3 id="reste-algo"><span class="num">12.7</span>Adaptations de l'algorithme</h3>

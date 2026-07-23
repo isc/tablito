@@ -470,6 +470,17 @@
   }
 }
 
+/* Niveau 3 — rangée du reste : les points qui « ne rentrent pas » dans les
+   rangées pleines (specs §12.4). Mis à part visuellement (coral, détachés de
+   la grille par un léger espace) pour matérialiser l'écart. */
+.dot-grid-row--rest {
+  margin-top: calc(var(--dot-gap, 10px) * 1.5);
+}
+
+.dot--rest {
+  background: var(--coral);
+}
+
 /* ===== components/ErrorBoundary.css ===== */
 .error-boundary {
   min-height: 100vh;
@@ -3310,6 +3321,10 @@ input, select, textarea {
   color: var(--honey-ink);
 }
 
+.parent-hard-fact-kind--rem {
+  background: var(--coral);
+}
+
 /* ===== screens/PrivacyScreen.css ===== */
 .privacy-screen {
   min-height: 100vh;
@@ -3760,6 +3775,11 @@ input, select, textarea {
 .recap-milestone--div {
   background: var(--honey-soft);
   border-color: var(--honey);
+}
+
+.recap-milestone--rem {
+  background: var(--sage-soft);
+  border-color: var(--sage);
 }
 
 .recap-milestone-icon {
@@ -4712,6 +4732,29 @@ input, select, textarea {
 .session-input-switch:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Niveau 3 — libellé de l'étape de saisie (« Combien de fois ? » puis
+   « Il reste combien ? », specs §12.5). */
+.session-rem-step {
+  margin-top: 8px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* « reste » intercalé dans la formule (« 45 ÷ 7 = 6, reste ? »). */
+.formula-remainder {
+  margin: 0 0.2em 0 0.15em;
+  font-size: 0.45em;
+  font-weight: 700;
+  color: var(--coral);
+}
+.formula-remainder::before {
+  content: ', ';
+  color: var(--ink);
 }
 
 /* ===== screens/WelcomeScreen.css ===== */

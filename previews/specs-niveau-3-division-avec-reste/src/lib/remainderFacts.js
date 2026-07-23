@@ -1,0 +1,3 @@
+import{getDivisionFactKey as t}from"./divisionFacts.js";function o(e,r){return`${e}r${r}`}function u(){const e=[];for(let r=2;r<=9;r++)for(let n=2;n<=9;n++)e.push({divisor:r,quotient:n,box:1,lastSeen:"",nextDue:"",history:[],introduced:!1});return e}function a(e){return t(e.divisor*e.quotient,e.divisor)}function m(e){const r=e.divisor*e.quotient;return[r,r+e.divisor-1]}function d(e){return Math.max(1,Math.floor(e/2))}function s(e){return Math.floor(Math.random()*e)}export{u as createInitialRemainderFacts,s as drawRemainder,o as getRemainderFactKey,d as introRemainder,a as parentDivisionKey,m as remainderZoneBounds};
+
+//# sourceMappingURL=remainderFacts.js.map

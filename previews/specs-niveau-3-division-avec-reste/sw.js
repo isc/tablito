@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260723203613"
+const CACHE = 'tablito-' + "20260723211653"
 const BASE = "/previews/specs-niveau-3-division-avec-reste/"
 const ASSETS = [
   "/previews/specs-niveau-3-division-avec-reste/CNAME",
@@ -61,6 +61,10 @@ const ASSETS = [
   "/previews/specs-niveau-3-division-avec-reste/src/__tests__/parseFrenchNumber.test.js",
   "/previews/specs-niveau-3-division-avec-reste/src/__tests__/placement.test.js",
   "/previews/specs-niveau-3-division-avec-reste/src/__tests__/recapCelebrations.test.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/__tests__/remainderBadges.test.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/__tests__/remainderComposer.test.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/__tests__/remainderDaily.test.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/__tests__/remainderJourney.test.js",
   "/previews/specs-niveau-3-division-avec-reste/src/__tests__/sessionComposer.test.js",
   "/previews/specs-niveau-3-division-avec-reste/src/__tests__/setup.js",
   "/previews/specs-niveau-3-division-avec-reste/src/__tests__/strategies.test.js",
@@ -94,6 +98,9 @@ const ASSETS = [
   "/previews/specs-niveau-3-division-avec-reste/src/components/NumPad.js",
   "/previews/specs-niveau-3-division-avec-reste/src/components/ParentGate.js",
   "/previews/specs-niveau-3-division-avec-reste/src/components/ProgressGrid.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/components/RemainderMysteryImage.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/components/RemainderProgressGrid.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/components/RemainderStrategyHint.js",
   "/previews/specs-niveau-3-division-avec-reste/src/components/StrategyHint.js",
   "/previews/specs-niveau-3-division-avec-reste/src/components/StrategyHintShell.js",
   "/previews/specs-niveau-3-division-avec-reste/src/components/StreakDetailModal.js",
@@ -142,7 +149,11 @@ const ASSETS = [
   "/previews/specs-niveau-3-division-avec-reste/src/lib/parseSpokenNumber.js",
   "/previews/specs-niveau-3-division-avec-reste/src/lib/placement.js",
   "/previews/specs-niveau-3-division-avec-reste/src/lib/push.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/lib/remainderComposer.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/lib/remainderFacts.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/lib/remainderStrategies.js",
   "/previews/specs-niveau-3-division-avec-reste/src/lib/sessionComposer.js",
+  "/previews/specs-niveau-3-division-avec-reste/src/lib/sessionItemView.js",
   "/previews/specs-niveau-3-division-avec-reste/src/lib/similarity.js",
   "/previews/specs-niveau-3-division-avec-reste/src/lib/spokenNumber.js",
   "/previews/specs-niveau-3-division-avec-reste/src/lib/storage.js",
