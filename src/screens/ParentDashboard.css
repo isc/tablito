@@ -461,3 +461,7 @@
   background: var(--honey);
   color: var(--honey-ink);
 }
+
+.parent-hard-fact-kind--rem {
+  background: var(--coral);
+}

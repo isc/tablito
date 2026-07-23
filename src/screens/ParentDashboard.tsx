@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
-import { isDivisionUnlocked } from '../lib/badges';
+import { isDivisionUnlocked, isRemainderUnlocked, activeLevel } from '../lib/badges';
 import { countMastered } from '../lib/leitner';
 import { getHardestFacts } from '../lib/hardestFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 import ProgressGrid from '../components/ProgressGrid';
 import DivisionProgressGrid from '../components/DivisionProgressGrid';
+import RemainderProgressGrid from '../components/RemainderProgressGrid';
 import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
 import EvolutionChart from '../components/EvolutionChart';
@@ -73,13 +74,14 @@ export default function ParentDashboard({
   const guideBase = `${import.meta.env.BASE_URL}guide/${lang === 'fr' ? '' : `${lang}/`}`;
 
   const divisionUnlocked = useMemo(() => isDivisionUnlocked(profile), [profile]);
+  const remainderUnlocked = useMemo(() => isRemainderUnlocked(profile), [profile]);
   const divisionFacts = useMemo(() => profile.divisionFacts ?? [], [profile.divisionFacts]);
-  // Onglet par défaut : la division dès qu'elle est débloquée — c'est l'activité
-  // d'apprentissage active (les tables sont déjà en boîte 5 par hypothèse, et
-  // surtout l'objet de l'attention du parent au quotidien).
-  const [gridView, setGridView] = useState<'mult' | 'div'>(
-    divisionUnlocked ? 'div' : 'mult',
-  );
+  const remainderFacts = useMemo(() => profile.remainderFacts ?? [], [profile.remainderFacts]);
+  // Onglet par défaut : le niveau actif — c'est l'activité d'apprentissage en
+  // cours (les niveaux passés sont déjà en boîte 5 par hypothèse, et surtout
+  // l'objet de l'attention du parent au quotidien).
+  const [gridView, setGridView] = useState<'mult' | 'div' | 'rem'>(() => activeLevel(profile));
+  const showRem = remainderUnlocked && gridView === 'rem';
   const showDiv = divisionUnlocked && gridView === 'div';
 
   const handleShare = async () => {
@@ -131,16 +133,52 @@ export default function ParentDashboard({
     };
   }, [transferLink]);
 
-  // Histogramme de l'opération sélectionnée par le parent (× / ÷).
+  // Descripteur de l'opération sélectionnée par le parent (× / ÷ / reste) —
+  // un seul point de vérité pour toutes les sections pilotées par le
+  // sélecteur (compteur de maîtrise, répartition par boîte, grille Leitner).
+  const activeView = showRem
+    ? {
+        facts: remainderFacts,
+        mastered: `${countMastered(remainderFacts)}/${remainderFacts.length}`,
+        masteredLabel: t.remaindersMastered,
+        opPlural: t.opRemaindersPlural,
+        opSingular: t.opRemainder,
+        grid: <RemainderProgressGrid facts={remainderFacts} />,
+      }
+    : showDiv
+      ? {
+          facts: divisionFacts,
+          mastered: `${countMastered(divisionFacts)}/${divisionFacts.length}`,
+          masteredLabel: t.divisionsMastered,
+          opPlural: t.opDivisionsPlural,
+          opSingular: t.opDivision,
+          grid: <DivisionProgressGrid facts={divisionFacts} />,
+        }
+      : {
+          facts: profile.facts,
+          mastered: `${countMastered(profile.facts)}/${profile.facts.length}`,
+          masteredLabel: t.multiplicationsMastered,
+          opPlural: t.opMultiplicationsPlural,
+          opSingular: t.opMultiplication,
+          grid: <ProgressGrid facts={profile.facts} />,
+        };
+
+  // Onglets du sélecteur — même pattern que « Mes images » (ProgressScreen).
+  const opTabs: Array<{ key: 'mult' | 'div' | 'rem'; label: string }> = [
+    { key: 'mult', label: t.multiplications },
+    { key: 'div', label: t.divisions },
+    ...(remainderUnlocked ? [{ key: 'rem' as const, label: t.remainders }] : []),
+  ];
+
+  // Histogramme de l'opération sélectionnée.
   const { boxCounts, maxBoxCount } = useMemo(() => {
     const counts = [0, 0, 0, 0, 0, 0];
-    const histoFacts = showDiv ? divisionFacts : profile.facts;
-    for (const fact of histoFacts) {
+    for (const fact of activeView.facts) {
       if (!fact.introduced) counts[0]++;
       else counts[fact.box]++;
     }
     return { boxCounts: counts, maxBoxCount: Math.max(...counts, 1) };
-  }, [profile.facts, divisionFacts, showDiv]);
+  }, [activeView.facts]);
 
   // Liste UNIFIÉE × + ÷ — indépendante du sélecteur (mélange les deux opérations
   // pour montrer où l'enfant bute en ce moment, cf. lib/hardestFacts).
@@ -178,7 +216,6 @@ export default function ParentDashboard({
   // Compteurs de maîtrise (× et ÷) au même format — réutilisés par la carte
   // « Faits maîtrisés » (avant déblocage) et la carte de maîtrise (après).
   const multMastered = `${countMastered(profile.facts)}/${profile.facts.length}`;
-  const divMastered = `${countMastered(divisionFacts)}/${divisionFacts.length}`;
 
   const boxColors = [
     'var(--box-gray)', 'var(--box-red)', 'var(--box-orange)',
@@ -241,20 +278,16 @@ export default function ParentDashboard({
       {divisionUnlocked && (
         <>
           <div className="progress-tabs parent-op-tabs" role="tablist" aria-label={t.operation}>
-            <button
-              type="button"
-              className={`progress-tab ${!showDiv ? 'active' : ''}`}
-              onClick={() => setGridView('mult')}
-            >
-              {t.multiplications}
-            </button>
-            <button
-              type="button"
-              className={`progress-tab ${showDiv ? 'active' : ''}`}
-              onClick={() => setGridView('div')}
-            >
-              {t.divisions}
-            </button>
+            {opTabs.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                className={`progress-tab ${gridView === key ? 'active' : ''}`}
+                onClick={() => setGridView(key)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {/* Compteur de maîtrise de l'opération sélectionnée — sorti de la
@@ -262,12 +295,8 @@ export default function ParentDashboard({
               sélecteur, au même titre que la Répartition et la Grille. */}
           <div className="parent-section">
             <div className="parent-stat-card parent-mastery-card">
-              <div className="parent-stat-value">
-                {showDiv ? divMastered : multMastered}
-              </div>
-              <div className="parent-stat-label">
-                {showDiv ? t.divisionsMastered : t.multiplicationsMastered}
-              </div>
+              <div className="parent-stat-value">{activeView.mastered}</div>
+              <div className="parent-stat-label">{activeView.masteredLabel}</div>
             </div>
           </div>
         </>
@@ -288,7 +317,7 @@ export default function ParentDashboard({
           </a>
         </h3>
         <p className="parent-section-subtitle">
-          {t.boxDistributionSubtitle(showDiv ? t.opDivisionsPlural : t.opMultiplicationsPlural)}
+          {t.boxDistributionSubtitle(activeView.opPlural)}
         </p>
         <div className="parent-histogram">
           {boxCounts.map((count, i) => (
@@ -323,13 +352,9 @@ export default function ParentDashboard({
           </a>
         </h3>
         <p className="parent-section-subtitle">
-          {t.leitnerGridSubtitle(showDiv ? t.opDivision : t.opMultiplication)}
+          {t.leitnerGridSubtitle(activeView.opSingular)}
         </p>
-        {showDiv ? (
-          <DivisionProgressGrid facts={divisionFacts} />
-        ) : (
-          <ProgressGrid facts={profile.facts} />
-        )}
+        {activeView.grid}
       </div>
 
       {/* Evolution: accuracy + response time */}
@@ -372,14 +397,26 @@ export default function ParentDashboard({
               <div key={`${f.kind}-${f.key}`} className="parent-hard-fact">
                 <span
                   className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`}
-                  aria-label={f.kind === 'div' ? t.factDivision : t.factMultiplication}
+                  aria-label={
+                    f.kind === 'rem'
+                      ? t.factRemainder
+                      : f.kind === 'div'
+                        ? t.factDivision
+                        : t.factMultiplication
+                  }
                 >
-                  {f.kind === 'div' ? t.divSymbol : t.multSymbol}
+                  {f.kind === 'rem' ? t.remSymbol : f.kind === 'div' ? t.divSymbol : t.multSymbol}
                 </span>
                 <span className="parent-hard-fact-name">
-                  {f.kind === 'div'
-                    ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
-                    : t.formatMultFact(f.a, f.b, f.product)}
+                  {f.kind === 'rem'
+                    ? t.formatRemFact(
+                        f.divisor * f.quotient,
+                        f.divisor * f.quotient + f.divisor - 1,
+                        f.divisor,
+                      )
+                    : f.kind === 'div'
+                      ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
+                      : t.formatMultFact(f.a, f.b, f.product)}
                 </span>
                 <span className="parent-hard-fact-errors">
                   {t.errors(f.errorCount)} | {t.boxLabel(f.box)}

@@ -146,6 +146,44 @@ export function getDivisionStrategyText(): DivisionStrategyText {
   return pickStrings(divisionStrategyText);
 }
 
+// === Niveau 3 : « cherche le multiple juste en dessous » (specs §12.4) ===
+interface RemainderStrategyText {
+  title: string;
+  intro: (dividend: number, divisor: number) => string;
+  // Égalité euclidienne en conclusion — la forme que l'enfant retrouvera en
+  // CM1 : « 45 = 7 × 6 + 3. Donc 45 ÷ 7 = 6, reste 3. »
+  conclusion: (dividend: number, divisor: number, quotient: number, remainder: number) => string;
+}
+
+const remainderFr: RemainderStrategyText = {
+  title: 'Cherche le multiple juste en dessous',
+  intro: (dividend, divisor) =>
+    `${dividend} ÷ ${divisor}, c'est : ${divisor} fois combien font presque ${dividend}, sans dépasser ?`,
+  conclusion: (dividend, divisor, quotient, remainder) =>
+    remainder === 0
+      ? `${dividend} = ${divisor} × ${quotient} tout juste. Donc ${dividend} ÷ ${divisor} = ${quotient}, ça tombe juste !`
+      : `${dividend} = ${divisor} × ${quotient} + ${remainder}. Donc ${dividend} ÷ ${divisor} = ${quotient}, reste ${remainder}.`,
+};
+
+const remainderEn: RemainderStrategyText = {
+  title: 'Find the multiple just below',
+  intro: (dividend, divisor) =>
+    `${dividend} ÷ ${divisor} means: ${divisor} times what makes almost ${dividend}, without going over?`,
+  conclusion: (dividend, divisor, quotient, remainder) =>
+    remainder === 0
+      ? `${dividend} = ${divisor} × ${quotient} exactly. So ${dividend} ÷ ${divisor} = ${quotient}, no remainder!`
+      : `${dividend} = ${divisor} × ${quotient} + ${remainder}. So ${dividend} ÷ ${divisor} = ${quotient}, remainder ${remainder}.`,
+};
+
+const remainderStrategyText: Record<Lang, RemainderStrategyText> = {
+  fr: remainderFr,
+  en: remainderEn,
+};
+
+export function getRemainderStrategyText(): RemainderStrategyText {
+  return pickStrings(remainderStrategyText);
+}
+
 // === Strings d'UI des cartes d'astuce (StrategyHint / DivisionStrategyHint) ===
 interface StrategyHintStrings {
   eyebrowMult: (label: string) => string;

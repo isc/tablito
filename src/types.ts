@@ -37,6 +37,23 @@ export interface DivisionFact {
   introduced: boolean;
 }
 
+// === Niveau 3 — division avec reste (cf. specs §12) ===
+// L'unité de maîtrise n'est pas un énoncé figé mais une ZONE : la case
+// (divisor, quotient) couvre les dividendes de divisor×quotient inclus à
+// divisor×(quotient+1) exclu. Le reste est tiré au sort à chaque présentation
+// (specs §12.2) — il vit sur la question (RemainderSessionQuestion), jamais
+// ici : l'état Leitner est porté par la zone, quel que soit le reste tiré.
+// 64 zones, non commutatives comme la division ((7,6) ≠ (6,7)).
+export interface RemainderFact {
+  divisor: number;    // diviseur (2-9)
+  quotient: number;   // quotient attendu (2-9) ; dividende de base = divisor × quotient
+  box: 1 | 2 | 3 | 4 | 5;
+  lastSeen: string;    // ISO date
+  nextDue: string;     // ISO date
+  history: Attempt[];
+  introduced: boolean;
+}
+
 export interface Badge {
   // Un badge persisté ne porte que sa clé de progression (`id`), sa date et son
   // `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par
@@ -84,6 +101,11 @@ export interface UserProfile {
   // `mysteryTheme` pour ne jamais re-flouter l'image multiplication conquise.
   divisionMysteryTheme?: MysteryTheme;
   hasSeenDivisionIntro?: boolean;
+  // === Niveau 3 — division avec reste (cf. specs §12). Optionnels : absents
+  // des profils antérieurs, backfillés par migrateProfile au chargement. ===
+  remainderFacts?: RemainderFact[];
+  // Image mystère dédiée au niveau 3 (specs §12.6), distincte des deux autres.
+  remainderMysteryTheme?: MysteryTheme;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -123,6 +145,14 @@ export const DIVISION_FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
   voice: 4000,
 };
 
+// Niveau 3 — division avec reste : deux saisies (quotient puis reste) et un
+// geste en deux temps (encadrement puis écart), mesurés de l'affichage de la
+// question à la validation du reste (specs §12.7). +2 s sur le seuil division.
+export const REMAINDER_FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
+  keypad: 8000,
+  voice: 6000,
+};
+
 export interface SessionQuestion {
   fact: MultiFact;
   displayA: number;  // peut être inversé pour varier a×b / b×a
@@ -142,13 +172,31 @@ export interface DivisionSessionQuestion {
   isBonusReview: boolean;
 }
 
-// Élément d'une séance mixte (specs §11.6) : après déblocage, la séance du
-// jour est principalement de la division mais peut intégrer des révisions
-// d'entretien des tables (× et ÷ entrelacés). Le discriminant `kind` permet à
-// l'écran de séance de rendre chaque question selon son type.
+// Question de division avec reste (niveau 3, specs §12). Le reste est tiré au
+// sort à la composition de la séance : le dividende affiché vaut
+// divisor × quotient + remainder. Deux réponses attendues (quotient puis reste).
+export interface RemainderSessionQuestion {
+  fact: RemainderFact;
+  remainder: number;  // 0..divisor-1 ; 0 garde vivante la discrimination « ça tombe juste »
+  isIntroduction: boolean;
+  isRetry: boolean;
+  isBonusReview: boolean;
+}
+
+/** Dividende affiché d'une question de division avec reste. */
+export function remainderDividend(q: Pick<RemainderSessionQuestion, 'fact' | 'remainder'>): number {
+  return q.fact.divisor * q.fact.quotient + q.remainder;
+}
+
+// Élément d'une séance mixte (specs §11.6, §12.3) : après déblocage, la séance
+// du jour est le niveau actif (division, puis division avec reste) mais peut
+// intégrer des révisions d'entretien des niveaux précédents, entrelacées. Le
+// discriminant `kind` permet à l'écran de séance de rendre chaque question
+// selon son type.
 export type SessionItem =
   | ({ kind: 'mult' } & SessionQuestion)
-  | ({ kind: 'div' } & DivisionSessionQuestion);
+  | ({ kind: 'div' } & DivisionSessionQuestion)
+  | ({ kind: 'rem' } & RemainderSessionQuestion);
 
 // Log par question pour les séances enregistrées depuis l'ajout du champ.
 // Permet de diagnostiquer vitesse et mode après coup, y compris pour les
@@ -160,14 +208,20 @@ export interface SessionQuestionLog {
   // 'mult'. Indispensable pour ne pas confondre une division avec une
   // multiplication dans le feedback : pour 'div', `a`/`b` portent diviseur et
   // quotient (le dividende = a × b), sinon `56 ÷ 7` serait illisible comme
-  // `{a:7, b:8}`, identique à `7 × 8`.
-  kind?: 'mult' | 'div';
-  // 'mult' : opérandes (canoniques). 'div' : a = diviseur, b = quotient.
+  // `{a:7, b:8}`, identique à `7 × 8`. Pour 'rem', a = diviseur, b = quotient
+  // (la zone), et `remainder` porte le reste tiré pour cette présentation.
+  kind?: 'mult' | 'div' | 'rem';
+  // 'mult' : opérandes (canoniques). 'div'/'rem' : a = diviseur, b = quotient.
   a: number;
   b: number;
   correct: boolean;
   responseTimeMs: number;
   answeredWith: number | null;
+  // Niveau 3 uniquement : reste tiré pour la question, et reste répondu (null
+  // si la question s'est arrêtée à un quotient faux). `answeredWith` porte le
+  // quotient répondu.
+  remainder?: number;
+  answeredRemainder?: number | null;
   isBonusReview: boolean;
   inputMode: 'keypad' | 'voice';
   // « Étoile dorée » : correct ET sous le seuil de rapidité du type de question
@@ -213,4 +267,9 @@ export const BADGE_IDS = {
   DIV_PREMIERE_MAITRISE: 'div-premiere-maitrise',
   DIV_TABLE_PREFIX: 'div-table-',
   DIV_GENIE: 'div-genie',
+  // Niveau 3 — division avec reste (cf. specs §12). Masqués tant que le niveau
+  // n'est pas débloqué (cf. isRemainderUnlocked / visibleBadgeDefinitions).
+  REM_PREMIERE_MAITRISE: 'rem-premiere-maitrise',
+  REM_TABLE_PREFIX: 'rem-table-',
+  REM_GENIE: 'rem-genie',
 } as const;

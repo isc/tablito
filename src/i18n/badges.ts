@@ -36,6 +36,9 @@ export interface BadgeI18n {
   divPremiereMaitrise: BadgeText;
   divTable: (n: number) => BadgeText;
   divGenie: BadgeText;
+  remPremiereMaitrise: BadgeText;
+  remTable: (n: number) => BadgeText;
+  remGenie: BadgeText;
   units: BadgeUnitLabels;
 }
 
@@ -113,6 +116,21 @@ const fr: BadgeI18n = {
     name: 'Maître de la division',
     description: 'Toutes les divisions en boîte 5',
     conditionText: 'Place toutes les divisions dans la boîte 5 (le top niveau !).',
+  },
+  remPremiereMaitrise: {
+    name: 'Premier reste maîtrisé',
+    description: 'Une division avec reste au top niveau',
+    conditionText: 'Place ta toute première division avec reste en boîte 5.',
+  },
+  remTable: (n) => ({
+    name: `Division avec reste par ${n}`,
+    description: `Maîtriser les divisions avec reste par ${n}`,
+    conditionText: `Place toutes les divisions avec reste par ${n} dans la boîte 4 ou 5.`,
+  }),
+  remGenie: {
+    name: 'Grand maître de la division',
+    description: 'Toutes les divisions avec reste en boîte 5',
+    conditionText: 'Place toutes les divisions avec reste dans la boîte 5 (le top niveau !).',
   },
   units: {
     session: 'séance',
@@ -197,6 +215,21 @@ const en: BadgeI18n = {
     name: 'Division master',
     description: 'Every division in box 5',
     conditionText: 'Move every division to box 5 (the top level!).',
+  },
+  remPremiereMaitrise: {
+    name: 'First remainder mastered',
+    description: 'A division with remainder at the top level',
+    conditionText: 'Move your very first division with remainder to box 5.',
+  },
+  remTable: (n) => ({
+    name: `Remainders when dividing by ${n}`,
+    description: `Master dividing by ${n} with remainders`,
+    conditionText: `Move every division with remainder by ${n} to box 4 or 5.`,
+  }),
+  remGenie: {
+    name: 'Grand master of division',
+    description: 'Every division with remainder in box 5',
+    conditionText: 'Move every division with remainder to box 5 (the top level!).',
   },
   units: {
     session: 'session',

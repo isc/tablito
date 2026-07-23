@@ -19,8 +19,10 @@ interface ParentDashboardStrings {
   operation: string;
   multiplications: string;
   divisions: string;
+  remainders: string;
   divisionsMastered: string;
   multiplicationsMastered: string;
+  remaindersMastered: string;
   boxDistribution: string;
   learnMoreLeitner: string;
   boxDistributionSubtitle: (op: string) => string;
@@ -28,10 +30,13 @@ interface ParentDashboardStrings {
   leitnerGridSubtitle: (op: string) => string;
   opDivision: string;
   opMultiplication: string;
+  opRemainder: string;
   opDivisionsPlural: string;
   opMultiplicationsPlural: string;
+  opRemaindersPlural: string;
   factDivision: string;
   factMultiplication: string;
+  factRemainder: string;
   correctAnswerRate: string;
   averageResponseTime: string;
   hardestFacts: string;
@@ -71,8 +76,11 @@ interface ParentDashboardStrings {
   formatLongDate: (date: Date) => string;
   divSymbol: string;
   multSymbol: string;
+  remSymbol: string;
   formatDivFact: (dividend: number, divisor: number, quotient: number) => string;
   formatMultFact: (a: number, b: number, product: number) => string;
+  // Niveau 3 : une « zone » de dividendes (specs §12.6) — « 42-48 ÷ 7 ».
+  formatRemFact: (lo: number, hi: number, divisor: number) => string;
 }
 
 const parentDashboardFr: ParentDashboardStrings = {
@@ -87,8 +95,10 @@ const parentDashboardFr: ParentDashboardStrings = {
   operation: 'Opération',
   multiplications: 'Multiplications',
   divisions: 'Divisions',
+  remainders: 'Avec reste',
   divisionsMastered: 'Divisions maîtrisées',
   multiplicationsMastered: 'Multiplications maîtrisées',
+  remaindersMastered: 'Divisions avec reste maîtrisées',
   boxDistribution: 'Répartition par boîte',
   learnMoreLeitner: 'En savoir plus sur le système de Leitner',
   boxDistributionSubtitle: (op) =>
@@ -98,10 +108,13 @@ const parentDashboardFr: ParentDashboardStrings = {
     `Une case par ${op}, colorée selon sa boîte. Le rouge signale les faits récents ou en difficulté, le vert ceux bien ancrés.`,
   opDivision: 'division',
   opMultiplication: 'multiplication',
+  opRemainder: 'division avec reste',
   opDivisionsPlural: 'divisions',
   opMultiplicationsPlural: 'multiplications',
+  opRemaindersPlural: 'divisions avec reste',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
+  factRemainder: 'Division avec reste',
   correctAnswerRate: 'Taux de bonnes réponses',
   averageResponseTime: 'Temps de réponse moyen',
   hardestFacts: 'Faits les plus difficiles',
@@ -145,9 +158,11 @@ const parentDashboardFr: ParentDashboardStrings = {
     date.toLocaleDateString(localeFor('fr'), { weekday: 'short', day: 'numeric', month: 'long' }),
   divSymbol: '÷',
   multSymbol: '×',
+  remSymbol: '÷ʳ',
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
+  formatRemFact: (lo, hi, divisor) => `${lo}-${hi} ÷ ${divisor}`,
 };
 
 const parentDashboardEn: ParentDashboardStrings = {
@@ -162,8 +177,10 @@ const parentDashboardEn: ParentDashboardStrings = {
   operation: 'Operation',
   multiplications: 'Multiplication',
   divisions: 'Division',
+  remainders: 'Remainders',
   divisionsMastered: 'Division facts mastered',
   multiplicationsMastered: 'Multiplication facts mastered',
+  remaindersMastered: 'Remainder facts mastered',
   boxDistribution: 'Distribution by box',
   learnMoreLeitner: 'Learn more about the Leitner system',
   boxDistributionSubtitle: (op) =>
@@ -173,11 +190,14 @@ const parentDashboardEn: ParentDashboardStrings = {
     `One cell per ${op} fact, colored by its box. Red flags recent or tricky facts, green the well-learned ones.`,
   opDivision: 'division',
   opMultiplication: 'multiplication',
+  opRemainder: 'division-with-remainder',
   // En anglais « X facts » prend le singulier ; même mot que la grille Leitner.
   opDivisionsPlural: 'division',
   opMultiplicationsPlural: 'multiplication',
+  opRemaindersPlural: 'division-with-remainder',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
+  factRemainder: 'Division with remainder',
   correctAnswerRate: 'Correct answer rate',
   averageResponseTime: 'Average response time',
   hardestFacts: 'Hardest facts',
@@ -221,9 +241,11 @@ const parentDashboardEn: ParentDashboardStrings = {
     date.toLocaleDateString(localeFor('en'), { weekday: 'short', day: 'numeric', month: 'long' }),
   divSymbol: '÷',
   multSymbol: '×',
+  remSymbol: '÷ʳ',
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
+  formatRemFact: (lo, hi, divisor) => `${lo}-${hi} ÷ ${divisor}`,
 };
 
 export const parentDashboardStrings = {
