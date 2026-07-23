@@ -345,6 +345,7 @@
     <li><a href="#perimetre">Périmètre — ce que l'app ne fait PAS</a></li>
     <li><a href="#metriques">Métriques de succès</a></li>
     <li><a href="#division">Niveau 2 — Réviser par la division</a></li>
+    <li><a href="#reste">Niveau 3 — La division avec reste</a></li>
     <li><a href="#profils">Multi-profils — plusieurs enfants par appareil</a></li>
     <li><a href="#evolutions">Évolutions possibles (V2)</a></li>
     <li><a href="#references">Références</a></li>
@@ -702,7 +703,7 @@ interface Badge {
       <tr><td>Flamme éternelle</td><td>30 jours consécutifs</td><td>🌟</td></tr>
     </tbody>
   </table>
-  <p>Le <strong>niveau 2</strong> (§11) ajoute un jeu de badges symétrique pour la division (Première division maîtrisée, Divisions par N, Maître de la division), <strong>masqué</strong> tant que le niveau n'est pas débloqué — détaillé en §11.5.</p>
+  <p>Le <strong>niveau 2</strong> (§11) ajoute un jeu de badges symétrique pour la division (Première division maîtrisée, Divisions par N, Maître de la division), <strong>masqué</strong> tant que le niveau n'est pas débloqué — détaillé en §11.5. Le <strong>niveau 3</strong> (§12, spécifié non implémenté) prévoit le même principe pour la division avec reste — détaillé en §12.6.</p>
   <p>Les deux badges <em>Première case révélée</em> et <em>Première multiplication maîtrisée</em> jalonnent la zone intermédiaire, entre les badges du tout début (Premier pas, Machine, Exploration) et la maîtrise complète d'une table : ils se déclenchent au moment précis où l'image mystère §5.1 change visiblement de finesse pour la 1ère fois.</p>
   <p>Sur l'écran <em>Badges</em>, <strong>chaque vignette est cliquable</strong> et ouvre une modale qui explicite le badge :</p>
   <ul>
@@ -833,7 +834,7 @@ interface Badge {
   <table>
     <thead><tr><th>Écran</th><th>Contenu</th></tr></thead>
     <tbody>
-      <tr><td>Qui joue ?</td><td>Choix du joueur au lancement — visible uniquement dès 2 profils sur l'appareil (§12)</td></tr>
+      <tr><td>Qui joue ?</td><td>Choix du joueur au lancement — visible uniquement dès 2 profils sur l'appareil (§13)</td></tr>
       <tr><td>Accueil</td><td>Mascotte (animations d'idle), prénom, streak, bouton « C'est parti ! » (+ bouton « changer de joueur » en multi-profils)</td></tr>
       <tr><td>Séance — Intro</td><td>Grille de points animée pour un nouveau fait</td></tr>
       <tr><td>Séance — Question</td><td>Question en gros, pavé numérique, barre de progression</td></tr>
@@ -897,7 +898,7 @@ interface Badge {
     <li>Pas de collecte de données personnelles</li>
   </ul>
   <blockquote class="note">
-    <p><strong>Division :</strong> exclue du cœur v1 (focus unique sur la mémorisation des tables), elle n'est plus écartée sur le principe — elle est spécifiée comme <strong>niveau 2 optionnel</strong> (§11) : un track séparé qui révise les mêmes faits sous forme de division, déclenché uniquement après maîtrise multiplicative. Un enfant qui travaille encore ses tables ne le voit pas, donc le focus unique de la v1 est préservé.</p>
+    <p><strong>Division :</strong> exclue du cœur v1 (focus unique sur la mémorisation des tables), elle n'est plus écartée sur le principe — elle est spécifiée comme <strong>niveau 2 optionnel</strong> (§11) : un track séparé qui révise les mêmes faits sous forme de division, déclenché uniquement après maîtrise multiplicative. Un enfant qui travaille encore ses tables ne le voit pas, donc le focus unique de la v1 est préservé. Le <strong>niveau 3</strong> (§12, spécifié non implémenté) prolonge la même logique vers la division avec reste, après maîtrise des divisions exactes.</p>
   </blockquote>
 </section>
 
@@ -984,11 +985,74 @@ interface Badge {
   <p>Des interventions de fluence ciblant <em>directement</em> la division existent et fonctionnent (cover-copy-compare, taped problems, detect-practice-repair). En revanche, les bénéfices de la <strong>répétition espacée</strong> sont démontrés sur la multiplication et la rétention en général, mais <strong>pas directement sur les faits de division</strong> : les méta-analyses traitent la division au sein des « faits de base » sans isoler son effet, et l'opération s'avère être un modérateur significatif. Appliquer Leitner à la division est donc une <strong>généralisation plausible mais non directement prouvée</strong> — un pari raisonné, assumé comme tel, à surveiller si l'usage révélait un comportement différent de la multiplication.</p>
 </section>
 
+<section class="chapter" id="reste">
+  <h2><span class="num">12</span>Niveau 3 — La division avec reste</h2>
+  <p>Le niveau 2 (§11) s'arrête aux divisions <strong>exactes</strong> : 64 faits dont le quotient tombe toujours juste. L'attendu scolaire — et l'usage réel des tables pour les années qui suivent — est plus large : <strong>trouver le quotient et le reste</strong> quand le dividende ne tombe pas juste (« 45 ÷ 7 = 6, reste 3 »). Le <strong>niveau 3</strong> prolonge le parcours par ce geste, l'<strong>encadrement par les multiples</strong>. Comme le niveau 2, il ne rouvre aucun chantier : il re-mobilise le même réseau multiplicatif par une <strong>troisième porte d'entrée</strong> — pour répondre à 45 ÷ 7, l'enfant récupère le fait de table immédiatement inférieur (7 × 6 = 42), puis compte l'écart. La progression se lit ainsi : niveau 1 « je connais mes tables », niveau 2 « je les traverse dans l'autre sens », niveau 3 « je m'en sers quand ça ne tombe pas juste ».</p>
+  <blockquote class="note">
+    <p><strong>Statut.</strong> Chapitre spécifié, <strong>non implémenté</strong>. Comme le niveau 2, le niveau 3 est invisible tant qu'il n'est pas débloqué : un enfant qui travaille encore ses tables ou ses divisions exactes n'en voit rien — le focus des niveaux précédents est préservé.</p>
+  </blockquote>
+
+  <h3 id="reste-pourquoi"><span class="num">12.1</span>Pourquoi ce niveau, et pourquoi à ce moment</h3>
+  <p class="source"><strong>Sources :</strong> Programmes de l'Éducation nationale (attendus de fin de CE2 et programme de CM1) ; Common Core (4.OA.3) ; LeFevre &amp; Morris (1999) ; Campbell (1997) ; Robinson &amp; LeFevre (2012) ; Van de Walle</p>
+  <p><strong>Côté programme.</strong> Les attendus de fin de CE2 déjà cités en §11.3 demandent <em>à la fois</em> la connaissance des tables et « l'obtention du quotient et du reste d'une division euclidienne par un nombre à un chiffre » — le niveau 2 ne couvre que la moitié « exacte » de cet attendu. Le CM1 formalise ensuite la <strong>division posée</strong>, dont le geste mental central est précisément l'encadrement : « dans 45, combien de fois 7 ? ». Un enfant qui termine l'image des divisions (niveaux 1 + 2, soit typiquement 4 à 6 mois de parcours) entre en CM1 : le niveau 3 arrive à l'heure du programme, ni en avance ni en retard. Common Core suit le même séquencement — l'interprétation des restes apparaît au grade 4 (<a href="https://www.thecorestandards.org/Math/Content/4/OA/">4.OA.3</a>).</p>
+  <p><strong>Côté cognition.</strong> Le mécanisme est celui, déjà documenté, de la médiation par la multiplication (§11.1) : la division avec reste se résout en récupérant le multiple immédiatement inférieur dans la table, puis en complétant par un écart additif trivial (toujours &lt; 9). C'est du <em>retrieval practice</em> sur le réseau multiplicatif existant — pas un corpus neuf à mémoriser — avec en prime la compétence scolaire la plus rentable de l'année suivante : un enfant fluent sur l'encadrement aborde la technique opératoire de la division posée avec le seul morceau réellement difficile déjà automatisé.</p>
+
+  <h3 id="reste-inventaire"><span class="num">12.2</span>Inventaire : 64 zones entre multiples</h3>
+  <p>L'unité de maîtrise n'est plus un fait isolé mais une <strong>zone</strong> : la case <code>(d, q)</code> — diviseur d, quotient q, tous deux de 2 à 9 — couvre les dividendes compris entre d×q inclus et d×(q+1) exclu. La case (7, 6) couvre ainsi les dividendes 42 à 48 divisés par 7 ; la case (7, 7) prend le relais à 49. Pour un diviseur donné, les zones partitionnent l'intervalle des dividendes sans chevauchement.</p>
+  <ul>
+    <li><strong>64 cases</strong> (8 diviseurs × 8 quotients), <strong>non commutatives</strong> comme au niveau 2 : (7, 6) porte « 42-48 ÷ 7 », (6, 7) porte « 42-47 ÷ 6 » — deux questions distinctes.</li>
+    <li><strong>Le reste est tiré au sort à chaque présentation</strong> : r uniforme dans 0..d−1, dividende = d×q + r. Le cas r = 0 (probabilité 1/d) garde vivante la discrimination « est-ce que ça tombe juste ? » — sans lui, l'enfant apprendrait le méta-pattern « il y a toujours un reste » — et entretient au passage les divisions exactes du niveau 2.</li>
+    <li><strong>Les réponses restent à un chiffre</strong> : quotient de 2 à 9, reste de 0 à 8. Comme au niveau 2, la saisie est plus simple qu'en multiplication — jamais de nombre à deux chiffres à taper.</li>
+    <li>Les divisions par 1 et par 10 restent des <strong>règles</strong> (§2.3, §11.2), jamais mémorisées ; le reste d'une division par 10 se lit directement au chiffre des unités (glisse-nombre inversé).</li>
+  </ul>
+  <p><strong>Pourquoi Leitner s'applique à une zone.</strong> L'association mémorisée est stable : quelle que soit la valeur de r tirée, la case mobilise le même fait d'appui (d×q) et le même geste. La variabilité du dividende est même un atout — elle empêche la mémorisation par cœur d'un énoncé exact et force le geste d'encadrement à chaque présentation, là où les niveaux 1 et 2 présentaient toujours la même question à l'identique.</p>
+
+  <h3 id="reste-declenchement"><span class="num">12.3</span>Déclenchement</h3>
+  <p>Même logique que le niveau 2 (§11.3), translatée d'un niveau : le niveau 3 se débloque à l'obtention des <strong>8 badges « Divisions par N »</strong> (toutes les divisions par n en boîte 4+). Critère fondé sur des badges, donc <strong>permanent</strong>. « Maître de la division » (boîte 5 sur les 64 divisions) n'est pas exigé — même raisonnement qu'en §11.3 pour « Génie de la multiplication » : exiger la boîte 5 partout imposerait un long palier de grind sans contenu nouveau, alors que le passage 4→5 se poursuit naturellement via l'entretien intégré aux séances du niveau 3, où « Maître de la division » devient un trophée décroché en route. Le déblocage est annoncé par une carte dédiée dans le récap (« Tu débloques la division avec reste ! »).</p>
+  <p><strong>Rythme d'introduction.</strong> Identique aux niveaux précédents : <strong>2 nouvelles cases par séance maximum</strong>, dans l'ordre canonique (doubles → ×5 → ×9 → carrés → dérivés, appliqué au couple diviseur/quotient), et seulement si les cases déjà introduites sont en boîte ≥ 2 (avec la même exception de phase finale qu'en §3.4bis). <strong>Filet de sécurité per-case</strong> : la case (d, q) n'est introduite que si la division exacte parente — la case (d, q) de la grille du niveau 2, soit d×q ÷ d — est en boîte 5. Les coordonnées coïncident exactement d'une grille à l'autre : chaque zone s'ouvre quand son point d'ancrage est parfaitement solide.</p>
+  <p><strong>Une seule séance par jour, un seul bouton.</strong> Comme au niveau 2 (§11.3) : pas de second bouton, la séance du jour devient la division avec reste, et les révisions de <strong>maintenance des niveaux 1 et 2</strong> (tables et divisions exactes dues) y sont intégrées, entrelacées avec les nouvelles questions. Le plafond d'entretien de 6 faits dus par séance absorbe le régime de croisière : 36 tables et 64 divisions revues tous les 21 jours produisent en moyenne (36 + 64) / 21 ≈ 5 révisions dues par jour. Le <strong>plancher de longueur</strong> (~12 questions, complétées par des révisions bonus sans effet Leitner) s'applique à l'identique pendant les premiers jours où le niveau est maigre.</p>
+
+  <h3 id="reste-strategie"><span class="num">12.4</span>Stratégie « cherche le multiple juste en dessous »</h3>
+  <p class="source"><strong>Sources :</strong> Robinson &amp; Dubé (2009), Robinson &amp; LeFevre (2012) ; Van de Walle</p>
+  <p>Comme pour l'inversion multiplication/division (§11.4), on n'attend pas de l'enfant qu'il découvre le geste seul : l'encadrement est <strong>enseigné explicitement</strong>, et il est le cœur de l'introduction de chaque case. L'astuce prolonge l'équation à facteur manquant du niveau 2 en <strong>équation à encadrement</strong> :</p>
+  <blockquote class="note">
+    <p>« 45 ÷ 7, c'est : <strong>7 fois combien</strong> font <em>presque</em> 45, sans dépasser ? » — <code>7 × ☐ ≤ 45</code>. On trouve 7 × 6 = 42, et de 42 à 45 il y a 3. Donc 45 ÷ 7 = <strong>6, reste 3</strong>.</p>
+  </blockquote>
+  <p><strong>Appui visuel : le groupement.</strong> Là où le niveau 2 montrait le <em>partage</em> (modèle partitif : « on partage 56 en 7 lots égaux »), le niveau 3 montre le <em>groupement</em> (modèle quotitif) : des rangées de 7 points se remplissent une à une (7, 14, 21… 42), on s'arrête avant de dépasser 45, et les 3 points qui ne forment pas une rangée complète restent isolés, mis en évidence : <strong>le reste, c'est ce qui ne rentre pas</strong>. Les deux modèles de la division sont ainsi couverts sur l'ensemble du parcours — la complémentarité recommandée par la littérature didactique (Van de Walle).</p>
+  <p>Le feedback de conclusion affiche l'<strong>égalité euclidienne</strong> en ligne — « 45 = 7 × 6 + 3 » — la forme exacte que l'enfant retrouvera en CM1. Comme aux niveaux précédents, l'astuce est affichée à l'introduction et en cas d'erreur pour les cases en boîte ≤ 2, et énoncée à voix haute (nouvelles clés TTS par case).</p>
+
+  <h3 id="reste-saisie"><span class="num">12.5</span>Saisie en deux temps</h3>
+  <p>C'est le principal coût UX nouveau du niveau : une question appelle <strong>deux réponses</strong>. Le flux reste sur un seul écran :</p>
+  <ol>
+    <li>La question s'affiche (« 45 ÷ 7 = ? ») et est énoncée à voix haute.</li>
+    <li>Premier champ, mis en évidence : le <strong>quotient</strong> (« Combien de fois ? »). Un chiffre, validation automatique.</li>
+    <li>Second champ : le <strong>reste</strong> (« Il reste combien ? »). Un chiffre (0 inclus), validation automatique.</li>
+  </ol>
+  <p><strong>Mode vocal :</strong> l'enfant énonce « six, reste trois » (variantes parsées : « six et il reste trois », « six reste trois ») ; un quotient seul est accepté et déclenche une relance douce (« et il reste ? »). Le cas « ça tombe juste » accepte « six » suivi de « rien » / « zéro » / « ça tombe juste ».</p>
+  <p><strong>Feedback ciblé par étape :</strong> une erreur de <em>quotient</em> ré-affiche l'encadrement complet (les rangées qui se remplissent) ; un bon quotient avec une erreur de <em>reste</em> ne ré-explique que l'écart (42 → 45). Dans les deux cas la case redescend en boîte 1 — l'état Leitner est porté par la case, pas par l'étape — mais l'explication vise l'endroit précis où l'enfant a buté.</p>
+
+  <h3 id="reste-image"><span class="num">12.6</span>Image mystère et badges</h3>
+  <p>Une <strong>troisième image mystère</strong> propre au niveau, sur la même grille 8×8 : la case (d, q) de l'image porte la zone (d, q), en bijection parfaite — 64 maîtrises indépendantes, sans symétrie miroir (non-commutativité, comme en §11.5). Les images des niveaux 1 et 2 restent affichées, complètes, en témoins des réussites passées ; le sélecteur de l'écran « Mes images » gagne une troisième entrée, ouvert par défaut sur l'image du niveau actif.</p>
+  <p><strong>Badges</strong>, masqués tant que le niveau n'est pas débloqué (même logique de révélation différée qu'aux §2.3 et §11.5) : <em>Premier reste maîtrisé</em> (🥉, première case en boîte 5), huit badges <em>Division avec reste par N</em> (🧮, n = diviseur 2..9, les 8 cases du diviseur en boîte 4+) et <em>Grand maître de la division</em> (👑, les 64 cases en boîte 5).</p>
+  <p><strong>Tableau de bord parent :</strong> le sélecteur Multiplications / Divisions (§5.2) gagne une troisième position « Divisions avec reste » (histogramme par boîte + grille Leitner, ouvert par défaut sur le niveau actif), la vue d'ensemble une carte « Zones maîtrisées », et la liste unifiée des faits les plus difficiles intègre la nouvelle opération avec son marqueur (« 45 ÷ 7 » affiché avec la mention <em>reste</em>).</p>
+
+  <h3 id="reste-algo"><span class="num">12.7</span>Adaptations de l'algorithme</h3>
+  <p>Le moteur (Leitner, entrelacement, composition de séance) se réutilise tel quel, comme au niveau 2 (§11.6). Trois ajustements :</p>
+  <ul>
+    <li><strong>Anti-interférence :</strong> les paires confusibles sont les cases de <strong>même diviseur à quotients adjacents</strong> — (7, 6) et (7, 7) se touchent à un point près (48 ÷ 7 contre 49 ÷ 7). Elles ne figurent jamais dans la même série, et leurs introductions sont espacées de 48h (règle §1.2 inchangée).</li>
+    <li><strong>Seuils de vitesse :</strong> deux saisies et un geste en deux temps — le seuil passe à <strong>8 s au clavier, 6 s en voix</strong> (contre 6 s / 4 s au niveau 2), mesuré de l'affichage de la question à la validation du reste.</li>
+    <li><strong>Bienveillance accrue :</strong> encore plus d'erreurs et de lenteur attendues qu'au niveau 2 ; le feedback ciblé par étape (§12.5) évite de faire porter à l'enfant une erreur globale quand seul le reste a échappé.</li>
+  </ul>
+
+  <h3 id="reste-reserves"><span class="num">12.8</span>Réserve méthodologique honnête</h3>
+  <p>La réserve du §11.7 s'applique, un cran plus loin. Au niveau 2, on généralisait la répétition espacée de la multiplication à la division ; ici, l'unité de maîtrise n'est même plus une association fixe question→réponse mais un <strong>micro-geste sur une zone</strong> (récupérer l'ancrage, compléter l'écart). Le pari : la zone est une association stable — « la zone de 7×6 » — et le geste s'automatise par la répétition comme un fait. Il est cohérent avec la littérature sur la médiation multiplicative et sur l'automatisation des stratégies de dérivation (§3.4bis), mais la répétition espacée n'a, à notre connaissance, jamais été testée spécifiquement sur ce format. Pari raisonné, assumé comme tel — à surveiller via le tableau de bord (temps de réponse, répartition des erreurs quotient/reste) si l'usage révélait un comportement différent des deux premiers niveaux.</p>
+</section>
+
 <section class="chapter" id="profils">
-  <h2><span class="num">12</span>Multi-profils — plusieurs enfants par appareil</h2>
+  <h2><span class="num">13</span>Multi-profils — plusieurs enfants par appareil</h2>
   <p>Une tablette familiale sert souvent à plusieurs enfants. Chaque enfant dispose de son propre profil : faits, boîtes Leitner, badges, séries et images mystère totalement indépendants. Aucune notion de compte ni de mot de passe — tout reste local sur l'appareil (§9).</p>
 
-  <h3 id="profils-parcours"><span class="num">12.1</span>Parcours</h3>
+  <h3 id="profils-parcours"><span class="num">13.1</span>Parcours</h3>
   <ul>
     <li><strong>Mono-profil (cas majoritaire)</strong> : rien ne change. Pas d'écran intermédiaire, pas de bouton supplémentaire — zéro friction ajoutée à la boucle quotidienne.</li>
     <li><strong>Ajout d'un enfant</strong> : bouton « Ajouter un enfant » dans l'espace parent (section Profils) ou depuis l'écran « Qui joue ? ». Rejoue l'onboarding complet : prénom, test de placement, intro des règles ×1/×10.</li>
@@ -998,21 +1062,21 @@ interface Badge {
     <li><strong>Suppression</strong> : « Supprimer ce profil » dans l'espace parent, avec confirmation explicite. S'il reste un seul profil → retour direct à son accueil ; plusieurs → « Qui joue ? » ; aucun → onboarding.</li>
   </ul>
 
-  <h3 id="profils-stockage"><span class="num">12.2</span>Stockage et migration</h3>
+  <h3 id="profils-stockage"><span class="num">13.2</span>Stockage et migration</h3>
   <p>Chaque profil vit sous sa propre clé localStorage (<code>multiplix-profile:&lt;id&gt;</code>) ; un index léger (<code>multiplix-profiles</code>) liste les profils (id, prénom) et le profil actif. L'ancien schéma mono-clé (<code>multiplix-profile</code>) est migré automatiquement et silencieusement au premier lancement : le profil existant devient le premier profil de l'index, rien n'est perdu.</p>
   <p>L'export/import de sauvegarde reste par-profil : l'export produit le JSON du profil actif (format inchangé, compatible avec les sauvegardes antérieures) ; l'import depuis l'écran d'accueil crée un <em>nouveau</em> profil (jamais d'écrasement d'un autre enfant), tandis que l'import depuis l'espace parent restaure le profil actif.</p>
   <p>Le <strong>transfert par QR code</strong> (§7) est lui aussi par-profil : le profil reçu devient un nouveau profil actif sur l'appareil de destination — sauf si le même enfant (prénom + date de début identiques) y existe déjà, auquel cas son profil est mis à jour au lieu d'être dupliqué (cas du re-transfert). Pendant la récupération, l'app affiche « Récupération de la progression… » (pas d'écran vide entre le scan et l'arrivée) ; l'import réussi est confirmé par une bannière « bien arrivée ✓ », un transfert échoué (lien expiré ou déjà servi) par une bannière d'erreur.</p>
 </section>
 
 <section class="chapter" id="evolutions">
-  <h2><span class="num">13</span>Évolutions possibles (V2)</h2>
+  <h2><span class="num">14</span>Évolutions possibles (V2)</h2>
   <ul>
     <li>Mode défi : séance bonus optionnelle le week-end</li>
   </ul>
 </section>
 
 <section class="chapter" id="references">
-  <h2><span class="num">14</span>Références</h2>
+  <h2><span class="num">15</span>Références</h2>
   <ol class="references">
     <li>Axtell, P. K., McCallum, R. S., Bell, S. M., &amp; Poncy, B. (2009). Developing math automaticity using a classwide fluency building procedure for middle school students: A preliminary study. <em>Psychology in the Schools, 46</em>(6), 526–538.</li>
     <li>Brendefur, J., Strother, S., Thiede, K., &amp; Appleton, S. (2015). Developing multiplication fact fluency. <em>Advances in Social Sciences Research Journal, 2</em>(8). <a href="https://doi.org/10.14738/assrj.28.1396">doi:10.14738/assrj.28.1396</a></li>
@@ -1043,7 +1107,7 @@ interface Badge {
 </main>
 
 <footer class="page-footer">
-  <p>Document de spécifications — v1.3 — Juin 2026</p>
+  <p>Document de spécifications — v1.4 — Juillet 2026</p>
   <p><a href="https://github.com/isc/tablito">Code source sur GitHub</a></p>
 </footer>
 
