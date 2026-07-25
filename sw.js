@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260725113237"
+const CACHE = 'tablito-' + "20260725135720"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -54,6 +54,7 @@ const ASSETS = [
   "/src/__tests__/divisionJourney.test.js",
   "/src/__tests__/dotGrid.test.js",
   "/src/__tests__/hardestFacts.test.js",
+  "/src/__tests__/helpers/watchServer.js",
   "/src/__tests__/leitner.test.js",
   "/src/__tests__/mixedSessionTTS.test.js",
   "/src/__tests__/multiProfile.test.js",
@@ -65,12 +66,14 @@ const ASSETS = [
   "/src/__tests__/remainderComposer.test.js",
   "/src/__tests__/remainderDaily.test.js",
   "/src/__tests__/remainderJourney.test.js",
+  "/src/__tests__/remoteFollow.test.js",
   "/src/__tests__/sessionComposer.test.js",
   "/src/__tests__/setup.js",
   "/src/__tests__/strategies.test.js",
   "/src/__tests__/streak.test.js",
   "/src/__tests__/transfer.test.js",
   "/src/__tests__/userJourney.test.js",
+  "/src/__tests__/watch.test.js",
   "/src/assets/hero.png",
   "/src/assets/react.svg",
   "/src/assets/vite.svg",
@@ -97,7 +100,9 @@ const ASSETS = [
   "/src/components/NotificationSettings.js",
   "/src/components/NumPad.js",
   "/src/components/ParentGate.js",
+  "/src/components/ParentStats.js",
   "/src/components/ProgressGrid.js",
+  "/src/components/QrCanvas.js",
   "/src/components/RemainderMysteryImage.js",
   "/src/components/RemainderProgressGrid.js",
   "/src/components/RemainderStrategyHint.js",
@@ -109,6 +114,7 @@ const ASSETS = [
   "/src/env.d.js",
   "/src/hooks/useConfetti.js",
   "/src/hooks/useInputMode.js",
+  "/src/hooks/useQrScan.js",
   "/src/hooks/useSound.js",
   "/src/hooks/useSpeechRecognition.js",
   "/src/hooks/useSpeechRecognition.test.js",
@@ -163,6 +169,8 @@ const ASSETS = [
   "/src/lib/transfer.js",
   "/src/lib/utils.js",
   "/src/lib/voiceDebug.js",
+  "/src/lib/watch.js",
+  "/src/lib/watchStore.js",
   "/src/main.js",
   "/src/screens/BadgesScreen.js",
   "/src/screens/ChangelogScreen.js",
