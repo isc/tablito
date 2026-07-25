@@ -1,0 +1,3 @@
+import{jsx as p}from"preact/jsx-runtime";import{useMemo as y}from"react";import c from"./MysteryGrid.js";import{getRemainderFactKey as m,remainderZoneBounds as l}from"../lib/remainderFacts.js";import{useFactCellStrings as u}from"../i18n/progress.js";function f({facts:o,theme:a}){const s=u(),d=y(()=>{const t=new Map;for(const r of o)t.set(m(r.divisor,r.quotient),r);return t},[o]);return p(c,{theme:a,cellFor:(t,r)=>{const e=d.get(m(t,r)),[i,n]=l({divisor:t,quotient:r});return{level:e?.introduced?e.box:0,introduced:e?.introduced??!1,ariaLabel:s.remLabel(i,n,t),detailHeading:e?`${i}\u2013${n} \xF7 ${e.divisor}`:"",gridA:e?.divisor??t,gridB:e?.quotient??r,box:e?.box??1}}})}export{f as default};
+
+//# sourceMappingURL=RemainderMysteryImage.js.map
