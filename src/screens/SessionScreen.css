@@ -203,14 +203,18 @@
   text-align: center;
 }
 
-/* « reste » intercalé dans la formule (« 45 ÷ 7 = 6, reste ? »). */
+/* « reste » intercalé dans la formule (« 45 ÷ 7 = 6, reste ? »). La virgule
+   colle au quotient (::before sans marge gauche) et l'espacement se fait par
+   marges explicites — l'espace typographique serait illisible à 0.45em. Encre
+   douce, pas de couleur d'alerte : ce n'est pas un signal, juste un mot. */
 .formula-remainder {
-  margin: 0 0.2em 0 0.15em;
+  margin: 0 0.25em 0 0;
   font-size: 0.45em;
   font-weight: 700;
-  color: var(--coral);
+  color: var(--ink-soft);
 }
 .formula-remainder::before {
-  content: ', ';
+  content: ',';
+  margin-right: 0.4em;
   color: var(--ink);
 }
