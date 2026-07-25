@@ -3,6 +3,7 @@ import { MYSTERY_POOL } from '../types';
 import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
+import { createInitialRemainderFacts } from './remainderFacts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
@@ -13,6 +14,13 @@ import { gunzip, urlBase64ToUint8Array } from './codec';
 // doit jamais être re-floutée par le niveau 2 (specs §11.5).
 function pickDivisionTheme(multTheme: MysteryTheme): MysteryTheme {
   const others = MYSTERY_POOL.filter((t) => t !== multTheme);
+  return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
+}
+
+// Idem pour le niveau 3 : thème distinct des DEUX images précédentes quand le
+// pool le permet (specs §12.6).
+function pickRemainderTheme(multTheme: MysteryTheme, divTheme: MysteryTheme | undefined): MysteryTheme {
+  const others = MYSTERY_POOL.filter((t) => t !== multTheme && t !== divTheme);
   return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
 }
 
@@ -319,6 +327,7 @@ export function importProfile(json: string): UserProfile | null {
 export function createNewProfile(name: string): UserProfile {
   const now = todayISO();
   const mysteryTheme = pickRandom(MYSTERY_POOL);
+  const divisionMysteryTheme = pickDivisionTheme(mysteryTheme);
   return {
     name,
     startDate: now,
@@ -334,8 +343,10 @@ export function createNewProfile(name: string): UserProfile {
     hasSeenRule11: false,
     mysteryTheme,
     divisionFacts: createInitialDivisionFacts(),
-    divisionMysteryTheme: pickDivisionTheme(mysteryTheme),
+    divisionMysteryTheme,
     hasSeenDivisionIntro: false,
+    remainderFacts: createInitialRemainderFacts(),
+    remainderMysteryTheme: pickRemainderTheme(mysteryTheme, divisionMysteryTheme),
   };
 }
 
@@ -386,6 +397,17 @@ function migrateProfile(profile: UserProfile): UserProfile {
   if (typeof profile.hasSeenDivisionIntro !== 'boolean') {
     profile.hasSeenDivisionIntro = false;
   }
+  // Niveau 3 — division avec reste : même backfill que le niveau 2. Inoffensif
+  // tant que le niveau n'est pas débloqué (zones en boîte 1, non introduites).
+  if (!Array.isArray(profile.remainderFacts)) {
+    profile.remainderFacts = createInitialRemainderFacts();
+  }
+  if (profile.remainderMysteryTheme === undefined) {
+    profile.remainderMysteryTheme = pickRemainderTheme(
+      profile.mysteryTheme,
+      profile.divisionMysteryTheme,
+    );
+  }
   // Fix les profils créés avant l'ajout de l'inférence par dominance lors
   // du test de placement : si des faits restent non introduits alors qu'on
   // a une preuve de réussite sur des faits plus durs, on les introduit.
@@ -435,6 +457,20 @@ function isValidProfile(obj: unknown): boolean {
       if (typeof fact !== 'object' || fact === null) return false;
       const f = fact as Record<string, unknown>;
       if (typeof f.dividend !== 'number') return false;
+      if (typeof f.divisor !== 'number') return false;
+      if (typeof f.quotient !== 'number') return false;
+      if (typeof f.box !== 'number' || f.box < 1 || f.box > 5) return false;
+      if (typeof f.introduced !== 'boolean') return false;
+      if (!Array.isArray(f.history)) return false;
+    }
+  }
+
+  // remainderFacts : même statut optionnel, même exigence de forme.
+  if (p.remainderFacts !== undefined) {
+    if (!Array.isArray(p.remainderFacts)) return false;
+    for (const fact of p.remainderFacts) {
+      if (typeof fact !== 'object' || fact === null) return false;
+      const f = fact as Record<string, unknown>;
       if (typeof f.divisor !== 'number') return false;
       if (typeof f.quotient !== 'number') return false;
       if (typeof f.box !== 'number' || f.box < 1 || f.box > 5) return false;

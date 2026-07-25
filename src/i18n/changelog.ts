@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-07-23',
+    items: [
+      "Nouveau niveau 3 : la division avec reste. Quand toutes les divisions sont maîtrisées (les 8 badges « Divisions par N »), l'app propose le geste suivant du programme (fin CE2 / CM1) : trouver le quotient et le reste quand ça ne tombe pas juste (« 45 ÷ 7 = 6, reste 3 »). La réponse se donne en deux temps (« Combien de fois ? » puis « Il reste combien ? »), une troisième image mystère se dévoile, et l'entretien des tables et des divisions continue en arrière-plan dans la même séance quotidienne. Rien ne change pour les enfants qui n'en sont pas là : le niveau est invisible avant d'être débloqué.",
+    ],
+  },
+  {
     date: '2026-07-20',
     items: [
       "Espace parent : la liste « Faits les plus difficiles » oubliait les erreurs commises pendant les révisions bonus (les questions ajoutées pour compléter une séance courte). Le taux de bonnes réponses pouvait montrer des séances imparfaites alors que presque aucune erreur n'était listée. La liste reflète désormais toutes les erreurs des dernières séances, révisions bonus comprises.",
@@ -165,6 +171,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-07-23',
+    items: [
+      'New level 3: division with remainders. Once every division is mastered (all 8 "Dividing by N" badges), the app moves on to the next skill in the curriculum: finding the quotient and the remainder when it doesn\'t come out even ("45 ÷ 7 = 6 r 3"). Answers come in two steps ("How many times?" then "What\'s left over?"), a third mystery picture reveals itself, and times-table and division upkeep continues in the background within the same daily session. Nothing changes for children who aren\'t there yet: the level stays invisible until it is unlocked.',
+    ],
+  },
   {
     date: '2026-07-20',
     items: [

@@ -84,7 +84,8 @@ describe('Séance mixte — lecture audio des questions', () => {
     // appears — faster than the 25ms first-load of its audio.
     for (const q of questions) {
       await wait(10);
-      const answer = q.kind === 'div' ? q.fact.quotient : q.fact.product;
+      const answer =
+        q.kind === 'div' ? q.fact.quotient : q.kind === 'mult' ? q.fact.product : q.fact.quotient;
       typeAnswer(answer);
       dismissFeedback();
     }

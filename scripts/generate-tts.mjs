@@ -218,6 +218,33 @@ function buildEntriesFr() {
     }
   }
 
+  // Niveau 3 — division avec reste (specs §12). Les questions couvrent tous
+  // les dividendes possibles (d×q + r, r ∈ 0..d-1) ; l'intro de chaque zone
+  // utilise le reste CANONIQUE (max(1, ⌊d/2⌋), cf. lib/remainderFacts
+  // introRemainder) pour que l'audio colle aux nombres affichés.
+  for (let divisor = 2; divisor <= 9; divisor++) {
+    for (let quotient = 2; quotient <= 9; quotient++) {
+      for (let r = 0; r < divisor; r++) {
+        const dividend = divisor * quotient + r;
+        entries.push({
+          key: `qr-${dividend}-${divisor}`,
+          text: `${dividend} divisé par ${divisor}`,
+        });
+      }
+      const introR = Math.max(1, Math.floor(divisor / 2));
+      const introDividend = divisor * quotient + introR;
+      entries.push({
+        key: `intror-${divisor}-${quotient}`,
+        text: `Nouveau ! ${introDividend} divisé par ${divisor}. ${divisor} fois combien font presque ${introDividend}, sans dépasser ? ${divisor} fois ${quotient}, égale ${divisor * quotient}, et il reste ${introR}. Donc ${introDividend} divisé par ${divisor}, égale ${quotient}, reste ${introR}.`,
+      });
+    }
+  }
+  entries.push({ key: 'rem-rest', text: 'Et il reste combien ?' });
+  entries.push({
+    key: 'strategy-rem',
+    text: 'Cherche le multiple juste en dessous, sans dépasser. Ce qui manque pour y arriver, c\'est le reste.',
+  });
+
   entries.push({
     key: 'welcome-hello',
     text: "Bonjour ! Je suis Piou, ton petit copain d'apprentissage. On va apprendre les tables de multiplication ensemble !",
@@ -299,6 +326,31 @@ function buildEntriesEn() {
       });
     }
   }
+
+  // Level 3 — division with remainder (specs §12). Same coverage as French:
+  // every possible dividend for questions, canonical remainder for zone intros.
+  for (let divisor = 2; divisor <= 9; divisor++) {
+    for (let quotient = 2; quotient <= 9; quotient++) {
+      for (let r = 0; r < divisor; r++) {
+        const dividend = divisor * quotient + r;
+        entries.push({
+          key: `qr-${dividend}-${divisor}`,
+          text: `${dividend} divided by ${divisor}`,
+        });
+      }
+      const introR = Math.max(1, Math.floor(divisor / 2));
+      const introDividend = divisor * quotient + introR;
+      entries.push({
+        key: `intror-${divisor}-${quotient}`,
+        text: `New! ${introDividend} divided by ${divisor}. ${divisor} times what makes almost ${introDividend}, without going over? ${divisor} times ${quotient} equals ${divisor * quotient}, and ${introR} is left over. So ${introDividend} divided by ${divisor} equals ${quotient}, remainder ${introR}.`,
+      });
+    }
+  }
+  entries.push({ key: 'rem-rest', text: "And what's left over?" });
+  entries.push({
+    key: 'strategy-rem',
+    text: "Find the multiple just below, without going over. What's missing to get there is the remainder.",
+  });
 
   entries.push({
     key: 'welcome-hello',

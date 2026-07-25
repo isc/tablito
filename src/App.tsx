@@ -1,7 +1,11 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type { UserProfile, SessionItem, SessionResult, SessionQuestionLog, Badge, BoxLevel } from './types';
-import { FAST_THRESHOLD_MS, DIVISION_FAST_THRESHOLD_MS } from './types';
+import {
+  FAST_THRESHOLD_MS,
+  DIVISION_FAST_THRESHOLD_MS,
+  REMAINDER_FAST_THRESHOLD_MS,
+} from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
 import { processAnswer } from './lib/leitner';
@@ -9,8 +13,11 @@ import {
   checkBadges,
   getCompletedTables,
   getCompletedDivisionTables,
+  getCompletedRemainderTables,
   isRule11Unlocked,
   isDivisionUnlocked,
+  isRemainderUnlocked,
+  activeLevel,
 } from './lib/badges';
 import {
   loadProfile,
@@ -26,6 +33,7 @@ import {
 } from './lib/storage';
 import { getFactKey } from './lib/facts';
 import { getDivisionFactKey } from './lib/divisionFacts';
+import { getRemainderFactKey } from './lib/remainderFacts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
 import { todayISO } from './lib/utils';
@@ -131,18 +139,20 @@ export default function App({ transferResult = null }: AppProps) {
   // Liste unifiée de la séance en cours : 100% multiplication avant déblocage,
   // mixte (division + entretien des tables) après (specs §11.6).
   const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
-  // Quelle « saveur » de récap afficher (multiplication vs division) — pilote
-  // le nom affiché, le badge de complétion surveillé et l'écran image cible.
-  const [recapMode, setRecapMode] = useState<'mult' | 'div'>('mult');
+  // Quelle « saveur » de récap afficher (multiplication, division, division
+  // avec reste) — pilote le nom affiché, le jalon surveillé et l'image cible.
+  const [recapMode, setRecapMode] = useState<'mult' | 'div' | 'rem'>('mult');
   // Onglet ouvert à l'arrivée sur l'écran progression (« Mes images ») : sur
-  // l'image division quand on y va depuis le récap d'une séance de division.
-  const [progressView, setProgressView] = useState<'mult' | 'div'>('mult');
+  // l'image du niveau de la séance quand on y va depuis le récap.
+  const [progressView, setProgressView] = useState<'mult' | 'div' | 'rem'>('mult');
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
   // Vrai sur le récap de la séance où le 8e badge de table tombe : c'est le
   // moment du déblocage du niveau 2 (division), célébré une seule fois.
   const [divisionJustUnlocked, setDivisionJustUnlocked] = useState(false);
+  // Idem pour le niveau 3 : 8e badge « Divisions par N » (specs §12.3).
+  const [remainderJustUnlocked, setRemainderJustUnlocked] = useState(false);
   const [freezeJustUsed, setFreezeJustUsed] = useState(false);
   const [freezeJustEarned, setFreezeJustEarned] = useState(false);
   // Tracked in state so a date rollover (app left open past minuit) re-déclenche
@@ -162,6 +172,7 @@ export default function App({ transferResult = null }: AppProps) {
   // Snapshot of tables already mastered before the session starts
   const tablesCompletedBeforeSession = useRef<Set<number>>(new Set());
   const divisionTablesCompletedBeforeSession = useRef<Set<number>>(new Set());
+  const remainderTablesCompletedBeforeSession = useRef<Set<number>>(new Set());
 
   // Skip the initial save-to-localStorage on mount
   const isInitialLoad = useRef(true);
@@ -335,6 +346,13 @@ export default function App({ transferResult = null }: AppProps) {
     () => (profile ? isDivisionUnlocked(profile) : false),
     [profile],
   );
+  const remainderUnlocked = useMemo(
+    () => (profile ? isRemainderUnlocked(profile) : false),
+    [profile],
+  );
+  // Niveau de la séance du jour — composeDailySession branche lui-même sur le
+  // niveau actif, on n'a besoin du mode que pour le récap et l'image cible.
+  const sessionMode: 'mult' | 'div' | 'rem' = profile ? activeLevel(profile) : 'mult';
   const sessionDone = !!profile && profile.lastSessionDate === today;
   const pendingItems = useMemo<SessionItem[]>(() => {
     if (!profile || sessionDone) return [];
@@ -364,10 +382,13 @@ export default function App({ transferResult = null }: AppProps) {
     }
 
     resetSessionTracking();
-    // Snapshot des tables maîtrisées (célébration de complétion) — × et ÷.
+    // Snapshot des tables maîtrisées (célébration de complétion) — ×, ÷, reste.
     tablesCompletedBeforeSession.current = getCompletedTables(profile.facts);
     divisionTablesCompletedBeforeSession.current = getCompletedDivisionTables(
       profile.divisionFacts ?? [],
+    );
+    remainderTablesCompletedBeforeSession.current = getCompletedRemainderTables(
+      profile.remainderFacts ?? [],
     );
     setSessionItems(pendingItems);
     setScreen('session');
@@ -403,16 +424,24 @@ export default function App({ transferResult = null }: AppProps) {
       timeMs: number,
       answered: number | null,
       inputMode: 'keypad' | 'voice',
+      answeredRemainder?: number | null,
     ) => {
-      const fastMs = (item.kind === 'div' ? DIVISION_FAST_THRESHOLD_MS : FAST_THRESHOLD_MS)[inputMode];
+      const fastMs = (
+        item.kind === 'rem'
+          ? REMAINDER_FAST_THRESHOLD_MS
+          : item.kind === 'div'
+            ? DIVISION_FAST_THRESHOLD_MS
+            : FAST_THRESHOLD_MS
+      )[inputMode];
 
       sessionQuestionLogs.current.push({
         kind: item.kind,
-        a: item.kind === 'div' ? item.fact.divisor : item.fact.a,
-        b: item.kind === 'div' ? item.fact.quotient : item.fact.b,
+        a: item.kind === 'mult' ? item.fact.a : item.fact.divisor,
+        b: item.kind === 'mult' ? item.fact.b : item.fact.quotient,
         correct,
         responseTimeMs: timeMs,
         answeredWith: answered,
+        ...(item.kind === 'rem' ? { remainder: item.remainder, answeredRemainder } : {}),
         isBonusReview: item.isBonusReview,
         inputMode,
         fast: correct && timeMs < fastMs,
@@ -435,6 +464,26 @@ export default function App({ transferResult = null }: AppProps) {
 
       setProfile((prev) => {
         if (!prev) return prev;
+
+        if (item.kind === 'rem') {
+          if (!prev.remainderFacts) return prev;
+          const { divisor, quotient } = item.fact;
+          const current =
+            prev.remainderFacts.find((f) => f.divisor === divisor && f.quotient === quotient) ??
+            item.fact;
+          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
+          if (updated.history.length > 0) {
+            updated.history[updated.history.length - 1].answeredWith = answered;
+          }
+          if (!updated.introduced) updated.introduced = true;
+          trackPromotion(getRemainderFactKey(divisor, quotient), current.box, updated.box);
+          return {
+            ...prev,
+            remainderFacts: prev.remainderFacts.map((f) =>
+              f.divisor === divisor && f.quotient === quotient ? updated : f,
+            ),
+          };
+        }
 
         if (item.kind === 'div') {
           if (!prev.divisionFacts) return prev;
@@ -487,7 +536,7 @@ export default function App({ transferResult = null }: AppProps) {
     (partial: Omit<SessionResult, 'factsPromoted'>) => {
       if (!profile) return;
 
-      const mode: 'mult' | 'div' = divisionUnlocked ? 'div' : 'mult';
+      const mode = sessionMode;
       const result: SessionResult = {
         ...partial,
         factsPromoted: sessionPromoted.current.size,
@@ -530,26 +579,33 @@ export default function App({ transferResult = null }: AppProps) {
       updatedProfile.badges = [...profile.badges, ...brandNewBadges];
 
       // Tables fraîchement complétées (tous faits en boîte 5) de l'opération de
-      // la séance : tables × en mode mult, « divisions par N » en mode div.
+      // la séance : tables × en mode mult, « divisions par N » en mode div,
+      // zones par diviseur en mode rem.
       const completedNow =
-        mode === 'div'
-          ? [...getCompletedDivisionTables(updatedProfile.divisionFacts ?? [])].filter(
-              (t) => !divisionTablesCompletedBeforeSession.current.has(t),
+        mode === 'rem'
+          ? [...getCompletedRemainderTables(updatedProfile.remainderFacts ?? [])].filter(
+              (t) => !remainderTablesCompletedBeforeSession.current.has(t),
             )
-          : [...getCompletedTables(updatedProfile.facts)].filter(
-              (t) => !tablesCompletedBeforeSession.current.has(t),
-            );
+          : mode === 'div'
+            ? [...getCompletedDivisionTables(updatedProfile.divisionFacts ?? [])].filter(
+                (t) => !divisionTablesCompletedBeforeSession.current.has(t),
+              )
+            : [...getCompletedTables(updatedProfile.facts)].filter(
+                (t) => !tablesCompletedBeforeSession.current.has(t),
+              );
 
-      // Déblocage du niveau 2 : la condition (8 badges de table) vient de
-      // basculer cette séance. `divisionUnlocked` reflète l'état d'AVANT la
-      // séance (memo sur `profile`), donc mode est encore 'mult' ici.
+      // Déblocages : la condition (8 badges de table / de divisions) vient de
+      // basculer cette séance. Les memos `*Unlocked` reflètent l'état d'AVANT
+      // la séance, donc mode est encore celui du niveau précédent ici.
       const divisionUnlockedNow = !divisionUnlocked && isDivisionUnlocked(updatedProfile);
+      const remainderUnlockedNow = !remainderUnlocked && isRemainderUnlocked(updatedProfile);
 
       setProfile(updatedProfile);
       setSessionResult(result);
       setNewBadges(brandNewBadges);
       setNewlyCompletedTables(completedNow);
       setDivisionJustUnlocked(divisionUnlockedNow);
+      setRemainderJustUnlocked(remainderUnlockedNow);
       setFreezeJustUsed(streakUpdate.freezeJustUsed);
       setFreezeJustEarned(streakUpdate.freezeJustEarned);
       setRecapMode(mode);
@@ -560,7 +616,7 @@ export default function App({ transferResult = null }: AppProps) {
       // abonné / push non configuré), jamais bloquant pour le recap.
       void syncLastSession();
     },
-    [profile, divisionUnlocked],
+    [profile, divisionUnlocked, remainderUnlocked, sessionMode],
   );
 
   const exitRecap = useCallback((next: Screen) => {
@@ -568,6 +624,7 @@ export default function App({ transferResult = null }: AppProps) {
     setNewBadges([]);
     setNewlyCompletedTables([]);
     setDivisionJustUnlocked(false);
+    setRemainderJustUnlocked(false);
     setFreezeJustUsed(false);
     setFreezeJustEarned(false);
     setRecapMode('mult');
@@ -575,6 +632,16 @@ export default function App({ transferResult = null }: AppProps) {
   }, []);
 
   const handleRecapFinish = useCallback(() => exitRecap('home'), [exitRecap]);
+
+  // Faits du niveau de la séance qui vient de se terminer — alimente la jauge
+  // de progression du récap (« Tu connais X / Y »).
+  const recapFacts = !profile
+    ? []
+    : recapMode === 'rem'
+      ? (profile.remainderFacts ?? [])
+      : recapMode === 'div'
+        ? (profile.divisionFacts ?? [])
+        : profile.facts;
 
   const handleExport = useCallback(() => {
     if (!profile) return;
@@ -685,9 +752,9 @@ export default function App({ transferResult = null }: AppProps) {
           divisionUnlocked={divisionUnlocked}
           onStart={handleStart}
           onShowProgress={() => {
-            // Post-déblocage, l'image des tables est complète (tout en boîte 5) :
-            // on ouvre directement sur la division, celle qui reste à dévoiler.
-            setProgressView(divisionUnlocked ? 'div' : 'mult');
+            // Post-déblocage, les images des niveaux passés sont complètes :
+            // on ouvre directement sur celle du niveau actif, à dévoiler.
+            setProgressView(sessionMode);
             setScreen('progress');
           }}
           onShowBadges={() => setScreen('badges')}
@@ -712,17 +779,12 @@ export default function App({ transferResult = null }: AppProps) {
           newBadges={newBadges}
           newlyCompletedTables={newlyCompletedTables}
           divisionJustUnlocked={divisionJustUnlocked}
+          remainderJustUnlocked={remainderJustUnlocked}
           currentStreak={profile.currentStreak}
           freezeJustUsed={freezeJustUsed}
           freezeJustEarned={freezeJustEarned}
-          knownFactsCount={
-            recapMode === 'div'
-              ? (profile.divisionFacts ?? []).filter((f) => f.box >= 3).length
-              : profile.facts.filter((f) => f.box >= 3).length
-          }
-          totalFacts={
-            recapMode === 'div' ? (profile.divisionFacts ?? []).length : profile.facts.length
-          }
+          knownFactsCount={recapFacts.filter((f) => f.box >= 3).length}
+          totalFacts={recapFacts.length}
           onFinish={handleRecapFinish}
           onShowProgress={() => { setProgressView(recapMode); exitRecap('progress'); }}
           mode={recapMode}

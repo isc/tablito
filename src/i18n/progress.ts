@@ -19,6 +19,7 @@ interface ProgressScreenStrings {
   myMysteryPicture: string;
   multiplications: string;
   divisions: string;
+  remainders: string;
   discoveredMult: string;
   discoveredDiv: string;
   masteredMult: string;
@@ -26,6 +27,7 @@ interface ProgressScreenStrings {
   total: string;
   legendMult: string;
   legendDiv: string;
+  legendRem: string;
 }
 
 const progressScreenFr: ProgressScreenStrings = {
@@ -34,6 +36,7 @@ const progressScreenFr: ProgressScreenStrings = {
   myMysteryPicture: 'Mon image mystère',
   multiplications: 'Multiplications',
   divisions: 'Divisions',
+  remainders: 'Avec reste',
   discoveredMult: 'découverts',
   discoveredDiv: 'découvertes',
   masteredMult: 'maîtrisés',
@@ -43,6 +46,8 @@ const progressScreenFr: ProgressScreenStrings = {
     "Chaque multiplication que tu connais mieux dévoile un peu plus de l'image. Et si un fait a besoin d'être revu, sa case se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
   legendDiv:
     "Chaque division que tu connais mieux dévoile un peu plus de cette image. Et si un fait a besoin d'être revu, sa case se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
+  legendRem:
+    "Chaque division avec reste que tu connais mieux dévoile un peu plus de cette image. Et si une case a besoin d'être revue, elle se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
 };
 
 const progressScreenEn: ProgressScreenStrings = {
@@ -51,6 +56,7 @@ const progressScreenEn: ProgressScreenStrings = {
   myMysteryPicture: 'My mystery picture',
   multiplications: 'Multiplications',
   divisions: 'Divisions',
+  remainders: 'Remainders',
   discoveredMult: 'discovered',
   discoveredDiv: 'discovered',
   masteredMult: 'mastered',
@@ -60,6 +66,8 @@ const progressScreenEn: ProgressScreenStrings = {
     'Every multiplication you know better reveals a bit more of the picture. And if a fact needs reviewing, its square blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
   legendDiv:
     'Every division you know better reveals a bit more of this picture. And if a fact needs reviewing, its square blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
+  legendRem:
+    'Every division with remainder you know better reveals a bit more of this picture. And if a square needs reviewing, it blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
 };
 
 export const progressScreenStrings = { fr: progressScreenFr, en: progressScreenEn };
@@ -284,16 +292,20 @@ export function useMascotStrings(): MascotStrings {
 interface FactCellStrings {
   multLabel: (row: number, col: number, product: number) => string;
   divLabel: (dividend: number, divisor: number) => string;
+  // Niveau 3 : une case = une zone de dividendes (specs §12.6).
+  remLabel: (lo: number, hi: number, divisor: number) => string;
 }
 
 const factCellFr: FactCellStrings = {
   multLabel: (row, col, product) => `${row} fois ${col} = ${product}`,
   divLabel: (dividend, divisor) => `${dividend} divisé par ${divisor}`,
+  remLabel: (lo, hi, divisor) => `${lo} à ${hi} divisés par ${divisor}, avec reste`,
 };
 
 const factCellEn: FactCellStrings = {
   multLabel: (row, col, product) => `${row} times ${col} = ${product}`,
   divLabel: (dividend, divisor) => `${dividend} divided by ${divisor}`,
+  remLabel: (lo, hi, divisor) => `${lo} to ${hi} divided by ${divisor}, with remainder`,
 };
 
 export const factCellStrings = { fr: factCellFr, en: factCellEn };

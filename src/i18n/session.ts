@@ -19,6 +19,13 @@ interface SessionStrings {
   littleTrick: string;
   // « On partage <dividend> en <divisor> lots égaux — combien dans chaque ? »
   shareInto: (dividend: number, divisor: number) => string;
+  // Niveau 3 : « Dans <dividend>, combien de fois <divisor> ? … »
+  remIntro: (dividend: number, divisor: number) => string;
+  // Libellés des deux étapes de saisie (specs §12.5).
+  howManyTimes: string;
+  whatRemains: string;
+  // « reste » dans la formule affichée (« = 6, reste ? »).
+  remainderWord: string;
   useMic: string;
 }
 
@@ -32,6 +39,11 @@ const sessionFr: SessionStrings = {
   littleTrick: "Une petite astuce pour s'en souvenir\u00a0!",
   shareInto: (dividend, divisor) =>
     `On partage ${dividend} en ${divisor} lots égaux — combien dans chaque\u00a0?`,
+  remIntro: (dividend, divisor) =>
+    `Dans ${dividend}, combien de fois ${divisor} ? Les points qui ne remplissent pas une rangée, c'est le reste.`,
+  howManyTimes: 'Combien de fois ?',
+  whatRemains: 'Il reste combien ?',
+  remainderWord: 'reste',
   useMic: 'Utiliser le micro',
 };
 
@@ -45,6 +57,11 @@ const sessionEn: SessionStrings = {
   littleTrick: 'A little trick to remember it!',
   shareInto: (dividend, divisor) =>
     `We share ${dividend} into ${divisor} equal groups — how many in each?`,
+  remIntro: (dividend, divisor) =>
+    `How many times does ${divisor} fit into ${dividend}? The dots that don't fill a row are the remainder.`,
+  howManyTimes: 'How many times?',
+  whatRemains: "What's left over?",
+  remainderWord: 'r',
   useMic: 'Use the mic',
 };
 
@@ -64,6 +81,10 @@ interface FeedbackOverlayStrings {
   gotIt: string;
   // Eyebrow de la grille (multiplication) : « <a> rangées de <b> ».
   rowsOf: (a: number, b: number) => string;
+  // Niveau 3 : « 6, reste 3 » — réponse composée affichée (bonne ou saisie).
+  remAnswer: (quotient: number, remainder: number) => string;
+  // Eyebrow de la grille (niveau 3) : « 7 × 6 + 3 » (ou « 7 × 6 » si reste 0).
+  remEyebrow: (divisor: number, quotient: number, remainder: number) => string;
 }
 
 const feedbackFr: FeedbackOverlayStrings = {
@@ -80,6 +101,10 @@ const feedbackFr: FeedbackOverlayStrings = {
   youAnswered: 'Tu as répondu',
   gotIt: "J'ai compris",
   rowsOf: (a, b) => `${a} rangée${a > 1 ? 's' : ''} de ${b}`,
+  remAnswer: (quotient, remainder) =>
+    remainder === 0 ? `${quotient}, reste 0` : `${quotient}, reste ${remainder}`,
+  remEyebrow: (divisor, quotient, remainder) =>
+    remainder === 0 ? `${divisor} × ${quotient}` : `${divisor} × ${quotient} + ${remainder}`,
 };
 
 const feedbackEn: FeedbackOverlayStrings = {
@@ -96,6 +121,9 @@ const feedbackEn: FeedbackOverlayStrings = {
   youAnswered: 'You answered',
   gotIt: 'Got it',
   rowsOf: (a, b) => `${a} row${a > 1 ? 's' : ''} of ${b}`,
+  remAnswer: (quotient, remainder) => `${quotient} r ${remainder}`,
+  remEyebrow: (divisor, quotient, remainder) =>
+    remainder === 0 ? `${divisor} × ${quotient}` : `${divisor} × ${quotient} + ${remainder}`,
 };
 
 export const feedbackOverlayStrings = { fr: feedbackFr, en: feedbackEn };

@@ -158,3 +158,14 @@
     transform: translateY(-50%) scale(1);
   }
 }
+
+/* Niveau 3 — rangée du reste : les points qui « ne rentrent pas » dans les
+   rangées pleines (specs §12.4). Mis à part visuellement (coral, détachés de
+   la grille par un léger espace) pour matérialiser l'écart. */
+.dot-grid-row--rest {
+  margin-top: calc(var(--dot-gap, 10px) * 1.5);
+}
+
+.dot--rest {
+  background: var(--coral);
+}

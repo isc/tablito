@@ -75,6 +75,7 @@ const TEXT = {
     badges: 'Badges',
     consistency: 'Régularité', // src/i18n/badges.ts (badge streak)
     divisions: 'Divisions',
+    remainders: 'Avec reste', // src/i18n/progress.ts (onglet niveau 3)
   },
   en: {
     greeting: 'Hi',        // greeting "Hi <name> !"
@@ -84,6 +85,7 @@ const TEXT = {
     badges: 'Badges',
     consistency: 'Consistency',
     divisions: 'Divisions',
+    remainders: 'Remainders',
   },
 };
 
@@ -278,6 +280,56 @@ function buildUnlockedDivisionProfile() {
   profile.divisionMysteryTheme = 'village'; // même raison que mysteryTheme : pas de spoiler
   profile.hasSeenDivisionIntro = true;
   profile.lastSessionDate = SEED_YESTERDAY;
+  return profile;
+}
+
+// Profil « niveau 3 débloqué » : tables ET divisions en boîte 5 (non dues),
+// badges de déblocage posés explicitement (la migration n'attribue qu'une
+// passe de checkBadges : les badges « Divisions par N » demanderaient une
+// seconde passe puisqu'ils sont gatés sur les badges de table persistés).
+// Sert à capturer l'intro de zone, la saisie en deux temps, la 3e image
+// mystère et le dashboard à trois onglets.
+function buildUnlockedRemainderProfile() {
+  const profile = buildUnlockedDivisionProfile();
+  const future = '2026-05-03';
+  for (const f of profile.divisionFacts) {
+    f.introduced = true;
+    f.box = 5;
+    f.lastSeen = SEED_YESTERDAY;
+    f.nextDue = future;
+    f.history = [{ date: SEED_YESTERDAY, correct: true, responseTimeMs: 2200, answeredWith: f.quotient }];
+  }
+  // Ne pousser QUE les badges « Divisions par N » : les badges de table sont
+  // complétés par la migration (toutes les mult en boîte 5), et le profil
+  // d'exemple contient déjà `table-2` — en re-pousser un ferait 9 badges
+  // `table-*` alors que le déblocage compte strictement 8 (hasAllTableBadges).
+  for (let n = 2; n <= 9; n++) {
+    profile.badges.push({ id: `div-table-${n}`, earnedDate: SEED_YESTERDAY, icon: `÷${n}` });
+  }
+  // Zones du niveau 3 : distribution déterministe décalée (image variée), et
+  // — comme pour la division — aucune zone INTRODUITE en boîte 1, sinon le
+  // pacing bloque les intros et la capture « 21-remainder-intro » n'a pas lieu.
+  const remainderFacts = [];
+  for (let divisor = 2; divisor <= 9; divisor++) {
+    for (let quotient = 2; quotient <= 9; quotient++) {
+      const seed = seededBox(quotient + 1, divisor);
+      const introduced = seed.introduced;
+      const box = introduced ? Math.max(seed.box, 2) : seed.box;
+      remainderFacts.push({
+        divisor,
+        quotient,
+        box,
+        introduced,
+        lastSeen: introduced ? SEED_YESTERDAY : '',
+        nextDue: introduced ? SEED_TODAY : '',
+        history: introduced
+          ? [{ date: SEED_YESTERDAY, correct: box >= 3, responseTimeMs: 3000, answeredWith: box >= 3 ? quotient : null }]
+          : [],
+      });
+    }
+  }
+  profile.remainderFacts = remainderFacts;
+  profile.remainderMysteryTheme = 'village'; // pas de spoiler, comme les deux autres
   return profile;
 }
 
@@ -808,6 +860,49 @@ async function captureDivisionScreens(page) {
   await shot(page, '17-division-question');
 }
 
+async function captureRemainderScreens(page) {
+  await seedProfile(page, buildUnlockedRemainderProfile());
+  await gotoHome(page);
+  await page.waitForSelector('.home-screen');
+
+  // Espace parent — version niveau 3 : troisième onglet « Avec reste » sur le
+  // sélecteur d'opération, carte de maîtrise dédiée.
+  await captureParentDashboard(page, '13c-parent-dashboard-remainder');
+
+  // Image mystère du niveau 3 : « Mes images » → onglet « Avec reste ».
+  await page.click(`.home-nav-btn:has-text("${tx('myPictures')}")`);
+  await page.waitForSelector('.progress-screen');
+  await page.click(`.progress-tab:has-text("${tx('remainders')}")`);
+  await shot(page, '23-remainder-progress');
+  await page.click('.progress-back-btn');
+  await page.waitForSelector('.home-screen');
+
+  // Séance : intro de zone (rangées pleines + points du reste en couleur),
+  // puis la saisie en deux temps sur la question qui suit.
+  await page.click('.home-start-btn');
+  await page.waitForSelector('.session-screen');
+  if (await page.locator('.session-intro').count()) {
+    // La rangée du reste est dans le DOM dès le montage mais reste `.hidden`
+    // (opacité) tant que les rangées pleines ne sont pas toutes révélées par
+    // les timers JS — on attend l'état révélé, pas la présence du nœud.
+    await page
+      .waitForSelector('.dot-grid-row--rest:not(.hidden)', { timeout: 9000 })
+      .catch(() => log('WARN: remainder rest dots did not appear'));
+    await sleep(300);
+    await shot(page, '21-remainder-intro');
+    await clickAllIntroSteps(page);
+  } else {
+    log('WARN: no remainder intro step — 21-remainder-intro will be missing');
+  }
+  // Étape 1 : on répond le bon quotient → l'écran passe à « Il reste combien ? »
+  // (le quotient s'installe dans la formule) — c'est cet état qu'on capture.
+  await page.waitForSelector('.session-question-text');
+  const { a: dividend, b: divisor } = await readQuestion(page);
+  await answerWith(page, Math.floor(dividend / divisor));
+  await page.waitForSelector('.formula-remainder');
+  await shot(page, '22-remainder-question');
+}
+
 async function captureMultiProfileScreens(page) {
   // Deux enfants sur l'appareil : Léa (le profil du reste du guide) + Max
   // (prénom choisi pour tomber sur une couleur d'avatar différente de Léa —
@@ -1000,6 +1095,30 @@ const SECTIONS_FR = [
       { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
       { file: '17-division-question', caption: 'Question de division au pavé numérique.' },
       { file: '18-division-progress', caption: 'Une image mystère dédiée à la division, distincte de celle des tables.' },
+    ],
+  },
+  {
+    id: 'remainder',
+    title: 'Niveau 3 — la division avec reste',
+    description: `Quand toutes les divisions sont maîtrisées (les huit badges
+      « Divisions par N »), un troisième niveau se débloque : la division quand
+      ça ne tombe pas juste (« 45 ÷ 7 = 6, reste 3 »), le geste attendu en fin
+      de CE2 et formalisé en CM1 avec la division posée. L'app enseigne
+      explicitement l'astuce d'encadrement : chercher le multiple juste en
+      dessous, sans dépasser — ce qui manque pour y arriver, c'est le reste.
+      La réponse se donne en deux temps : « Combien de fois ? » puis « Il reste
+      combien ? » (toujours des réponses à un chiffre), et le nombre à diviser
+      change à chaque révision pour que l'enfant refasse vraiment le geste.
+      Parfois, ça tombe juste — le reste est zéro, il faut le remarquer !
+      Une troisième image mystère se dévoile, et les tables comme les divisions
+      continuent d'être entretenues discrètement dans la même séance
+      quotidienne. Comme toujours : rien de tout cela n'est visible avant
+      d'être débloqué.`,
+    shots: [
+      { file: '21-remainder-intro', caption: 'Introduction d\'une division avec reste : les rangées pleines, et les points qui « ne rentrent pas » — le reste.' },
+      { file: '22-remainder-question', caption: 'La réponse en deux temps : le quotient validé s\'installe dans la formule, puis « Il reste combien ? ».' },
+      { file: '23-remainder-progress', caption: 'Une troisième image mystère, dédiée à la division avec reste.' },
+      { file: '13c-parent-dashboard-remainder', caption: 'Le tableau de bord parent gagne un troisième onglet « Avec reste » (répartition par boîte et grille Leitner).' },
     ],
   },
   {
@@ -1235,6 +1354,29 @@ const SECTIONS_EN = [
       { file: '16-division-intro', caption: 'Introducing a division: “think of the multiplication”.' },
       { file: '17-division-question', caption: 'Division question on the keypad.' },
       { file: '18-division-progress', caption: 'A mystery picture dedicated to division, distinct from the tables one.' },
+    ],
+  },
+  {
+    id: 'remainder',
+    title: 'Level 3 — division with remainders',
+    description: `Once every division is mastered (all eight "Dividing by N"
+      badges), a third level unlocks: division when it doesn't come out even
+      ("45 ÷ 7 = 6 r 3") — the skill expected at the end of grade 3 and
+      formalized with long division the following year. The app explicitly
+      teaches the bounding trick: find the multiple just below, without going
+      over — what's missing to get there is the remainder. Answers come in two
+      steps: "How many times?" then "What's left over?" (always single-digit
+      answers), and the number to divide changes on every review so the child
+      genuinely redoes the reasoning. Sometimes it does come out even — the
+      remainder is zero, and spotting that is part of the skill! A third
+      mystery picture reveals itself, and both the times tables and the
+      divisions quietly keep being maintained within the same daily session.
+      As always: none of this is visible before it is unlocked.`,
+    shots: [
+      { file: '21-remainder-intro', caption: 'Introducing a division with remainder: the full rows, and the dots that "don\'t fit" — the remainder.' },
+      { file: '22-remainder-question', caption: 'Answering in two steps: the validated quotient settles into the formula, then "What\'s left over?".' },
+      { file: '23-remainder-progress', caption: 'A third mystery picture, dedicated to division with remainders.' },
+      { file: '13c-parent-dashboard-remainder', caption: 'The parent dashboard gains a third "Remainders" tab (box distribution and Leitner grid).' },
     ],
   },
   {
@@ -1727,6 +1869,7 @@ async function generateForLang(browser, lang) {
   await captureSessionScreens(page);
   await captureRecap(page);
   await captureDivisionScreens(page);
+  await captureRemainderScreens(page);
   await captureMultiProfileScreens(page);
   // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
   // the input mode to 'voice' via addInitScript, both of which would
