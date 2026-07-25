@@ -253,7 +253,11 @@
 }
 
 /* Scan du QR de transfert (caméra in-app) */
-.welcome-scan-video {
+/* Cadre de la caméra de scan — partagé par les deux appairages par QR
+   (transfert ici, suivi à distance dans l'espace parent). Le build concatène
+   tous les .css en un seul fichier, donc une règle groupée suffit. */
+.welcome-scan-video,
+.parent-scan-video {
   width: min(300px, 78vw);
   aspect-ratio: 1;
   object-fit: cover;

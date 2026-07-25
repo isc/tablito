@@ -27,6 +27,7 @@ import {
   deleteActiveProfile,
   setActiveProfile,
   listProfiles,
+  getActiveProfileId,
   createNewProfile,
   exportProfile,
   importProfile,
@@ -41,6 +42,8 @@ import { applyStreakUpdate } from './lib/streak';
 import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { syncLastSession } from './lib/push';
+import { listWatched } from './lib/watchStore';
+import type { WatchPairing } from './lib/watch';
 import { isVoiceMode } from './hooks/useInputMode';
 import { useAppStrings } from './i18n/app';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
@@ -99,7 +102,13 @@ function initialScreen(profile: UserProfile | null, profileCount: number): Scree
   // devine jamais quel enfant tient la tablette. Mono-profil : parcours
   // inchangé, zéro friction ajoutée.
   if (profileCount > 1) return 'profiles';
-  if (!profile) return 'welcome';
+  if (!profile) {
+    // Aucun profil local mais au moins un enfant suivi à distance : l'appareil
+    // est celui d'un parent (il a peut-être découvert Tablito en scannant le QR
+    // de son enfant). Lui proposer l'onboarding enfant — prénom, test de
+    // placement — serait un contresens : on ouvre son espace parent.
+    return listWatched().length > 0 ? 'parent' : 'welcome';
+  }
   return profileHome(profile);
 }
 
@@ -125,13 +134,22 @@ interface AppProps {
   // expiré, déjà consommé, hors-ligne…). Annoncé une fois, quel que soit
   // l'écran d'arrivée.
   transferResult?: 'imported' | 'error' | null;
+  // Issu d'un #watch= présent au boot : le parent vient de scanner le QR de
+  // l'appareil de son enfant. Déjà déchiffré par main.tsx, transmis tel quel à
+  // l'espace parent pour un affichage immédiat.
+  watchPairing?: WatchPairing | 'error' | null;
 }
 
-export default function App({ transferResult = null }: AppProps) {
+export default function App({ transferResult = null, watchPairing = null }: AppProps) {
   const appStrings = useAppStrings();
   const [transferNotice, setTransferNotice] = useState(transferResult);
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
-  const [screen, setScreen] = useState<Screen>(() => initialScreen(profile, listProfiles().length));
+  // Un #watch= au boot signifie que le parent vient de scanner le QR de son
+  // enfant : quoi qu'il y ait par ailleurs sur l'appareil, ce qu'il veut voir
+  // est l'espace parent (même en cas d'échec — il peut y réessayer l'appairage).
+  const [screen, setScreen] = useState<Screen>(() =>
+    watchPairing ? 'parent' : initialScreen(profile, listProfiles().length),
+  );
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
   // du Welcome « ajout d'un enfant ». Lu à chaque render : l'index est
   // minuscule et ne change que via des flows qui re-rendent déjà App.
@@ -615,6 +633,18 @@ export default function App({ transferResult = null }: AppProps) {
       // pour que le cron saute l'envoi du soir. Best-effort (no-op si non
       // abonné / push non configuré), jamais bloquant pour le recap.
       void syncLastSession();
+
+      // Suivi à distance : rafraîchit l'instantané chiffré que consulte le
+      // parent sur son propre appareil. Même esprit que ci-dessus — no-op si le
+      // profil n'est pas partagé, et un échec (hors-ligne) sera rattrapé par la
+      // séance suivante, donc jamais bloquant pour le recap.
+      // Import dynamique : lib/watch tire le chiffrement (et transfer.ts) —
+      // hors de question de les faire entrer dans le graphe eager du boot pour
+      // un chemin qui ne sert qu'aux profils partagés.
+      const activeId = getActiveProfileId();
+      if (activeId) {
+        void import('./lib/watch').then((m) => m.publishWatchSnapshot(activeId, updatedProfile));
+      }
     },
     [profile, divisionUnlocked, remainderUnlocked, sessionMode],
   );
@@ -688,6 +718,13 @@ export default function App({ transferResult = null }: AppProps) {
     if (!profile) return;
     const ok = window.confirm(appStrings.confirmDeleteProfile(profile.name));
     if (!ok) return;
+    // Le profil part d'ici, donc son suivi à distance n'a plus d'objet : on
+    // révoque le dépôt AVANT de perdre l'id qui porte ses identifiants, sinon un
+    // instantané relisible survivrait à l'enfant (purgé au mieux après 6 mois).
+    const deletedId = getActiveProfileId();
+    if (deletedId) {
+      void import('./lib/watch').then((m) => m.stopWatch(deletedId));
+    }
     deleteActiveProfile();
     // Même décision qu'au boot : plusieurs enfants → « Qui joue ? » ; un seul
     // → son accueil directement ; aucun → onboarding complet.
@@ -728,7 +765,10 @@ export default function App({ transferResult = null }: AppProps) {
           // Annulable uniquement en mode « ajout d'un enfant » (il existe
           // déjà au moins un profil) : au tout premier onboarding il n'y a
           // nulle part où revenir.
-          onCancel={profileCount > 0 ? handleWelcomeCancel : undefined}
+          // Annulable dès qu'il y a un écran d'arrivée ailleurs : un profil
+          // local, OU un enfant suivi à distance (sinon le parent qui tape
+          // « Créer un profil sur cet appareil » reste piégé dans l'onboarding).
+          onCancel={profileCount > 0 || listWatched().length > 0 ? handleWelcomeCancel : undefined}
         />
       )}
 
@@ -806,10 +846,16 @@ export default function App({ transferResult = null }: AppProps) {
         <RulesScreen onBack={() => setScreen('home')} showRule11={rule11Unlocked} />
       )}
 
-      {screen === 'parent' && profile && (
+      {/* `watchPairing` compte, y compris quand il vaut 'error' : un parent sans
+          Tablito qui scanne un QR périmé n'a ni profil local ni suivi mémorisé,
+          et sans ce terme il tomberait sur un écran blanc au lieu de l'espace
+          parent, d'où il peut réessayer l'appairage. */}
+      {screen === 'parent' && (profile || watchPairing || listWatched().length > 0) && (
         <ParentDashboard
           profile={profile}
-          onBack={() => setScreen('home')}
+          initialWatch={watchPairing && watchPairing !== 'error' ? watchPairing : null}
+          // Sans profil local, l'espace parent EST l'app : nulle part où revenir.
+          onBack={profile ? () => setScreen('home') : undefined}
           onExport={handleExport}
           onImport={handleImport}
           onAddProfile={handleAddProfile}

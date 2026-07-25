@@ -16,6 +16,14 @@ export const transferFetchingStrings = {
   en: 'Fetching your progress…',
 };
 
+// Même écran d'attente pré-montage, pour un appairage de suivi à distance
+// (#watch=) : c'est la progression de l'ENFANT qu'on récupère, sur l'appareil du
+// parent — d'où une formulation distincte de celle du transfert.
+export const watchFetchingStrings = {
+  fr: 'Récupération de la progression de votre enfant…',
+  en: "Fetching your child's progress…",
+};
+
 interface WelcomeStrings {
   dontKnow: string;
   testHint: string;

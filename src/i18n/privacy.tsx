@@ -24,6 +24,8 @@ interface PrivacyStrings {
   reminderOutro: ReactNode;
   transferTitle: string;
   transferBody: ReactNode;
+  watchTitle: string;
+  watchBody: ReactNode;
   notCollectedTitle: string;
   notCollectedItems: ReactNode[];
   rightsTitle: string;
@@ -53,8 +55,8 @@ const fr: PrivacyStrings = {
       L'application fonctionne entièrement hors-ligne après le premier
       chargement. Par défaut, rien n'est envoyé sur un serveur : les seules
       exceptions sont déclenchées par vous et décrites ci-dessous (l'envoi
-      d'un avis, l'activation du rappel quotidien, et le transfert vers un
-      autre appareil).
+      d'un avis, l'activation du rappel quotidien, le transfert vers un
+      autre appareil, et le suivi à distance).
     </>
   ),
   feedbackTitle: "Ce qui est envoyé en cas d'avis",
@@ -122,6 +124,26 @@ const fr: PrivacyStrings = {
       automatiquement au bout de 15&nbsp;minutes, récupéré ou non.
     </>
   ),
+  watchTitle: 'Ce qui est envoyé si vous activez le suivi à distance',
+  watchBody: (
+    <>
+      Le suivi à distance (espace parent, section «&nbsp;Suivi à
+      distance&nbsp;») permet de consulter la progression d'un enfant qui
+      pratique sur un autre appareil. Il repose sur le même chiffrement que le
+      transfert&nbsp;: après chaque séance, l'appareil de l'enfant dépose un
+      instantané de son profil <strong>chiffré sur l'appareil</strong> avant
+      l'envoi, et la clé de déchiffrement ne vit que dans le QR code / le lien
+      partagé — jamais transmise au serveur, qui ne peut donc pas lire le
+      contenu. La différence avec un transfert est la{' '}
+      <strong>durée</strong>&nbsp;: là où un transfert s'efface au bout de
+      15&nbsp;minutes, un suivi reste déposé et relisible tant qu'il est actif,
+      pour que la progression affichée sur l'appareil du parent reste à jour. Le
+      bouton «&nbsp;Ne plus partager&nbsp;» supprime immédiatement le dépôt, et un
+      suivi qu'aucune séance n'a rafraîchi depuis 6&nbsp;mois est purgé
+      automatiquement. Aucune adresse e-mail n'est demandée, et aucun compte n'est
+      créé.
+    </>
+  ),
   notCollectedTitle: "Ce qui n'est pas collecté",
   notCollectedItems: [
     <>Aucun cookie de suivi, aucun analytics tiers.</>,
@@ -150,7 +172,7 @@ const fr: PrivacyStrings = {
       formulaire <strong>«&nbsp;Envoyer un avis&nbsp;»</strong> du dashboard parent.
     </>
   ),
-  updated: 'Dernière mise à jour : mai 2026.',
+  updated: 'Dernière mise à jour : juillet 2026.',
 };
 
 const en: PrivacyStrings = {
@@ -170,8 +192,8 @@ const en: PrivacyStrings = {
       locally in the browser (<code>localStorage</code>). The app works
       entirely offline after the first load. By default, nothing is sent to
       a server: the only exceptions are triggered by you and described below
-      (sending feedback, turning on the daily reminder, and transferring to
-      another device).
+      (sending feedback, turning on the daily reminder, transferring to
+      another device, and remote follow).
     </>
   ),
   feedbackTitle: 'What is sent when you send feedback',
@@ -238,6 +260,23 @@ const en: PrivacyStrings = {
       15&nbsp;minutes, picked up or not.
     </>
   ),
+  watchTitle: 'What is sent if you turn on remote follow',
+  watchBody: (
+    <>
+      Remote follow (parent area, "Remote follow" section) lets you check the
+      progress of a child practising on another device. It uses the same
+      encryption as a transfer: after every session, the child's device uploads a
+      snapshot of their profile <strong>encrypted on the device</strong> before
+      sending, and the decryption key only lives in the shared QR code / link —
+      never sent to the server, which therefore cannot read the content. The
+      difference with a transfer is <strong>duration</strong>: where a transfer
+      deletes itself after 15&nbsp;minutes, a follow stays uploaded and readable
+      as long as it is active, so that the progress shown on the parent's device
+      stays up to date. The "Stop sharing" button deletes the upload immediately,
+      and a follow that no session has refreshed for 6&nbsp;months is purged
+      automatically. No email address is asked for, and no account is created.
+    </>
+  ),
   notCollectedTitle: 'What is not collected',
   notCollectedItems: [
     <>No tracking cookies, no third-party analytics.</>,
@@ -266,7 +305,7 @@ const en: PrivacyStrings = {
       <strong>"Send feedback"</strong> form in the parent dashboard.
     </>
   ),
-  updated: 'Last updated: May 2026.',
+  updated: 'Last updated: July 2026.',
 };
 
 export const privacyStrings = { fr, en };

@@ -50,6 +50,11 @@ export default function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </section>
 
         <section className="privacy-section">
+          <h2>{t.watchTitle}</h2>
+          <p>{t.watchBody}</p>
+        </section>
+
+        <section className="privacy-section">
           <h2>{t.notCollectedTitle}</h2>
           <ul>
             {t.notCollectedItems.map((item, i) => (

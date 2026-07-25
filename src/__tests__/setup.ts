@@ -1,3 +1,5 @@
+import { webcrypto } from 'node:crypto';
+
 // Vitest setup file — runs once per test file before the tests.
 //
 // i18n : jsdom ET Node 22 exposent `navigator.language` = 'en-US', ce qui
@@ -104,3 +106,10 @@ globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   }
   return realFetch(input as RequestInfo, init);
 }) as typeof fetch;
+
+// jsdom expose parfois un `crypto` sans SubtleCrypto, alors que le chiffrement
+// du transfert et du suivi à distance (AES-GCM) en dépend. On garantit l'API
+// WebCrypto complète de Node — même implémentation que les navigateurs.
+if (!globalThis.crypto?.subtle) {
+  Object.defineProperty(globalThis, 'crypto', { value: webcrypto, configurable: true });
+}

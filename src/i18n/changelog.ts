@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-07-25',
+    items: [
+      "Suivi à distance : votre enfant pratique sur un autre appareil (une tablette, un ancien téléphone) et vous n'aviez aucune visibilité sur sa progression. Depuis son espace parent, « Partager la progression » affiche un QR code ; scannez-le avec votre téléphone et son tableau de bord apparaît chez vous, mis à jour après chaque séance. Vous n'avez pas besoin d'avoir Tablito : le QR l'installe et ouvre directement l'espace parent. Si vous avez aussi un profil sur votre appareil, un sélecteur en haut de l'espace parent bascule entre le vôtre et celui de votre enfant. Aucune adresse e-mail, aucun compte : tout est chiffré, et « Ne plus partager » coupe le suivi immédiatement.",
+    ],
+  },
+  {
     date: '2026-07-23',
     items: [
       "Nouveau niveau 3 : la division avec reste. Quand toutes les divisions sont maîtrisées (les 8 badges « Divisions par N »), l'app propose le geste suivant du programme (fin CE2 / CM1) : trouver le quotient et le reste quand ça ne tombe pas juste (« 45 ÷ 7 = 6, reste 3 »). La réponse se donne en deux temps (« Combien de fois ? » puis « Il reste combien ? »), une troisième image mystère se dévoile, et l'entretien des tables et des divisions continue en arrière-plan dans la même séance quotidienne. Rien ne change pour les enfants qui n'en sont pas là : le niveau est invisible avant d'être débloqué.",
@@ -171,6 +177,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-07-25',
+    items: [
+      "Remote follow: your child practises on another device (a tablet, an old phone) and you had no visibility on their progress. From their parent area, \"Share progress\" shows a QR code; scan it with your phone and their dashboard appears on yours, refreshed after every session. You don't need to have Tablito already: the QR installs it and opens straight into the parent area. If you also have a profile on your device, a switcher at the top of the parent area flips between yours and your child's. No email address, no account: everything is encrypted, and \"Stop sharing\" cuts the follow immediately.",
+    ],
+  },
   {
     date: '2026-07-23',
     items: [
