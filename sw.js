@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260725074618"
+const CACHE = 'tablito-' + "20260725092456"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
