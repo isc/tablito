@@ -183,6 +183,19 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
   });
 });
 
+// Crée un profil via le vrai parcours Welcome (prénom + « Passer le test »),
+// puis ferme l'intro des règles. Même helper que multiProfile.test.tsx.
+function completeWelcome(name: string): void {
+  fireEvent.click(findButton(/^Suivant/)!);
+  const nameInput = document.querySelector<HTMLInputElement>('input.welcome-input')!;
+  fireEvent.change(nameInput, { target: { value: name } });
+  fireEvent.click(findButton(/^C'est moi/)!);
+  fireEvent.click(findButton(/Passer le test/)!);
+  fireEvent.click(findButton(/C'est parti/)!);
+  fireEvent.click(findButton(/Suivant/)!);
+  fireEvent.click(findButton(/J'ai compris/)!);
+}
+
 describe('appareil mixte : un profil local ET un enfant suivi', () => {
   // Le cas d'usage d'origine : le parent pratique lui-même sur son téléphone et
   // suit son enfant, qui pratique sur un autre appareil.
@@ -196,6 +209,33 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     mine.totalSessions = 4;
     addProfile(mine);
   }
+
+  it('un suiveur peut se créer un profil après coup, et les deux coexistent', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    // Départ : appareil de parent, aucun profil local, un enfant suivi.
+    const { link } = await shareChildProgress('Zoé', 30);
+    localStorage.clear();
+    localStorage.setItem('multiplix-lang', 'fr');
+    await addWatched(link);
+
+    await renderApp();
+    // Il est bien sur l'espace parent, et la porte de sortie est offerte.
+    await act(async () => {
+      fireEvent.click(findButton(/Créer un profil sur cet appareil/)!);
+    });
+
+    // Parcours d'onboarding complet, pour lui cette fois. Hors act() : fireEvent
+    // enveloppe déjà chaque événement, et tout batcher empêcherait les étapes de
+    // Welcome de se rendre entre les clics.
+    completeWelcome('Papa');
+    await flush();
+
+    // Le profil local existe SANS avoir chassé le suivi de Zoé.
+    expect(listProfiles().map((p) => p.name)).toEqual(['Papa']);
+    expect(listWatched().map((w) => w.name)).toEqual(['Zoé']);
+    // Et il atterrit sur SON accueil, pas sur l'espace parent.
+    expect(document.querySelector('.home-greeting')?.textContent).toContain('Papa');
+  });
 
   it('propose les deux sources et bascule de l’une à l’autre', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
