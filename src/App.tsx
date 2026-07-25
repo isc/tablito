@@ -846,7 +846,11 @@ export default function App({ transferResult = null, watchPairing = null }: AppP
         <RulesScreen onBack={() => setScreen('home')} showRule11={rule11Unlocked} />
       )}
 
-      {screen === 'parent' && (profile || listWatched().length > 0) && (
+      {/* `watchPairing` compte, y compris quand il vaut 'error' : un parent sans
+          Tablito qui scanne un QR périmé n'a ni profil local ni suivi mémorisé,
+          et sans ce terme il tomberait sur un écran blanc au lieu de l'espace
+          parent, d'où il peut réessayer l'appairage. */}
+      {screen === 'parent' && (profile || watchPairing || listWatched().length > 0) && (
         <ParentDashboard
           profile={profile}
           initialWatch={watchPairing && watchPairing !== 'error' ? watchPairing : null}

@@ -168,6 +168,19 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
     expect(document.querySelector('.parent-dashboard')).not.toBeNull();
     expect(findButton(/Suivre un enfant à distance/)).not.toBeNull();
   });
+  it('n’affiche pas un écran blanc quand un QR périmé est scanné sur un appareil vierge', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    // Appareil totalement vierge : ni profil local, ni suivi déjà connu. C'est le
+    // cas d'un parent sans Tablito qui scanne un QR expiré ou révoqué.
+    expect(listProfiles()).toHaveLength(0);
+    expect(listWatched()).toHaveLength(0);
+
+    await renderApp({ watchPairing: 'error' });
+
+    // Quelque chose DOIT s'afficher, avec un chemin de récupération.
+    expect(document.querySelector('.parent-dashboard')).not.toBeNull();
+    expect(findButton(/Suivre un enfant à distance/)).not.toBeNull();
+  });
 });
 
 describe('appareil mixte : un profil local ET un enfant suivi', () => {
