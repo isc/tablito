@@ -103,6 +103,16 @@ export function useLang(): LangContextValue {
 }
 
 /** Locale BCP-47 de la langue courante du contexte (pour les composants React). */
+/**
+ * Base du guide utilisateur pour la langue courante : FR à `/guide/`, autres
+ * langues sous `/guide/<lang>/` (cf. scripts/generate-user-guide.mjs). Partagé
+ * par tous les liens d'aide — la convention de chemin ne doit vivre qu'ici.
+ */
+export function useGuideBase(): string {
+  const { lang } = useLang();
+  return `${import.meta.env.BASE_URL}guide/${lang === 'fr' ? '' : `${lang}/`}`;
+}
+
 export function useLocale(): string {
   return LOCALE[useContext(LangContext).lang];
 }

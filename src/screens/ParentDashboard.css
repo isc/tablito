@@ -465,3 +465,78 @@
 .parent-hard-fact-kind--rem {
   background: var(--coral);
 }
+
+/* === Suivi à distance === */
+
+/* Barre de fraîcheur du profil suivi, juste sous le sélecteur de source. */
+.parent-remote-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 20px 4px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sage) 8%, var(--paper));
+}
+
+.parent-remote-status {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.parent-remote-status--error {
+  color: var(--box-red);
+}
+
+/* Bouton compact : il vit dans la barre, pas dans une grille d'actions. */
+.parent-remote-refresh {
+  flex-shrink: 0;
+  width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.parent-remote-refresh:disabled {
+  opacity: 0.5;
+}
+
+/* Un bloc par sens du suivi (partager d'ici / suivre d'ailleurs). */
+.parent-watch-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.parent-watch-list {
+  margin: 14px 20px 0;
+  border-top: 1.5px solid var(--line);
+}
+
+.parent-watch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.parent-watch-name {
+  font-weight: 700;
+}
+
+.parent-watch-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--box-red);
+  text-decoration: underline;
+  cursor: pointer;
+}

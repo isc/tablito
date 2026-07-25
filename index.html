@@ -51,17 +51,20 @@
         try {
           var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
             || window.navigator.standalone === true;
-          var profile = false, skipped = false, hasImport = false;
+          var profile = false, skipped = false, hasBootFragment = false;
           // Deux clés : `multiplix-profiles` (index multi-profils) et
           // `multiplix-profile` (ancien schéma mono-profil, migré au boot).
           try { profile = !!(localStorage.getItem('multiplix-profiles') || localStorage.getItem('multiplix-profile')); } catch (e) {}
           try { skipped = localStorage.getItem('multiplix-skip-install') === '1'; } catch (e) {}
-          // Profil dans le fragment d'URL → on boote l'app directement (pas la
-          // landing) : #import= (migration cross-origin depuis l'ancien domaine)
-          // ou #transfer= (transfert depuis un autre appareil, QR de l'espace
-          // parent). L'import réel a lieu dans main.tsx.
-          try { hasImport = location.hash.indexOf('import=') !== -1 || location.hash.indexOf('transfer=') !== -1; } catch (e) {}
-          if (standalone || profile || skipped || hasImport) {
+          // Fragment d'URL porteur d'un profil ou d'un appairage → on boote
+          // l'app directement (pas la landing) : #import= (migration
+          // cross-origin depuis l'ancien domaine), #transfer= (transfert depuis
+          // un autre appareil, QR de l'espace parent), ou #watch= (suivi à
+          // distance : un parent scanne le QR de l'appareil de son enfant, et
+          // n'a rien à faire de la landing). Le traitement réel a lieu dans
+          // main.tsx.
+          try { hasBootFragment = /(import|transfer|watch)=/.test(location.hash); } catch (e) {}
+          if (standalone || profile || skipped || hasBootFragment) {
             document.documentElement.classList.add('skip-static-landing');
           }
           // Langue de l'interface (globale) : préférence explicite stockée,
@@ -79,7 +82,7 @@
           if (lang === 'en') {
             document.title = 'Tablito — Practise the times tables (free, no ads)';
             var desc = document.querySelector('meta[name="description"]');
-            if (desc) desc.setAttribute('content', 'Free, ad-free app to learn the multiplication tables gently, from age 7. Leitner method, no grades or rankings, works offline. Data stays on the device.');
+            if (desc) desc.setAttribute('content', 'Free, ad-free app to learn the multiplication tables gently, from age 7. Leitner method, no grades or rankings, works offline. Data stays on the device by default.');
             // Manifest localisé : le standard n'a pas de description multilingue,
             // donc un fichier par langue, basculé ici (le <link rel="manifest">
             // existe déjà plus haut). Seule la `description` diffère ; le nom et
@@ -123,7 +126,7 @@
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
 
     <title>Tablito — Réviser les tables de multiplication (gratuit, sans pub)</title>
-    <meta name="description" content="Appli gratuite et sans publicité pour apprendre les tables de multiplication en douceur, dès le CE1. Méthode Leitner, sans notes ni classement, fonctionne hors-ligne. Les données restent sur l'appareil." />
+    <meta name="description" content="Appli gratuite et sans publicité pour apprendre les tables de multiplication en douceur, dès le CE1. Méthode Leitner, sans notes ni classement, fonctionne hors-ligne. Les données restent sur l'appareil par défaut." />
     <link rel="canonical" href="https://tablito.app/" />
 
     <!-- Open Graph / Twitter : aperçu riche quand l'URL est partagée (groupes
@@ -251,8 +254,8 @@
             <span class="landing-principle-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M8 12l3 3 5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </span>
-            <span data-lang="fr"><strong>Hors-ligne, sans pub, sans compte.</strong> Une fois installé, plus besoin de connexion. Les données restent sur l'appareil.</span>
-            <span data-lang="en"><strong>Offline, no ads, no account.</strong> Once installed, no connection needed. Data stays on the device.</span>
+            <span data-lang="fr"><strong>Hors-ligne, sans pub, sans compte.</strong> Une fois installé, plus besoin de connexion. Les données restent sur l'appareil par défaut.</span>
+            <span data-lang="en"><strong>Offline, no ads, no account.</strong> Once installed, no connection needed. Data stays on the device by default.</span>
           </li>
         </ul>
 

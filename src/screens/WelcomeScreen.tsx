@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type QrScanner from 'qr-scanner';
 import type { UserProfile } from '../types';
 import Mascot from '../components/Mascot';
 import NumPad from '../components/NumPad';
+import { useQrScan } from '../hooks/useQrScan';
 import {
   PLACEMENT_FACTS,
   MAX_CONSECUTIVE_FAILURES,
@@ -48,48 +48,23 @@ export default function WelcomeScreen({
   // presse-papiers échoue (refus, navigateur non supporté) ou sur demande.
   const [manualPaste, setManualPaste] = useState(false);
   const [scan, setScan] = useState<ScanState>('off');
-  const scanVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Scan du QR de transfert affiché par l'ancien appareil. La caméra tourne
-  // tant que `scan === 'on'` ; qr-scanner (vendoré) est chargé à la demande.
-  // On ignore les QR étrangers (l'utilisateur vise peut-être encore à côté)
-  // et on ne consomme le code — lecture unique côté serveur — qu'une fois le
-  // scanner arrêté.
-  useEffect(() => {
-    if (scan !== 'on') return;
-    let scanner: QrScanner | null = null;
-    let cancelled = false;
-    (async () => {
-      try {
-        const [{ default: QrScanner }, transfer] = await Promise.all([
-          import('qr-scanner'),
-          import('../lib/transfer'),
-        ]);
-        if (cancelled || !scanVideoRef.current) return;
-        const qr = new QrScanner(
-          scanVideoRef.current,
-          async ({ data }) => {
-            if (!transfer.parseTransferLink(data)) return;
-            qr.stop();
-            setScan('fetching');
-            const profile = await transfer.importTransferFromLink(data);
-            if (profile) onTransferImported(profile);
-            else setScan('transferError');
-          },
-          { returnDetailedScanResult: true },
-        );
-        scanner = qr;
-        await qr.start();
-      } catch {
-        // Caméra absente, refusée, ou lib introuvable → repli sur le collage.
-        if (!cancelled) setScan('cameraError');
-      }
-    })();
-    return () => {
-      cancelled = true;
-      scanner?.destroy(); // destroy() arrête aussi la caméra
-    };
-  }, [scan, onTransferImported]);
+  // Scan du QR de transfert affiché par l'ancien appareil. On ignore les QR
+  // étrangers, et on ne consomme le code — lecture unique côté serveur —
+  // qu'après avoir reconnu un lien de transfert.
+  const scanVideoRef = useQrScan({
+    active: scan === 'on',
+    onCode: async (data) => {
+      const transfer = await import('../lib/transfer');
+      if (!transfer.parseTransferLink(data)) return false;
+      setScan('fetching');
+      const profile = await transfer.importTransferFromLink(data);
+      if (profile) onTransferImported(profile);
+      else setScan('transferError');
+      return true;
+    },
+    onCameraError: () => setScan('cameraError'), // → repli sur le collage
+  });
 
   const { speak, stop: stopSpeech } = useTTS();
 

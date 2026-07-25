@@ -14,7 +14,7 @@
 import type { UserProfile } from '../types';
 import { clearUrlHash, importProfile, installProfile } from './storage';
 import { bytesToBase64url, gunzip, gzip, urlBase64ToUint8Array } from './codec';
-import { supabaseEnv, supabaseHeaders } from './supabase';
+import { supabaseEnv, supabaseRpc } from './supabase';
 
 /** Durée de validité d'un transfert côté serveur — garder en phase avec
  *  l'interval de read_transfer dans supabase/transfers.sql. */
@@ -25,16 +25,32 @@ export function transferConfigured(): boolean {
 }
 
 const IV_LENGTH = 12; // taille standard du nonce AES-GCM
+const KEY_LENGTH = 32; // AES-256
 
-/** Profil → blob opaque (gzip puis AES-GCM) + clé base64url. Exporté pour les
- *  tests ; le flux nominal passe par createTransfer / importTransferFromUrl. */
-export async function packProfile(
+/** Code haute entropie servant de clé de ligne côté serveur : 12 octets
+ *  aléatoires → 16 chars base64url (96 bits), inénumérable, et au-dessus du
+ *  minimum imposé par les RPC SQL. Partagé avec le suivi à distance
+ *  (lib/watch), qui a la même contrainte de non-devinabilité. */
+export function randomCode(): string {
+  return bytesToBase64url(crypto.getRandomValues(new Uint8Array(12)));
+}
+
+/** Profil → blob opaque (gzip puis AES-GCM) sous une clé DONNÉE. Séparé de
+ *  packProfile pour le suivi à distance (lib/watch), qui redépose des
+ *  instantanés successifs sous la clé stable déjà scannée par le parent — là où
+ *  un transfert en tire une neuve à chaque dépôt. */
+export async function packProfileWithKey(
   profile: UserProfile,
-): Promise<{ payload: string; keyB64: string }> {
+  keyB64: string,
+): Promise<string> {
   const plain = await gzip(new TextEncoder().encode(JSON.stringify(profile)));
-  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
-    'encrypt',
-  ]);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    urlBase64ToUint8Array(keyB64),
+    'AES-GCM',
+    false,
+    ['encrypt'],
+  );
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const cipher = new Uint8Array(
     await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain),
@@ -42,8 +58,22 @@ export async function packProfile(
   const blob = new Uint8Array(IV_LENGTH + cipher.length);
   blob.set(iv);
   blob.set(cipher, IV_LENGTH);
-  const raw = new Uint8Array(await crypto.subtle.exportKey('raw', key));
-  return { payload: bytesToBase64url(blob), keyB64: bytesToBase64url(raw) };
+  return bytesToBase64url(blob);
+}
+
+/** Clé AES-256 aléatoire, base64url. Partagée avec le suivi à distance, qui a
+ *  besoin d'en tirer une hors de tout dépôt (elle survit aux instantanés). */
+export function randomKeyB64(): string {
+  return bytesToBase64url(crypto.getRandomValues(new Uint8Array(KEY_LENGTH)));
+}
+
+/** Profil → blob opaque + clé base64url fraîche. Exporté pour les tests ; le
+ *  flux nominal passe par createTransfer / importTransferFromUrl. */
+export async function packProfile(
+  profile: UserProfile,
+): Promise<{ payload: string; keyB64: string }> {
+  const keyB64 = randomKeyB64();
+  return { payload: await packProfileWithKey(profile, keyB64), keyB64 };
 }
 
 /** Blob opaque + clé → profil validé/migré, ou null si déchiffrement ou
@@ -77,19 +107,11 @@ export async function unpackProfile(payload: string, keyB64: string): Promise<Us
  * dépôt échoue (hors-ligne, service indisponible…).
  */
 export async function createTransfer(profile: UserProfile): Promise<string | null> {
-  const env = supabaseEnv();
-  if (!env) return null;
   try {
     const { payload, keyB64 } = await packProfile(profile);
-    // 12 octets aléatoires → 16 chars base64url (96 bits) : inénumérable, et
-    // au-dessus du minimum imposé par create_transfer côté SQL.
-    const code = bytesToBase64url(crypto.getRandomValues(new Uint8Array(12)));
-    const res = await fetch(`${env.url}/rest/v1/rpc/create_transfer`, {
-      method: 'POST',
-      headers: supabaseHeaders(env.key),
-      body: JSON.stringify({ p_code: code, p_payload: payload }),
-    });
-    if (!res.ok) return null;
+    const code = randomCode();
+    const res = await supabaseRpc('create_transfer', { p_code: code, p_payload: payload });
+    if (!res?.ok) return null;
     return `${window.location.origin}${import.meta.env.BASE_URL}#transfer=${code}.${keyB64}`;
   } catch {
     return null;
@@ -112,15 +134,9 @@ export function parseTransferLink(text: string): { code: string; key: string } |
 // profil, qui devient actif (dédup re-transfert : cf. storage.installProfile).
 // Null si échec : code expiré/consommé, déchiffrement impossible, hors-ligne.
 async function consumeTransfer(code: string, key: string): Promise<UserProfile | null> {
-  const env = supabaseEnv();
-  if (!env) return null;
   try {
-    const res = await fetch(`${env.url}/rest/v1/rpc/read_transfer`, {
-      method: 'POST',
-      headers: supabaseHeaders(env.key),
-      body: JSON.stringify({ p_code: code }),
-    });
-    if (!res.ok) return null;
+    const res = await supabaseRpc('read_transfer', { p_code: code });
+    if (!res?.ok) return null;
     const payload = (await res.json()) as string | null;
     if (!payload) return null; // code inconnu, expiré ou déjà consommé
     const profile = await unpackProfile(payload, key);

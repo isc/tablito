@@ -21,3 +21,23 @@ export function supabaseHeaders(key: string): Record<string, string> {
     'Content-Type': 'application/json',
   };
 }
+
+/**
+ * Appelle une fonction SECURITY DEFINER (`POST /rest/v1/rpc/<name>`). Renvoie
+ * null si la config est absente ou si l'appel n'a pas abouti du tout
+ * (hors-ligne, service injoignable) — à l'appelant de distinguer ce cas d'une
+ * réponse non-ok, qui remonte telle quelle.
+ */
+export async function supabaseRpc(name: string, body: unknown): Promise<Response | null> {
+  const env = supabaseEnv();
+  if (!env) return null;
+  try {
+    return await fetch(`${env.url}/rest/v1/rpc/${name}`, {
+      method: 'POST',
+      headers: supabaseHeaders(env.key),
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return null;
+  }
+}
