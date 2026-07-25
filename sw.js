@@ -26,7 +26,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260722124033"
+const CACHE = 'tablito-' + "20260725074618"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -61,6 +61,10 @@ const ASSETS = [
   "/src/__tests__/parseFrenchNumber.test.js",
   "/src/__tests__/placement.test.js",
   "/src/__tests__/recapCelebrations.test.js",
+  "/src/__tests__/remainderBadges.test.js",
+  "/src/__tests__/remainderComposer.test.js",
+  "/src/__tests__/remainderDaily.test.js",
+  "/src/__tests__/remainderJourney.test.js",
   "/src/__tests__/sessionComposer.test.js",
   "/src/__tests__/setup.js",
   "/src/__tests__/strategies.test.js",
@@ -94,6 +98,9 @@ const ASSETS = [
   "/src/components/NumPad.js",
   "/src/components/ParentGate.js",
   "/src/components/ProgressGrid.js",
+  "/src/components/RemainderMysteryImage.js",
+  "/src/components/RemainderProgressGrid.js",
+  "/src/components/RemainderStrategyHint.js",
   "/src/components/StrategyHint.js",
   "/src/components/StrategyHintShell.js",
   "/src/components/StreakDetailModal.js",
@@ -142,7 +149,11 @@ const ASSETS = [
   "/src/lib/parseSpokenNumber.js",
   "/src/lib/placement.js",
   "/src/lib/push.js",
+  "/src/lib/remainderComposer.js",
+  "/src/lib/remainderFacts.js",
+  "/src/lib/remainderStrategies.js",
   "/src/lib/sessionComposer.js",
+  "/src/lib/sessionItemView.js",
   "/src/lib/similarity.js",
   "/src/lib/spokenNumber.js",
   "/src/lib/storage.js",
