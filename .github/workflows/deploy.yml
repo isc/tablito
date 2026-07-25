@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Déclenchement manuel : nécessaire après un commit poussé par un autre
+  # workflow (ex. assets(tts) via generate-tts.yml) — les pushes faits avec le
+  # GITHUB_TOKEN ne déclenchent pas les workflows `on: push` (anti-boucle),
+  # donc les assets resteraient hors ligne jusqu'au prochain vrai push.
+  workflow_dispatch:
 
 permissions:
   contents: write
