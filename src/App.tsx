@@ -138,9 +138,16 @@ interface AppProps {
   // l'appareil de son enfant. Déjà déchiffré par main.tsx, transmis tel quel à
   // l'espace parent pour un affichage immédiat.
   watchPairing?: WatchPairing | 'error' | null;
+  // Vrai si le boot venait d'un clic sur la notification de recap hebdomadaire
+  // (fragment RECAP_HASH, consommé par main.tsx comme les autres fragments).
+  recapRequested?: boolean;
 }
 
-export default function App({ transferResult = null, watchPairing = null }: AppProps) {
+export default function App({
+  transferResult = null,
+  watchPairing = null,
+  recapRequested = false,
+}: AppProps) {
   const appStrings = useAppStrings();
   const [transferNotice, setTransferNotice] = useState(transferResult);
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
@@ -148,7 +155,10 @@ export default function App({ transferResult = null, watchPairing = null }: AppP
   // enfant : quoi qu'il y ait par ailleurs sur l'appareil, ce qu'il veut voir
   // est l'espace parent (même en cas d'échec — il peut y réessayer l'appairage).
   const [screen, setScreen] = useState<Screen>(() =>
-    watchPairing ? 'parent' : initialScreen(profile, listProfiles().length),
+    // Un #watch= au boot signifie un appairage ; #recap vient du clic sur la
+    // notification hebdomadaire. Dans les deux cas c'est l'espace parent qu'on
+    // veut, pas l'accueil de l'enfant.
+    watchPairing || recapRequested ? 'parent' : initialScreen(profile, listProfiles().length),
   );
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
   // du Welcome « ajout d'un enfant ». Lu à chaque render : l'index est

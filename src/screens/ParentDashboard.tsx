@@ -3,12 +3,14 @@ import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
 import FeedbackModal from '../components/FeedbackModal';
 import NotificationSettings from '../components/NotificationSettings';
+import WeeklyRecapSettings from '../components/WeeklyRecapSettings';
 import LanguageToggle from '../components/LanguageToggle';
 import ParentStats from '../components/ParentStats';
 import QrCanvas from '../components/QrCanvas';
 import { useGuideBase } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
 import { getActiveProfileId } from '../lib/storage';
+import { setPushPref } from '../lib/push';
 import { createTransfer, transferConfigured, TRANSFER_TTL_MINUTES } from '../lib/transfer';
 import {
   addWatched,
@@ -281,6 +283,11 @@ export default function ParentDashboard({
   const handleStopWatching = (code: string) => {
     const list = removeWatched(code);
     setWatched(list);
+    // Plus aucun enfant suivi : le recap hebdomadaire n'a plus rien à annoncer,
+    // et son toggle disparaît avec la liste — le laisser actif condamnerait le
+    // parent à une notification hebdomadaire qu'il ne pourrait plus éteindre
+    // depuis l'app.
+    if (list.length === 0) void setPushPref('weekly', false);
     // Le suivi affiché disparaît : on retombe sur le profil local, ou à défaut
     // sur un autre enfant suivi.
     if (selectedCode === code) setSelectedCode(profile ? null : list[0]?.code ?? null);
@@ -522,20 +529,25 @@ export default function ParentDashboard({
             )}
           </div>
 
+          {/* Recap hebdomadaire et liste des suivis : n'ont de sens que si cet
+              appareil suit quelqu'un. */}
           {watched.length > 0 && (
-            <div className="parent-watch-list">
-              {watched.map((w) => (
-                <div key={w.code} className="parent-watch-row">
-                  <span className="parent-watch-name">{w.name}</span>
-                  <button
-                    className="parent-watch-remove"
-                    onClick={() => handleStopWatching(w.code)}
-                  >
-                    {t.watchStopFollowing}
-                  </button>
-                </div>
-              ))}
-            </div>
+            <>
+              <WeeklyRecapSettings />
+              <div className="parent-watch-list">
+                {watched.map((w) => (
+                  <div key={w.code} className="parent-watch-row">
+                    <span className="parent-watch-name">{w.name}</span>
+                    <button
+                      className="parent-watch-remove"
+                      onClick={() => handleStopWatching(w.code)}
+                    >
+                      {t.watchStopFollowing}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

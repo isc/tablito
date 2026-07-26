@@ -31,7 +31,9 @@ async function shareChildProgress(name: string, totalSessions = 9) {
 // Monte l'app et laisse le React.lazy() de ParentDashboard se résoudre : il se
 // règle en microtâche, donc le tout premier rendu d'un fichier de test a besoin
 // d'un tick de plus que les suivants (où le module est déjà résolu).
-async function renderApp(props: { watchPairing?: WatchPairing | 'error' | null } = {}) {
+async function renderApp(
+  props: { watchPairing?: WatchPairing | 'error' | null; recapRequested?: boolean } = {},
+) {
   await act(async () => {
     render(<App {...props} />);
   });
@@ -195,6 +197,31 @@ function completeWelcome(name: string): void {
   fireEvent.click(findButton(/Suivant/)!);
   fireEvent.click(findButton(/J'ai compris/)!);
 }
+
+describe('lien profond #recap (clic sur la notification hebdomadaire)', () => {
+  it('ouvre l’espace parent même quand un profil local existe', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    const { link } = await shareChildProgress('Zoé', 12);
+    localStorage.clear();
+    localStorage.setItem('multiplix-lang', 'fr');
+    await addWatched(link);
+    const mine = createNewProfile('Papa');
+    mine.hasSeenRulesIntro = true;
+    addProfile(mine);
+
+    // Boot ordinaire : l'accueil de l'enfant local.
+    await renderApp();
+    expect(document.querySelector('.parent-dashboard')).toBeNull();
+    cleanup();
+
+    // Clic sur la notification : on atterrit dans l'espace parent, sinon elle
+    // déposerait le parent sur un écran qui n'a rien à voir avec le recap.
+    // (La consommation du fragment #recap elle-même vit dans main.tsx boot(),
+    // avec celle des autres fragments.)
+    await renderApp({ recapRequested: true });
+    expect(document.querySelector('.parent-dashboard')).not.toBeNull();
+  });
+});
 
 describe('appareil mixte : un profil local ET un enfant suivi', () => {
   // Le cas d'usage d'origine : le parent pratique lui-même sur son téléphone et

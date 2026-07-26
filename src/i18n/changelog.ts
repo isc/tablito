@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-07-27',
+    items: [
+      "Recap hebdomadaire du suivi à distance : si vous suivez la progression d'un enfant depuis votre appareil, vous pouvez recevoir une notification le dimanche soir pour penser à y jeter un œil. C'est indépendant du rappel quotidien de séance — celui-ci s'adresse à l'enfant sur son appareil, le recap à vous sur le vôtre, et vous pouvez activer l'un sans l'autre. La notification ne contient aucun chiffre (la progression reste chiffrée) : elle ouvre directement l'espace parent, où tout s'affiche.",
+    ],
+  },
+  {
     date: '2026-07-25',
     items: [
       "Suivi à distance : votre enfant pratique sur un autre appareil (une tablette, un ancien téléphone) et vous n'aviez aucune visibilité sur sa progression. Depuis son espace parent, « Partager la progression » affiche un QR code ; scannez-le avec votre téléphone et son tableau de bord apparaît chez vous, mis à jour après chaque séance. Vous n'avez pas besoin d'avoir Tablito : le QR l'installe et ouvre directement l'espace parent. Si vous avez aussi un profil sur votre appareil, un sélecteur en haut de l'espace parent bascule entre le vôtre et celui de votre enfant. Aucune adresse e-mail, aucun compte : tout est chiffré, et « Ne plus partager » coupe le suivi immédiatement.",
@@ -177,6 +183,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-07-27',
+    items: [
+      "Weekly recap for remote follow: if you follow a child's progress from your device, you can now get a notification on Sunday evening to remember to take a look. It is independent from the daily session reminder — that one is for the child on their device, the recap is for you on yours, and you can turn on either without the other. The notification carries no figures (the progress stays encrypted): it opens the parent area directly, where everything is shown.",
+    ],
+  },
   {
     date: '2026-07-25',
     items: [

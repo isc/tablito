@@ -61,9 +61,10 @@
           // cross-origin depuis l'ancien domaine), #transfer= (transfert depuis
           // un autre appareil, QR de l'espace parent), ou #watch= (suivi à
           // distance : un parent scanne le QR de l'appareil de son enfant, et
-          // n'a rien à faire de la landing). Le traitement réel a lieu dans
-          // main.tsx.
-          try { hasBootFragment = /(import|transfer|watch)=/.test(location.hash); } catch (e) {}
+          // n'a rien à faire de la landing), ou #recap (clic sur la notification
+          // hebdomadaire, qui ouvre l'espace parent). Le traitement réel a lieu
+          // dans main.tsx / App.tsx.
+          try { hasBootFragment = /(import|transfer|watch)=|^#recap$/.test(location.hash); } catch (e) {}
           if (standalone || profile || skipped || hasBootFragment) {
             document.documentElement.classList.add('skip-static-landing');
           }

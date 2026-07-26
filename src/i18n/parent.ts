@@ -456,6 +456,47 @@ export function useNotificationSettingsStrings(): NotificationSettingsStrings {
   return useStrings(notificationSettingsStrings);
 }
 
+// === WeeklyRecapSettings (recap hebdomadaire du suivi à distance) ===
+
+interface WeeklyRecapStrings {
+  subtitle: string;
+  enabled: string;
+  enable: string;
+  iosInstallSubtitle: string;
+  blocked: string;
+  unavailable: string;
+}
+
+const weeklyRecapFr: WeeklyRecapStrings = {
+  subtitle:
+    'Une notification le dimanche soir pour penser à regarder la progression de la semaine. Elle ne contient aucune donnée\u00a0: elle ouvre simplement cette page, où la progression est déchiffrée sur votre appareil.',
+  enabled: 'Activé',
+  enable: 'Recevoir un recap chaque semaine',
+  iosInstallSubtitle:
+    "Pour recevoir le recap hebdomadaire, installez d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → «\u00a0Sur l'écran d'accueil\u00a0»).",
+  blocked:
+    'Notifications bloquées. Autorisez-les dans les réglages de votre navigateur, puis réessayez.',
+  unavailable: "Impossible d'activer le recap pour le moment. Réessayez plus tard.",
+};
+
+const weeklyRecapEn: WeeklyRecapStrings = {
+  subtitle:
+    'A notification on Sunday evening, to remember to check the week\u2019s progress. It carries no data: it simply opens this page, where the progress is decrypted on your device.',
+  enabled: 'On',
+  enable: 'Get a weekly recap',
+  iosInstallSubtitle:
+    'To get the weekly recap, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
+  blocked:
+    'Notifications are blocked. Allow them in your browser settings, then try again.',
+  unavailable: "Can't turn on the recap right now. Please try again later.",
+};
+
+export const weeklyRecapStrings = { fr: weeklyRecapFr, en: weeklyRecapEn };
+
+export function useWeeklyRecapStrings(): WeeklyRecapStrings {
+  return useStrings(weeklyRecapStrings);
+}
+
 // === FeedbackModal ===
 
 interface FeedbackModalStrings {
