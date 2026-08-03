@@ -82,12 +82,14 @@ const fr: PrivacyStrings = {
       le responsable du projet.
     </>
   ),
-  reminderTitle: 'Ce qui est envoyé si vous activez le rappel quotidien',
+  reminderTitle: 'Ce qui est envoyé si vous activez les notifications',
   reminderIntro: (
     <>
-      Le <strong>rappel quotidien</strong> (espace parent) est facultatif.
-      Si vous l'activez, l'appareil enregistre un <em>abonnement push</em>{' '}
-      dans la même base Supabase :
+      Les <strong>notifications</strong> (espace parent) sont facultatives, et
+      indépendantes l'une de l'autre&nbsp;: le <strong>rappel quotidien</strong> de
+      séance, et le <strong>recap hebdomadaire</strong> du suivi à distance. Si
+      vous en activez au moins une, l'appareil enregistre un{' '}
+      <em>abonnement push</em> dans la même base Supabase&nbsp;:
     </>
   ),
   reminderItems: [
@@ -98,18 +100,25 @@ const fr: PrivacyStrings = {
     <>le fuseau horaire de l'appareil (pour envoyer à 18&nbsp;h heure locale),</>,
     <>
       la date de la dernière séance, uniquement pour ne pas notifier les
-      jours où l'enfant a déjà pratiqué (anti-nag).
+      jours où l'enfant a déjà pratiqué (anti-nag),
+    </>,
+    <>
+      lesquelles des deux notifications sont activées, et la date du dernier
+      recap envoyé (pour n'en envoyer qu'un par semaine).
     </>,
   ],
   reminderOutro: (
     <>
-      <strong>Le prénom n'est pas envoyé</strong> et le message de rappel
-      est générique. Ces informations sont rattachées à l'abonnement (son
+      <strong>Le prénom n'est pas envoyé</strong> et les deux messages sont
+      génériques — le recap hebdomadaire ne contient d'ailleurs aucun chiffre,
+      puisque la progression suivie est chiffrée et illisible par le serveur&nbsp;:
+      il annonce qu'un recap est prêt, et c'est l'app qui l'affiche après
+      déchiffrement sur votre appareil. Ces informations sont rattachées à l'abonnement (son
       endpoint), pas à une identité. L'envoi des notifications passe par le
       service de notification de votre navigateur (Google, Mozilla ou Apple
       selon le navigateur), comme pour toute notification web. Vous pouvez
-      désactiver le rappel à tout moment depuis le même bouton, ce qui
-      supprime l'abonnement de la base.
+      désactiver chaque notification à tout moment depuis son bouton&nbsp;;
+      désactiver la dernière supprime l'abonnement de la base.
     </>
   ),
   transferTitle: 'Ce qui est envoyé lors d’un transfert vers un autre appareil',
@@ -218,12 +227,14 @@ const en: PrivacyStrings = {
       database hosted in Europe, readable only by the project owner.
     </>
   ),
-  reminderTitle: 'What is sent if you turn on the daily reminder',
+  reminderTitle: 'What is sent if you turn on notifications',
   reminderIntro: (
     <>
-      The <strong>daily reminder</strong> (parent area) is optional. If you
-      turn it on, the device records a <em>push subscription</em>{' '}
-      in the same Supabase database:
+      <strong>Notifications</strong> (parent area) are optional, and independent
+      of each other: the <strong>daily session reminder</strong>, and the{' '}
+      <strong>weekly recap</strong> of remote follow. If you turn on at least one,
+      the device records a <em>push subscription</em> in the same Supabase
+      database:
     </>
   ),
   reminderItems: [
@@ -234,18 +245,24 @@ const en: PrivacyStrings = {
     <>the device's time zone (to send at 6&nbsp;pm local time),</>,
     <>
       the date of the last session, only so as not to notify on days when
-      the child has already practiced (anti-nag).
+      the child has already practiced (anti-nag),
+    </>,
+    <>
+      which of the two notifications are on, and the date of the last recap sent
+      (so that only one goes out per week).
     </>,
   ],
   reminderOutro: (
     <>
-      <strong>The first name is not sent</strong> and the reminder message
-      is generic. This information is tied to the subscription (its
-      endpoint), not to an identity. Notifications are delivered through your
+      <strong>The first name is not sent</strong> and both messages are generic —
+      the weekly recap carries no figures at all, since the followed progress is
+      encrypted and unreadable by the server: it announces that a recap is ready,
+      and the app displays it after decrypting on your device. This information is
+      tied to the subscription (its endpoint), not to an identity. Notifications are delivered through your
       browser's notification service (Google, Mozilla or Apple depending on
-      the browser), as with any web notification. You can turn off the
-      reminder at any time from the same button, which removes the
-      subscription from the database.
+      the browser), as with any web notification. You can turn off each
+      notification at any time from its own button; turning off the last one
+      removes the subscription from the database.
     </>
   ),
   transferTitle: 'What is sent when transferring to another device',

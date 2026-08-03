@@ -4,7 +4,8 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { LangProvider } from './i18n/LangProvider'
-import { importProfileFromUrl } from './lib/storage'
+import { clearUrlHash, importProfileFromUrl } from './lib/storage'
+import { RECAP_HASH } from './lib/watchStore'
 import { transferFetchingStrings, watchFetchingStrings } from './i18n/onboarding'
 import type { TransferImportResult } from './lib/transfer'
 import type { WatchPairing } from './lib/watch'
@@ -40,6 +41,10 @@ async function boot() {
   let transferResult: TransferImportResult = null
   let watchPairing: WatchPairing | 'error' | null = null
   const hash = window.location.hash
+  // Clic sur la notification de recap : App ouvrira l'espace parent. Consommé
+  // ici comme les autres fragments, pour qu'un rechargement ne le rejoue pas.
+  const recapRequested = hash === RECAP_HASH
+  if (recapRequested) clearUrlHash()
   if (hash.includes('transfer=')) {
     showWaiting(root, transferFetchingStrings)
     transferResult = await (await import('./lib/transfer')).importTransferFromUrl()
@@ -57,7 +62,11 @@ async function boot() {
     <StrictMode>
       <ErrorBoundary>
         <LangProvider>
-          <App transferResult={transferResult} watchPairing={watchPairing} />
+          <App
+            transferResult={transferResult}
+            watchPairing={watchPairing}
+            recapRequested={recapRequested}
+          />
         </LangProvider>
       </ErrorBoundary>
     </StrictMode>,

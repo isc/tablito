@@ -54,6 +54,14 @@ export function watchLink({ code, key }: WatchCredentials): string {
   return `${window.location.origin}${import.meta.env.BASE_URL}#watch=${code}.${key}`;
 }
 
+/**
+ * Fragment déposé par la notification de recap hebdomadaire (cf.
+ * scripts/send-reminders.mjs), qui demande l'ouverture de l'espace parent.
+ * ⚠ Aussi testé en dur par l'inline script d'index.html (pré-paint) pour sauter
+ * la landing — garder les deux en phase.
+ */
+export const RECAP_HASH = '#recap';
+
 // ⚠ Le nom du fragment est aussi testé en dur par l'inline script d'index.html
 // (pré-paint, avant tout module) pour sauter la landing statique — si `watch=`
 // change ici, mettre à jour la regex des fragments de boot là-bas.

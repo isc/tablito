@@ -1,11 +1,19 @@
-// Web Push — rappel quotidien (cf. plan « rappel quotidien à heure fixe »).
+// Web Push — deux notifications distinctes portées par la MÊME subscription :
+//  - le RAPPEL QUOTIDIEN de séance, sur l'appareil de l'enfant ;
+//  - le RECAP HEBDOMADAIRE du suivi à distance, sur l'appareil du parent, qui
+//    l'avertit que la progression de l'enfant qu'il suit a bougé.
+// Vouloir l'un sans l'autre est le cas normal (le parent n'a pas de séance à
+// faire), d'où deux préférences indépendantes plutôt qu'un unique « abonné ».
 //
-// Côté client, on ne fait que (dé)s'abonner et tenir à jour deux dates dans la
-// table Supabase `push_subscriptions`. L'envoi réel est fait par un cron
-// GitHub Actions (scripts/send-reminders.mjs), seul détenteur de la clé VAPID
-// privée. La table n'est jamais lue côté client (pas de policy SELECT anon) :
-// l'endpoint d'une subscription est une URL opaque non devinable, qui sert de
-// clé pour update/delete sa propre ligne.
+// Côté client, on tient à jour SA ligne de la table Supabase
+// `push_subscriptions` : les deux préférences et les dates de dédoublonnage.
+// L'envoi réel est fait par un cron GitHub Actions
+// (scripts/send-reminders.mjs), seul détenteur de la clé VAPID privée.
+//
+// La table n'a aucune policy (ni SELECT ni écriture) : l'endpoint d'une
+// subscription est une URL opaque non devinable, qui sert de clé ET
+// d'autorisation, via des fonctions SECURITY DEFINER. Un client peut donc lire
+// et écrire SA ligne sans que la table soit énumérable.
 //
 // Même conventions réseau que src/lib/feedback.ts (PostgREST + publishable key).
 
@@ -56,35 +64,108 @@ async function activeSubscription(): Promise<PushSubscription | null> {
   return (await reg?.pushManager.getSubscription()) ?? null;
 }
 
-/**
- * État courant de l'abonnement, pour réconcilier le toggle à l'ouverture de
- * l'espace parent (gère la permission révoquée hors de l'app).
- */
-export async function isSubscribed(): Promise<boolean> {
-  if (!pushConfigured || !pushSupported() || Notification.permission !== 'granted') return false;
-  return (await activeSubscription()) !== null;
+export type PushPrefResult = 'ok' | 'denied' | 'unsupported' | 'error';
+
+/** Les deux notifications, indépendantes. Tout à false = aucun abonnement. */
+export interface PushPrefs {
+  daily: boolean;
+  weekly: boolean;
 }
 
-export type SubscribeResult = 'subscribed' | 'denied' | 'unsupported' | 'error';
+const NO_PUSH: PushPrefs = { daily: false, weekly: false };
+
+// Miroir local du dernier état connu. L'affichage des toggles ne doit pas
+// dépendre du réseau : une PWA s'ouvre souvent hors-ligne, et afficher OFF
+// pendant que les notifications arrivent bel et bien est un mensonge — pire, il
+// rend le toggle inopérant pour DÉSACTIVER (il ne proposerait qu'« activer »).
+const MIRROR_KEY = 'multiplix-push-prefs';
+
+function readMirror(): PushPrefs | null {
+  try {
+    const raw = localStorage.getItem(MIRROR_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PushPrefs;
+    return { daily: !!parsed?.daily, weekly: !!parsed?.weekly };
+  } catch {
+    return null;
+  }
+}
+
+function writeMirror(prefs: PushPrefs | null): void {
+  try {
+    if (prefs) localStorage.setItem(MIRROR_KEY, JSON.stringify(prefs));
+    else localStorage.removeItem(MIRROR_KEY);
+  } catch {
+    // ignore (navigation privée stricte)
+  }
+}
 
 /**
- * Active le rappel quotidien : demande la permission, crée la subscription
- * push, et upsert la ligne Supabase (clé = endpoint).
+ * Préférences de cet appareil. La permission révoquée hors de l'app fait foi
+ * (aucune notification n'arrivera), donc elle l'emporte. Sinon on interroge le
+ * serveur, et on retombe sur le dernier état connu localement si la lecture
+ * échoue — surtout ne pas répondre « rien d'activé » pour cause de hors-ligne.
  */
-export async function subscribeToReminders(): Promise<SubscribeResult> {
+export async function getPushPrefs(): Promise<PushPrefs> {
+  if (!pushConfigured || !pushSupported() || Notification.permission !== 'granted') return NO_PUSH;
+  try {
+    const sub = await activeSubscription();
+    if (!sub) return NO_PUSH; // pas de canal : rien ne peut arriver, c'est certain
+    // La table n'a aucune policy SELECT (anti-énumération) : on passe donc par un
+    // RPC SECURITY DEFINER, à qui l'endpoint opaque sert d'autorisation.
+    const res = await fetch(`${url}/rest/v1/rpc/read_push_prefs`, {
+      method: 'POST',
+      headers: baseHeaders,
+      body: JSON.stringify({ p_endpoint: serialize(sub).endpoint }),
+    });
+    if (!res.ok) return readMirror() ?? NO_PUSH;
+    const row = (await res.json()) as PushPrefs | null;
+    const prefs = row ? { daily: !!row.daily, weekly: !!row.weekly } : NO_PUSH;
+    writeMirror(prefs);
+    return prefs;
+  } catch {
+    return readMirror() ?? NO_PUSH;
+  }
+}
+
+/**
+ * Active ou désactive UNE des deux notifications, sans toucher à l'autre : la
+ * mise à jour est partielle côté SQL (paramètre NULL = drapeau inchangé), parce
+ * que les deux toggles vivent dans deux endroits distincts de l'espace parent et
+ * qu'un read-modify-write côté client les ferait s'écraser mutuellement.
+ *
+ * Désactiver la dernière notification active supprime tout l'abonnement : garder
+ * une subscription que le cron ignore n'aurait aucun sens. C'est le RPC qui
+ * renvoie l'état résultant, donc cette décision découle d'une valeur lue et
+ * jamais d'une supposition.
+ */
+export async function setPushPref(
+  key: keyof PushPrefs,
+  value: boolean,
+): Promise<PushPrefResult> {
   if (!pushConfigured || !pushSupported()) return 'unsupported';
 
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return 'denied';
+  let sub = await activeSubscription();
+  const created = sub === null;
+  if (!value && !sub) return 'ok'; // rien à désactiver
+
+  // La permission se demande dès qu'elle n'est pas accordée, et pas seulement
+  // quand la subscription manque : un utilisateur peut l'avoir révoquée dans les
+  // réglages du site sans que le navigateur ne détruise la PushSubscription — on
+  // afficherait alors « Activé » pour des notifications qui n'arriveront jamais.
+  if (Notification.permission !== 'granted') {
+    if ((await Notification.requestPermission()) !== 'granted') return 'denied';
+  }
 
   try {
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
     if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      });
+      const reg = await navigator.serviceWorker.ready;
+      sub =
+        (await reg.pushManager.getSubscription()) ??
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        }));
     }
 
     const { endpoint, p256dh, auth } = serialize(sub);
@@ -94,10 +175,9 @@ export async function subscribeToReminders(): Promise<SubscribeResult> {
     // sous RLS, un ON CONFLICT DO UPDATE (comme un PATCH filtré par endpoint)
     // doit lire la ligne ciblée, donc les policies SELECT s'appliquent — or on en
     // refuse une exprès (l'endpoint opaque sert de secret, personne ne doit pouvoir
-    // énumérer les abonnés). La fonction bypasse RLS et ne retourne rien : on peut
-    // upsert SA ligne sans rendre la table lisible. Le ON CONFLICT préserve
+    // énumérer les abonnés). La fonction bypasse RLS. Le ON CONFLICT préserve
     // last_session_date / last_notified_date (la fonction ne les touche pas).
-    const res = await fetch(`${url}/rest/v1/rpc/upsert_push_subscription`, {
+    const res = await fetch(`${url}/rest/v1/rpc/upsert_push_prefs`, {
       method: 'POST',
       headers: baseHeaders,
       body: JSON.stringify({
@@ -105,15 +185,27 @@ export async function subscribeToReminders(): Promise<SubscribeResult> {
         p_p256dh: p256dh,
         p_auth: auth,
         p_timezone: timezone,
+        p_daily: key === 'daily' ? value : null,
+        p_weekly: key === 'weekly' ? value : null,
       }),
     });
     if (!res.ok) {
-      // L'enregistrement serveur a échoué : retirer la subscription locale pour
-      // ne pas laisser un abonnement que le cron ignore.
-      await sub.unsubscribe().catch(() => {});
+      // Ne retirer la subscription que si on vient de la CRÉER : sinon on
+      // détruirait un abonnement préexistant (et l'autre notification avec) à
+      // cause d'un échec sur celle-ci.
+      if (created) await sub.unsubscribe().catch(() => {});
       return 'error';
     }
-    return 'subscribed';
+
+    const prefs = (await res.json()) as PushPrefs;
+    // Plus rien d'actif : on retire l'abonnement au lieu de garder une ligne
+    // muette (et la permission cesse d'être « utilisée » côté navigateur).
+    if (!prefs.daily && !prefs.weekly) {
+      await unsubscribeFromReminders();
+      return 'ok';
+    }
+    writeMirror(prefs);
+    return 'ok';
   } catch {
     return 'error';
   }
@@ -133,6 +225,7 @@ export async function unsubscribeFromReminders(): Promise<void> {
     // best-effort : le cron purgera de toute façon les endpoints morts (410).
   }
   await sub.unsubscribe().catch(() => {});
+  writeMirror(null);
 }
 
 /**
