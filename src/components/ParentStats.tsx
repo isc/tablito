@@ -13,6 +13,7 @@ import type { UserProfile } from '../types';
 import { isDivisionUnlocked, isRemainderUnlocked, activeLevel } from '../lib/badges';
 import { countMastered } from '../lib/leitner';
 import { getHardestFacts } from '../lib/hardestFacts';
+import { remainderZoneBounds } from '../lib/remainderFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 import ProgressGrid from './ProgressGrid';
@@ -300,11 +301,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
                 </span>
                 <span className="parent-hard-fact-name">
                   {f.kind === 'rem'
-                    ? t.formatRemFact(
-                        f.divisor * f.quotient,
-                        f.divisor * f.quotient + f.divisor - 1,
-                        f.divisor,
-                      )
+                    ? t.formatRemFact(...remainderZoneBounds(f), f.divisor)
                     : f.kind === 'div'
                       ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
                       : t.formatMultFact(f.a, f.b, f.product)}

@@ -1,4 +1,5 @@
 import { useStrings } from './lang';
+import type { BoxLevel } from '../types';
 
 // Strings des écrans/composants « Progression & Badges » (ProgressScreen,
 // BadgesScreen, Badge, BadgeDetailModal, LeitnerGrid, StreakDetailModal,
@@ -172,8 +173,29 @@ export function useBadgeDetailStrings(): BadgeDetailStrings {
   return useStrings(badgeDetailStrings);
 }
 
+// === Libellé du niveau d'un fait selon sa boîte ===
+// Partagé par les modales détail de LeitnerGrid et de MysteryGrid.
+
+interface BoxLevelStrings {
+  label: (box: BoxLevel) => string;
+}
+
+const boxLevelFr: BoxLevelStrings = {
+  label: (box) =>
+    box === 5 ? 'Maîtrisé !' : box === 1 ? 'En apprentissage' : `Boîte ${box}/5`,
+};
+
+const boxLevelEn: BoxLevelStrings = {
+  label: (box) => (box === 5 ? 'Mastered!' : box === 1 ? 'Learning' : `Box ${box}/5`),
+};
+
+export const boxLevelStrings = { fr: boxLevelFr, en: boxLevelEn };
+
+export function useBoxLevelStrings(): BoxLevelStrings {
+  return useStrings(boxLevelStrings);
+}
+
 // === LeitnerGrid (modale détail d'un fait) ===
-// Le libellé du niveau (boxLevelLabel) vient déjà localisé de lib/leitner.
 
 interface LeitnerGridStrings {
   level: (label: string) => string;
@@ -289,23 +311,42 @@ export function useMascotStrings(): MascotStrings {
 // Partagé par ProgressGrid / DivisionProgressGrid / MysteryImage /
 // DivisionMysteryImage : « N fois M = P » et « D divisé par n ».
 
+// Titre d'une zone de dividendes (niveau 3) : « 6 ou 7 ÷ 2 », « 27 à 35 ÷ 9 ».
+// Le tiret d'intervalle brut (« 6–7 ÷ 2 ») se lisait comme une soustraction.
+// Une zone ÷ 2 ne couvre que deux dividendes : on les énumère au lieu
+// d'annoncer une plage. Table exportée — l'espace parent (i18n/parent.ts)
+// affiche les mêmes zones dans « Faits les plus difficiles ».
+function remainderZoneTitle(pair: string, range: string) {
+  return (lo: number, hi: number, divisor: number): string =>
+    `${lo} ${divisor === 2 ? pair : range} ${hi} ÷ ${divisor}`;
+}
+
+export const remainderZoneTitleStrings = {
+  fr: remainderZoneTitle('ou', 'à'),
+  en: remainderZoneTitle('or', 'to'),
+};
+
 interface FactCellStrings {
   multLabel: (row: number, col: number, product: number) => string;
   divLabel: (dividend: number, divisor: number) => string;
   // Niveau 3 : une case = une zone de dividendes (specs §12.6).
   remLabel: (lo: number, hi: number, divisor: number) => string;
+  // Titre de la modale détail d'une zone (niveau 3).
+  remTitle: (lo: number, hi: number, divisor: number) => string;
 }
 
 const factCellFr: FactCellStrings = {
   multLabel: (row, col, product) => `${row} fois ${col} = ${product}`,
   divLabel: (dividend, divisor) => `${dividend} divisé par ${divisor}`,
   remLabel: (lo, hi, divisor) => `${lo} à ${hi} divisés par ${divisor}, avec reste`,
+  remTitle: remainderZoneTitleStrings.fr,
 };
 
 const factCellEn: FactCellStrings = {
   multLabel: (row, col, product) => `${row} times ${col} = ${product}`,
   divLabel: (dividend, divisor) => `${dividend} divided by ${divisor}`,
   remLabel: (lo, hi, divisor) => `${lo} to ${hi} divided by ${divisor}, with remainder`,
+  remTitle: remainderZoneTitleStrings.en,
 };
 
 export const factCellStrings = { fr: factCellFr, en: factCellEn };
@@ -315,7 +356,6 @@ export function useFactCellStrings(): FactCellStrings {
 }
 
 // === MysteryGrid (modale détail d'une case) ===
-// Le libellé du niveau (boxLevelLabel) vient déjà localisé de lib/leitner.
 
 interface MysteryGridStrings {
   close: string;

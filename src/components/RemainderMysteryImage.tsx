@@ -27,7 +27,7 @@ export default function RemainderMysteryImage({ facts, theme }: RemainderMystery
       level: fact?.introduced ? fact.box : 0,
       introduced: fact?.introduced ?? false,
       ariaLabel: t.remLabel(lo, hi, row),
-      detailHeading: fact ? `${lo}–${hi} ÷ ${fact.divisor}` : '',
+      detailHeading: fact ? t.remTitle(lo, hi, fact.divisor) : '',
       gridA: fact?.divisor ?? row,
       gridB: fact?.quotient ?? col,
       box: fact?.box ?? 1,

@@ -142,13 +142,6 @@ export function countMastered(facts: { box: BoxLevel }[]): number {
   return facts.filter((f) => f.box >= MASTERY_BOX).length;
 }
 
-/** Libellé lisible du niveau d'un fait selon sa boîte (espace parent, images). */
-export function boxLevelLabel(box: BoxLevel): string {
-  if (box === 5) return 'Maîtrisé !';
-  if (box === 1) return 'En apprentissage';
-  return `Boîte ${box}/5`;
-}
-
 // --- Briques de composition de séance, partagées par les composeurs × et ÷ ---
 // (la séparation des composeurs est volontaire — politiques d'intro/conflit
 // distinctes ; seules les briques mécaniques ci-dessous sont mutualisées).

@@ -28,7 +28,7 @@ export default function RemainderProgressGrid({ facts }: RemainderProgressGridPr
       ariaLabel: t.remLabel(lo, hi, row),
       diagonal: false,
       modal: {
-        title: fact ? `${lo}–${hi} ÷ ${fact.divisor}` : '',
+        title: fact ? t.remTitle(lo, hi, fact.divisor) : '',
         correctCount,
         totalAttempts: fact?.history.length ?? 0,
       },

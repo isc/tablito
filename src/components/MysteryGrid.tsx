@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import type { MysteryTheme, BoxLevel } from '../types';
-import { boxLevelLabel } from '../lib/leitner';
 import DotGrid from './DotGrid';
-import { useMysteryGridStrings } from '../i18n/progress';
+import { useBoxLevelStrings, useMysteryGridStrings } from '../i18n/progress';
 
 export interface MysteryCell {
   level: number; // 0 = non introduit, 1..5 = boîte Leitner
@@ -33,6 +32,7 @@ interface MysteryGridProps {
  */
 export default function MysteryGrid({ theme, cellFor }: MysteryGridProps) {
   const t = useMysteryGridStrings();
+  const boxLevel = useBoxLevelStrings();
   const [selected, setSelected] = useState<MysteryCell | null>(null);
 
   return (
@@ -69,7 +69,7 @@ export default function MysteryGrid({ theme, cellFor }: MysteryGridProps) {
           <div className="mystery-detail-card" onClick={(e) => e.stopPropagation()}>
             <h3>{selected.detailHeading}</h3>
             <DotGrid a={selected.gridA} b={selected.gridB} animated={false} size="small" />
-            <p className="mystery-detail-box">{boxLevelLabel(selected.box)}</p>
+            <p className="mystery-detail-box">{boxLevel.label(selected.box)}</p>
             <button className="mystery-detail-close" onClick={() => setSelected(null)}>
               {t.close}
             </button>

@@ -1,8 +1,7 @@
 import { useState, Fragment } from 'react';
 import type { BoxLevel } from '../types';
-import { boxLevelLabel } from '../lib/leitner';
 import Modal from './Modal';
-import { useLeitnerGridStrings } from '../i18n/progress';
+import { useBoxLevelStrings, useLeitnerGridStrings } from '../i18n/progress';
 
 export interface LeitnerGridCell {
   box: BoxLevel;
@@ -39,6 +38,7 @@ function getBoxClass(cell: LeitnerGridCell): string {
  */
 export default function LeitnerGrid({ operator, cellFor }: LeitnerGridProps) {
   const t = useLeitnerGridStrings();
+  const boxLevel = useBoxLevelStrings();
   const [selected, setSelected] = useState<LeitnerGridCell | null>(null);
 
   return (
@@ -73,7 +73,7 @@ export default function LeitnerGrid({ operator, cellFor }: LeitnerGridProps) {
       {selected && (
         <Modal onClose={() => setSelected(null)} className="fact-detail">
           <h3 className="fact-detail-title">{selected.modal.title}</h3>
-          <p className="fact-detail-line">{t.level(boxLevelLabel(selected.box))}</p>
+          <p className="fact-detail-line">{t.level(boxLevel.label(selected.box))}</p>
           <p className="fact-detail-line">
             {selected.modal.totalAttempts > 0
               ? t.correctAnswers(selected.modal.correctCount, selected.modal.totalAttempts)

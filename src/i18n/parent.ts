@@ -1,4 +1,5 @@
 import { localeFor, useStrings, type Lang } from './lang';
+import { remainderZoneTitleStrings } from './progress';
 
 // Strings de l'espace parent : ParentDashboard, ParentGate, NotificationSettings
 // et FeedbackModal. Même pattern que voice.ts — un dico `fr` source, un `en`
@@ -121,7 +122,7 @@ interface ParentDashboardStrings {
   remSymbol: string;
   formatDivFact: (dividend: number, divisor: number, quotient: number) => string;
   formatMultFact: (a: number, b: number, product: number) => string;
-  // Niveau 3 : une « zone » de dividendes (specs §12.6) — « 42-48 ÷ 7 ».
+  // Niveau 3 : une « zone » de dividendes (specs §12.6) — « 42 à 48 ÷ 7 ».
   formatRemFact: (lo: number, hi: number, divisor: number) => string;
 }
 
@@ -242,7 +243,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
-  formatRemFact: (lo, hi, divisor) => `${lo}-${hi} ÷ ${divisor}`,
+  formatRemFact: remainderZoneTitleStrings.fr,
 };
 
 const parentDashboardEn: ParentDashboardStrings = {
@@ -362,7 +363,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
-  formatRemFact: (lo, hi, divisor) => `${lo}-${hi} ÷ ${divisor}`,
+  formatRemFact: remainderZoneTitleStrings.en,
 };
 
 export const parentDashboardStrings = {
