@@ -51,6 +51,9 @@ interface ParentDashboardProps {
   // Suivi appairé au boot depuis un `#watch=` : déjà déchiffré par main.tsx, on
   // l'affiche sans second aller-retour réseau.
   initialWatch?: WatchPairing | null;
+  // Vrai quand l'espace parent est ouvert par la notification de recap
+  // hebdomadaire : change la source affichée par défaut.
+  openOnWatched?: boolean;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -74,6 +77,7 @@ export default function ParentDashboard({
   onShowPrivacy,
   onShowChangelog,
   initialWatch = null,
+  openOnWatched = false,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
   const guideBase = useGuideBase();
@@ -101,8 +105,13 @@ export default function ParentDashboard({
     // Appairage au boot : on ouvre directement sur l'enfant qu'on vient de
     // scanner, c'est la raison même de l'ouverture de l'app.
     if (initialWatch) return initialWatch.entry.code;
-    if (profile) return null;
-    return listWatched()[0]?.code ?? null;
+    const firstWatched = listWatched()[0]?.code ?? null;
+    // Arrivée par la notification de recap : c'est la progression SUIVIE que le
+    // parent vient consulter, pas la sienne — même s'il a un profil local ici,
+    // auquel cas la source par défaut serait ce profil et il faudrait encore
+    // taper l'onglet de l'enfant.
+    if (openOnWatched && firstWatched) return firstWatched;
+    return profile ? null : firstWatched;
   });
 
   // L'instantané distant, ÉTIQUETÉ du code auquel il appartient : c'est ce qui

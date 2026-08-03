@@ -864,6 +864,7 @@ export default function App({
         <ParentDashboard
           profile={profile}
           initialWatch={watchPairing && watchPairing !== 'error' ? watchPairing : null}
+          openOnWatched={recapRequested}
           // Sans profil local, l'espace parent EST l'app : nulle part où revenir.
           onBack={profile ? () => setScreen('home') : undefined}
           onExport={handleExport}

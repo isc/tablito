@@ -220,6 +220,13 @@ describe('lien profond #recap (clic sur la notification hebdomadaire)', () => {
     // avec celle des autres fragments.)
     await renderApp({ recapRequested: true });
     expect(document.querySelector('.parent-dashboard')).not.toBeNull();
+
+    // …et sur l'enfant SUIVI, pas sur le profil local : la notification parle de
+    // la progression de l'enfant, l'ouvrir sur « Papa » obligerait à taper
+    // l'onglet à chaque fois.
+    expect(document.querySelector('.parent-title')?.textContent).toContain('Zoé');
+    const active = document.querySelector('.parent-op-tabs .progress-tab.active');
+    expect((active?.textContent ?? '')).toContain('Zoé');
   });
 });
 
