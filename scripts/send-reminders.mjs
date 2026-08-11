@@ -39,6 +39,12 @@ export const WEEKLY_CATCHUP_DAY = 1; // lundi
 // des dates plutôt que calculer un numéro de semaine ISO évite les cas tordus de
 // bascule d'année.
 export const WEEKLY_MIN_DAYS = 6;
+// Tags des notifications : au sein d'un type, une notif non lue en remplace une
+// autre plutôt que de s'empiler. Ils font aussi office de clé côté app, qui
+// referme le rappel du jour quand la séance est faite (cf. src/lib/push.ts) —
+// les renommer ici sans y toucher là-bas casserait cette fermeture en silence.
+export const DAILY_TAG = 'daily-reminder';
+export const WEEKLY_TAG = 'weekly-recap';
 
 function localHour(tz, now) {
   return Number(
@@ -156,7 +162,7 @@ async function main() {
       body: isWeekly ? weeklyBody : dailyBody,
       // Le recap ouvre directement l'espace parent, sur le suivi à distance.
       url: isWeekly ? `${reminderUrl}#recap` : reminderUrl,
-      tag: isWeekly ? 'weekly-recap' : 'daily-reminder',
+      tag: isWeekly ? WEEKLY_TAG : DAILY_TAG,
     });
     try {
       await webpush.sendNotification(

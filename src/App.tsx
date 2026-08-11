@@ -639,9 +639,10 @@ export default function App({
       setRecapMode(mode);
       setScreen('recap');
 
-      // Anti-nag du rappel push : marque qu'une séance a eu lieu aujourd'hui
-      // pour que le cron saute l'envoi du soir. Best-effort (no-op si non
-      // abonné / push non configuré), jamais bloquant pour le recap.
+      // Anti-nag du rappel push, des deux côtés : marque qu'une séance a eu lieu
+      // aujourd'hui pour que le cron saute l'envoi du soir, ET referme le rappel
+      // déjà affiché dans la barre de notifications, devenu caduc. Best-effort
+      // (no-op si non abonné / push non configuré), jamais bloquant pour le recap.
       void syncLastSession();
 
       // Suivi à distance : rafraîchit l'instantané chiffré que consulte le

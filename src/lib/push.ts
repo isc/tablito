@@ -228,11 +228,36 @@ export async function unsubscribeFromReminders(): Promise<void> {
   writeMirror(null);
 }
 
+// Miroir de DAILY_TAG dans scripts/send-reminders.mjs, qui pose ce tag sur le
+// payload. Recopié plutôt qu'importé : ce script tourne sous Node en CI et
+// n'entre pas dans le graphe du navigateur.
+const DAILY_TAG = 'daily-reminder';
+
 /**
- * Marque qu'une séance a eu lieu aujourd'hui (anti-nag : le cron saute l'envoi
- * si une séance a eu lieu le jour même). Best-effort, jamais bloquant.
+ * Retire de la barre de notifications le rappel du jour, devenu caduc.
+ *
+ * Complète l'anti-nag serveur, qui ne peut rien pour un rappel DÉJÀ envoyé :
+ * quand l'enfant ouvre l'app depuis son écran d'accueil plutôt qu'en tapant la
+ * notification, celle-ci resterait affichée après la séance (seul le clic la
+ * ferme). Volontairement indépendant de l'abonnement push : une notif peut
+ * traîner dans la barre alors que l'abonnement vient d'être coupé.
+ */
+async function dismissDailyReminder(): Promise<void> {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    for (const note of (await reg?.getNotifications({ tag: DAILY_TAG })) ?? []) note.close();
+  } catch {
+    // best-effort : navigateur sans service worker ni API notifications.
+  }
+}
+
+/**
+ * Signale que la séance du jour a eu lieu : marque la date côté serveur
+ * (anti-nag : le cron saute l'envoi du soir) et retire le rappel déjà affiché.
+ * Best-effort, jamais bloquant.
  */
 export async function syncLastSession(): Promise<void> {
+  await dismissDailyReminder();
   if (!pushConfigured || !pushSupported() || Notification.permission !== 'granted') return;
   try {
     const sub = await activeSubscription();
