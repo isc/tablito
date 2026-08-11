@@ -1,0 +1,3 @@
+import{describe as s,it as i,expect as t,vi as n,afterEach as c}from"vitest";import{syncLastSession as o}from"../lib/push.js";function r(e){Object.defineProperty(navigator,"serviceWorker",{configurable:!0,value:{getRegistration:async()=>e}})}c(()=>{Reflect.deleteProperty(navigator,"serviceWorker")}),s("syncLastSession",()=>{i("ferme le rappel quotidien rest\xE9 affich\xE9",async()=>{const e=n.fn(),a=n.fn(async()=>[{close:e},{close:e}]);r({getNotifications:a}),await o(),t(a).toHaveBeenCalledWith({tag:"daily-reminder"}),t(e).toHaveBeenCalledTimes(2)}),i("ne casse pas quand le navigateur n'expose pas l'API notifications",async()=>{r({}),await t(o()).resolves.toBeUndefined()})});
+
+//# sourceMappingURL=pushDismiss.test.js.map
