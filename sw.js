@@ -15,6 +15,15 @@
 //    n'est pas dans le cache (1re install pas terminée).
 //  - autre GET : cache-first puis lazy-cache si succès réseau.
 //
+// Les caches sont séparés par cycle de vie. Le shell est versionné par build
+// (son contenu doit changer à chaque déploiement) ; les médias lazy (MP3,
+// images mystère, splash…) ont leur propre cache versionné par leur CONTENU,
+// calculé au build. Avant, tout partageait le cache versionné par build : le
+// `activate` d'une nouvelle version jetait aussi les ~13 Mo d'images mystère et
+// les ~55 Mo de MP3 déjà téléchargés, qui repartaient sur le réseau au premier
+// usage — d'autant plus visible que GitHub Pages sert ces fichiers en
+// `max-age=600`, donc sans filet côté cache HTTP.
+//
 // Historique : avant, le SW attendait un message SKIP_WAITING du page-side
 // pour skipWaiting. Ça dépendait d'un `pwa-register.js` qui s'exécutait
 // correctement. Si pour une raison X le page-side ne pouvait pas envoyer
@@ -26,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260811112714"
+const CACHE = 'tablito-' + "20260812131241"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -199,6 +208,27 @@ const ASSETS = [
   "/vendor/preact/preact.module.js"
 ]
 
+// { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
+// dans scripts/build.mjs, qui est la source unique de la liste.
+const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"]}
+const LAZY_VERSIONS = {"audio":"7351114b1678","media":"2387459ab3c6"}
+
+const LAZY_CACHES = {}
+for (const group of Object.keys(LAZY_GROUPS)) {
+  LAZY_CACHES[group] = 'tablito-' + group + '-' + LAZY_VERSIONS[group]
+}
+const KEEP = [CACHE].concat(Object.values(LAZY_CACHES))
+
+// Cache d'écriture d'une réponse lazy-cachée. Tout ce qui n'est pas un média
+// (pages du guide, specs…) retombe sur le cache shell, donc suit le cycle de vie
+// des déploiements comme avant.
+function cacheNameFor(pathname) {
+  for (const group of Object.keys(LAZY_GROUPS)) {
+    if (LAZY_GROUPS[group].some((p) => pathname.startsWith(p))) return LAZY_CACHES[group]
+  }
+  return CACHE
+}
+
 // Précache tolérant aux échecs. `cache.addAll()` est ATOMIQUE : un seul asset
 // qui échoue à se télécharger (fréquent sur WiFi faible — l'environnement où le
 // cache offline est justement le plus utile) rejette TOUT le précache, l'install
@@ -218,7 +248,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => KEEP.indexOf(k) === -1).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   )
 })
@@ -250,7 +280,7 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then((cached) => cached || fetch(e.request).then((res) => {
       if (res.ok && res.type === 'basic') {
         const clone = res.clone()
-        caches.open(CACHE).then((c) => c.put(e.request, clone))
+        caches.open(cacheNameFor(url.pathname)).then((c) => c.put(e.request, clone))
       }
       return res
     }))
