@@ -12,6 +12,7 @@
 // purement une convention d'auteur (lisibilité) ; le browser n'a aucune
 // raison de recevoir 30 requêtes là où 1 suffit.
 
+import crypto from 'node:crypto'
 import esbuild from 'esbuild'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -47,6 +48,29 @@ const ENV_DEFINE = {
 }
 
 const SRC_EXTS = ['.tsx', '.ts', '.jsx', '.js']
+
+// Assets hors shell : trop lourds pour un précache à l'install, donc cachés à la
+// demande par le SW. Un groupe = un cache SW à part, versionné par le contenu du
+// groupe : régénérer les MP3 n'invalide pas les images mystère, et inversement.
+// Cette table est la source unique — elle décide à la fois ce qu'on retire du
+// précache et vers quel cache le SW écrit (elle lui est injectée telle quelle).
+const LAZY_GROUPS = {
+  audio: ['/audio/'],
+  media: [
+    '/mystery/',
+    '/splash/',
+    '/video/', // démo de la landing : la PWA installée saute la landing (skip-static-landing)
+    '/vendor/qr-scanner/', // scan de transfert : ~58 KB utilisés au plus une fois par appareil, et le transfert exige le réseau de toute façon
+    '/img/hero-poster', // idem : poster de la démo, hors shell de l'app
+  ],
+}
+
+function lazyGroup(rel) {
+  for (const [group, prefixes] of Object.entries(LAZY_GROUPS)) {
+    if (prefixes.some((p) => rel.startsWith(p))) return group
+  }
+  return null
+}
 
 async function exists(p) { try { await fs.access(p); return true } catch { return false } }
 async function ensureDir(p) { await fs.mkdir(p, { recursive: true }) }
@@ -180,19 +204,36 @@ if (BASE !== '/') {
 //      vendor, icônes, manifest). Précaché à l'install.
 //    - lazy : audio + grosses images (mystery, splash). Caché à la demande
 //      lors de la 1re utilisation, pour éviter un install lourd de 10 Mo.
+const BASE_PREFIX = BASE.replace(/\/$/, '')
 const shellAssets = []
+const lazyFiles = Object.fromEntries(Object.keys(LAZY_GROUPS).map((g) => [g, []])) // groupe -> [{ rel, file }], pour hasher le contenu
 for await (const f of walk(OUT)) {
   const rel = '/' + path.relative(OUT, f).split(path.sep).join('/')
   if (rel.endsWith('/sw.js')) continue
   if (rel.endsWith('.map')) continue
   if (rel === '/og-image.png' || rel === '/robots.txt' || rel === '/sitemap.xml') continue // assets lus par les crawlers, jamais par l'app
-  if (rel.startsWith('/audio/')) continue
-  if (rel.startsWith('/mystery/')) continue
-  if (rel.startsWith('/splash/')) continue
-  if (rel.startsWith('/video/')) continue // démo de la landing : la PWA installée saute la landing (skip-static-landing), inutile à précacher
-  if (rel.startsWith('/vendor/qr-scanner/')) continue // scan de transfert : ~58 KB utilisés au plus une fois par appareil, et le transfert exige le réseau de toute façon — lazy-cache au premier usage
-  if (rel.startsWith('/img/hero-poster')) continue // idem : poster de la démo, hors shell de l'app
-  shellAssets.push(BASE.replace(/\/$/, '') + rel)
+  const group = lazyGroup(rel)
+  if (group) {
+    lazyFiles[group].push({ rel, file: f })
+    continue
+  }
+  shellAssets.push(BASE_PREFIX + rel)
+}
+
+// Version de chaque groupe lazy = hash de son CONTENU, pas du build. Le cache
+// shell, lui, reste versionné par build : son contenu doit être remplacé à
+// chaque déploiement. Mettre les deux dans le même cache faisait jeter les
+// ~13 Mo d'images mystère et les ~55 Mo de MP3 à chaque mise en ligne, alors
+// que ces fichiers n'avaient pas bougé (feedback du 11/08/2026 : « les images
+// mystère sont retéléchargées à chaque redémarrage »).
+const lazyVersions = {}
+for (const [group, files] of Object.entries(lazyFiles)) {
+  const h = crypto.createHash('sha1')
+  for (const { rel, file } of files.sort((a, b) => (a.rel < b.rel ? -1 : 1))) {
+    h.update(rel)
+    h.update(await fs.readFile(file))
+  }
+  lazyVersions[group] = h.digest('hex').slice(0, 12)
 }
 
 // 5) SW + pwa-register
@@ -201,6 +242,11 @@ sw = sw
   .replaceAll('__VERSION__', JSON.stringify(VERSION))
   .replaceAll('__BASE__', JSON.stringify(BASE))
   .replaceAll('__ASSETS__', JSON.stringify(shellAssets, null, 2))
+  .replaceAll('__LAZY_GROUPS__', JSON.stringify(
+    Object.fromEntries(Object.entries(LAZY_GROUPS)
+      .map(([g, prefixes]) => [g, prefixes.map((p) => BASE_PREFIX + p)])),
+  ))
+  .replaceAll('__LAZY_VERSIONS__', JSON.stringify(lazyVersions))
 await fs.writeFile(path.join(OUT, 'sw.js'), sw)
 
 let reg = await fs.readFile(REG_SRC, 'utf8')

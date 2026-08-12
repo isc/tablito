@@ -44,7 +44,14 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   `App` n'est pas sur un écran "safe" (`home` uniquement). Détection
   des updates : fetch de `/sw.js` au boot (`updateViaCache: 'none'`)
   + `reg.update()` à chaque retour en foreground (cooldown 1 min).
-  Évite tout reload mid-séance.
+  Évite tout reload mid-séance. **Caches séparés par cycle de vie** :
+  le shell est versionné par build (remplacé à chaque déploiement),
+  les médias lazy ont un cache par groupe (`audio`, `media`) versionné
+  par le **contenu** du groupe — sans quoi chaque mise en ligne jetait
+  les ~13 Mo d'images mystère et ~55 Mo de MP3 déjà téléchargés. La
+  liste des groupes vit dans `LAZY_GROUPS` (`scripts/build.mjs`), source
+  unique injectée dans le SW ; comportement verrouillé par
+  `scripts/sw-cache.test.mjs`.
 - **i18n (fr/en)** : langue d'interface **globale** (pas par profil),
   persistée dans `localStorage` sous `multiplix-lang`, défaut = langue du
   navigateur. Cœur dans `src/i18n/lang.ts` (`useLang`, `useStrings` pour React ;
