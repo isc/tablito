@@ -1,0 +1,31 @@
+/* Feedback de la matière conjugaison (spec Verbito §5.3). Réutilise la coquille
+   de FeedbackOverlay.css (.feedback-overlay, .feedback-card, .feedback-message,
+   .feedback-ok-btn) : seule la zone « forme segmentée » — l'équivalent de la
+   grille de points côté maths — est propre à la conjugaison. */
+
+.conj-feedback-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 14px 0 6px;
+}
+
+/* Rappel de la phrase porteuse sous la forme corrigée : la forme se réancre
+   dans son contexte, pas dans le vide. Discret — c'est la forme segmentée qui
+   porte la correction. */
+.conj-feedback-sentence {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-muted);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+/* Chemin accepté (correct ou « presque ») : la forme prend la place que le
+   rappel « 7 × 8 = 56 » occupe côté maths — c'est la vraie récompense
+   pédagogique de l'écran, pas une légende. */
+.feedback-overlay.correct .conj-feedback-form {
+  margin-top: 4px;
+}

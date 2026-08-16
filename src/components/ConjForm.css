@@ -1,0 +1,84 @@
+/* Palette de la segmentation morphologique (spec Verbito §2.3). Deux couleurs
+   stables, valables partout où une forme verbale est affichée : le RADICAL en
+   bleu, la TERMINAISON en grenat. Volontairement distinctes de l'indigo (accent
+   d'interface) et du corail (couleur d'erreur) : la segmentation est une
+   information de structure, jamais un jugement. */
+:root {
+  --conj-stem: #3E7EB6;        /* = --sky */
+  --conj-stem-soft: #DDE9F4;   /* = --sky-soft */
+  --conj-mark: #B23A5D;
+  --conj-mark-soft: #F7E1E8;
+}
+
+.conj-form {
+  font-family: var(--serif);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.45;
+  /* Les phrases porteuses sont passées avec leur espacement (« Demain, »,
+     « nous », « j’ ») : on le préserve tout en laissant la ligne se replier. */
+  white-space: pre-wrap;
+}
+
+.conj-form--normal {
+  font-size: 24px;
+}
+
+.conj-form--large {
+  font-size: 34px;
+  letter-spacing: -0.5px;
+}
+
+.conj-form-context {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.conj-form-subject {
+  color: var(--ink);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.conj-form-stem {
+  color: var(--conj-stem);
+  font-weight: 600;
+}
+
+.conj-form-mark {
+  color: var(--conj-mark);
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+/* « Illuminé » : une pastille de couleur derrière le pronom ou sa marque
+   (spec §5.2 étape 2, §5.3 cas erreur). Le padding est négatif en marge pour
+   que l'illumination n'écarte pas les lettres — la forme ne doit pas bouger
+   quand elle s'allume. */
+.conj-form-subject.is-lit,
+.conj-form-mark.is-lit {
+  padding: 0.06em 0.16em;
+  margin: 0 -0.16em;
+  animation: conjLightUp 0.45s ease both;
+}
+
+.conj-form-subject.is-lit {
+  background: var(--honey-soft);
+  box-shadow: 0 1px 0 var(--honey);
+}
+
+.conj-form-mark.is-lit {
+  background: var(--conj-mark-soft);
+  box-shadow: 0 1px 0 var(--conj-mark);
+}
+
+@keyframes conjLightUp {
+  from { background-color: transparent; box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conj-form-subject.is-lit,
+  .conj-form-mark.is-lit {
+    animation: none;
+  }
+}
