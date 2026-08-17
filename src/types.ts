@@ -119,7 +119,21 @@ export interface Badge {
 
 // `village` est réservé au guide utilisateur (pour ne pas spoiler) ;
 // les profils réels tirent aléatoirement dans MYSTERY_POOL à la création.
-export const MYSTERY_POOL = ['market', 'ocean', 'garden', 'savanna', 'city', 'space'] as const;
+export const MYSTERY_POOL = [
+  'market',
+  'ocean',
+  'garden',
+  'savanna',
+  'city',
+  'space',
+  // Série storybook générée en local (scripts/generate-mystery-master.mjs,
+  // août 2026) — masters dans masters/, le fichier commité fait foi.
+  'forest',
+  'mountain',
+  'castle',
+  'harbor',
+  'circus',
+] as const;
 
 export type MysteryTheme = (typeof MYSTERY_POOL)[number] | 'village';
 
