@@ -777,14 +777,14 @@ export default function SessionScreen({
           taper. Aucune auto-validation : la longueur n'est pas prévisible. */}
       {!showIntro && cv && (
         <div className="session-question conj-question">
+          {/* Trois lignes : le contexte avant, le groupe verbal SEUL au
+              centre (pronom + radical + trait, insécables), le contexte
+              après. Le verbe ne partage jamais sa ligne — c'est l'objet de
+              la question (défaut de repli relevé en test réel). */}
           <div className="conj-sentence">
-            <ConjForm
-              before={cv.carrier.before}
-              subject={cv.subject}
-              segment={[cv.displayedStem, '']}
-            />
-            <span className="conj-blank" aria-hidden="true" />
-            <span className="conj-sentence-tail">{cv.tail}</span>
+            {cv.carrier.before && <span className="conj-sentence-lead">{cv.carrier.before}</span>}
+            <ConjForm subject={cv.subject} segment={[cv.displayedStem, '']} blank />
+            {cv.tail && <span className="conj-sentence-tail">{cv.tail}</span>}
           </div>
           <div className="conj-question-meta">
             <span className="conj-intro-infinitive">{tc.infinitive(cv.verb)}</span>

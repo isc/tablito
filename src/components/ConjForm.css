@@ -95,3 +95,20 @@
   color: var(--conj-stem);
   font-weight: 600;
 }
+
+/* Le groupe verbal (pronom + radical + terminaison ou trait) est insécable :
+   une coupure entre « chant » et « ions » — ou entre le radical et son
+   trait — casserait l'objet même que la segmentation met en scène. */
+.conj-form-unit {
+  white-space: nowrap;
+}
+
+/* Le trait de la terminaison à compléter. Largeur FIXE : elle ne doit jamais
+   trahir le nombre de lettres attendues. */
+.conj-blank {
+  display: inline-block;
+  width: 2.2em;
+  height: 0.9em;
+  border-bottom: 3px solid var(--indigo);
+  margin: 0 0.06em;
+}

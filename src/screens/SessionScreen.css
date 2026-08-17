@@ -262,10 +262,12 @@
 /* Un seul item à l'écran, gros corps, interlignage généreux (§8). La phrase se
    replie en gardant le blanc solidaire de ce qui le précède. */
 .conj-sentence {
+  /* Trois lignes empilées : contexte avant / groupe verbal seul / contexte
+     après. Le verbe ne partage jamais sa ligne avec le reste de la phrase. */
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   font-family: var(--serif);
   font-size: 34px;
   text-align: center;
@@ -274,18 +276,12 @@
 
 /* Le blanc à remplir : un trait, pas une case à cases — sa largeur est fixe et
    ne trahit donc JAMAIS le nombre de lettres attendues. */
-.conj-blank {
-  display: inline-block;
-  width: 2.2em;
-  height: 0.9em;
-  border-bottom: 3px solid var(--indigo);
-  margin: 0 0.06em;
-}
-
+.conj-sentence-lead,
 .conj-sentence-tail {
   color: var(--ink-soft);
   font-weight: 400;
   white-space: pre-wrap;
+  font-size: 0.75em;
 }
 
 .conj-question-meta {

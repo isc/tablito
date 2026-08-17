@@ -30,6 +30,12 @@ interface ConjFormProps {
   segment: readonly [string, string];
   /** Pronom sujet, espace ou apostrophe comprise : « nous », « j’ ». */
   subject?: string;
+  /**
+   * Rend le trait de la terminaison à compléter juste après le radical, DANS
+   * l'unité insécable : « nous chant____ » ne peut alors jamais se couper
+   * entre le radical et son trait (défaut relevé en test réel, 17/08/2026).
+   */
+  blank?: boolean;
   /** Début de phrase porteuse, marqueur temporel compris : « Demain, ». */
   before?: string;
   /** Fin de phrase porteuse : « des crêpes. ». */
@@ -42,6 +48,7 @@ export default function ConjForm({
   subject,
   before,
   after,
+  blank = false,
   lit = 'none',
 }: ConjFormProps) {
   const [stem, mark] = segment;
@@ -51,24 +58,32 @@ export default function ConjForm({
   return (
     <span className="conj-form">
       {before && <span className="conj-form-context">{before} </span>}
-      {subject && (
-        // L'éventuelle espace finale du pronom (« nous ») reste HORS du span :
-        // la pastille d'illumination doit épouser le mot, pas son espacement —
-        // et cette espace est ce qui sépare visuellement les deux pastilles
-        // quand pronom et marque sont adjacents (« je suis »).
-        <>
-          <span className={`conj-form-subject${subjectLit ? ' is-lit' : ''}`}>
-            {subject.trimEnd()}
-          </span>
-          {subject.slice(subject.trimEnd().length)}
-        </>
-      )}
-      <span className="conj-form-stem">{stem}</span>
-      {/* Pas de <span> vide pour les formes insécables : « nous sommes » doit se
-          lire comme un bloc, pas comme un radical suivi d'un trou. */}
-      {mark !== '' && (
-        <span className={`conj-form-mark${markLit ? ' is-lit' : ''}`}>{mark}</span>
-      )}
+      {/* Le groupe verbal — pronom, radical, terminaison ou trait — est une
+          unité INSÉCABLE : une coupure de ligne entre « chant » et « ions »
+          (ou entre le radical et son trait) casserait l'objet même que la
+          segmentation met en scène. Le contexte (before/after) reste libre
+          de se replier autour. */}
+      <span className="conj-form-unit">
+        {subject && (
+          // L'éventuelle espace finale du pronom (« nous ») reste HORS du span :
+          // la pastille d'illumination doit épouser le mot, pas son espacement —
+          // et cette espace est ce qui sépare visuellement les deux pastilles
+          // quand pronom et marque sont adjacents (« je suis »).
+          <>
+            <span className={`conj-form-subject${subjectLit ? ' is-lit' : ''}`}>
+              {subject.trimEnd()}
+            </span>
+            {subject.slice(subject.trimEnd().length)}
+          </>
+        )}
+        <span className="conj-form-stem">{stem}</span>
+        {/* Pas de <span> vide pour les formes insécables : « nous sommes » doit se
+            lire comme un bloc, pas comme un radical suivi d'un trou. */}
+        {mark !== '' && (
+          <span className={`conj-form-mark${markLit ? ' is-lit' : ''}`}>{mark}</span>
+        )}
+        {blank && <span className="conj-blank" aria-hidden="true" />}
+      </span>
       {after && <span className="conj-form-context">{after}</span>}
     </span>
   );
