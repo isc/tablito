@@ -17,14 +17,17 @@ import { conjStrings as t } from '../i18n/conjugation';
 // bornée et prévisible ; ici la réponse fait de 1 (« a ») à 9 caractères
 // (« viendront »), on ne peut donc pas deviner qu'elle est finie.
 
-const ROWS = [
-  ['a', 'b', 'c', 'd', 'e', 'é', 'ê'],
-  ['f', 'g', 'h', 'i', 'j', 'k', 'l'],
-  ['m', 'n', 'o', 'p', 'q', 'r', 's'],
-  ['t', 'u', 'v', 'w', 'x', 'y', 'z'],
+// Tableau de chaînes (pas un spread de littéral) : é et ê doivent rester des
+// clés d'un caractère quelle que soit la forme Unicode du fichier source.
+// La grille CSS (repeat(7, 1fr)) en fait 4 rangées de 7 touches identiques.
+const KEYS = [
+  'a', 'b', 'c', 'd', 'e', 'é', 'ê',
+  'f', 'g', 'h', 'i', 'j', 'k', 'l',
+  'm', 'n', 'o', 'p', 'q', 'r', 's',
+  't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-const LETTERS = new Set(ROWS.flat());
+const LETTERS = new Set(KEYS);
 
 /**
  * Garde-fou de saisie : « viendront » (9) est la plus longue forme attendue du
@@ -124,10 +127,8 @@ export default function LetterKeyboard({
         {!disabled && <span className="pad-display-cursor" />}
       </div>
       <div className="letterpad-rows">
-        {ROWS.map((row, i) => (
-          <div key={i} className="letterpad-row">{row.map(key)}</div>
-        ))}
-        <div className="letterpad-row letterpad-row--actions">
+        <div className="letterpad-keys">{KEYS.map(key)}</div>
+        <div className="letterpad-row--actions">
           <button
             type="button"
             className="pad-btn letterpad-btn pad-btn-backspace letterpad-btn-backspace"

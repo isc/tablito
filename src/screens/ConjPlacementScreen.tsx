@@ -148,11 +148,14 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
         </div>
 
         <div className="conj-sentence">
-          {view.carrier.before && (
-            <span className="conj-sentence-lead">{view.carrier.before}</span>
-          )}
-          <ConjForm subject={view.subject} segment={[view.displayedStem, '']} blank />
-          {view.tail && <span className="conj-sentence-tail">{view.tail}</span>}
+          <ConjForm
+            stacked
+            before={view.carrier.before}
+            subject={view.subject}
+            segment={[view.displayedStem, '']}
+            blank
+            after={view.tail}
+          />
         </div>
         <div className="conj-question-meta">
           <span className="conj-intro-infinitive">{t.infinitive(view.verb)}</span>

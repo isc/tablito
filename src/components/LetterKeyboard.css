@@ -1,6 +1,6 @@
-/* Mini-clavier AZERTY de la matière conjugaison (spec Verbito §4.2). Le socle
-   commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit dans
-   Pad.css — le geste doit être le même d'une matière à l'autre ; ici ne
+/* Mini-clavier alphabétique de la matière conjugaison (spec Verbito §15.5).
+   Le socle commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit
+   dans Pad.css — le geste doit être le même d'une matière à l'autre ; ici ne
    restent que les dimensions propres à un clavier de lettres et l'ardoise à
    radical. */
 
@@ -30,20 +30,23 @@
   width: 100%;
 }
 
-.letterpad-row {
-  display: flex;
+/* Les 28 touches sont identiques : la grille exprime « 4 rangées de 7 » en
+   une déclaration, comme .numpad-grid le fait pour le pavé numérique. */
+.letterpad-keys {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   width: 100%;
 }
 
 .letterpad-row--actions {
-  margin-top: 4px;
+  display: flex;
   gap: 8px;
+  width: 100%;
+  margin-top: 4px;
 }
 
 .letterpad-btn {
-  flex: 1;
-  min-width: 0;
   /* Cible tactile : 52px de haut, au-dessus des 48px recommandés. La largeur,
      elle, se partage l'écran comme sur un vrai clavier — c'est la hauteur qui
      porte la précision du geste. */
@@ -51,6 +54,16 @@
   min-height: 48px;
   border-radius: 10px;
   font-size: 20px;
+}
+
+/* Quatre rangées de lettres au lieu de trois : sur les petits écrans en
+   hauteur (type SE, 568px), on rend les 32px pris pour ne pas faire déborder
+   l'écran de question. 44px reste au-dessus du minimum tactile. */
+@media (max-height: 620px) {
+  .letterpad-btn {
+    height: 44px;
+    min-height: 44px;
+  }
 }
 
 .letterpad-btn-backspace {

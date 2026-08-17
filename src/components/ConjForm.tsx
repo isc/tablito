@@ -31,11 +31,19 @@ interface ConjFormProps {
   /** Pronom sujet, espace ou apostrophe comprise : « nous », « j’ ». */
   subject?: string;
   /**
-   * Rend le trait de la terminaison à compléter juste après le radical, DANS
-   * l'unité insécable : « nous chant____ » ne peut alors jamais se couper
-   * entre le radical et son trait (défaut relevé en test réel, 17/08/2026).
+   * Rend le trait de la terminaison à compléter juste après le radical, dans
+   * le groupe insécable. Toujours accompagné d'une terminaison vide — le
+   * trait REMPLACE la marque, il ne s'y ajoute pas.
    */
   blank?: boolean;
+  /**
+   * Mise en scène « question » : trois lignes empilées et centrées — contexte
+   * avant, groupe verbal seul, contexte après (en encre douce, corps réduit).
+   * Le verbe ne partage jamais sa ligne : c'est l'objet de la question
+   * (défaut de repli relevé en test réel, 17/08/2026). Sans `stacked`, tout
+   * se rend en ligne (corrections, image mystère).
+   */
+  stacked?: boolean;
   /** Début de phrase porteuse, marqueur temporel compris : « Demain, ». */
   before?: string;
   /** Fin de phrase porteuse : « des crêpes. ». */
@@ -49,6 +57,7 @@ export default function ConjForm({
   before,
   after,
   blank = false,
+  stacked = false,
   lit = 'none',
 }: ConjFormProps) {
   const [stem, mark] = segment;
@@ -56,13 +65,15 @@ export default function ConjForm({
   const markLit = lit === 'both';
 
   return (
-    <span className="conj-form">
-      {before && <span className="conj-form-context">{before} </span>}
-      {/* Le groupe verbal — pronom, radical, terminaison ou trait — est une
-          unité INSÉCABLE : une coupure de ligne entre « chant » et « ions »
-          (ou entre le radical et son trait) casserait l'objet même que la
-          segmentation met en scène. Le contexte (before/after) reste libre
-          de se replier autour. */}
+    <span className={`conj-form${stacked ? ' conj-form--stacked' : ''}`}>
+      {/* Les espaces de séparation des porteuses (finale de `before`, initiale
+          de `after`) sont retirées : en pile, chaque segment a sa ligne ; en
+          ligne, ConjForm rend lui-même l'espace, hors des spans de contexte. */}
+      {before && (
+        <span className="conj-form-context">{before.trimEnd()}</span>
+      )}
+      {before && !stacked && ' '}
+      {/* Le groupe verbal est insécable — cf. .conj-form dans ConjForm.css. */}
       <span className="conj-form-unit">
         {subject && (
           // L'éventuelle espace finale du pronom (« nous ») reste HORS du span :
@@ -84,7 +95,8 @@ export default function ConjForm({
         )}
         {blank && <span className="conj-blank" aria-hidden="true" />}
       </span>
-      {after && <span className="conj-form-context">{after}</span>}
+      {after && !stacked && ' '}
+      {after && <span className="conj-form-context">{after.trimStart()}</span>}
     </span>
   );
 }
