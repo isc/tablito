@@ -63,6 +63,12 @@ const LAZY_GROUPS = {
     '/vendor/qr-scanner/', // scan de transfert : ~58 KB utilisés au plus une fois par appareil, et le transfert exige le réseau de toute façon
     '/img/hero-poster', // idem : poster de la démo, hors shell de l'app
   ],
+  // Dictionnaire de prononciation du mode vocal épelé (specs §15.10) : demandé
+  // seulement quand ce mode optionnel est actif, donc jamais précaché. Groupe à
+  // part et non `media` : son cycle de vie est le sien (il ne change qu'avec
+  // l'inventaire de la conjugaison), et le mêler aux images mystère jetterait
+  // ~13 Mo déjà téléchargés à la moindre régénération.
+  phonetic: ['/phonetic/'],
 }
 
 function lazyGroup(rel) {

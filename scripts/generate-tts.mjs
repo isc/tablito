@@ -26,11 +26,11 @@
  * d'API ni appel réseau.
  */
 
-import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import esbuild from 'esbuild';
+import { importTs } from './import-ts.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TTS_ROOT = join(__dirname, '..', 'public', 'audio', 'tts');
@@ -179,21 +179,12 @@ function strategyTextEn(a, b) {
 // tout) : les recopier ici garantirait la divergence silencieuse — un MP3 qui
 // dit autre chose que ce que l'écran affiche, et personne pour s'en apercevoir.
 //
-// On lit donc la source de vérité. Un .mjs ne peut pas importer un .ts, mais
-// esbuild est déjà une devDependency (scripts/build.mjs, scripts/dev.mjs) et
-// `npm ci` l'installe dans le workflow generate-tts : on transforme le fichier
-// et on importe le résultat en data: URL. `conjugationFacts.ts` n'a qu'un import
-// `type`, donc transformer ce seul fichier suffit — pas besoin de bundler.
-// (scripts/generate-tts.test.mjs échouerait si cette hypothèse cessait d'être
-// vraie, avant que le workflow ne casse.)
+// On lit donc la source de vérité, via `importTs` (scripts/import-ts.mjs, qui
+// porte le détail du mécanisme et sa contrainte : le module chargé ne doit avoir
+// que des imports `type`). scripts/generate-tts.test.mjs échouerait si cette
+// hypothèse cessait d'être vraie, avant que le workflow ne casse.
 async function loadConjEntries() {
-  const path = join(__dirname, '..', 'src', 'lib', 'conjugationFacts.ts');
-  const { code } = await esbuild.transform(await readFile(path, 'utf8'), {
-    loader: 'ts',
-    format: 'esm',
-  });
-  const url = `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
-  const { allConjCarrierSentences } = await import(url);
+  const { allConjCarrierSentences } = await importTs('src/lib/conjugationFacts.ts');
   return allConjCarrierSentences();
 }
 
