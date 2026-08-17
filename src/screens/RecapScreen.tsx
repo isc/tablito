@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { SessionResult, Badge as BadgeType } from '../types';
+import type { FactKind, SessionResult, Badge as BadgeType } from '../types';
 import { BADGE_IDS } from '../types';
 import Mascot from '../components/Mascot';
 import { useSound } from '../hooks/useSound';
@@ -30,7 +30,7 @@ interface RecapScreenProps {
   onShowProgress: () => void;
   // 'div'/'rem' selon la séance : change le nom affiché et le jalon surveillé
   // (specs §11, §12). 'conj' = séance de la matière conjugaison. Défaut 'mult'.
-  mode?: 'mult' | 'div' | 'rem' | 'conj';
+  mode?: FactKind;
 }
 
 function ImageCardIcon() {

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import type { BoxLevel } from '../types';
-import { CONJ_FACT_DEFS, conjFactDef, requireConjFactDef } from '../lib/conjugationFacts';
+import { conjFactDefs, conjFactDef, requireConjFactDef } from '../lib/conjugationFacts';
 import {
   CONJ_CONSOLIDATED_BOX,
   canConjBeAdjacent,
@@ -66,8 +66,8 @@ describe('paires à haut risque (§3.4)', () => {
   });
 
   it('est symétrique sur tout l’inventaire', () => {
-    for (const a of CONJ_FACT_DEFS) {
-      for (const b of CONJ_FACT_DEFS) {
+    for (const a of conjFactDefs()) {
+      for (const b of conjFactDefs()) {
         expect(conjFactsInterfere(a, b)).toBe(conjFactsInterfere(b, a));
       }
     }

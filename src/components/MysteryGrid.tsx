@@ -19,6 +19,7 @@ export interface MysteryCell {
 }
 
 const HEADERS = [2, 3, 4, 5, 6, 7, 8, 9];
+const PLAIN = [0, 1, 2, 3, 4, 5, 6, 7];
 
 // Les PNG par niveau sont produits par scripts/generate-mystery-levels.mjs et
 // servis depuis public/mystery/<theme>/level-{1..5}.png.
@@ -27,6 +28,15 @@ const BASE = import.meta.env.BASE_URL;
 interface MysteryGridProps {
   theme: MysteryTheme;
   cellFor: (row: number, col: number) => MysteryCell;
+  /**
+   * La grille n'affiche jamais d'en-têtes ; ce drapeau dit dans quel repère
+   * `cellFor` reçoit sa case. `true` (défaut) : les valeurs des tables, 2..9 —
+   * la case EST le fait (a × b). `false` : des indices 0..7 en ordre de
+   * lecture, pour une matière dont les faits ne sont pas indexés par un couple
+   * de nombres (la conjugaison). Même contrat que LeitnerGrid, à dessein : les
+   * deux grilles d'une même matière doivent numéroter leurs cases pareil.
+   */
+  showHeaders?: boolean;
 }
 
 /**
@@ -35,17 +45,18 @@ interface MysteryGridProps {
  * 800% + background-position). La multiplication et la division fournissent leur
  * propre mapping case→fait via `cellFor` — d'où aucune duplication de la grille.
  */
-export default function MysteryGrid({ theme, cellFor }: MysteryGridProps) {
+export default function MysteryGrid({ theme, cellFor, showHeaders = true }: MysteryGridProps) {
   const t = useMysteryGridStrings();
   const boxLevel = useBoxLevelStrings();
   const [selected, setSelected] = useState<MysteryCell | null>(null);
+  const values = showHeaders ? HEADERS : PLAIN;
 
   return (
     <div className="mystery-image-container">
       <div className="mystery-image">
         <div className="mystery-cells">
-          {HEADERS.map((row, rowIdx) =>
-            HEADERS.map((col, colIdx) => {
+          {values.map((row, rowIdx) =>
+            values.map((col, colIdx) => {
               const cell = cellFor(row, col);
               const style =
                 cell.level > 0

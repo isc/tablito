@@ -304,6 +304,13 @@ export interface ConjSessionQuestion {
   isBonusReview: boolean;
 }
 
+/**
+ * Nature d'une question : les trois niveaux de maths, plus la matière
+ * conjugaison. Un seul alias plutôt que l'union recopiée à chaque écran qui
+ * pilote un sélecteur d'opération (récap, images, espace parent, logs).
+ */
+export type FactKind = 'mult' | 'div' | 'rem' | 'conj';
+
 export type SessionItem =
   | ({ kind: 'mult' } & SessionQuestion)
   | ({ kind: 'div' } & DivisionSessionQuestion)
@@ -337,12 +344,13 @@ export interface SessionQuestionLog {
   // quotient (le dividende = a × b), sinon `56 ÷ 7` serait illisible comme
   // `{a:7, b:8}`, identique à `7 × 8`. Pour 'rem', a = diviseur, b = quotient
   // (la zone), et `remainder` porte le reste tiré pour cette présentation.
-  kind?: 'mult' | 'div' | 'rem' | 'conj';
+  kind?: FactKind;
   // 'mult' : opérandes (canoniques). 'div'/'rem' : a = diviseur, b = quotient.
-  // 'conj' : NON SIGNIFIATIFS (0/0) — un fait de conjugaison n'est pas indexé
-  // par un couple de nombres, c'est `factKey` qui l'identifie.
-  a: number;
-  b: number;
+  // ABSENTS en 'conj' : un fait de conjugaison n'est pas indexé par un couple
+  // de nombres, c'est `factKey` qui l'identifie — écrire des `0` sentinelles
+  // laissait un log de conjugaison passer pour la multiplication 0×0.
+  a?: number;
+  b?: number;
   // Matière conjugaison uniquement : clé du fait posé (cf. lib/conjugationFacts).
   factKey?: string;
   correct: boolean;

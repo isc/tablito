@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { conjFastThresholdMs, CONJ_FAST_BASE_MS, CONJ_FAST_PER_CHAR_MS } from '../types';
 import {
-  CONJ_FACT_DEFS,
+  conjFactDefs,
   CONJ_GROUP1_VERBS,
   CONJ_IRREGULAR_VERBS,
   CONJ_PERSONS,
@@ -32,28 +32,30 @@ function formsOf(key: string): string[] {
   return def.carriers.map((_, i) => resolveConjQuestion(def, i).form);
 }
 
+const DEFS = conjFactDefs();
+
 describe('inventaire — la structure de la spec §3.3', () => {
   it('compte exactement 63 faits', () => {
-    expect(CONJ_FACT_DEFS).toHaveLength(63);
+    expect(DEFS).toHaveLength(63);
   });
 
   it('respecte la répartition par bloc', () => {
     const counts = {
-      presentG1: CONJ_FACT_DEFS.filter((d) => d.tense === 'present' && d.kind === 'ending').length,
-      presentIrr: CONJ_FACT_DEFS.filter((d) => d.tense === 'present' && d.kind === 'irregular')
+      presentG1: DEFS.filter((d) => d.tense === 'present' && d.kind === 'ending').length,
+      presentIrr: DEFS.filter((d) => d.tense === 'present' && d.kind === 'irregular')
         .length,
-      imparfait: conjFactsOfTense([...CONJ_FACT_DEFS], 'imparfait').length,
-      futur: conjFactsOfTense([...CONJ_FACT_DEFS], 'futur').length,
+      imparfait: conjFactsOfTense([...DEFS], 'imparfait').length,
+      futur: conjFactsOfTense([...DEFS], 'futur').length,
     };
     expect(counts).toEqual({ presentG1: 6, presentIrr: 38, imparfait: 7, futur: 12 });
   });
 
   it('a 6 terminaisons + 1 radical à l’imparfait, 6 + 6 au futur', () => {
-    const imp = conjFactsOfTense([...CONJ_FACT_DEFS], 'imparfait');
+    const imp = conjFactsOfTense([...DEFS], 'imparfait');
     expect(imp.filter((d) => d.kind === 'ending')).toHaveLength(6);
     expect(imp.filter((d) => d.kind === 'stem').map((d) => d.stem)).toEqual(['ét']);
 
-    const fut = conjFactsOfTense([...CONJ_FACT_DEFS], 'futur');
+    const fut = conjFactsOfTense([...DEFS], 'futur');
     expect(fut.filter((d) => d.kind === 'ending')).toHaveLength(6);
     expect(fut.filter((d) => d.kind === 'stem').map((d) => d.stem)).toEqual([
       'ser',
@@ -67,25 +69,25 @@ describe('inventaire — la structure de la spec §3.3', () => {
 
   it('couvre les 7 irréguliers, 6 personnes chacun, avec 4 fusions je/tu', () => {
     for (const verb of CONJ_IRREGULAR_VERBS) {
-      const defs = conjFactsOfVerb([...CONJ_FACT_DEFS], verb).filter(
+      const defs = conjFactsOfVerb([...DEFS], verb).filter(
         (d) => d.tense === 'present',
       );
       const covered = defs.flatMap((d) => d.persons);
       expect([...covered].sort()).toEqual([...CONJ_PERSONS].sort());
     }
-    const fused = CONJ_FACT_DEFS.filter((d) => d.persons.length === 2);
+    const fused = DEFS.filter((d) => d.persons.length === 2);
     expect(fused.map((d) => d.form)).toEqual(['fais', 'dis', 'viens', 'vois']);
   });
 
   it('a des clés uniques et stables', () => {
-    const keys = CONJ_FACT_DEFS.map((d) => d.key);
+    const keys = DEFS.map((d) => d.key);
     expect(new Set(keys).size).toBe(keys.length);
     // Aucun accent ni espace : les clés servent aussi de noms de fichiers TTS.
     for (const key of keys) expect(key).toMatch(/^[a-z0-9_-]+$/);
   });
 
   it('donne 2 à 3 phrases porteuses par fait, avec un marqueur temporel', () => {
-    for (const def of CONJ_FACT_DEFS) {
+    for (const def of DEFS) {
       expect(def.carriers.length).toBeGreaterThanOrEqual(2);
       expect(def.carriers.length).toBeLessThanOrEqual(3);
       for (const carrier of def.carriers) {
@@ -109,7 +111,7 @@ describe('inventaire — la structure de la spec §3.3', () => {
   });
 
   it('n’utilise que les 8 verbes support pour les terminaisons', () => {
-    for (const def of CONJ_FACT_DEFS) {
+    for (const def of DEFS) {
       if (def.kind !== 'ending') continue;
       for (const carrier of def.carriers) {
         expect(CONJ_GROUP1_VERBS).toContain(carrier.verb);

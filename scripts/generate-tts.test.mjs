@@ -20,10 +20,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { buildEntriesFr, buildEntriesEn } from './generate-tts.mjs';
-import {
-  CONJ_FACT_DEFS,
-  resolveConjQuestion,
-} from '../src/lib/conjugationFacts.ts';
+import { conjFactDefs, resolveConjQuestion } from '../src/lib/conjugationFacts.ts';
+
+const DEFS = conjFactDefs();
 
 const fr = await buildEntriesFr();
 const en = buildEntriesEn();
@@ -31,7 +30,7 @@ const frByKey = new Map(fr.map((e) => [e.key, e.text]));
 
 // Ce que l'UI demandera réellement : la clé de CHAQUE couple (fait, porteuse),
 // dérivée comme SessionScreen et ConjPlacementScreen la dérivent.
-const asked = CONJ_FACT_DEFS.flatMap((def) =>
+const asked = DEFS.flatMap((def) =>
   def.carriers.map((_, i) => resolveConjQuestion(def, i)),
 );
 
@@ -42,7 +41,7 @@ describe('entrées TTS de la conjugaison', () => {
     expect(asked.length).toBeGreaterThan(100);
     // Un énoncé par porteuse, plus une phrase complète par fait (l'intro).
     expect(fr.filter((e) => e.key.startsWith('conj-')).length).toBe(
-      asked.length + CONJ_FACT_DEFS.length,
+      asked.length + DEFS.length,
     );
   });
 
@@ -53,7 +52,7 @@ describe('entrées TTS de la conjugaison', () => {
     expect(missing).toEqual([]);
     // La phrase complète n'existe que pour la porteuse 0 : c'est la seule
     // qu'une introduction utilise (cf. composeConjSession).
-    expect(asked.filter((v) => v.sentenceTtsKey).length).toBe(CONJ_FACT_DEFS.length);
+    expect(asked.filter((v) => v.sentenceTtsKey).length).toBe(DEFS.length);
   });
 
   it('fait dire au MP3 exactement ce que l’écran demande', () => {
@@ -81,7 +80,7 @@ describe('entrées TTS de la conjugaison', () => {
     const covered = new Set(
       fr.filter((e) => e.key.startsWith('conj-')).map((e) => e.key.replace(/-\d+(-p)?$/, '')),
     );
-    const uncovered = CONJ_FACT_DEFS.map((d) => `conj-${d.key}`).filter((k) => !covered.has(k));
+    const uncovered = DEFS.map((d) => `conj-${d.key}`).filter((k) => !covered.has(k));
     expect(uncovered).toEqual([]);
   });
 

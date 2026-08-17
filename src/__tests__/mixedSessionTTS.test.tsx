@@ -74,7 +74,14 @@ describe('Séance mixte — lecture audio des questions', () => {
     const questions: SessionItem[] = [
       mult(2, 2), div(8, 2), mult(5, 3), div(15, 3), mult(8, 8), div(64, 8), mult(6, 9),
     ];
-    render(<SessionScreen questions={questions} onComplete={() => {}} onAnswer={() => {}} />);
+    render(
+      <SessionScreen
+        questions={questions}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={() => {}}
+      />,
+    );
 
     // Brief settle while the session preloads its audio (a child can't answer
     // the very first question in <25ms anyway).
