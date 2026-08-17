@@ -1,22 +1,20 @@
 import { useMemo } from 'react';
 import type { ConjFact } from '../types';
 import LeitnerGrid, { type LeitnerGridCell } from './LeitnerGrid';
-import { CONJ_FACT_DEFS, conjSubject, resolveConjQuestion } from '../lib/conjugationFacts';
+import { conjFactDefs, conjGridIndex, resolveConjQuestion } from '../lib/conjugationFacts';
 
 interface ConjProgressGridProps {
   facts: ConjFact[];
 }
 
-// Même ordre de cases que l'image mystère de la matière (l'inventaire) : le
-// parent qui regarde la grille et l'enfant qui regarde son image voient la
-// même chose au même endroit.
-const ORDERED = CONJ_FACT_DEFS;
-
 /**
  * Grille Leitner de la conjugaison pour l'espace parent : 63 faits sur 8×8,
  * sans en-têtes — un fait de conjugaison n'est pas indexé par un couple de
  * nombres, contrairement aux tables (cf. LeitnerGrid `showHeaders`). La 64e
- * case reste vide (non introduite), comme sur l'image mystère.
+ * case reste vide (non introduite), comme sur l'image mystère : même ordre de
+ * cases (l'inventaire), même formule d'indexation (`conjGridIndex`), donc le
+ * parent qui regarde la grille et l'enfant qui regarde son image voient la
+ * même chose au même endroit.
  */
 export default function ConjProgressGrid({ facts }: ConjProgressGridProps) {
   const factMap = useMemo(() => {
@@ -25,10 +23,13 @@ export default function ConjProgressGrid({ facts }: ConjProgressGridProps) {
     return m;
   }, [facts]);
 
+  // Libellés des 63 cases : ils ne dépendent que de l'inventaire, jamais de
+  // l'état Leitner — dérivés une fois au montage plutôt qu'à chaque rendu.
+  const views = useMemo(() => conjFactDefs().map((def) => resolveConjQuestion(def, 0)), []);
+
   const cellFor = (row: number, col: number): LeitnerGridCell => {
-    const index = row * 8 + col;
-    const def = ORDERED[index];
-    if (!def) {
+    const view = views[conjGridIndex(row, col)];
+    if (!view) {
       return {
         box: 1,
         introduced: false,
@@ -37,16 +38,14 @@ export default function ConjProgressGrid({ facts }: ConjProgressGridProps) {
         modal: { title: '', correctCount: 0, totalAttempts: 0 },
       };
     }
-    const fact = factMap.get(def.key);
-    const view = resolveConjQuestion(def, 0);
-    const label = `${conjSubject(view.person, view.form)}${view.form}`;
+    const fact = factMap.get(view.def.key);
     return {
       box: fact?.box ?? 1,
       introduced: fact?.introduced ?? false,
-      ariaLabel: label,
+      ariaLabel: view.label,
       diagonal: false,
       modal: {
-        title: label,
+        title: view.label,
         correctCount: fact ? fact.history.filter((h) => h.correct).length : 0,
         totalAttempts: fact?.history.length ?? 0,
       },

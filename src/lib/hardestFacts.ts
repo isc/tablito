@@ -2,7 +2,7 @@ import type { UserProfile, BoxLevel, Attempt, SessionResult } from '../types';
 import { getFactKey } from './facts';
 import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey } from './remainderFacts';
-import { conjFactDef, conjSubject, resolveConjQuestion } from './conjugationFacts';
+import { conjFactDef, requireConjFactDef, resolveConjQuestion } from './conjugationFacts';
 
 // Fait « difficile » unifié × / ÷ / reste, pour l'espace parent. Le discriminant
 // `kind` porte les champs propres à l'opération. En 'rem', la « difficulté »
@@ -27,13 +27,14 @@ function countErrorsFromLogs(sessions: SessionResult[]): Map<string, number> {
   for (const s of sessions) {
     for (const q of s.questions ?? []) {
       if (q.correct) continue;
-      // Conjugaison : a/b ne veulent rien dire, c'est `factKey` qui identifie.
-      // Test explicite AVANT le repli 'mult' — sans lui, un log de conjugaison
-      // se compterait comme une erreur sur la multiplication 0×0.
+      // Conjugaison : le fait est identifié par `factKey`, pas par un couple de
+      // nombres — `a`/`b` sont absents. Test explicite AVANT le repli 'mult',
+      // qui les suppose présents.
       if (q.kind === 'conj') {
         if (q.factKey) errors.set(`conj:${q.factKey}`, (errors.get(`conj:${q.factKey}`) ?? 0) + 1);
         continue;
       }
+      if (q.a === undefined || q.b === undefined) continue;
       // Logs 'div'/'rem' : a = diviseur, b = quotient (dividende div = a × b).
       const key =
         q.kind === 'rem'
@@ -137,12 +138,9 @@ export function getHardestFacts(
   const conj: HardFact[] = [];
   if (includeConj) {
     for (const f of profile.conjFacts ?? []) {
-      if (!f.introduced) continue;
       // Un fait dont la clé a disparu de l'inventaire (profil d'une version
       // antérieure) n'est pas affichable : on l'ignore, sans casser la liste.
-      const def = conjFactDef(f.key);
-      if (!def) continue;
-      const view = resolveConjQuestion(def, 0);
+      if (!f.introduced || !conjFactDef(f.key)) continue;
       conj.push({
         kind: 'conj',
         key: f.key,
@@ -150,7 +148,9 @@ export function getHardestFacts(
         errorCount: logErrors
           ? (logErrors.get(`conj:${f.key}`) ?? 0)
           : countErrorsFromHistory(f.history, cutoff),
-        label: `${conjSubject(view.person, view.form)}${view.form}`,
+        // Résolu plus bas : nommer un fait demande de dériver sa question, et
+        // la liste n'en affiche qu'une poignée sur les 63 de la matière.
+        label: '',
       });
     }
   }
@@ -158,5 +158,10 @@ export function getHardestFacts(
   return [...mult, ...div, ...rem, ...conj]
     .filter((f) => f.errorCount > 0)
     .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
-    .slice(0, limit);
+    .slice(0, limit)
+    .map((f) =>
+      f.kind === 'conj'
+        ? { ...f, label: resolveConjQuestion(requireConjFactDef(f.key), 0).label }
+        : f,
+    );
 }

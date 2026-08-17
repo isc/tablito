@@ -5,6 +5,7 @@ import type {
   AnySessionItem,
   ConjFact,
   ConjSessionItem,
+  FactKind,
   SessionItem,
   SessionResult,
   SessionQuestionLog,
@@ -18,7 +19,8 @@ import {
 } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
-import { composeConjSession, type ConjJudgement } from './lib/conjugationComposer';
+import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
+import { createInitialConjFacts } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
 import { processAnswer } from './lib/leitner';
 import {
@@ -30,7 +32,7 @@ import {
   isDivisionUnlocked,
   isRemainderUnlocked,
   isConjAvailable,
-  hasOpenedConj,
+  isConjVisible,
   activeLevel,
 } from './lib/badges';
 import {
@@ -190,17 +192,13 @@ export default function App({
   // mixte (division + entretien des tables) après (specs §11.6), ou 100%
   // conjugaison — une séance ne mélange jamais deux MATIÈRES (spec Verbito §7.2).
   const [sessionItems, setSessionItems] = useState<AnySessionItem[]>([]);
-  // Matière de la séance en cours. Décidée au démarrage (deux boutons sur
-  // l'accueil), relue à la fin : c'est elle qui dit quelle date de séance
-  // marquer et quelle image le récap vise.
-  const [sessionSubject, setSessionSubject] = useState<'math' | 'conj'>('math');
   // Quelle « saveur » de récap afficher (multiplication, division, division
   // avec reste, conjugaison) — pilote le nom affiché, le jalon surveillé et
   // l'image cible.
-  const [recapMode, setRecapMode] = useState<'mult' | 'div' | 'rem' | 'conj'>('mult');
+  const [recapMode, setRecapMode] = useState<FactKind>('mult');
   // Onglet ouvert à l'arrivée sur l'écran progression (« Mes images ») : sur
   // l'image du niveau de la séance quand on y va depuis le récap.
-  const [progressView, setProgressView] = useState<'mult' | 'div' | 'rem' | 'conj'>('mult');
+  const [progressView, setProgressView] = useState<FactKind>('mult');
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
@@ -430,16 +428,23 @@ export default function App({
   // Tant que le test de placement n'a pas été passé, la « séance du jour » de
   // la matière EST ce test (il enchaîne ensuite sur la première séance, §6.1).
   const conjNeedsPlacement = !!profile && conjAvailable && profile.hasDoneConjPlacement !== true;
+  // Dépendances restreintes à ce que la composition LIT (cf. `ConjProfile`) :
+  // sur `profile` entier, chaque réponse d'une séance de maths recomposait la
+  // séance de conjugaison du jour.
+  const conjFacts = profile?.conjFacts;
+  const badges = profile?.badges;
   const conjPendingItems = useMemo<ConjSessionItem[]>(() => {
-    if (!profile || !conjAvailable || conjSessionDone || conjNeedsPlacement) return [];
-    return composeConjSession(profile, today).map((q): ConjSessionItem => ({ kind: 'conj', ...q }));
-  }, [profile, conjAvailable, conjSessionDone, conjNeedsPlacement, today]);
+    if (!conjFacts || !badges || !conjAvailable || conjSessionDone || conjNeedsPlacement) return [];
+    return composeConjSession({ conjFacts, badges }, today).map(
+      (q): ConjSessionItem => ({ kind: 'conj', ...q }),
+    );
+  }, [conjFacts, badges, conjAvailable, conjSessionDone, conjNeedsPlacement, today]);
   const hasConjSessionAvailable =
     conjAvailable && !conjSessionDone && (conjNeedsPlacement || conjPendingItems.length > 0);
   // Matière ouverte au moins une fois : c'est ce qui allume ses onglets
   // transverses (images, badges, espace parent) et éteint la pastille de
   // découverte — révélation différée, pas de modale (§6.2).
-  const conjVisible = !!profile && conjAvailable && hasOpenedConj(profile);
+  const conjVisible = !!profile && isConjVisible(profile, lang);
 
   // Remet à zéro les compteurs de séance.
   const resetSessionTracking = useCallback(() => {
@@ -470,7 +475,6 @@ export default function App({
     remainderTablesCompletedBeforeSession.current = getCompletedRemainderTables(
       profile.remainderFacts ?? [],
     );
-    setSessionSubject('math');
     setSessionItems(pendingItems);
     setScreen('session');
   }, [profile, pendingItems, resetSessionTracking]);
@@ -484,14 +488,22 @@ export default function App({
    */
   const handleStartConj = useCallback(() => {
     if (!profile || !conjAvailable) return;
-    setProfile((prev) => (prev && !prev.hasSeenConjIntro ? { ...prev, hasSeenConjIntro: true } : prev));
+    // Ensemencement des 63 faits À LA PREMIÈRE ENTRÉE, pas à la création du
+    // profil : `conjFacts` absent veut dire « matière jamais commencée », et
+    // les porter dans chaque profil coûtait ~6 Ko sérialisés à chaque réponse
+    // de maths (cf. lib/storage).
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const seed = prev.conjFacts ? null : createInitialConjFacts();
+      if (!seed && prev.hasSeenConjIntro) return prev;
+      return { ...prev, hasSeenConjIntro: true, ...(seed ? { conjFacts: seed } : {}) };
+    });
     if (conjNeedsPlacement) {
       setScreen('conjPlacement');
       return;
     }
     if (conjPendingItems.length === 0) return;
     resetSessionTracking();
-    setSessionSubject('conj');
     setSessionItems(conjPendingItems);
     setScreen('session');
   }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, resetSessionTracking]);
@@ -506,7 +518,10 @@ export default function App({
     (results: ConjPlacementResult[]) => {
       if (!profile) return;
       const now = todayISO();
-      const conjFacts = (profile.conjFacts ?? []).map((f) => ({ ...f }));
+      // Le placement est la porte d'entrée de la matière : c'est ici que les
+      // 63 faits existent pour la première fois si `handleStartConj` ne les a
+      // pas déjà ensemencés.
+      const conjFacts = (profile.conjFacts ?? createInitialConjFacts()).map((f) => ({ ...f }));
       seedConjFromPlacement(conjFacts, results, now);
       const updated: UserProfile = {
         ...profile,
@@ -524,7 +539,6 @@ export default function App({
         return;
       }
       resetSessionTracking();
-      setSessionSubject('conj');
       setSessionItems(items);
       setScreen('session');
     },
@@ -678,13 +692,13 @@ export default function App({
       fast: boolean,
       timeMs: number,
     ) => {
+      const accepted = isConjAccepted(judgement.verdict);
+
       sessionQuestionLogs.current.push({
         kind: 'conj',
-        // a/b n'ont pas de sens ici : c'est `factKey` qui identifie le fait.
-        a: 0,
-        b: 0,
+        // Pas d'`a`/`b` : c'est `factKey` qui identifie le fait.
         factKey: item.fact.key,
-        correct: judgement.accepted,
+        correct: accepted,
         responseTimeMs: timeMs,
         answeredWith: null,
         isBonusReview: item.isBonusReview,
@@ -692,7 +706,7 @@ export default function App({
         fast,
       });
 
-      if (judgement.accepted) {
+      if (accepted) {
         sessionConsecutiveCorrect.current++;
         sessionMaxConsecutiveCorrect.current = Math.max(
           sessionMaxConsecutiveCorrect.current,
@@ -729,7 +743,7 @@ export default function App({
         // peut n'être pour rien dans l'erreur, il reste alors intact — ni
         // promu, ni puni (§4.5).
         const outcomes = new Map<string, boolean>();
-        if (judgement.accepted) outcomes.set(posedKey, true);
+        if (accepted) outcomes.set(posedKey, true);
         else for (const key of judgement.blamedKeys) outcomes.set(key, false);
 
         // `fast` est calculé par l'écran, qui seul connaît le verdict : un
@@ -791,8 +805,10 @@ export default function App({
       // Une séance appartient à UNE matière. `isConj` gouverne : le récap, la
       // date de séance marquée, et les jalons de niveau (qui n'existent pas en
       // conjugaison).
-      const isConj = sessionSubject === 'conj';
-      const mode: 'mult' | 'div' | 'rem' | 'conj' = isConj ? 'conj' : sessionMode;
+      // Une séance ne mélange jamais deux matières (§7.2) : le `kind` de sa
+      // première question suffit à dire laquelle.
+      const isConj = sessionItems[0]?.kind === 'conj';
+      const mode: FactKind = isConj ? 'conj' : sessionMode;
       const result: SessionResult = {
         ...partial,
         factsPromoted: sessionPromoted.current.size,
@@ -895,7 +911,7 @@ export default function App({
         void import('./lib/watch').then((m) => m.publishWatchSnapshot(activeId, updatedProfile));
       }
     },
-    [profile, divisionUnlocked, remainderUnlocked, sessionMode, sessionSubject],
+    [profile, divisionUnlocked, remainderUnlocked, sessionMode, sessionItems],
   );
 
   const exitRecap = useCallback((next: Screen) => {

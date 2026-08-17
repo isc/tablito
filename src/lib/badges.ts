@@ -8,13 +8,14 @@ import type {
   ConjTense,
 } from '../types';
 import { BADGE_IDS } from '../types';
+import { CONJ_TENSE_BADGE_ID, allConjMastered, conjVerbBadgeId } from './conjugationComposer';
 import {
-  CONJ_TENSE_BADGE_ID,
-  CONJ_TENSE_ORDER,
-  conjVerbBadgeId,
-  isConjTenseMastered,
-} from './conjugationComposer';
-import { CONJ_IRREGULAR_VERBS, conjFactsOfTense, conjFactsOfVerb } from './conjugationFacts';
+  CONJ_IRREGULAR_VERBS,
+  CONJ_TENSES,
+  conjFactDef,
+  conjFactsOfTense,
+  conjFactsOfVerb,
+} from './conjugationFacts';
 import { MASTERY_BOX } from './leitner';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
@@ -464,7 +465,7 @@ function buildConjBadgeDefinitions(): BadgeDefinition[] {
   const u = i.units;
   const conjFactsOf = (p: UserProfile) => p.conjFacts ?? [];
   return [
-    ...CONJ_TENSE_ORDER.map((tense) => ({
+    ...CONJ_TENSES.map((tense) => ({
       id: CONJ_TENSE_BADGE_ID[tense],
       ...i.conjTense(tense),
       icon: CONJ_TENSE_ICON[tense],
@@ -643,20 +644,38 @@ export function checkBadges(
   // visibilité ici : ces badges DÉBLOQUENT les temps suivants, ils doivent donc
   // tomber dès que le critère est atteint, indépendamment de la langue
   // d'interface du moment (l'affichage, lui, reste gardé par isConjVisible).
+  //
+  // Court-circuit tant qu'aucun fait n'a été introduit : aucun badge n'est
+  // alors gagnable (un fait jamais posé reste en boîte 1), et c'est le cas de
+  // toutes les séances de maths — la matière n'a même pas de faits en mémoire
+  // tant qu'elle n'a pas été ouverte.
   const conjFacts = profile.conjFacts;
-  if (conjFacts && conjFacts.length > 0) {
-    for (const tense of CONJ_TENSE_ORDER) {
-      if (isConjTenseMastered(conjFacts, tense)) earn(CONJ_TENSE_BADGE_ID[tense]);
+  if (conjFacts?.some((f) => f.introduced)) {
+    // UN passage sur les faits, regroupés à la fois par temps et par verbe, au
+    // lieu de 3 + 7 filtrages de l'inventaire complet.
+    const byTense = new Map<ConjTense, ConjFact[]>();
+    const byVerb = new Map<string, ConjFact[]>();
+    for (const fact of conjFacts) {
+      const def = conjFactDef(fact.key);
+      if (!def) continue;
+      pushTo(byTense, def.tense, fact);
+      if (def.verb) pushTo(byVerb, def.verb, fact);
+    }
+    for (const tense of CONJ_TENSES) {
+      if (allConjMastered(byTense.get(tense) ?? [])) earn(CONJ_TENSE_BADGE_ID[tense]);
     }
     for (const verb of CONJ_IRREGULAR_VERBS) {
-      const verbFacts: ConjFact[] = conjFactsOfVerb(conjFacts, verb);
-      if (verbFacts.length > 0 && verbFacts.every((f) => f.box >= MASTERY_BOX)) {
-        earn(conjVerbBadgeId(verb));
-      }
+      if (allConjMastered(byVerb.get(verb) ?? [])) earn(conjVerbBadgeId(verb));
     }
   }
 
   return newBadges;
+}
+
+function pushTo<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const bucket = map.get(key);
+  if (bucket) bucket.push(value);
+  else map.set(key, [value]);
 }
 
 function hasConsecutiveTrue(values: boolean[], count: number): boolean {

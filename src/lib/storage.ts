@@ -4,7 +4,6 @@ import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
 import { createInitialRemainderFacts } from './remainderFacts';
-import { createInitialConjFacts } from './conjugationFacts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
@@ -358,7 +357,11 @@ export function createNewProfile(name: string): UserProfile {
     hasSeenDivisionIntro: false,
     remainderFacts: createInitialRemainderFacts(),
     remainderMysteryTheme,
-    conjFacts: createInitialConjFacts(),
+    // `conjFacts` volontairement ABSENT : les 63 faits ne sont ensemencés qu'à
+    // la première entrée dans la matière (cf. App `handleStartConj`). Absent =
+    // « jamais commencé », ce que tous les lecteurs traitent déjà (`?? []`).
+    // Les porter dès la création coûtait ~6 Ko sérialisés à CHAQUE réponse,
+    // y compris pour un enfant qui ne fera jamais de conjugaison.
     conjMysteryTheme: pickConjTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme]),
     hasSeenConjIntro: false,
     hasDoneConjPlacement: false,
@@ -425,12 +428,12 @@ function migrateProfile(profile: UserProfile): UserProfile {
       profile.divisionMysteryTheme,
     );
   }
-  // Matière conjugaison : même backfill silencieux que les niveaux de maths.
-  // Inoffensif tant que la matière n'est pas ouverte (63 faits en boîte 1, non
-  // introduits — aucun badge gagnable, rien d'affiché).
-  if (!Array.isArray(profile.conjFacts)) {
-    profile.conjFacts = createInitialConjFacts();
-  }
+  // Matière conjugaison : PAS de backfill des faits, contrairement aux niveaux
+  // de maths. `conjFacts` absent veut dire « matière jamais commencée » — les
+  // 63 faits sont ensemencés à la première entrée (App `handleStartConj`), et
+  // les lire coûterait ~6 Ko de sérialisation à chaque réponse d'un enfant qui
+  // ne fait que des maths. Seule l'image de la matière est backfillée : elle
+  // est tirée une fois, en évitant les thèmes déjà pris par les maths.
   if (profile.conjMysteryTheme === undefined) {
     profile.conjMysteryTheme = pickConjTheme([
       profile.mysteryTheme,

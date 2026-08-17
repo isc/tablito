@@ -205,6 +205,14 @@ function stemFact(
   };
 }
 
+/**
+ * Construit l'inventaire. Appelé au plus une fois, à la PREMIÈRE lecture de
+ * `conjFactDefs()` : les 63 définitions et leurs ~151 phrases porteuses ne
+ * s'évaluent pas au chargement du module. La conjugaison est une matière qu'on
+ * n'ouvre pas tous les jours (et jamais en anglais) — un boot qui ne la touche
+ * pas ne paie rien.
+ */
+function buildConjFactDefs(): ConjFactDef[] {
 // --- Bloc 1 — présent, 1er groupe : 6 terminaisons --------------------------
 
 const PRESENT_G1: ConjFactDef[] = [
@@ -538,36 +546,58 @@ const FUTUR: ConjFactDef[] = [
 // fabrique par la règle (infinitif moins le e des verbes en -re, §3.2). C'est
 // pourquoi le bloc futur compte 6 radicaux pour 7 verbes irréguliers.
 
-/** L'inventaire complet : 63 faits (spec §3.3). */
-export const CONJ_FACT_DEFS: readonly ConjFactDef[] = [
-  ...PRESENT_G1,
-  ...PRESENT_ETRE,
-  ...PRESENT_AVOIR,
-  ...PRESENT_ALLER,
-  ...PRESENT_FAIRE,
-  ...PRESENT_DIRE,
-  ...PRESENT_VENIR,
-  ...PRESENT_VOIR,
-  ...IMPARFAIT,
-  ...FUTUR,
-];
+  return [
+    ...PRESENT_G1,
+    ...PRESENT_ETRE,
+    ...PRESENT_AVOIR,
+    ...PRESENT_ALLER,
+    ...PRESENT_FAIRE,
+    ...PRESENT_DIRE,
+    ...PRESENT_VENIR,
+    ...PRESENT_VOIR,
+    ...IMPARFAIT,
+    ...FUTUR,
+  ];
+}
 
-const DEFS_BY_KEY = new Map(CONJ_FACT_DEFS.map((d) => [d.key, d]));
+let cachedDefs: readonly ConjFactDef[] | null = null;
+let cachedByKey: Map<string, ConjFactDef> | null = null;
+
+/** L'inventaire complet : 63 faits (spec §3.3), construit à la demande. */
+export function conjFactDefs(): readonly ConjFactDef[] {
+  return (cachedDefs ??= buildConjFactDefs());
+}
+
+function defsByKey(): Map<string, ConjFactDef> {
+  return (cachedByKey ??= new Map(conjFactDefs().map((d) => [d.key, d])));
+}
 
 export function conjFactDef(key: string): ConjFactDef | undefined {
-  return DEFS_BY_KEY.get(key);
+  return defsByKey().get(key);
+}
+
+/**
+ * Rang du fait occupant la case (row, col) d'une grille 8×8 de la matière,
+ * indices 0..7 en ordre de lecture. L'image mystère de l'enfant et la grille de
+ * l'espace parent partagent l'ordre de l'inventaire (§7.1) — donc cette
+ * formule, écrite une seule fois : le parent qui regarde la grille et l'enfant
+ * qui regarde son image voient la même chose au même endroit. Le rang 63 ne
+ * désigne aucun fait (63 faits, 64 cases).
+ */
+export function conjGridIndex(row: number, col: number): number {
+  return row * 8 + col;
 }
 
 /** Variante stricte, pour les appelants qui savent la clé valide (tests, UI). */
 export function requireConjFactDef(key: string): ConjFactDef {
-  const def = DEFS_BY_KEY.get(key);
+  const def = defsByKey().get(key);
   if (!def) throw new Error(`Fait de conjugaison inconnu : ${key}`);
   return def;
 }
 
 /** Les 63 faits, en boîte 1, non introduits. */
 export function createInitialConjFacts(): ConjFact[] {
-  return CONJ_FACT_DEFS.map((def) => ({
+  return conjFactDefs().map((def) => ({
     key: def.key,
     box: 1 as const,
     lastSeen: '',
@@ -629,6 +659,10 @@ export interface ConjQuestionView {
   carrier: ConjCarrier;
   verb: string;
   person: ConjPerson;
+  /** Pronom sujet prêt à afficher, élision comprise : « nous », « j’ ». */
+  subject: string;
+  /** Le fait nommé pour un humain : pronom + forme (« nous mangeons »). */
+  label: string;
   /** Radical affiché à gauche du blanc ('' quand la forme entière est tapée). */
   displayedStem: string;
   /** Ce que l'enfant doit taper (terminaison seule, ou forme entière). */
@@ -700,7 +734,8 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
   }
 
   const form = segment[0] + segment[1];
-  const lead = `${carrier.before} ${conjSubject(person, form)}`;
+  const subject = conjSubject(person, form);
+  const lead = `${carrier.before} ${subject}`;
   const tail = carrier.after ? ` ${carrier.after}` : '';
 
   return {
@@ -708,6 +743,8 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
     carrier,
     verb,
     person,
+    subject,
+    label: `${subject}${form}`,
     displayedStem,
     expected,
     form,
@@ -743,7 +780,7 @@ export function conjSentenceTtsKey(factKey: string): string {
  * de chaque fait (63), lue à l'étape 1 de l'introduction.
  */
 export function allConjCarrierSentences(): { key: string; text: string }[] {
-  return CONJ_FACT_DEFS.flatMap((def) =>
+  return conjFactDefs().flatMap((def) =>
     def.carriers.flatMap((_, i) => {
       const view = resolveConjQuestion(def, i);
       const entries = [{ key: view.promptTtsKey, text: view.prompt }];

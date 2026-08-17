@@ -18,11 +18,10 @@ import {
   CONJ_PERSONS,
   CONJ_TENSES,
   conjFactDef,
-  conjFactsOfTense,
   isPhoneticallyClose,
   normalizeConjAnswer,
-  resolveConjQuestion,
   stripAccents,
+  type ConjCarrier,
   type ConjFactDef,
   type ConjQuestionView,
 } from './conjugationFacts';
@@ -45,12 +44,10 @@ export const CONJ_MIN_QUESTIONS = 12;
 export const CONJ_MAX_QUESTIONS = 15;
 export const CONJ_MAX_NEW_FACTS = 2;
 
-/**
- * Plafond dur de la séance, REPRISES COMPRISES (§5.1) : une question ratée est
- * re-posée, mais la séance ne s'allonge jamais au-delà de 20 questions — 4 à
- * 6 minutes, budget temps saturé par ailleurs (§1).
- */
-export const CONJ_HARD_CAP_QUESTIONS = 20;
+// Plafond dur de la séance, REPRISES COMPRISES (§5.1) : une question ratée est
+// re-posée, mais la séance ne s'allonge jamais au-delà de 20 questions — 4 à
+// 6 minutes, budget temps saturé par ailleurs (§1). C'est exactement la borne
+// des séances de maths : cf. MAX_SESSION_QUESTIONS (lib/utils).
 
 /** Écart de re-pose après une erreur ou une intro : 2 à 3 questions (§5.2). */
 export const CONJ_RETRY_MIN_GAP = 2;
@@ -87,16 +84,14 @@ export function conjVerbBadgeId(verb: string): string {
   return `${CONJ_VERB_BADGE_PREFIX}${stripAccents(verb)}`;
 }
 
-/** Ordre d'introduction des temps : présent → imparfait → futur (§6.2). */
-export const CONJ_TENSE_ORDER: readonly ConjTense[] = CONJ_TENSES;
-
 /**
- * Critère du badge « temps maîtrisé » : tous les faits du temps en boîte ≥ 4
- * (MASTERY_BOX, le même seuil que les badges « Table de N »).
+ * Critère de maîtrise d'un GROUPE de faits (un temps, un verbe) : le groupe est
+ * non vide et tous ses faits sont en boîte ≥ 4 (MASTERY_BOX, le même seuil que
+ * les badges « Table de N »). Une seule définition pour les deux familles de
+ * badges de la matière — temps et verbe irrégulier.
  */
-export function isConjTenseMastered(facts: ConjFact[], tense: ConjTense): boolean {
-  const ofTense = conjFactsOfTense(facts, tense);
-  return ofTense.length > 0 && ofTense.every((f) => f.box >= MASTERY_BOX);
+export function allConjMastered(facts: ConjFact[]): boolean {
+  return facts.length > 0 && facts.every((f) => f.box >= MASTERY_BOX);
 }
 
 /**
@@ -106,7 +101,8 @@ export function isConjTenseMastered(facts: ConjFact[], tense: ConjTense): boolea
 export function unlockedConjTenses(badges: Badge[]): ConjTense[] {
   const owned = new Set(badges.map((b) => b.id));
   const unlocked: ConjTense[] = [];
-  for (const tense of CONJ_TENSE_ORDER) {
+  // Ordre d'introduction des temps : présent → imparfait → futur (§6.2).
+  for (const tense of CONJ_TENSES) {
     unlocked.push(tense);
     if (!owned.has(CONJ_TENSE_BADGE_ID[tense])) break;
   }
@@ -114,10 +110,17 @@ export function unlockedConjTenses(badges: Badge[]): ConjTense[] {
 }
 
 /** Temps ACTIF du jour : le dernier temps débloqué (§6.2, « un seul bouton »). */
-export function activeConjTense(profile: UserProfile): ConjTense {
+export function activeConjTense(profile: ConjProfile): ConjTense {
   const unlocked = unlockedConjTenses(profile.badges);
   return unlocked[unlocked.length - 1];
 }
+
+/**
+ * Tout ce que la composition lit d'un profil. Restreint EXPRÈS à ces deux
+ * champs : c'est le contrat que l'appelant peut mémoïser, sans recomposer la
+ * séance de conjugaison à chaque réponse d'une séance de maths.
+ */
+export type ConjProfile = Pick<UserProfile, 'conjFacts' | 'badges'>;
 
 // --- Ordre d'introduction à l'intérieur d'un temps --------------------------
 
@@ -183,9 +186,18 @@ function makeQuestion(
   };
 }
 
-function viewOf(question: ConjSessionQuestion): ConjQuestionView | null {
+/**
+ * Le couple (verbe, personne) que la question fera lire à l'écran. C'est la
+ * PORTEUSE qui les porte : inutile de dériver la question entière (forme
+ * attendue, segmentation, phrases, clés TTS) pour comparer deux questions —
+ * l'entrelacement en compare des centaines de paires par séance.
+ */
+function carrierOf(question: ConjSessionQuestion): ConjCarrier | null {
   const def = conjFactDef(question.fact.key);
-  return def ? resolveConjQuestion(def, question.carrierIndex) : null;
+  if (!def) return null;
+  const carriers = def.carriers;
+  const i = ((question.carrierIndex % carriers.length) + carriers.length) % carriers.length;
+  return carriers[i];
 }
 
 /**
@@ -194,12 +206,21 @@ function viewOf(question: ConjSessionQuestion): ConjQuestionView | null {
  * non encore désamorcée par la consolidation.
  */
 export function conjQuestionConflict(a: ConjSessionQuestion, b: ConjSessionQuestion): boolean {
-  const viewA = viewOf(a);
-  const viewB = viewOf(b);
-  if (!viewA || !viewB) return false;
-  if (viewA.verb === viewB.verb) return true;
-  if (viewA.person === viewB.person) return true;
+  const carrierA = carrierOf(a);
+  const carrierB = carrierOf(b);
+  if (!carrierA || !carrierB) return false;
+  if (carrierA.verb === carrierB.verb) return true;
+  if (carrierA.person === carrierB.person) return true;
   return !canConjBeAdjacent(a.fact, b.fact);
+}
+
+/**
+ * Le fait peut-il entrer dans la séance à côté de TOUT ce qui y est déjà ?
+ * (§3.4 : deux faits confusibles non consolidés ne s'y croisent jamais.) Le
+ * même filtre s'applique aux intros, aux révisions dues et aux bonus.
+ */
+function conjCoexistsWithAll(fact: ConjFact, ...groups: ConjFact[][]): boolean {
+  return groups.every((group) => group.every((other) => canConjCoexist(other, fact)));
 }
 
 function interleave(
@@ -223,13 +244,15 @@ function interleave(
  *
  * Renvoie une liste vide si le profil n'a pas encore de faits de conjugaison.
  */
-export function composeConjSession(profile: UserProfile, now: string): ConjSessionQuestion[] {
+export function composeConjSession(profile: ConjProfile, now: string): ConjSessionQuestion[] {
   const facts = profile.conjFacts ?? [];
   if (facts.length === 0) return [];
   const today = now.slice(0, 10);
 
-  const unlocked = new Set(unlockedConjTenses(profile.badges));
-  const active = activeConjTense(profile);
+  const unlockedTenses = unlockedConjTenses(profile.badges);
+  const unlocked = new Set(unlockedTenses);
+  // Temps ACTIF du jour : le dernier temps débloqué (§6.2, « un seul bouton »).
+  const active = unlockedTenses[unlockedTenses.length - 1];
 
   // Intros choisies AVANT les révisions (même raison que sessionComposer : les
   // révisions saturent sinon le budget et affament l'introduction).
@@ -275,8 +298,7 @@ export function composeConjSession(profile: UserProfile, now: string): ConjSessi
     if (!def) continue;
     const isMaintenance = def.tense !== active;
     if (isMaintenance && maintenance >= CONJ_MAINTENANCE_CAP) continue;
-    if (newFacts.some((nf) => !canConjCoexist(nf, fact))) continue;
-    if (selected.some((s) => !canConjCoexist(s, fact))) continue;
+    if (!conjCoexistsWithAll(fact, newFacts, selected)) continue;
     selected.push(fact);
     if (isMaintenance) maintenance++;
   }
@@ -298,9 +320,7 @@ export function composeConjSession(profile: UserProfile, now: string): ConjSessi
     );
     for (const fact of ranked) {
       if (bonusFacts.length >= need) break;
-      if (newFacts.some((nf) => !canConjCoexist(nf, fact))) continue;
-      if (selected.some((s) => !canConjCoexist(s, fact))) continue;
-      if (bonusFacts.some((b) => !canConjCoexist(b, fact))) continue;
+      if (!conjCoexistsWithAll(fact, newFacts, selected, bonusFacts)) continue;
       bonusFacts.push(fact);
     }
   }
@@ -325,28 +345,14 @@ export function composeConjSession(profile: UserProfile, now: string): ConjSessi
 }
 
 /**
- * Re-pose une question 2 à 3 questions plus tard (§5.2 étape 5, §5.3) : après
- * une erreur, et après l'introduction d'un fait nouveau.
- *
- * Renvoie la file inchangée si le plafond dur de la séance est atteint — on
- * préfère une séance qui se termine proprement à une séance qui s'étire.
- *
- * Générique sur l'élément de file : la composition manipule des
- * `ConjSessionQuestion`, mais l'écran de séance manipule des `AnySessionItem`
- * (la question porte alors son discriminant `kind`). Seuls les deux drapeaux
- * réécrits ici sont nécessaires au calcul.
+ * Écart de re-pose de la matière : 2 ou 3 questions plus tard (§5.2 étape 5,
+ * §5.3). Tiré ici, la mécanique d'insertion elle-même étant générique
+ * (`scheduleRetry`, partagée avec le chemin maths).
  */
-export function scheduleConjRetry<T extends { isIntroduction: boolean; isRetry: boolean }>(
-  queue: T[],
-  currentIndex: number,
-  question: T,
-  gap: number = CONJ_RETRY_MIN_GAP +
-    Math.floor(Math.random() * (CONJ_RETRY_MAX_GAP - CONJ_RETRY_MIN_GAP + 1)),
-): T[] {
-  if (queue.length >= CONJ_HARD_CAP_QUESTIONS) return queue;
-  const at = Math.min(currentIndex + gap, queue.length);
-  const retry = { ...question, isIntroduction: false, isRetry: true };
-  return [...queue.slice(0, at), retry, ...queue.slice(at)];
+export function conjRetryGap(): number {
+  return (
+    CONJ_RETRY_MIN_GAP + Math.floor(Math.random() * (CONJ_RETRY_MAX_GAP - CONJ_RETRY_MIN_GAP + 1))
+  );
 }
 
 // --- Attribution d'erreur (spec §4.5) ---------------------------------------
@@ -369,10 +375,17 @@ export function scheduleConjRetry<T extends { isIntroduction: boolean; isRetry: 
  */
 export type ConjVerdict = 'correct' | 'almost' | 'ending' | 'stem' | 'both';
 
+/**
+ * Le Leitner traite-t-il ce verdict comme une bonne réponse ? Les deux verdicts
+ * acceptés sont `correct` et `almost` — on ne pénalise jamais l'orthographe
+ * lexicale dans un jeu de conjugaison.
+ */
+export function isConjAccepted(verdict: ConjVerdict): boolean {
+  return verdict === 'correct' || verdict === 'almost';
+}
+
 export interface ConjJudgement {
   verdict: ConjVerdict;
-  /** Le Leitner traite-t-il cette réponse comme correcte ? */
-  accepted: boolean;
   /**
    * Faits à faire redescendre. PAS forcément celui posé : sur « seron » pour
    * « serons », c'est la terminaison -ons qui a lâché, pas le radical ser-
@@ -405,16 +418,16 @@ export function judgeConjAnswer(view: ConjQuestionView, typed: string): ConjJudg
   const expected = normalizeConjAnswer(view.expected);
   const ownKey = view.def.key;
 
-  if (answer === expected) return { verdict: 'correct', accepted: true, blamedKeys: [] };
+  if (answer === expected) return { verdict: 'correct', blamedKeys: [] };
 
   if (view.endingOnly) {
     // Tolérance : l'enfant qui tape la forme entière alors que le radical est
     // affiché sait ce qu'on lui demande — on ne pénalise pas un malentendu de
     // consigne.
     if (answer === normalizeConjAnswer(view.form)) {
-      return { verdict: 'correct', accepted: true, blamedKeys: [] };
+      return { verdict: 'correct', blamedKeys: [] };
     }
-    return { verdict: 'ending', accepted: false, blamedKeys: [ownKey] };
+    return { verdict: 'ending', blamedKeys: [ownKey] };
   }
 
   const [stem, ending] = view.segment.map(normalizeConjAnswer) as [string, string];
@@ -423,14 +436,14 @@ export function judgeConjAnswer(view: ConjQuestionView, typed: string): ConjJudg
   // radical, il n'y a pas de terminaison à blâmer.
   if (ending === '') {
     return isPhoneticallyClose(answer, stem)
-      ? { verdict: 'almost', accepted: true, blamedKeys: [] }
-      : { verdict: 'stem', accepted: false, blamedKeys: [ownKey] };
+      ? { verdict: 'almost', blamedKeys: [] }
+      : { verdict: 'stem', blamedKeys: [ownKey] };
   }
 
   const endingKey = conjEndingFactKeyFor(view);
 
   if (answer.startsWith(stem) && !answer.endsWith(ending)) {
-    return { verdict: 'ending', accepted: false, blamedKeys: [endingKey ?? ownKey] };
+    return { verdict: 'ending', blamedKeys: [endingKey ?? ownKey] };
   }
 
   if (answer.endsWith(ending)) {
@@ -438,10 +451,10 @@ export function judgeConjAnswer(view: ConjQuestionView, typed: string): ConjJudg
     // il commence bien mais dérape ensuite (« serrons »).
     const typedStem = answer.slice(0, answer.length - ending.length);
     return isPhoneticallyClose(typedStem, stem)
-      ? { verdict: 'almost', accepted: true, blamedKeys: [] }
-      : { verdict: 'stem', accepted: false, blamedKeys: [ownKey] };
+      ? { verdict: 'almost', blamedKeys: [] }
+      : { verdict: 'stem', blamedKeys: [ownKey] };
   }
 
   const blamed = endingKey && endingKey !== ownKey ? [ownKey, endingKey] : [ownKey];
-  return { verdict: 'both', accepted: false, blamedKeys: blamed };
+  return { verdict: 'both', blamedKeys: blamed };
 }
