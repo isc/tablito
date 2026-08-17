@@ -1,0 +1,3 @@
+import{Fragment as j,jsx as s,jsxs as o}from"preact/jsx-runtime";function l({segment:m,subject:n,before:t,after:a,lit:r="none"}){const[c,e]=m,i=r!=="none",p=r==="both";return o("span",{className:"conj-form",children:[t&&o("span",{className:"conj-form-context",children:[t," "]}),n&&o(j,{children:[s("span",{className:`conj-form-subject${i?" is-lit":""}`,children:n.trimEnd()}),n.slice(n.trimEnd().length)]}),s("span",{className:"conj-form-stem",children:c}),e!==""&&s("span",{className:`conj-form-mark${p?" is-lit":""}`,children:e}),a&&s("span",{className:"conj-form-context",children:a})]})}export{l as default};
+
+//# sourceMappingURL=ConjForm.js.map

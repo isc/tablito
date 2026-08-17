@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["hooks/useLatestRef.ts"],
+  "sourcesContent": ["import { useEffect, useRef } from 'react';\n\n/**\n * Miroir de la derni\u00E8re valeur d'une prop dans une ref.\n *\n * Sert aux composants vocaux : les callbacks de reconnaissance\n * (`useSpeechRecognition`) doivent lire l'\u00E9tat le plus frais SANS \u00EAtre recr\u00E9\u00E9s \u00E0\n * chaque render \u2014 les recr\u00E9er relance l'effet qui les enregistre plusieurs fois\n * par question, pour rien. La ref est \u00E9crite dans un effet, jamais pendant le\n * render : une ref ne participe pas au rendu.\n *\n * L'idiome tra\u00EEnait d\u00E9j\u00E0, \u00E9crit \u00E0 la main, dans `VoiceInput` (trois fois) et\n * dans `ConjVoiceInput` (autant) ; il vit ici pour n'avoir qu'une d\u00E9finition.\n */\nexport function useLatestRef<T>(value: T): { readonly current: T } {\n  const ref = useRef(value);\n  useEffect(() => {\n    ref.current = value;\n  }, [value]);\n  return ref;\n}\n"],
+  "mappings": "AAAA,OAAS,aAAAA,EAAW,UAAAC,MAAc,QAc3B,SAASC,EAAgBC,EAAmC,CACjE,MAAMC,EAAMH,EAAOE,CAAK,EACxB,OAAAH,EAAU,IAAM,CACdI,EAAI,QAAUD,CAChB,EAAG,CAACA,CAAK,CAAC,EACHC,CACT",
+  "names": ["useEffect", "useRef", "useLatestRef", "value", "ref"]
+}
