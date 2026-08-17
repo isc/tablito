@@ -324,8 +324,8 @@
 <header class="page-header">
   <div class="eyebrow">Spécifications fonctionnelles</div>
   <h1>Tablito<em>.</em></h1>
-  <p class="lede">Application d'apprentissage des tables de multiplication basée sur la recherche en sciences cognitives.</p>
-  <p class="target">Utilisatrice cible : Zoé, 8 ans, CE2 — Tables de 1 à 10</p>
+  <p class="lede">Application d'entraînement quotidien fondée sur la recherche en sciences cognitives. Un même moteur de répétition espacée sert désormais plusieurs matières — les tables de multiplication et la division d'abord, la conjugaison ensuite — à raison d'une séance courte par jour.</p>
+  <p class="target">Utilisatrice cible : Zoé, 9 ans, CM1</p>
   <a class="back-link" href="../">← Retour à l'application</a>
 </header>
 
@@ -348,6 +348,7 @@
     <li><a href="#reste">Niveau 3 — La division avec reste</a></li>
     <li><a href="#profils">Multi-profils — plusieurs enfants par appareil</a></li>
     <li><a href="#suivi">Suivi à distance — le parent sur son propre appareil</a></li>
+    <li><a href="#conjugaison">Conjugaison — une seconde matière</a></li>
     <li><a href="#evolutions">Évolutions possibles (V2)</a></li>
     <li><a href="#references">Références</a></li>
   </ol>
@@ -892,7 +893,7 @@ interface Badge {
 <section class="chapter" id="perimetre">
   <h2><span class="num">9</span>Périmètre — Ce que l'application ne fait PAS</h2>
   <ul>
-    <li>Pas d'addition ni de soustraction (le périmètre reste le seul champ multiplicatif)</li>
+    <li>Pas d'addition ni de soustraction (côté maths, le périmètre reste le seul champ multiplicatif)</li>
     <li>Pas de comptes utilisateurs ni d'authentification ; aucune donnée d'apprentissage envoyée à un serveur (le seul stockage distant concerne les avis et les abonnements push, anonymes — §5.2, §8.1)</li>
     <li>Pas de classement entre enfants (pas de compétition)</li>
     <li>Pas de mode examen chronométré</li>
@@ -901,6 +902,7 @@ interface Badge {
   </ul>
   <blockquote class="note">
     <p><strong>Division :</strong> exclue du cœur v1 (focus unique sur la mémorisation des tables), elle n'est plus écartée sur le principe — elle est spécifiée comme <strong>niveau 2 optionnel</strong> (§11) : un track séparé qui révise les mêmes faits sous forme de division, déclenché uniquement après maîtrise multiplicative. Un enfant qui travaille encore ses tables ne le voit pas, donc le focus unique de la v1 est préservé. Le <strong>niveau 3</strong> (§12) prolonge la même logique vers la division avec reste, après maîtrise des divisions exactes.</p>
+    <p><strong>Autres matières :</strong> hors du champ mathématique, l'app accueille désormais une seconde matière, la <strong>conjugaison</strong> (§15) — séance, image mystère et badges propres, et masquée quand la langue d'interface est l'anglais. Elle ne s'ajoute jamais à la séance de maths : c'est une séance distincte, entièrement facultative.</p>
   </blockquote>
 </section>
 
@@ -1097,17 +1099,188 @@ interface Badge {
   <p>Conséquence assumée sur les sections propres à l'appareil : sauvegarde, transfert, rappel quotidien et suppression de profil disparaissent quand la source affichée est un enfant distant — elles parleraient d'une progression qu'on n'a pas en main.</p>
 </section>
 
+<section class="chapter" id="conjugaison">
+  <h2><span class="num">15</span>Conjugaison — une seconde matière</h2>
+  <blockquote class="note">
+    <p><strong>Statut : spécifié, implémentation en cours.</strong> Ce chapitre décrit le comportement cible de la matière. Il est publié avant sa mise en ligne complète : certains détails (calibrages de seuils, inventaire final) sont susceptibles de bouger au contact de l'usage réel.</p>
+  </blockquote>
+  <p>Les niveaux 2 et 3 (§11, §12) prolongent le même objet mathématique par de nouvelles portes d'entrée. La <strong>conjugaison</strong> est autre chose : une <strong>matière</strong> à part entière, qui vient à côté des maths et non par-dessus. L'objectif n'est pas d'enseigner la conjugaison — elle s'apprend en classe — mais de <strong>réactiver et d'automatiser</strong> des formes déjà rencontrées, pour qu'elles restent disponibles quand l'enfant écrit vraiment. Accessoirement, et ce n'est pas un objectif secondaire : remplacer le sentiment diffus d'« avoir tout oublié pendant les vacances » par une maîtrise visible.</p>
+  <p>Ce que la matière <strong>réutilise tel quel</strong> : le moteur Leitner et ses intervalles (§1.1), la règle d'anti-interférence (§1.2), l'entrelacement (§1.3), la composition de séance et ses garde-fous (§6), le récap non <em>ego-involving</em> (§3.5), l'audio pré-généré (§3.6), les multi-profils (§13), le suivi à distance (§14) et la PWA hors-ligne (§8). Ce qu'elle apporte en propre : son inventaire, sa question type, son clavier, son image mystère et ses badges.</p>
+  <blockquote class="note">
+    <p><strong>Matière francophone uniquement.</strong> La conjugaison porte sur la morphologie du verbe français : elle n'a pas d'équivalent transposable dans la version anglaise de l'interface. La matière est donc <strong>masquée quand la langue d'interface est l'anglais</strong> — pas de tuile, pas de séance, pas de badge fantôme. C'est la première fonctionnalité de l'app dont le périmètre dépend de la langue.</p>
+  </blockquote>
+
+  <h3 id="conj-matiere"><span class="num">15.1</span>Une matière, pas un niveau de plus</h3>
+  <p>La distinction est structurante, et elle se voit dans le produit :</p>
+  <ul>
+    <li><strong>Séance quotidienne propre.</strong> Les niveaux 2 et 3 <em>absorbent</em> la maintenance du niveau précédent dans une séance unique (§11.3) : il n'y a jamais deux séances de maths à faire. La conjugaison, elle, est une <strong>seconde séance possible</strong>, du même format court (4-6 min) — pas une rallonge de la séance de maths, qui deviendrait longue et hétéroclite.</li>
+    <li><strong>Image mystère propre</strong> (§15.8), <strong>badges propres</strong> (§15.8), progression suivie séparément dans le tableau de bord parent (§5.2).</li>
+    <li><strong>Rien n'est obligatoire.</strong> Faire les deux matières le même jour est un choix, jamais une exigence. C'est le point sur lequel la conception a le plus insisté : ajouter une matière ne doit pas doubler la charge quotidienne, sinon l'app se transforme en devoir supplémentaire et se fait abandonner.</li>
+    <li><strong>La flamme de série est partagée.</strong> Une séance de <em>n'importe quelle</em> matière maintient la série (§4.3). Exiger les deux chaque jour pour garder la flamme reviendrait à rendre les deux obligatoires par la bande. Les faits de la matière délaissée attendent simplement dans leurs boîtes — la répétition espacée est tolérante à l'attente, c'est même son principe.</li>
+  </ul>
+  <p>Sur l'écran d'accueil, la conséquence est un <strong>choix de matière</strong> plutôt qu'un bouton unique — la seule concession faite au principe « un seul bouton » énoncé en §11.3, et elle est assumée : le choix porte ici sur <em>quoi travailler</em>, pas sur <em>quel niveau rejouer</em>. À l'intérieur d'une matière, le principe tient toujours : un seul bouton, la séance du jour est décidée par l'algorithme.</p>
+
+  <h3 id="conj-recherche"><span class="num">15.2</span>Ce que dit la recherche</h3>
+  <p class="source"><strong>Sources :</strong> Pinker (1999), Totereau, Thevenin &amp; Fayol (1997), Fayol, Hupet &amp; Largy (1999), Bowers, Kirby &amp; Deacon (2010), Karpicke &amp; Roediger (2008), Kang (2016), Skinner, McLaughlin &amp; Logan (1997)</p>
+  <p>Les quatre piliers du chapitre 1 s'appliquent sans modification. S'y ajoutent des résultats propres à la morphologie verbale.</p>
+
+  <h4>Des règles productives et des formes stockées</h4>
+  <p>La flexion verbale mobilise deux systèmes distincts : des <strong>règles productives</strong> — les terminaisons régulières, qui se généralisent à n'importe quel verbe nouveau — et des <strong>formes stockées</strong>, les irrégulières fréquentes, récupérées en mémoire comme des mots entiers. C'est exactement la partition que l'app fait déjà entre les règles ×1 / ×10 (§2.3), enseignées et jamais mémorisées fait par fait, et les 36 faits multiplicatifs. L'inventaire (§15.3) la reprend telle quelle : les régularités de personne et les mécanismes de fabrication des temps sont des <em>règles</em> ; les formes irrégulières sont des <em>faits</em> Leitner.</p>
+
+  <h4>L'accord s'automatise, et c'est là que tout se joue</h4>
+  <p>En français écrit, la plupart des marques d'accord verbal sont <strong>muettes</strong> : <em>il chante</em> et <em>ils chantent</em> se prononcent à l'identique. Les travaux de Fayol et collègues montrent que ces marques s'apprennent d'abord comme des règles coûteuses, appliquées délibérément, puis s'automatisent avec la pratique — et que les erreurs réapparaissent, y compris chez les scripteurs experts, précisément quand la charge cognitive monte. L'objectif est donc le même que pour les tables : amener le rappel de la bonne forme au niveau de l'automatisme, pour qu'il survive à la charge d'une vraie rédaction.</p>
+
+  <h4>La segmentation morphologique aide, surtout les lecteurs les moins avancés</h4>
+  <p>La revue systématique de Bowers, Kirby &amp; Deacon montre que l'enseignement explicite de la morphologie — décomposer les mots en base et affixes — bénéficie à la littératie, avec un effet <em>plus marqué chez les lecteurs les moins avancés</em>. L'app matérialise cette décomposition en permanence : toute forme verbale affichée l'est <strong>segmentée en deux couleurs</strong>, radical d'un côté (<code>chant</code>), terminaison de l'autre (<code>ons</code>). Bénéfice secondaire mais réel : la segmentation réduit la taille de l'unité visuelle à traiter d'un coup.</p>
+
+  <h4>Produire, pas reconnaître</h4>
+  <p>Le rappel actif — produire la réponse — construit une rétention nettement supérieure à la reconnaissance — choisir parmi des propositions. L'enfant <strong>tape</strong> donc la terminaison ou la forme, et ne choisit jamais dans un QCM (§15.5). C'est aussi la compétence écologiquement utile : en dictée comme en rédaction, on produit.</p>
+
+  <h4>Je lis, je cache, j'écris</h4>
+  <p>Le paradigme <em>Cover, Copy and Compare</em> — regarder un modèle, le masquer, le reproduire, comparer — est une intervention robuste, validée aussi bien sur l'orthographe que sur les faits arithmétiques. L'introduction d'un fait nouveau (§15.6) reprend ce geste à l'identique, et c'est la seule étape de l'app où la bonne réponse est affichée <em>avant</em> d'être demandée.</p>
+
+  <h3 id="conj-inventaire"><span class="num">15.3</span>L'inventaire : règles et faits</h3>
+  <p><strong>Périmètre v1 :</strong> <strong>présent, imparfait et futur simple</strong> des verbes du 1<sup>er</sup> groupe et des irréguliers les plus fréquents — <em>être, avoir, aller, faire, dire, venir, voir</em>. C'est le socle du cycle 2, celui qu'un enfant entrant au CM1 a déjà rencontré. Le passé composé, également au programme, est reporté en extension (voir plus bas).</p>
+  <p>Verbes du 1<sup>er</sup> groupe retenus comme support, choisis fréquents, concrets et imageables : <em>chanter, jouer, regarder, aimer, donner, parler, trouver, manger</em> — <em>manger</em> est inclus délibérément pour le piège orthographique <em>nous man<strong>geons</strong></em>.</p>
+
+  <h4>Les règles — enseignées, jamais mémorisées fait par fait</h4>
+  <p>Comme ×1 et ×10 (§2.3), les régularités massives sont enseignées comme des règles, avec leur propre écran d'introduction :</p>
+  <ul>
+    <li><strong>Les marques de personne</strong>, quasi invariantes d'un temps à l'autre : <em>tu</em> → <code>-s</code>, <em>nous</em> → <code>-ons</code> (sauf <em>sommes</em>), <em>vous</em> → <code>-ez</code> (sauf <em>êtes, faites, dites</em>), <em>ils/elles</em> → <code>-nt</code> (sans exception). Ce sont les <em>anchor facts</em> de la conjugaison, l'équivalent des doubles et des ×5 en multiplication : tout le reste s'y raccroche.</li>
+    <li><strong>L'imparfait se fabrique</strong> : radical de la personne <em>nous</em> au présent, plus des terminaisons uniques — <em>nous <strong>fais</strong>ons</em> → <em>je <strong>fais</strong>ais</em>. Cette règle couvre tous les verbes du français à une exception près, <em>être</em>.</li>
+    <li><strong>Le futur se fabrique</strong> : infinitif plus terminaisons — <em>chanter</em> + <code>ai</code> ; pour les verbes en <em>-re</em> comme <em>dire</em>, on retire le <em>e</em> final.</li>
+    <li><strong>Les pièges de son</strong> : <em>-geons</em>, <em>-çons</em> — règle annexe, énoncée à l'introduction et rappelée en cas d'erreur.</li>
+  </ul>
+
+  <h4>Les faits Leitner</h4>
+  <p>Un fait est un couple (forme, personne) — ou une terminaison, ou un radical irrégulier. Quand <em>je</em> et <em>tu</em> partagent la même forme écrite (<em>je fais / tu fais</em>), les deux personnes sont <strong>fusionnées en un seul fait</strong> dont les questions font varier le pronom : même logique que la fusion des paires commutatives 3×4 / 4×3 (§1.2).</p>
+  <table>
+    <thead><tr><th>Bloc</th><th>Contenu</th><th>Faits</th></tr></thead>
+    <tbody>
+      <tr><td>Présent, 1<sup>er</sup> groupe</td><td>6 terminaisons : <code>-e -es -e -ons -ez -ent</code></td><td>6</td></tr>
+      <tr><td>Présent, irréguliers</td><td>7 verbes × 6 personnes = 42 formes, moins 4 fusions je/tu (<em>fais, dis, viens, vois</em>)</td><td>38</td></tr>
+      <tr><td>Imparfait</td><td>6 terminaisons (<code>-ais -ais -ait -ions -iez -aient</code>) + 1 radical irrégulier (<em>être</em> → <code>ét-</code>)</td><td>7</td></tr>
+      <tr><td>Futur simple</td><td>6 terminaisons (<code>-ai -as -a -ons -ez -ont</code>) + 6 radicaux irréguliers (<code>ser- aur- ir- fer- viendr- verr-</code>)</td><td>12</td></tr>
+      <tr><td><strong>Total v1</strong></td><td></td><td><strong>63</strong></td></tr>
+    </tbody>
+  </table>
+  <p>63 faits, soit exactement l'ordre de grandeur d'un niveau de maths (36 multiplications, 64 divisions) — et une grille d'image mystère 8×8 fonctionne presque telle quelle (§15.8). <strong>La factorisation est ce qui rend l'inventaire tenable</strong> : l'imparfait, qui paraît immense vu de loin, ne pèse que 7 faits une fois sa règle posée. Le montrer <em>est</em> le message rassurant de la matière.</p>
+
+  <h4>Extensions envisagées</h4>
+  <ul>
+    <li><strong>Passé composé</strong> — au programme du cycle 2, mais mécanique différente (deux mots, choix de l'auxiliaire) : la question type et l'attribution d'erreur (§15.5) sont à repenser, pas seulement à étendre.</li>
+    <li><strong>2<sup>e</sup> groupe et irréguliers du CM1</strong> (<em>prendre, pouvoir, vouloir</em>…) — à ajouter en suivant le programme, comme le niveau 3 suit celui du CM1 (§12.1).</li>
+  </ul>
+
+  <h3 id="conj-interference"><span class="num">15.4</span>Interférences à gérer</h3>
+  <p class="source"><strong>Sources :</strong> Dotan &amp; Zviran-Ginat (2022), Rohrer &amp; Taylor (2007)</p>
+  <p>La règle du §1.2 s'applique sans changement : deux faits fortement similaires ne cohabitent jamais dans une même série tant qu'ils ne sont pas consolidés, et leurs <strong>introductions</strong> sont espacées d'au moins 48 h. Les paires à haut risque de la conjugaison :</p>
+  <ul>
+    <li><strong><em>sont / ont / vont / font</em></strong> — quatre monosyllabes en <em>-ont</em>, introduits chacun à 48 h d'écart au minimum. Leur air de famille (la règle <em>ils</em> → <code>-nt</code>) est présenté comme une régularité <em>après</em> maîtrise individuelle, jamais avant : donné trop tôt, il fabrique la confusion qu'il prétend expliquer.</li>
+    <li><strong><em>tu es</em> / <em>il est</em></strong> — homophones, deux graphies.</li>
+    <li><strong><em>vous faites</em> / <em>vous dites</em> / <em>vous êtes</em></strong> — trois exceptions contre la règle <em>vous</em> → <code>-ez</code>.</li>
+    <li><strong>Futur <code>-ai</code> / imparfait <code>-ais</code> à la 1<sup>re</sup> personne</strong> — l'interférence inter-temps majeure. Jamais dans la même séance en phase d'apprentissage ; puis <strong>entrelacées délibérément</strong> une fois les deux faits en boîte ≥ 3, parce que c'est l'entrelacement qui construit la discrimination une fois les traces installées.</li>
+  </ul>
+  <p>Ce double régime — séparer pendant l'apprentissage, mêler pendant la consolidation — est la transposition directe du raisonnement de §1.2 : l'interférence nuit à l'<em>acquisition</em> de paires similaires, pas à leur <em>révision</em>.</p>
+
+  <h3 id="conj-question"><span class="num">15.5</span>La question type et la saisie</h3>
+  <p>Une question est une <strong>phrase courte à compléter</strong>, avec un marqueur temporel franc (<em>hier, demain, en ce moment</em>), <strong>systématiquement lue à voix haute</strong> (TTS pré-généré, §3.6). Un seul item à l'écran, gros corps, interlignage généreux :</p>
+  <blockquote class="note">
+    <p>🔊 « Demain, nous… <em>chanter</em> »</p>
+    <p>Demain, nous <code>chant</code>____ &nbsp;<em>(chanter)</em></p>
+  </blockquote>
+  <p>Chaque fait dispose de <strong>2 à 3 phrases porteuses fixes</strong>. Des phrases stables réduisent la charge de lecture — elles deviennent familières au bout de quelques passages — et bornent le volume audio à pré-générer (environ 200 fichiers, contre 773 côté maths).</p>
+
+  <h4>On ne tape que ce qui porte la connaissance testée</h4>
+  <ul>
+    <li><strong>Verbe régulier</strong> : le radical est affiché, l'enfant tape la <strong>terminaison</strong> seule (2 à 5 lettres). Aucune friction motrice sur ce qui n'est pas testé.</li>
+    <li><strong>Forme irrégulière</strong> : la forme entière est tapée — elles sont courtes (<em>suis, vont, êtes, serons</em>) et c'est la forme elle-même qui constitue le fait.</li>
+  </ul>
+  <p>La saisie se fait sur un <strong>mini-clavier AZERTY à grosses touches</strong> (3 rangées, plus <code>é</code> et <code>ê</code>), disposition scolaire familière. C'est le principal chantier d'interface neuf de la matière : le pavé numérique (§3.3) ne se transpose pas. La validation est <strong>explicite</strong> — contrairement aux nombres, la longueur de la réponse n'est pas prévisible, donc l'auto-validation à N caractères n'a pas de sens.</p>
+
+  <h4>Alternatives rejetées</h4>
+  <ul>
+    <li><strong>QCM</strong> (choisir entre <em>chante / chantes / chantent</em>) : la reconnaissance retient moins bien que la production (§15.2), et l'écran afficherait en grand des formes fausses au moment précis où l'orthographe s'imprime.</li>
+    <li><strong>Réponse vocale non épelée</strong> (dire la forme) : <em>chante, chantes, chantent</em> sont homophones — dire la forme est aveugle à la compétence testée, qui est orthographique. C'est l'épellation qui rend le vocal viable (§15.10).</li>
+    <li><strong>Écriture sur papier avec validation par un adulte</strong> : exclu pour préserver l'autonomie. La matière doit être jouable seule, exactement comme le reste de l'app.</li>
+  </ul>
+
+  <h4>Seuil de rapidité et attribution d'erreur</h4>
+  <p>Le seuil « rapide » (celui qui conditionne l'étoile rayonnante et la montée de boîte, §3.3) doit absorber le coût moteur de la frappe, plus variable qu'au pavé numérique. Proposition initiale : <strong>5 s, plus 1 s par caractère à taper</strong>, à recalibrer en conditions réelles. Comme partout ailleurs, la lenteur n'est jamais verbalisée.</p>
+  <p>La segmentation radical / terminaison permet une <strong>attribution d'erreur diagnostique</strong> quand la forme entière est tapée : <em>seron</em> pour <em>serons</em> est une erreur de terminaison — le fait <code>-ons</code> redescend ; <em>saurons</em> pour <em>serons</em> est une erreur de radical — le fait <code>ser-</code> redescend. Et le cas « presque » : terminaison correcte mais coquille phonétiquement plausible dans le radical → <strong>réponse acceptée pour le Leitner</strong>, forme correcte réaffichée segmentée, sans commentaire. <strong>On ne pénalise jamais l'orthographe lexicale dans un exercice de conjugaison</strong> : une seule règle à la fois, le reste non compté.</p>
+
+  <h3 id="conj-seance"><span class="num">15.6</span>La séance</h3>
+  <p>L'anatomie est celle du §3.2, à l'identique : <code>[Accueil] → [Intro : max 2 faits nouveaux] → [Pratique : 12-15 questions] → [Récap] → [Fin]</code>, 4 à 6 minutes, plafond dur à 20 questions reprises comprises, pas de répétition de remplissage, pas de chrono visible. Entrelacement (§1.3) : jamais deux questions consécutives partageant le même verbe <em>ou</em> la même personne ; une fois plusieurs temps débloqués, les temps sont mêlés dans la séance, sous réserve des exclusions du §15.4.</p>
+
+  <h4>Introduction d'un fait nouveau — cinq étapes</h4>
+  <ol>
+    <li><strong>La phrase en contexte</strong>, affichée et lue à voix haute, forme complète visible.</li>
+    <li><strong>La mécanique en couleurs</strong> : le pronom s'illumine, puis sa marque — <em>nous</em> → <code>chant</code>+<code>ons</code> — avec l'ancrage à la règle transversale ou à la dérivation (« l'imparfait se fabrique à partir de <em>nous</em> »). C'est l'équivalent exact de la grille de points et des stratégies de dérivation (§3.4, §3.4bis) : on ne demande jamais de mémoriser une forme qui n'a pas été expliquée.</li>
+    <li><strong>Copie différée</strong> — le geste <em>cover, copy, compare</em> (§15.2) : la forme s'affiche 4 s, se masque, l'enfant la tape.</li>
+    <li><strong>Première question</strong> immédiate, en contexte.</li>
+    <li><strong>Re-test</strong> 2 à 3 questions plus tard dans la séance.</li>
+  </ol>
+
+  <h4>Feedback — quatre cas, jamais <em>ego-involving</em></h4>
+  <ul>
+    <li><strong>Correct et rapide</strong> → étoile dorée rayonnante, montée de boîte.</li>
+    <li><strong>Correct mais lent</strong> → « Bravo ! », étoile sans rayons, pas de montée de boîte.</li>
+    <li><strong>Presque</strong> (coquille lexicale, §15.5) → accepté, forme correcte montrée segmentée.</li>
+    <li><strong>Erreur de conjugaison</strong> → aucun son négatif ; la forme correcte s'affiche segmentée, le pronom et sa marque s'illuminent ; la question revient 2 à 3 questions plus tard ; la règle d'appui n'est réaffichée que pour les faits en boîte ≤ 2 (même seuil qu'en §3.4bis).</li>
+  </ul>
+  <p>Le récap suit strictement le §3.5 : message chaleureux constant, pas de score, pas de compte d'erreurs, pas de nombre de faits promus.</p>
+
+  <h3 id="conj-progression"><span class="num">15.7</span>Placement, progression, déblocages</h3>
+  <p><strong>Le test de placement est le premier geste de réassurance.</strong> À la première ouverture de la matière : jusqu'à 15 questions de difficulté croissante, bouton « Je ne sais pas », arrêt après 3 échecs consécutifs, <strong>inférence par dominance</strong> — qui produit correctement <em>vous chanterez</em> connaît la terminaison <code>-ez</code> et la règle du futur. Le mécanisme est celui du §3.1, transposé à un ordre de difficulté morphologique. Comme en maths, le placement ensemence les boîtes Leitner — et donc <strong>l'image mystère démarre déjà partiellement révélée</strong>. C'est le message d'ouverture de la matière, sans un mot : tu n'as pas tout oublié, regarde tout ce qui est déjà là.</p>
+  <p><strong>Ordre d'introduction : présent → imparfait → futur</strong>, l'ordre du programme. L'imparfait en deuxième position est aussi un choix de motivation : 7 faits seulement une fois la règle posée, soit une victoire rapide au moment exact où la nouveauté de la matière retombe.</p>
+  <p><strong>Rythme et déblocages.</strong> Deux faits nouveaux par séance au maximum, et seulement si les faits déjà introduits sont en boîte ≥ 2 — règle du §3.4bis, exception de phase finale comprise. Les temps se débloquent sur des <strong>badges permanents</strong> (§15.8), jamais sur l'état Leitner en direct : une mauvaise journée ne referme pas un temps. Le déblocage est signalé par une pastille discrète, sans modale, comme la règle ×11 (§2.3).</p>
+  <p><strong>Un seul bouton à l'intérieur de la matière.</strong> Le temps actif du jour intègre l'entretien entrelacé des temps précédents, plafonné à ~6 faits dus par séance comme en §11.3 ; le plancher de longueur (§6.2) s'applique à l'identique pendant les premiers jours où la matière est maigre. Il n'y a jamais deux séances de conjugaison à faire.</p>
+
+  <h3 id="conj-recompenses"><span class="num">15.8</span>Récompenses</h3>
+  <p><strong>Image mystère dédiée.</strong> La métaphore de progression reste l'image mystère, avec un <strong>pool d'images propre à la matière</strong> — le cas était explicitement anticipé en §5.1. 63 faits sur une grille 8×8 : la 64<sup>e</sup> case se révèle avec le dernier fait, clin d'œil de complétion. La finesse de chaque fragment suit la boîte du fait, un oubli refloute sa case : « pas d'échec, juste la brume qui revient » (§5.1). Les images des matières déjà terminées restent affichées, complètes, dans le sélecteur de l'écran « Mes images ».</p>
+  <p><strong>Badges.</strong> Un badge par verbe irrégulier maîtrisé (7), un badge par temps (3), plus les badges d'assiduité déjà existants. Chaque vignette est cliquable, avec condition et barre de progression (§4.2). Comme pour les niveaux 2 et 3, ces badges sont <strong>masqués tant que la matière n'est pas ouverte</strong>.</p>
+  <p><strong>Série partagée.</strong> Rappel du §15.1 : la flamme (§4.3) est commune à toutes les matières. Une séance quelconque la maintient ; les gels de série fonctionnent à l'identique. Rien — image, badges, série — n'est conditionné à la performance d'une séance ; tout l'est à la régularité et à la consolidation.</p>
+
+  <h3 id="conj-charge"><span class="num">15.9</span>Charge de lecture et de saisie</h3>
+  <p>Un exercice de conjugaison classique demande trois choses à la fois : <strong>lire</strong> un énoncé, <strong>tenir</strong> la consigne en mémoire, <strong>écrire</strong> vite. Pour un lecteur encore en cours d'automatisation — c'est-à-dire la plupart des enfants de cet âge — ces trois coûts s'additionnent et masquent la compétence qu'on prétend mesurer. Un enfant peut parfaitement connaître sa règle d'accord et échouer parce que le <em>canal</em> est saturé.</p>
+  <p>La matière est donc conçue pour <strong>maximiser le travail de rappel et minimiser tout le reste</strong>. Les adaptations, toutes déjà éprouvées ailleurs dans l'app, forment un système :</p>
+  <ul>
+    <li><strong>Canal audio systématique</strong> — toute consigne et toute question est lue à voix haute (§3.6). Un exercice ne doit jamais commencer par un déchiffrage.</li>
+    <li><strong>Un seul item à l'écran</strong>, gros corps, interlignage généreux, aucun encombrement visuel (§7.2).</li>
+    <li><strong>Phrases porteuses courtes et récurrentes</strong>, au vocabulaire connu : le coût de lecture d'une phrase tombe dès le deuxième passage.</li>
+    <li><strong>Segmentation radical / terminaison</strong> systématique à l'affichage des introductions et des corrections — deux unités courtes plutôt qu'un mot long.</li>
+    <li><strong>Saisie réduite au strict nécessaire</strong> (§15.5) et clavier à grosses touches.</li>
+    <li><strong>Jamais de pénalité sur l'orthographe lexicale</strong>, jamais de chrono visible, jamais de son négatif.</li>
+  </ul>
+  <p>Aucune de ces adaptations n'est réservée à un profil particulier : elles sont le comportement par défaut de la matière, pour tout le monde. C'est le même parti pris que la lecture à voix haute des questions de multiplication (§3.3) — utile aux lecteurs hésitants, inoffensive pour les autres.</p>
+
+  <h3 id="conj-vocal"><span class="num">15.10</span>Évolution prévue — le mode vocal épelé</h3>
+  <p>Quand on révise la conjugaison à l'oral entre humains, on épelle : « ils chantent — e, n, t ». Ce geste se transpose directement en mode d'entrée vocal, et il résout le problème d'homophonie qui disqualifie la réponse vocale directe (§15.5) : <strong>épeler est de la production orthographique authentique</strong> — la compétence testée est « quelles lettres », et c'est exactement ce qu'on produit en épelant.</p>
+  <p><strong>Déroulé envisagé.</strong> Pour un verbe régulier, l'enfant <em>dit la forme puis épelle la terminaison</em> (« chantent : e-n-t ») — énoncer la forme d'abord ajoute le lien phonie-graphie que le clavier n'a pas ; pour une forme irrégulière, il épelle la forme entière. Bénéfice décisif : <strong>le coût moteur disparaît</strong>, et le seuil de rapidité (§15.5) mesure enfin le rappel pur. Il se mesurerait alors au <em>début</em> de l'épellation, pas à sa fin.</p>
+  <p><strong>Le risque est technique, pas pédagogique.</strong> La reconnaissance de noms de lettres français isolés, en voix d'enfant, est fragile — « s » transcrit « esse », « n » transcrit « haine ». Le mécanisme de robustesse envisagé est l'<strong>appariement en espace phonémique</strong> : on ne compare jamais le transcript à la cible en orthographe, on projette les deux en phonèmes et on compare là, ce qui rend toute transcription homophone inoffensive. Le vocabulaire est fermé — une dizaine de noms de lettres couvre toutes les terminaisons — et le dictionnaire phonétique n'est chargé que si le mode est activé. S'y ajoutent un écho visuel des lettres reconnues (corrigeable au clavier), le principe qu'un raté de reconnaissance n'est <strong>jamais</strong> compté comme une erreur Leitner (re-demande neutre, comme en §3.6bis), et une bascule automatique au clavier après deux ratés sur la même question.</p>
+  <p>Le clavier reste le mode par défaut ; le mode vocal s'activerait comme l'entrée vocale des maths (§3.6bis) — un réglage, jamais imposé. Il n'est pas dans le périmètre de la v1 de la matière.</p>
+
+  <h3 id="conj-reserves"><span class="num">15.11</span>Réserve méthodologique honnête</h3>
+  <ul>
+    <li><strong>La répétition espacée est prouvée sur des faits déclaratifs</strong> — vocabulaire, arithmétique, et l'orthographe lexicale dès Rea &amp; Modigliani (1985). L'appliquer à des <em>applications de règles</em>, c'est-à-dire traiter les terminaisons régulières comme des faits Leitner, est une extrapolation. Pari raisonné, assumé comme tel — le même que pour la division (§11.7) et la division avec reste (§12.8).</li>
+    <li><strong>Le seuil de rapidité est bruité par la frappe.</strong> Sur un pavé numérique, le temps moteur est quasi constant ; sur un clavier alphabétique, il varie avec l'aisance de frappe et la longueur de la réponse. Le seuil linéaire en longueur (§15.5) est une hypothèse de départ, pas un résultat. Le mode vocal épelé (§15.10), qui mesure la latence de rappel sans coût moteur, serait probablement la mesure la plus propre — si la reconnaissance tient ses promesses.</li>
+    <li><strong>Les phrases porteuses fixes risquent un apprentissage contextuel</strong> : la forme rappelée <em>dans</em> sa phrase, et pas ailleurs. Mitigation : 2 à 3 phrases par fait, en rotation. Mais le transfert vers la rédaction libre n'est pas garanti par l'app, et il ne faut pas le promettre.</li>
+    <li><strong>Automatiser des formes n'est pas savoir conjuguer en situation.</strong> L'app vise l'automatisme du rappel, condition nécessaire mais pas suffisante de l'accord en production écrite réelle — Fayol et collègues montrent précisément que c'est <em>sous charge</em> que les accords lâchent. C'est un outil de révision et de confiance, pas un enseignement complet.</li>
+  </ul>
+</section>
+
 <section class="chapter" id="evolutions">
-  <h2><span class="num">15</span>Évolutions possibles (V2)</h2>
+  <h2><span class="num">16</span>Évolutions possibles (V2)</h2>
   <ul>
     <li>Mode défi : séance bonus optionnelle le week-end</li>
   </ul>
 </section>
 
 <section class="chapter" id="references">
-  <h2><span class="num">16</span>Références</h2>
+  <h2><span class="num">17</span>Références</h2>
   <ol class="references">
     <li>Axtell, P. K., McCallum, R. S., Bell, S. M., &amp; Poncy, B. (2009). Developing math automaticity using a classwide fluency building procedure for middle school students: A preliminary study. <em>Psychology in the Schools, 46</em>(6), 526–538.</li>
+    <li>Bowers, P. N., Kirby, J. R., &amp; Deacon, S. H. (2010). The effects of morphological instruction on literacy skills: A systematic review of the literature. <em>Review of Educational Research, 80</em>(2), 144–179. <a href="https://doi.org/10.3102/0034654309359353">doi:10.3102/0034654309359353</a></li>
     <li>Brendefur, J., Strother, S., Thiede, K., &amp; Appleton, S. (2015). Developing multiplication fact fluency. <em>Advances in Social Sciences Research Journal, 2</em>(8). <a href="https://doi.org/10.14738/assrj.28.1396">doi:10.14738/assrj.28.1396</a></li>
     <li>Burns, M. K., Kanive, R., &amp; DeGrande, M. (2012). Effect of a computer-delivered math fact intervention as a supplemental intervention for math in third and fourth grades. <em>Remedial and Special Education, 33</em>(3), 184–191. <a href="https://doi.org/10.1177/0741932510381652">doi:10.1177/0741932510381652</a></li>
     <li>Butler, R. (1988). Enhancing and undermining intrinsic motivation: The effects of task-involving and ego-involving evaluation on interest and performance. <em>British Journal of Educational Psychology, 58</em>(1), 1–14. <a href="https://doi.org/10.1111/j.2044-8279.1988.tb00874.x">doi:10.1111/j.2044-8279.1988.tb00874.x</a></li>
@@ -1119,16 +1292,21 @@ interface Badge {
     <li>Curtis, E. T., Huebner, M. G., &amp; LeFevre, J.-A. (2016). The relationship between problem size and fixation patterns during addition, subtraction, multiplication, and division. <em>Journal of Numerical Cognition, 2</em>(2), 91–115. <a href="https://doi.org/10.5964/jnc.v2i2.17">doi:10.5964/jnc.v2i2.17</a></li>
     <li>De Brauwer, J., &amp; Fias, W. (2009). A longitudinal study of children's performance on simple multiplication and division problems. <em>Developmental Psychology, 45</em>(5), 1480–1496. <a href="https://doi.org/10.1037/a0015465">doi:10.1037/a0015465</a></li>
     <li>Dotan, D., &amp; Zviran-Ginat, S. (2022). Elementary math in elementary school: The effect of interference on learning the multiplication table. <em>Cognitive Research: Principles and Implications, 7</em>, 101. <a href="https://doi.org/10.1186/s41235-022-00451-0">doi:10.1186/s41235-022-00451-0</a></li>
+    <li>Fayol, M., Hupet, M., &amp; Largy, P. (1999). The acquisition of subject-verb agreement in written French: From novices to experts' errors. <em>Reading and Writing, 11</em>(2), 153–174. <a href="https://doi.org/10.1023/A:1008038127807">doi:10.1023/A:1008038127807</a></li>
     <li>Hattie, J., &amp; Timperley, H. (2007). The power of feedback. <em>Review of Educational Research, 77</em>(1), 81–112. <a href="https://doi.org/10.3102/003465430298487">doi:10.3102/003465430298487</a></li>
     <li>Huber, S., Fischer, U., Moeller, K., &amp; Nuerk, H.-C. (2013). On the interrelation of multiplication and division in secondary school children. <em>Frontiers in Psychology, 4</em>, 740. <a href="https://doi.org/10.3389/fpsyg.2013.00740">doi:10.3389/fpsyg.2013.00740</a></li>
     <li>Kang, S. H. K. (2016). Spaced repetition promotes efficient and effective learning. <em>Policy Insights from the Behavioral and Brain Sciences, 3</em>(1), 12–19. <a href="https://doi.org/10.1177/2372732215624708">doi:10.1177/2372732215624708</a></li>
+    <li>Karpicke, J. D., &amp; Roediger, H. L. (2008). The critical importance of retrieval for learning. <em>Science, 319</em>(5865), 966–968. <a href="https://doi.org/10.1126/science.1152408">doi:10.1126/science.1152408</a></li>
     <li>LeFevre, J.-A., &amp; Morris, J. (1999). More on the relation between division and multiplication in simple arithmetic: Evidence for mediation of division solutions via multiplication. <em>Memory &amp; Cognition, 27</em>(5), 803–812. <a href="https://doi.org/10.3758/BF03198533">doi:10.3758/BF03198533</a></li>
     <li>Mauro, D. G., LeFevre, J.-A., &amp; Morris, J. (2003). Effects of problem format on division and multiplication performance: Division facts are mediated via multiplication-based representations. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition, 29</em>(2), 163–170. <a href="https://doi.org/10.1037/0278-7393.29.2.163">doi:10.1037/0278-7393.29.2.163</a></li>
+    <li>Pinker, S. (1999). <em>Words and Rules: The Ingredients of Language</em>. Basic Books.</li>
     <li>Rea, C. P., &amp; Modigliani, V. (1985). The effect of expanded versus massed practice on the retention of multiplication facts and spelling lists. <em>Human Learning, 4</em>, 11–18.</li>
     <li>Robinson, K. M., &amp; Dubé, A. K. (2009). Children's understanding of the inverse relation between multiplication and division. <em>Journal of Experimental Child Psychology</em>. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0885201408000889">ScienceDirect</a></li>
     <li>Robinson, K. M., &amp; LeFevre, J.-A. (2012). The inverse relation between multiplication and division: Concepts, procedures, and a cognitive framework. <em>Educational Studies in Mathematics, 79</em>(3), 409–428. <a href="https://doi.org/10.1007/s10649-011-9330-5">doi:10.1007/s10649-011-9330-5</a></li>
     <li>Rohrer, D., Dedrick, R. F., &amp; Burgess, K. (2014). The benefit of interleaved mathematics practice is not limited to superficially similar kinds of problems. <em>Psychonomic Bulletin &amp; Review, 21</em>(5), 1323–1330. <a href="https://doi.org/10.3758/s13423-014-0588-3">doi:10.3758/s13423-014-0588-3</a></li>
     <li>Rohrer, D., &amp; Taylor, K. (2007). The shuffling of mathematics problems improves learning. <em>Instructional Science, 35</em>, 481–498. <a href="https://doi.org/10.1007/s11251-007-9015-8">doi:10.1007/s11251-007-9015-8</a></li>
+    <li>Skinner, C. H., McLaughlin, T. F., &amp; Logan, P. (1997). Cover, copy, and compare: A self-managed academic intervention effective across skills, students, and settings. <em>Journal of Behavioral Education, 7</em>(3), 295–306. <a href="https://doi.org/10.1023/A:1022823522040">doi:10.1023/A:1022823522040</a></li>
+    <li>Totereau, C., Thevenin, M.-G., &amp; Fayol, M. (1997). The development of the understanding of number morphology in written French. In C. A. Perfetti, L. Rieben &amp; M. Fayol (dir.), <em>Learning to spell: Research, theory, and practice across languages</em> (p. 97–114). Lawrence Erlbaum.</li>
   </ol>
 </section>
 
@@ -1136,7 +1314,7 @@ interface Badge {
 </main>
 
 <footer class="page-footer">
-  <p>Document de spécifications — v1.4 — Juillet 2026</p>
+  <p>Document de spécifications — v1.5 — Août 2026</p>
   <p><a href="https://github.com/isc/tablito">Code source sur GitHub</a></p>
 </footer>
 
