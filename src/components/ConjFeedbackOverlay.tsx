@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ConjForm from './ConjForm';
+import ConjForm, { renderConjHintLine } from './ConjForm';
 import FeedbackStar from './FeedbackStar';
 import StrategyHintShell from './StrategyHintShell';
 import type { ConjQuestionView } from '../lib/conjugationFacts';
@@ -94,7 +94,7 @@ export default function ConjFeedbackOverlay({
         {strategy && (
           <StrategyHintShell
             title={strategy.title}
-            lines={[...strategy.lines]}
+            lines={strategy.lines.map(renderConjHintLine)}
             variant="feedback"
             eyebrow={t.hintEyebrow}
           />

@@ -9,7 +9,7 @@ import NumPad from '../components/NumPad';
 import LetterKeyboard from '../components/LetterKeyboard';
 import VoiceInput from '../components/VoiceInput';
 import DotGrid from '../components/DotGrid';
-import ConjForm from '../components/ConjForm';
+import ConjForm, { renderConjHintLine } from '../components/ConjForm';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import ConjFeedbackOverlay from '../components/ConjFeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
@@ -737,7 +737,7 @@ export default function SessionScreen({
               {conjIntroStrategy && (
                 <StrategyHintShell
                   title={conjIntroStrategy.title}
-                  lines={[...conjIntroStrategy.lines]}
+                  lines={conjIntroStrategy.lines.map(renderConjHintLine)}
                   variant="intro"
                 />
               )}

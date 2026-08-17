@@ -5,9 +5,15 @@ import {
   composeConjSession,
   conjCarrierIndex,
   conjQuestionConflict,
+  isConjAccepted,
+  judgeConjAnswer,
 } from '../lib/conjugationComposer';
 import { canConjCoexist } from '../lib/conjugationInterference';
-import { createInitialConjFacts } from '../lib/conjugationFacts';
+import {
+  createInitialConjFacts,
+  requireConjFactDef,
+  resolveConjQuestion,
+} from '../lib/conjugationFacts';
 import { seedConjFromPlacement } from '../lib/conjugationPlacement';
 import { conjFastThresholdMs } from '../types';
 
@@ -152,5 +158,34 @@ describe('ensemencement du placement (§6.1)', () => {
     const facts = createInitialConjFacts();
     seedConjFromPlacement(facts, [{ key: 'fut-vous', correct: true, timeMs: 1000 }], TODAY);
     expect(facts.find((f) => f.key === 'fut-je')!.box).toBe(3);
+  });
+});
+
+// Le cas « verons » (rapporté en preview, 17/08/2026) : la tolérance
+// phonétique du radical accepte les coquilles fidèles à la prononciation
+// (dédoublement, c/s, accents) mais jamais un autre radical — et un
+// « presque » est accepté sans blâme ni promotion (verrou côté écran :
+// conjSession.test.tsx, « presque »).
+describe('judgeConjAnswer — coquilles de radical sur « nous verrons »', () => {
+  const view = resolveConjQuestion(requireConjFactDef('fut-voir'), 1);
+
+  it('« verons » : radical irrégulier récupéré, doublement raté → presque, sans blâme', () => {
+    const j = judgeConjAnswer(view, 'verons');
+    expect(j.verdict).toBe('almost');
+    expect(isConjAccepted(j.verdict)).toBe(true);
+    expect(j.blamedKeys).toEqual([]);
+  });
+
+  it('« voirons » : radical construit sur l’infinitif → erreur de radical, blâme fut-voir', () => {
+    const j = judgeConjAnswer(view, 'voirons');
+    expect(j.verdict).toBe('stem');
+    expect(isConjAccepted(j.verdict)).toBe(false);
+    expect(j.blamedKeys).toEqual(['fut-voir']);
+  });
+
+  it('« verron » : terminaison ratée → blâme le fait de terminaison fut-nous', () => {
+    const j = judgeConjAnswer(view, 'verron');
+    expect(j.verdict).toBe('ending');
+    expect(j.blamedKeys).toEqual(['fut-nous']);
   });
 });

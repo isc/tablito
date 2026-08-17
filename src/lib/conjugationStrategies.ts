@@ -21,7 +21,12 @@ export type ConjStrategyKind =
 export interface ConjStrategy {
   kind: ConjStrategyKind;
   title: string;
-  /** Énoncé côté enfant : phrases courtes, une idée par ligne. */
+  /**
+   * Énoncé côté enfant : phrases courtes, une idée par ligne. Mini-balisage
+   * rendu par `renderConjHintLine` (ConjForm.tsx) : `*ons*` = terminaison dans
+   * la couleur des marques, `_chant_` = radical dans celle des radicaux — les
+   * mêmes couleurs que la forme segmentée affichée au-dessus de l'astuce.
+   */
   lines: readonly string[];
 }
 
@@ -38,11 +43,11 @@ export const PERSON_MARKS: ConjStrategy = {
   kind: 'person-marks',
   title: 'Chaque personne a sa marque',
   lines: [
-    'Avec tu, ça finit presque toujours par s : tu chantes, tu vas, tu diras.',
-    'Avec nous, ça finit par ons : nous chantons, nous allons, nous étions.',
-    'Avec vous, ça finit par ez : vous chantez, vous venez, vous verrez.',
-    'Avec ils et elles, ça finit par nt : ils chantent, ils jouaient, ils viendront.',
-    'Trois formes n’obéissent pas : vous êtes, vous faites, vous dites. Et une quatrième : nous sommes.',
+    'Avec tu, ça finit presque toujours par *s* : tu chante*s*, tu va*s*, tu dira*s*.',
+    'Avec nous, ça finit par *ons* : nous chant*ons*, nous all*ons*, nous éti*ons*.',
+    'Avec vous, ça finit par *ez* : vous chant*ez*, vous ven*ez*, vous verr*ez*.',
+    'Avec ils et elles, ça finit par *nt* : ils chante*nt*, ils jouaie*nt*, ils viendro*nt*.',
+    'Trois formes n’obéissent pas : vous *êtes*, vous *faites*, vous *dites*. Et une quatrième : nous *sommes*.',
   ],
 };
 
@@ -51,11 +56,11 @@ export const IMPARFAIT_RULE: ConjStrategy = {
   kind: 'imparfait-nous',
   title: 'L’imparfait se fabrique avec « nous »',
   lines: [
-    'Dis le verbe avec nous, au présent : nous chantons.',
-    'Enlève -ons : il reste chant.',
-    'Ajoute la terminaison : ais, ais, ait, ions, iez, aient.',
-    'Ça donne : je chantais, nous chantions, ils chantaient.',
-    'Ça marche pour tous les verbes… sauf être : j’étais, nous étions.',
+    'Dis le verbe avec nous, au présent : nous _chant_*ons*.',
+    'Enlève *-ons* : il reste _chant_.',
+    'Ajoute la terminaison : *ais*, *ais*, *ait*, *ions*, *iez*, *aient*.',
+    'Ça donne : je _chant_*ais*, nous _chant_*ions*, ils _chant_*aient*.',
+    'Ça marche pour tous les verbes… sauf être : j’_ét_*ais*, nous _ét_*ions*.',
   ],
 };
 
@@ -64,11 +69,11 @@ export const FUTUR_RULE: ConjStrategy = {
   kind: 'futur-infinitif',
   title: 'Le futur se fabrique avec l’infinitif',
   lines: [
-    'Prends le verbe en entier : chanter.',
-    'Ajoute la terminaison : ai, as, a, ons, ez, ont.',
-    'Ça donne : je chanterai, nous chanterons, ils chanteront.',
-    'Pour les verbes en -re comme dire, on enlève le e : je dirai.',
-    'Six verbes changent de début : être → ser, avoir → aur, aller → ir, faire → fer, venir → viendr, voir → verr.',
+    'Prends le verbe en entier : _chanter_.',
+    'Ajoute la terminaison : *ai*, *as*, *a*, *ons*, *ez*, *ont*.',
+    'Ça donne : je _chanter_*ai*, nous _chanter_*ons*, ils _chanter_*ont*.',
+    'Pour les verbes en -re comme dire, on enlève le e : je _dir_*ai*.',
+    'Six verbes changent de début : être → _ser_, avoir → _aur_, aller → _ir_, faire → _fer_, venir → _viendr_, voir → _verr_.',
   ],
 };
 
@@ -78,10 +83,10 @@ export const SON_DOUX_RULE: ConjStrategy = {
   title: 'Le piège du g et du c',
   lines: [
     'Devant a, o, u, le g et le c changent de son.',
-    'Pour garder le son doux, on écrit nous mangeons, avec un e.',
-    'Pareil à l’imparfait : je mangeais, ils mangeaient.',
-    'Mais devant i, pas besoin du e : nous mangions.',
-    'Avec un c, on met une cédille : nous lançons.',
+    'Pour garder le son doux, on écrit nous mang*eons*, avec un e.',
+    'Pareil à l’imparfait : je mang*eais*, ils mang*eaient*.',
+    'Mais devant i, pas besoin du e : nous mang*ions*.',
+    'Avec un c, on met une cédille : nous lan*çons*.',
   ],
 };
 

@@ -273,10 +273,15 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
     tapLetters('cerons');
     tapValidate();
 
-    const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
+    const [, judgement, fast] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement, boolean];
     expect(judgement.verdict).toBe('almost');
     expect(isConjAccepted(judgement.verdict)).toBe(true);
     expect(judgement.blamedKeys).toEqual([]);
+    // Accepté mais JAMAIS promu (§5.3) : seul un `correct` franc peut être
+    // « rapide » — la boîte ne monte que sur la forme exacte. Réponse tapée
+    // instantanément (faux timers) : sans le verrou de verdict, elle serait
+    // passée « rapide ».
+    expect(fast).toBe(false);
 
     // Accepté : pas de carte d'erreur, et la forme correcte segmentée.
     expect(document.querySelector('.feedback-overlay.incorrect')).toBeNull();

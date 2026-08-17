@@ -35,6 +35,10 @@
 .conj-form-stem {
   color: var(--conj-stem);
   font-weight: 600;
+  /* Élément positionné ⇒ peint AU-DESSUS des fonds des pastilles voisines :
+     sans ça, la pastille de la marque (plus tard dans le DOM, marge négative)
+     recouvre la descente du g de « mang·ions ». */
+  position: relative;
 }
 
 .conj-form-mark {
@@ -49,8 +53,11 @@
    quand elle s'allume. */
 .conj-form-subject.is-lit,
 .conj-form-mark.is-lit {
-  padding: 0.06em 0.16em;
-  margin: 0 -0.16em;
+  /* Le débord horizontal (padding compensé en marge, pour que la forme ne
+     bouge pas quand elle s'allume) reste sous la moitié d'une espace : deux
+     pastilles adjacentes (« je suis ») gardent ainsi un jour entre elles. */
+  padding: 0.06em 0.1em;
+  margin: 0 -0.1em;
   animation: conjLightUp 0.45s ease both;
 }
 
@@ -73,4 +80,18 @@
   .conj-form-mark.is-lit {
     animation: none;
   }
+}
+
+/* Terminaisons et radicaux mis en évidence DANS le texte des astuces (mini-
+   balisage de conjugationStrategies, rendu par renderConjHintLine) : mêmes
+   couleurs que la forme segmentée, pour que l'astuce et la forme se lisent
+   comme un seul système. */
+.conj-hint-mark {
+  color: var(--conj-mark);
+  font-weight: 700;
+}
+
+.conj-hint-stem {
+  color: var(--conj-stem);
+  font-weight: 600;
 }
