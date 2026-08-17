@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { MysteryTheme, BoxLevel } from '../types';
 import DotGrid from './DotGrid';
 import { useBoxLevelStrings, useMysteryGridStrings } from '../i18n/progress';
@@ -7,9 +7,14 @@ export interface MysteryCell {
   level: number; // 0 = non introduit, 1..5 = boîte Leitner
   introduced: boolean;
   ariaLabel: string;
-  detailHeading: string; // « 7 × 8 = 56 » / « 56 ÷ 7 = 8 »
-  gridA: number; // DotGrid de l'overlay (rangées)
-  gridB: number; // DotGrid de l'overlay (colonnes)
+  detailHeading: string; // « 7 × 8 = 56 » / « 56 ÷ 7 = 8 » / « nous chantons »
+  // Corps de l'overlay de détail. Les matières mathématiques laissent le défaut
+  // (la grille de points a×b) en fournissant gridA/gridB ; la conjugaison, où
+  // « 8 rangées de 6 points » ne veut rien dire, fournit son propre corps
+  // (la forme segmentée radical|terminaison) via `detailBody`.
+  gridA?: number;
+  gridB?: number;
+  detailBody?: ReactNode;
   box: BoxLevel;
 }
 
@@ -68,7 +73,10 @@ export default function MysteryGrid({ theme, cellFor }: MysteryGridProps) {
         <div className="mystery-detail-overlay" onClick={() => setSelected(null)}>
           <div className="mystery-detail-card" onClick={(e) => e.stopPropagation()}>
             <h3>{selected.detailHeading}</h3>
-            <DotGrid a={selected.gridA} b={selected.gridB} animated={false} size="small" />
+            {selected.detailBody ??
+              (selected.gridA !== undefined && selected.gridB !== undefined ? (
+                <DotGrid a={selected.gridA} b={selected.gridB} animated={false} size="small" />
+              ) : null)}
             <p className="mystery-detail-box">{boxLevel.label(selected.box)}</p>
             <button className="mystery-detail-close" onClick={() => setSelected(null)}>
               {t.close}

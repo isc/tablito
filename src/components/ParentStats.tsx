@@ -10,7 +10,7 @@
 
 import { memo, useMemo, useState } from 'react';
 import type { UserProfile } from '../types';
-import { isDivisionUnlocked, isRemainderUnlocked, activeLevel } from '../lib/badges';
+import { isConjVisible, isDivisionUnlocked, isRemainderUnlocked, activeLevel } from '../lib/badges';
 import { countMastered } from '../lib/leitner';
 import { getHardestFacts } from '../lib/hardestFacts';
 import { remainderZoneBounds } from '../lib/remainderFacts';
@@ -19,8 +19,9 @@ import { todayISO } from '../lib/utils';
 import ProgressGrid from './ProgressGrid';
 import DivisionProgressGrid from './DivisionProgressGrid';
 import RemainderProgressGrid from './RemainderProgressGrid';
+import ConjProgressGrid from './ConjProgressGrid';
 import EvolutionChart from './EvolutionChart';
-import { useGuideBase } from '../i18n/lang';
+import { useGuideBase, useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
 
 const HARD_FACTS_WINDOW = 10;
@@ -34,22 +35,39 @@ const EVOLUTION_WINDOW = 20;
 function ParentStats({ profile }: { profile: UserProfile }) {
   const t = useParentDashboardStrings();
   const guideBase = useGuideBase();
+  const { lang } = useLang();
 
   const divisionUnlocked = useMemo(() => isDivisionUnlocked(profile), [profile]);
   const remainderUnlocked = useMemo(() => isRemainderUnlocked(profile), [profile]);
+  // Matière conjugaison : ni un niveau ni un déblocage — visible dès qu'elle a
+  // été ouverte, et jamais en anglais (spec Verbito §9, matière fr-only).
+  const conjVisible = useMemo(() => isConjVisible(profile, lang), [profile, lang]);
   const divisionFacts = useMemo(() => profile.divisionFacts ?? [], [profile.divisionFacts]);
   const remainderFacts = useMemo(() => profile.remainderFacts ?? [], [profile.remainderFacts]);
+  const conjFacts = useMemo(() => profile.conjFacts ?? [], [profile.conjFacts]);
   // Onglet par défaut : le niveau actif — c'est l'activité d'apprentissage en
   // cours (les niveaux passés sont déjà en boîte 5 par hypothèse, et surtout
   // l'objet de l'attention du parent au quotidien).
-  const [gridView, setGridView] = useState<'mult' | 'div' | 'rem'>(() => activeLevel(profile));
-  const showRem = remainderUnlocked && gridView === 'rem';
-  const showDiv = divisionUnlocked && gridView === 'div';
+  const [gridView, setGridView] = useState<'mult' | 'div' | 'rem' | 'conj'>(() =>
+    activeLevel(profile),
+  );
+  const showConj = conjVisible && gridView === 'conj';
+  const showRem = !showConj && remainderUnlocked && gridView === 'rem';
+  const showDiv = !showConj && divisionUnlocked && gridView === 'div';
 
   // Descripteur de l'opération sélectionnée par le parent (× / ÷ / reste) —
   // un seul point de vérité pour toutes les sections pilotées par le
   // sélecteur (compteur de maîtrise, répartition par boîte, grille Leitner).
-  const activeView = showRem
+  const activeView = showConj
+    ? {
+        facts: conjFacts,
+        mastered: `${countMastered(conjFacts)}/${conjFacts.length}`,
+        masteredLabel: t.conjugationsMastered,
+        opPlural: t.opConjugationsPlural,
+        opSingular: t.opConjugation,
+        grid: <ConjProgressGrid facts={conjFacts} />,
+      }
+    : showRem
     ? {
         facts: remainderFacts,
         mastered: `${countMastered(remainderFacts)}/${remainderFacts.length}`,
@@ -77,10 +95,13 @@ function ParentStats({ profile }: { profile: UserProfile }) {
         };
 
   // Onglets du sélecteur — même pattern que « Mes images » (ProgressScreen).
-  const opTabs: Array<{ key: 'mult' | 'div' | 'rem'; label: string }> = [
+  const opTabs: Array<{ key: 'mult' | 'div' | 'rem' | 'conj'; label: string }> = [
     { key: 'mult', label: t.multiplications },
-    { key: 'div', label: t.divisions },
-    ...(remainderUnlocked ? [{ key: 'rem' as const, label: t.remainders }] : []),
+    ...(divisionUnlocked ? [{ key: 'div' as const, label: t.divisions }] : []),
+    ...(divisionUnlocked && remainderUnlocked
+      ? [{ key: 'rem' as const, label: t.remainders }]
+      : []),
+    ...(conjVisible ? [{ key: 'conj' as const, label: t.conjugations }] : []),
   ];
 
   // Histogramme de l'opération sélectionnée.
@@ -95,7 +116,10 @@ function ParentStats({ profile }: { profile: UserProfile }) {
 
   // Liste UNIFIÉE × + ÷ — indépendante du sélecteur (mélange les deux opérations
   // pour montrer où l'enfant bute en ce moment, cf. lib/hardestFacts).
-  const hardFacts = useMemo(() => getHardestFacts(profile, HARD_FACTS_WINDOW, 5), [profile]);
+  const hardFacts = useMemo(
+    () => getHardestFacts(profile, HARD_FACTS_WINDOW, 5, conjVisible),
+    [profile, conjVisible],
+  );
 
   const recentSessions = useMemo(
     () => [...profile.sessionHistory].reverse().slice(0, 10),
@@ -140,7 +164,9 @@ function ParentStats({ profile }: { profile: UserProfile }) {
           vivent plus bas sous le sélecteur (cf. carte de maîtrise). */}
       <div className="parent-section">
         <h3>{t.overview}</h3>
-        <div className={`parent-stats-grid${divisionUnlocked ? ' parent-stats-grid--three' : ''}`}>
+        {/* Trois cartes quand un sélecteur existe (le compteur de maîtrise vit
+            alors sous celui-ci), quatre sinon. */}
+        <div className={`parent-stats-grid${opTabs.length > 1 ? ' parent-stats-grid--three' : ''}`}>
           <div className="parent-stat-card">
             <div className="parent-stat-value">{profile.totalSessions}</div>
             <div className="parent-stat-label">{t.sessions}</div>
@@ -153,7 +179,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
             <div className="parent-stat-value">{profile.longestStreak}</div>
             <div className="parent-stat-label">{t.bestStreak}</div>
           </div>
-          {!divisionUnlocked && (
+          {opTabs.length <= 1 && (
             <div className="parent-stat-card">
               <div className="parent-stat-value">{multMastered}</div>
               <div className="parent-stat-label">{t.masteredFacts}</div>
@@ -167,7 +193,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
           « Mes images » côté enfant (.progress-tabs, CSS concaténé global).
           Visible uniquement après déblocage : avant, la division ne doit pas
           apparaître (specs §11.3). */}
-      {divisionUnlocked && (
+      {opTabs.length > 1 && (
         <>
           <div className="progress-tabs parent-op-tabs" role="tablist" aria-label={t.operation}>
             {opTabs.map(({ key, label }) => (
@@ -290,21 +316,31 @@ function ParentStats({ profile }: { profile: UserProfile }) {
                 <span
                   className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`}
                   aria-label={
-                    f.kind === 'rem'
-                      ? t.factRemainder
-                      : f.kind === 'div'
-                        ? t.factDivision
-                        : t.factMultiplication
+                    f.kind === 'conj'
+                      ? t.factConjugation
+                      : f.kind === 'rem'
+                        ? t.factRemainder
+                        : f.kind === 'div'
+                          ? t.factDivision
+                          : t.factMultiplication
                   }
                 >
-                  {f.kind === 'rem' ? t.remSymbol : f.kind === 'div' ? t.divSymbol : t.multSymbol}
+                  {f.kind === 'conj'
+                    ? t.conjSymbol
+                    : f.kind === 'rem'
+                      ? t.remSymbol
+                      : f.kind === 'div'
+                        ? t.divSymbol
+                        : t.multSymbol}
                 </span>
                 <span className="parent-hard-fact-name">
-                  {f.kind === 'rem'
-                    ? t.formatRemFact(...remainderZoneBounds(f), f.divisor)
-                    : f.kind === 'div'
-                      ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
-                      : t.formatMultFact(f.a, f.b, f.product)}
+                  {f.kind === 'conj'
+                    ? f.label
+                    : f.kind === 'rem'
+                      ? t.formatRemFact(...remainderZoneBounds(f), f.divisor)
+                      : f.kind === 'div'
+                        ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
+                        : t.formatMultFact(f.a, f.b, f.product)}
                 </span>
                 <span className="parent-hard-fact-errors">
                   {t.errors(f.errorCount)} | {t.boxLabel(f.box)}

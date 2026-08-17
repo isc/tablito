@@ -466,6 +466,13 @@
   background: var(--coral);
 }
 
+/* Matière conjugaison : pastille « Vb » — deux lettres, donc un cran plus
+   petit que les symboles d'opération, qui sont des glyphes uniques. */
+.parent-hard-fact-kind--conj {
+  background: var(--sage);
+  font-size: 12px;
+}
+
 /* === Suivi à distance === */
 
 /* Barre de fraîcheur du profil suivi, juste sous le sélecteur de source. */
