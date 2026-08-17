@@ -44,11 +44,13 @@ export const conjStrings = {
   voiceFallbackToKeyboard: 'On va plutôt écrire, c’est plus simple !',
   /** L'enfant a touché le clavier : c'est elle qui valide, plus le micro. */
   voiceTookOver: 'Corrige, puis valide',
-  /** Retour volontaire à la voix (l'enfant, ou le parent, garde la main). */
-  voiceRetry: 'Réessayer avec la voix',
-  voiceUseKeyboard: 'Utiliser le clavier',
+  /**
+   * Bascule clavier → épellation, propre à la matière : « micro » ne dirait pas
+   * ce qu'il y a à faire. Les libellés communs au vocal des maths (parler,
+   * écouter, réessayer avec la voix, utiliser le clavier, micro bloqué, besoin
+   * d'internet) viennent de i18n/voice.ts — le geste est le même partout.
+   */
   voiceUseMic: 'Épeler à voix haute',
-  voiceTapToSpeak: 'Appuie pour parler',
 
   // --- Feedback (spec §5.3) ---
   correctMessages: ['Super !', 'Bravo !', 'Génial !', 'Bien joué !', 'Parfait !'],

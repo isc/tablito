@@ -2,7 +2,6 @@ import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SessionScreen from '../screens/SessionScreen';
-import type { ConjFact, ConjSessionItem, BoxLevel } from '../types';
 import { isConjAccepted, type ConjJudgement } from '../lib/conjugationComposer';
 import { conjStrings as t } from '../i18n/conjugation';
 import {
@@ -12,35 +11,13 @@ import {
   text,
   typeLetters as tapLetters,
 } from './helpers/dom';
+import { conjItem } from './helpers/conjItems';
 
 // Tests DOM de la matière conjugaison (spec Verbito) : rendu d'une question,
 // mini-clavier à validation explicite, introduction en 5 étapes (§5.2) et les
 // quatre cas de feedback (§5.3). On monte le vrai <SessionScreen /> avec une
 // file de questions fabriquée à la main — l'écran est le point d'entrée de
 // toute l'UI de la matière (clavier, forme segmentée, overlays).
-
-function conjItem(
-  key: string,
-  carrierIndex: number,
-  opts: { box?: BoxLevel; isIntroduction?: boolean } = {},
-): ConjSessionItem {
-  const fact: ConjFact = {
-    key,
-    box: opts.box ?? 1,
-    lastSeen: '',
-    nextDue: '',
-    history: [],
-    introduced: !opts.isIntroduction,
-  };
-  return {
-    kind: 'conj',
-    fact,
-    carrierIndex,
-    isIntroduction: opts.isIntroduction ?? false,
-    isRetry: false,
-    isBonusReview: false,
-  };
-}
 
 // Compteur d'oscillateurs : `useSound` n'en crée QUE pour jouer un son. Zéro
 // oscillateur après une erreur = « aucun son négatif » (§5.3), vérifié à la

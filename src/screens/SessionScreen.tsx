@@ -237,8 +237,10 @@ export default function SessionScreen({
 
   // Mode vocal épelé de la conjugaison (§15.10) : même réglage que le vocal des
   // maths, donc même bascule et même persistance — le clavier reste le défaut.
-  // La matière étant francophone, aucune condition de langue à ajouter ici.
-  const conjVoiceMode = inputMode === 'voice' && STT_SUPPORTED;
+  // La matière étant francophone, aucune condition de langue à ajouter ici, et
+  // aucune condition de support : comme `VoiceInput` côté maths, c'est le
+  // composant qui retombe sur le clavier si le navigateur ne sait pas écouter.
+  const conjVoiceMode = inputMode === 'voice';
 
   const questionStartTime = useRef(0);
   /**
@@ -274,13 +276,6 @@ export default function SessionScreen({
         // générique d'erreur (le dividende varie, l'astuce parlée est fixe).
         keys.add('rem-rest');
         keys.add('strategy-rem');
-      }
-      // Relances du mode vocal épelé (§15.10) : elles arrivent juste après une
-      // réponse mal entendue, donc au pire moment pour un décodage à la volée —
-      // et une relance qui traîne, c'est un enfant qui attend sans savoir quoi.
-      if (item.kind === 'conj' && inputMode === 'voice') {
-        keys.add('conj-voice-again');
-        keys.add('conj-voice-spell');
       }
     }
     preload([...keys]);
@@ -457,7 +452,7 @@ export default function SessionScreen({
    * « presque » (accepté) de l'erreur de terminaison ou de radical.
    */
   const handleConjSubmit = useCallback(
-    (typed: string) => {
+    (typed: string, source: 'keypad' | 'voice' = 'keypad') => {
       if (!currentItem || currentItem.kind !== 'conj' || submittingRef.current) return;
       submittingRef.current = true;
       setNumpadDisabled(true);
@@ -466,17 +461,18 @@ export default function SessionScreen({
       const view = conjView(currentItem);
       const timeMs = Date.now() - questionStartTime.current;
       const judgement = judgeConjAnswer(view, typed);
-      // Au clavier, le seuil de rapidité absorbe le coût moteur de la frappe :
-      // base + coût par caractère (§4.5). En vocal épelé, ce coût n'existe plus
-      // et c'est la latence de rappel qui est mesurée (§15.10) — à défaut (une
-      // réponse finalement tapée après un raté de reconnaissance), le temps
-      // total fait foi. Seul un `correct` franc peut être « rapide » : un
-      // « presque » est accepté, pas promu.
-      const judgedMs =
-        inputMode === 'voice' && conjRecallMs.current !== null ? conjRecallMs.current : timeMs;
+      // Le seuil dépend de la surface qui a RÉELLEMENT produit la réponse, pas
+      // du réglage : après deux ratés de reconnaissance, l'enfant tape, et une
+      // réponse tapée mérite le seuil du clavier. Au clavier donc, base + coût
+      // par caractère, qui absorbe le coût moteur de la frappe (§4.5) ; en
+      // épellation, la latence de rappel et la base seule (§15.10). Seul un
+      // `correct` franc peut être « rapide » : un « presque » est accepté,
+      // pas promu.
+      const spoken = source === 'voice' && conjRecallMs.current !== null;
+      const judgedMs = spoken ? (conjRecallMs.current as number) : timeMs;
       const fast =
         judgement.verdict === 'correct'
-        && judgedMs < conjFastThresholdMs(view.expected, inputMode);
+        && judgedMs < conjFastThresholdMs(view.expected, source);
       const accepted = isConjAccepted(judgement.verdict);
 
       totalTimeMs.current += timeMs;
@@ -487,7 +483,7 @@ export default function SessionScreen({
 
       // `timeMs` (et non `judgedMs`) part dans l'historique : le temps réel de
       // la question reste vrai, c'est le SEUIL qui change de définition.
-      onConjAnswer(currentItem, judgement, fast, timeMs, inputMode);
+      onConjAnswer(currentItem, judgement, fast, timeMs, source);
 
       // Re-pose 2 à 3 questions plus tard : après une erreur, et après une
       // introduction (§5.2 étape 5 — le re-test différé).
@@ -498,7 +494,7 @@ export default function SessionScreen({
       setResults((prev) => [...prev, { correct: accepted }]);
       setConjFeedback({ view, judgement, fast, typed, box: currentItem.fact.box });
     },
-    [currentItem, currentIndex, onConjAnswer, playCorrect, stopSpeech, inputMode],
+    [currentItem, currentIndex, onConjAnswer, playCorrect, stopSpeech],
   );
 
   /**
@@ -636,7 +632,7 @@ export default function SessionScreen({
   const renderConjInput = (
     q: ConjQuestionView,
     token: string,
-    onSubmitTyped: (typed: string) => void,
+    onSubmitTyped: (typed: string, source?: 'keypad' | 'voice') => void,
   ) =>
     conjVoiceMode ? (
       <ConjVoiceInput

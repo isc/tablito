@@ -21,6 +21,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildEntriesFr, buildEntriesEn } from './generate-tts.mjs';
 import { conjFactDefs, resolveConjQuestion } from '../src/lib/conjugationFacts.ts';
+import { conjStrings } from '../src/i18n/conjugation.ts';
 
 const DEFS = conjFactDefs();
 
@@ -80,11 +81,13 @@ describe('entrées TTS de la conjugaison', () => {
     expect(leaking).toEqual([]);
   });
 
-  it('parle les deux relances du mode vocal épelé', () => {
+  it('parle les deux relances du mode vocal épelé, dans les mots de l’écran', () => {
     // Muettes, elles laisseraient un enfant qui épelle sans savoir qu'on ne
     // l'a pas entendu — en vocal, il n'a pas forcément les yeux sur l'écran.
-    expect(frByKey.get('conj-voice-again')).toMatch(/pas bien entendu/);
-    expect(frByKey.get('conj-voice-spell')).toMatch(/épelle/);
+    // Et un MP3 qui diverge du texte affiché est pire que pas de MP3 : les
+    // deux textes viennent donc du module de strings, ce test le vérifie.
+    expect(frByKey.get('conj-voice-spell')).toBe(conjStrings.voiceSpellNow);
+    expect(frByKey.get('conj-voice-again')).toContain(conjStrings.voiceNotHeard);
   });
 
   it("n'oublie aucun fait de l'inventaire", () => {

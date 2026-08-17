@@ -1,10 +1,5 @@
 import { isPhoneticallyClose, normalizeConjAnswer } from './conjugationFacts';
-import {
-  LETTER_NAMES,
-  MAX_NAME_WORDS,
-  SPELLING_FILLERS,
-  type LetterNameDef,
-} from './letterNames';
+import { LETTER_NAMES, SPELLING_FILLERS, type LetterNameDef } from './letterNames';
 import { phonemesOf, sameSound, type PhoneticDict } from './phoneticDict';
 
 // === Lire une épellation dans un transcript (spec §15.10) ===
@@ -79,19 +74,23 @@ export interface SpelledParseOptions {
 
 const LETTERS = new Set(LETTER_NAMES.map((d) => d.letter));
 
-function normalizeWord(word: string): string {
-  return word.toLowerCase().replace(/’/g, "'").trim();
-}
+// Normalisation des mots (casse, apostrophes, espaces) : celle de la matière,
+// `normalizeConjAnswer`, appliquée aussi bien à la table qu'aux transcripts —
+// deux normalisateurs dans un même module finiraient par diverger.
 
 const BY_NAME = new Map<string, string>();
 const BY_PHONEME = new Map<string, string>();
-const MULTI_NAMES: { words: string[]; letter: string }[] = [];
+/**
+ * Noms de lettres ET remplissages tenant en PLUSIEURS mots (« i grec »,
+ * « c'est tout »), indexés par la phrase normalisée : la valeur est la lettre,
+ * ou `null` pour un remplissage (reconnu, mais n'écrit rien).
+ */
+const MULTI_PHRASES = new Map<string, string | null>();
 
 function indexLetter(def: LetterNameDef): void {
   for (const name of def.names) {
-    const norm = normalizeWord(name);
-    const words = norm.split(' ');
-    if (words.length > 1) MULTI_NAMES.push({ words, letter: def.letter });
+    const norm = normalizeConjAnswer(name);
+    if (norm.includes(' ')) MULTI_PHRASES.set(norm, def.letter);
     else BY_NAME.set(norm, def.letter);
   }
   for (const phoneme of def.phonemes) BY_PHONEME.set(phoneme, def.letter);
@@ -99,12 +98,16 @@ function indexLetter(def: LetterNameDef): void {
 LETTER_NAMES.forEach(indexLetter);
 
 const FILLERS = new Set<string>();
-const MULTI_FILLERS: string[][] = [];
 for (const filler of SPELLING_FILLERS) {
-  const words = normalizeWord(filler).split(' ');
-  if (words.length > 1) MULTI_FILLERS.push(words);
-  else FILLERS.add(words[0]);
+  const norm = normalizeConjAnswer(filler);
+  if (norm.includes(' ')) MULTI_PHRASES.set(norm, null);
+  else FILLERS.add(norm);
 }
+
+/** Longueur du plus long nom composé — dérivée, jamais maintenue à la main. */
+const MAX_PHRASE_WORDS = Math.max(
+  ...[...MULTI_PHRASES.keys()].map((phrase) => phrase.split(' ').length),
+);
 
 // --- Découpage ---------------------------------------------------------------
 
@@ -119,11 +122,11 @@ interface Token {
  * Découpe sur tout ce qui n'est ni lettre ni apostrophe : « e.n.t », « e-n-t »
  * et « e, n, t » donnent tous trois mots, et « j'ai » reste entier.
  */
-export function tokenizeTranscript(transcript: string): Token[] {
+function tokenizeTranscript(transcript: string): Token[] {
   return transcript
     .split(/[^\p{L}'’]+/u)
     .filter(Boolean)
-    .map((raw) => ({ raw, norm: normalizeWord(raw) }));
+    .map((raw) => ({ raw, norm: normalizeConjAnswer(raw) }));
 }
 
 // --- Appariement ------------------------------------------------------------
@@ -142,7 +145,7 @@ function uppercaseRun(token: Token): string[] | null {
 
 /** La lettre nommée par ce mot, ou null. Étages 2, 3 et 4. */
 export function letterFromWord(word: string, dict?: PhoneticDict | null): string | null {
-  const norm = normalizeWord(word);
+  const norm = normalizeConjAnswer(word);
   if (norm.length === 1 && LETTERS.has(norm)) return norm;
   const named = BY_NAME.get(norm);
   if (named) return named;
@@ -164,27 +167,11 @@ export function matchesSpokenForm(
   expectedForm: string,
   dict?: PhoneticDict | null,
 ): boolean {
-  const norm = normalizeWord(word);
   if (!expectedForm) return false;
-  if (normalizeConjAnswer(norm) === normalizeConjAnswer(expectedForm)) return true;
+  const norm = normalizeConjAnswer(word);
+  if (norm === normalizeConjAnswer(expectedForm)) return true;
   if (sameSound(dict ?? null, norm, expectedForm)) return true;
   return isPhoneticallyClose(norm, expectedForm);
-}
-
-/** Un n-gramme du transcript apparie-t-il un nom composé ou un remplissage ? */
-function matchPhrase(
-  tokens: Token[],
-  start: number,
-  size: number,
-): { letter: string | null } | null {
-  const phrase = tokens
-    .slice(start, start + size)
-    .map((t) => t.norm)
-    .join(' ');
-  const named = MULTI_NAMES.find((m) => m.words.length === size && m.words.join(' ') === phrase);
-  if (named) return { letter: named.letter };
-  const filler = MULTI_FILLERS.find((f) => f.length === size && f.join(' ') === phrase);
-  return filler ? { letter: null } : null;
 }
 
 /**
@@ -204,10 +191,14 @@ export function parseSpelledLetters(
   while (i < tokens.length) {
     // 1. Noms composés et remplissages sur plusieurs mots, le plus long d'abord.
     let consumed = 0;
-    for (let size = Math.min(MAX_NAME_WORDS, tokens.length - i); size >= 2; size--) {
-      const phrase = matchPhrase(tokens, i, size);
-      if (!phrase) continue;
-      if (phrase.letter) letters.push(phrase.letter);
+    for (let size = Math.min(MAX_PHRASE_WORDS, tokens.length - i); size >= 2; size--) {
+      const phrase = tokens
+        .slice(i, i + size)
+        .map((t) => t.norm)
+        .join(' ');
+      if (!MULTI_PHRASES.has(phrase)) continue;
+      const letter = MULTI_PHRASES.get(phrase);
+      if (letter) letters.push(letter);
       consumed = size;
       break;
     }
@@ -254,4 +245,23 @@ export function parseSpelledLetters(
         : 'unheard';
 
   return { status, letters, answer: letters.join(''), saidForm };
+}
+
+/**
+ * La meilleure lecture parmi les hypothèses du recognizer (`maxAlternatives`) :
+ * une épellation exploitable d'abord, à défaut une forme dite, à défaut le
+ * constat d'échec. Les alternatives sont gratuites — le recognizer les fournit
+ * avec le résultat — et souvent meilleures que l'hypothèse principale sur des
+ * lettres isolées, où la principale part vers un vrai mot français.
+ */
+export function bestSpelledParse(
+  candidates: string[],
+  options: SpelledParseOptions,
+): SpelledParse {
+  const parses = candidates.map((c) => parseSpelledLetters(c, options));
+  return (
+    parses.find((p) => p.status === 'letters')
+    ?? parses.find((p) => p.status === 'form-only')
+    ?? parses[0]
+  );
 }

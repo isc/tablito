@@ -125,10 +125,9 @@ if (missingForms.length > 0) {
 // dans la table maison (à corriger), soit un nom composé que la source
 // n'indexe pas (« i grec » → /igʁɛk/, reconnu par son orthographe et non par
 // ses phonèmes — attendu). Signalé sans dramatiser, mais signalé.
+const backed = new Set(kept.flatMap(([, phonemes]) => phonemes))
 const unbacked = LETTER_NAMES.flatMap((def) =>
-  def.phonemes
-    .filter((p) => !kept.some(([, ps]) => ps.includes(p)))
-    .map((p) => `${def.letter}=/${p}/`),
+  def.phonemes.filter((p) => !backed.has(p)).map((p) => `${def.letter}=/${p}/`),
 )
 if (unbacked.length > 0) {
   console.log(`Note          : phonèmes sans appui dans la source — ${unbacked.join(' ')}`)

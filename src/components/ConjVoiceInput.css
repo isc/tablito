@@ -5,7 +5,12 @@
    promesse de la spec, « correction au clavier toujours possible » — donc le
    micro devient une barre compacte : l'icône, son halo d'écoute, et la
    consigne à côté. L'écho des lettres entendues, lui, n'a pas de composant :
-   c'est l'ardoise du clavier qui se remplit (cf. LetterKeyboard `value`). */
+   c'est l'ardoise du clavier qui se remplit (cf. LetterKeyboard `value`).
+
+   Deux classes viennent de VoiceInput.css et ne sont pas redéfinies ici :
+   `.voice-mic-ring` (le halo d'écoute) et `.voice-error` (micro bloqué, pas de
+   réseau). Le geste doit être le même d'une matière à l'autre, et tous les CSS
+   sont de toute façon concaténés en un seul fichier au build. */
 
 .conj-voice {
   display: flex;

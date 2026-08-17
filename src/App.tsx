@@ -524,7 +524,7 @@ export default function App({
    * geste qu'`handleWelcomeComplete` côté maths).
    */
   const handleConjPlacementComplete = useCallback(
-    (results: ConjPlacementResult[]) => {
+    async (results: ConjPlacementResult[]) => {
       if (!profile) return;
       const now = todayISO();
       // Le placement est la porte d'entrée de la matière : c'est ici que les
@@ -546,6 +546,12 @@ export default function App({
       if (items.length === 0) {
         setScreen('home');
         return;
+      }
+      // Le placement enchaîne DIRECTEMENT sur la première séance : en mode
+      // vocal, la permission micro se demande donc ici aussi, sinon la première
+      // question démarre pendant que l'utilisateur répond au prompt natif.
+      if (isVoiceMode()) {
+        await preflightMicPermission();
       }
       resetSessionTracking();
       setSessionItems(items);

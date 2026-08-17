@@ -309,10 +309,18 @@ async function buildEntriesFr() {
   // l'enfant a les yeux ailleurs que sur l'écran : une relance uniquement
   // affichée serait une relance muette. Elles ne dépendent d'aucun fait, d'où
   // ces clés statiques — le reste de la matière (astuces de
-  // conjugationStrategies.ts, messages de i18n/conjugation.ts) est affiché,
-  // jamais parlé.
-  entries.push({ key: 'conj-voice-again', text: "Je n'ai pas bien entendu. Tu peux répéter ?" });
-  entries.push({ key: 'conj-voice-spell', text: 'Maintenant, épelle !' });
+  // conjugationStrategies.ts, autres messages de i18n/conjugation.ts) est
+  // affiché, jamais parlé.
+  //
+  // Le texte est LU dans le module de strings, pas recopié : c'est la même
+  // exigence que pour les phrases porteuses ci-dessus. Une relance dont le MP3
+  // dit autre chose que ce que l'écran affiche est pire que pas de MP3.
+  const { conjStrings } = await importTs('src/i18n/conjugation.ts');
+  entries.push({
+    key: 'conj-voice-again',
+    text: `${conjStrings.voiceNotHeard}. Tu peux répéter ?`,
+  });
+  entries.push({ key: 'conj-voice-spell', text: conjStrings.voiceSpellNow });
 
   return entries;
 }

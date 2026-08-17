@@ -54,7 +54,9 @@ export const LETTER_NAMES: readonly LetterNameDef[] = [
   // perdre coûterait plus cher que d'accepter une hésitation de temps en temps.
   { letter: 'e', names: ['euh', 'heu', 'eu', 'eux'], phonemes: ['ø', 'ə'] },
   { letter: 'f', names: ['effe', 'ef', 'èf', 'aife'], phonemes: ['ɛf'] },
-  { letter: 'g', names: ['gé', 'ge', 'gè', 'j’ai', "j'ai", 'geai'], phonemes: ['ʒe'] },
+  // Les apostrophes sont normalisées (’ → ') avant comparaison : une seule
+  // graphie par nom suffit.
+  { letter: 'g', names: ['gé', 'ge', 'gè', "j'ai", 'geai'], phonemes: ['ʒe'] },
   { letter: 'h', names: ['hache', 'ache', 'hâche'], phonemes: ['aʃ'] },
   { letter: 'i', names: ['hi', 'ih'], phonemes: ['i'] },
   { letter: 'j', names: ['ji', 'gi', 'gis'], phonemes: ['ʒi'] },
@@ -103,9 +105,6 @@ export const LETTER_NAMES: readonly LetterNameDef[] = [
   },
 ];
 
-/** Les lettres du périmètre, dans l'ordre de la table. */
-export const SPELLABLE_LETTERS: readonly string[] = LETTER_NAMES.map((d) => d.letter);
-
 /**
  * Mots que l'enfant intercale sans épeler : ponctuation dictée et marqueurs de
  * fin. Volontairement court, et surtout : aucun de ces mots n'est un nom de
@@ -116,7 +115,6 @@ export const SPELLING_FILLERS: readonly string[] = [
   'virgule',
   'point',
   'tiret',
-  'trait d’union',
   "trait d'union",
   'espace',
   'alors',
@@ -127,11 +125,6 @@ export const SPELLING_FILLERS: readonly string[] = [
   'et voilà',
   'fini',
   "j'ai fini",
-  'j’ai fini',
   "c'est tout",
-  'c’est tout',
   'ok',
 ];
-
-/** Nombre maximal de mots d'un nom composé ou d'un remplissage (« e accent circonflexe »). */
-export const MAX_NAME_WORDS = 3;

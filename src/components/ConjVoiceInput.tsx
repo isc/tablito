@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import LetterKeyboard from './LetterKeyboard';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useInputMode } from '../hooks/useInputMode';
+import { useLatestRef } from '../hooks/useLatestRef';
+import { useTTS } from '../hooks/useTTS';
 import { isAndroid } from '../lib/install';
 import { voiceLog } from '../lib/voiceDebug';
 import { loadPhoneticDict, type PhoneticDict } from '../lib/phoneticDict';
-import { parseSpelledLetters, type SpelledParse } from '../lib/parseSpelledLetters';
+import { bestSpelledParse, parseSpelledLetters } from '../lib/parseSpelledLetters';
 import { conjStrings as t } from '../i18n/conjugation';
 import { useVoiceStrings } from '../i18n/voice';
 
@@ -49,6 +51,18 @@ const MAX_FAILS_BEFORE_KEYBOARD = 2;
 // couvre le final traînant, pas la réponse de l'enfant.
 const POST_TTS_GRACE_MS = 1200;
 
+/**
+ * Les deux relances parlées du mode, avec leurs clés de MP3 (§15.10). Elles
+ * vivent ici, chez le composant qui décide de les dire : l'écran de séance n'a
+ * qu'à jouer la clé qu'on lui passe. Leur texte, lui, vient de
+ * i18n/conjugation.ts (`voiceNotHeard`, `voiceSpellNow`) et
+ * scripts/generate-tts.mjs le lit là-bas — jamais deux rédactions.
+ */
+const NUDGE_KEYS = {
+  unheard: 'conj-voice-again',
+  spell: 'conj-voice-spell',
+} as const;
+
 interface ConjVoiceInputProps {
   /**
    * Forme verbale complète attendue (« chantent »). Sert à RECONNAÎTRE la forme
@@ -57,8 +71,14 @@ interface ConjVoiceInputProps {
    * orthographique se joue dans l'épellation.
    */
   expectedForm: string;
-  /** Réponse épelée (ou corrigée au clavier), à juger comme une saisie. */
-  onSubmit: (value: string) => void;
+  /**
+   * Réponse à juger, avec la surface qui l'a réellement produite : `'voice'`
+   * pour une épellation entendue, `'keypad'` dès que l'enfant a tapé (une
+   * correction, ou la bascule après deux ratés). L'appelant en a besoin — le
+   * seuil de rapidité et l'historique ne peuvent pas dire « vocal » d'une
+   * réponse tapée au clavier (§15.10).
+   */
+  onSubmit: (value: string, source: 'voice' | 'keypad') => void;
   /** Radical affiché en encre douce dans l'ardoise (« chant »). */
   prefix?: string;
   /** Seule la terminaison est demandée : la consigne dite diffère. */
@@ -74,28 +94,12 @@ interface ConjVoiceInputProps {
    * de séance s'en sert au lieu du temps jusqu'à la validation.
    */
   onSpeechStart?: () => void;
-  /** Relance parlée à jouer (l'écran de séance est le seul à posséder la TTS). */
-  onNudge?: (ttsKey: 'conj-voice-again' | 'conj-voice-spell') => void;
-}
-
-/**
- * La meilleure lecture parmi les hypothèses du recognizer (`maxAlternatives`) :
- * une épellation exploitable d'abord, à défaut une forme dite, à défaut le
- * constat d'échec. Les alternatives sont gratuites et souvent meilleures que
- * l'hypothèse principale sur des lettres isolées.
- */
-function bestParse(
-  candidates: string[],
-  expectedForm: string,
-  dict: PhoneticDict | null,
-  ignoreForm: boolean,
-): SpelledParse {
-  const parses = candidates.map((c) => parseSpelledLetters(c, { expectedForm, dict, ignoreForm }));
-  return (
-    parses.find((p) => p.status === 'letters')
-    ?? parses.find((p) => p.status === 'form-only')
-    ?? parses[0]
-  );
+  /**
+   * Joue une relance parlée. L'écran de séance est le seul à posséder l'instance
+   * de synthèse qui pilote `isSpeaking` (donc la politique micro) : il reçoit la
+   * clé, il la dit.
+   */
+  onNudge?: (ttsKey: string) => void;
 }
 
 export default function ConjVoiceInput({
@@ -123,6 +127,21 @@ export default function ConjVoiceInput({
   const [micOn, setMicOn] = useState(true);
   const [hint, setHint] = useState<'spell' | 'again' | 'spell-now'>('spell');
 
+  /**
+   * Remet la surface en position « je t'écoute » : ardoise vide, micro ouvert,
+   * consigne de départ. Trois moments l'utilisent — une nouvelle question, la
+   * réouverture du micro après l'avoir coupé, et le retour volontaire à la voix
+   * après la bascule clavier — et ils doivent repartir du même état, sinon un
+   * reste de la question précédente traîne dans l'ardoise.
+   */
+  function resumeVoice(): void {
+    setEcho('');
+    setKeyboardOnly(false);
+    setTookOver(false);
+    setMicOn(true);
+    setHint('spell');
+  }
+
   // Politique micro : identique au vocal des maths (cf. l'en-tête de
   // VoiceInput). Android = sessions mono-énoncé sans annulation d'écho, donc
   // micro fermé pendant la synthèse ; iOS = micro ouvert toute la séance.
@@ -131,8 +150,6 @@ export default function ConjVoiceInput({
   const dictRef = useRef<PhoneticDict | null>(null);
   /** Ratés de reconnaissance sur la question en cours (jamais des erreurs). */
   const failsRef = useRef(0);
-  const disabledRef = useRef(disabled);
-  const isSpeakingRef = useRef(isSpeaking);
   const lastSpeakEndRef = useRef(0);
   const submittedRef = useRef(false);
   const speechStartedRef = useRef(false);
@@ -140,16 +157,13 @@ export default function ConjVoiceInput({
   // ça, une forme d'une seule lettre (« il a » → « a ») tournerait en rond,
   // l'épellation étant alors indiscernable de la forme.
   const ignoreFormRef = useRef(false);
-  const expectedFormRef = useRef(expectedForm);
+  // Props lues dans les callbacks de reconnaissance, qui ne doivent pas être
+  // recréés à chaque render (cf. useLatestRef).
+  const disabledRef = useLatestRef(disabled);
+  const isSpeakingRef = useLatestRef(isSpeaking);
+  const expectedFormRef = useLatestRef(expectedForm);
 
   useEffect(() => {
-    disabledRef.current = disabled;
-  }, [disabled]);
-  useEffect(() => {
-    expectedFormRef.current = expectedForm;
-  }, [expectedForm]);
-  useEffect(() => {
-    isSpeakingRef.current = isSpeaking;
     if (!isSpeaking) lastSpeakEndRef.current = Date.now();
   }, [isSpeaking]);
 
@@ -167,6 +181,16 @@ export default function ConjVoiceInput({
     };
   }, []);
 
+  // Les MP3 des relances sont décodés dès l'entrée en mode vocal : elles se
+  // jouent juste après une réponse mal entendue, le pire moment pour un décodage
+  // à la volée — et une relance qui traîne, c'est un enfant qui attend sans
+  // savoir quoi faire. Le cache de buffers de `useTTS` est au niveau module,
+  // donc précharger d'ici sert la synthèse de l'écran de séance.
+  const { preload } = useTTS();
+  useEffect(() => {
+    preload(Object.values(NUDGE_KEYS));
+  }, [preload]);
+
   // Nouvelle question : tout repart de zéro. Le composant n'est PAS re-monté
   // d'une question à l'autre — un re-montage rouvrirait le micro, et iOS joue un
   // « ding » à chaque ouverture — donc c'est ce reset qui tient lieu de remise à
@@ -175,11 +199,7 @@ export default function ConjVoiceInput({
   const [prevToken, setPrevToken] = useState(questionToken);
   if (questionToken !== prevToken) {
     setPrevToken(questionToken);
-    setEcho('');
-    setKeyboardOnly(false);
-    setTookOver(false);
-    setMicOn(true);
-    setHint('spell');
+    resumeVoice();
   }
 
   // … et côté refs par un effet : une ref ne participe pas au rendu, donc elle
@@ -195,27 +215,29 @@ export default function ConjVoiceInput({
   /** Écho de la synthèse : tout ce qui arrive pendant, ou juste après, est suspect. */
   const isTTSEcho = useCallback(
     () => isSpeakingRef.current || Date.now() - lastSpeakEndRef.current < POST_TTS_GRACE_MS,
-    [],
+    [isSpeakingRef],
   );
 
-  const submit = useCallback(
+  const submitSpelled = useCallback(
     (answer: string) => {
       if (submittedRef.current || disabledRef.current) return;
       submittedRef.current = true;
-      onSubmit(answer);
+      onSubmit(answer, 'voice');
     },
-    [onSubmit],
+    [disabledRef, onSubmit],
   );
+
+  /** Réponse tapée : une correction, ou la bascule après deux ratés. */
+  const submitTyped = useCallback((answer: string) => onSubmit(answer, 'keypad'), [onSubmit]);
 
   const handleFinal = useCallback(
     (transcript: string, alternatives: string[]) => {
       if (disabledRef.current || tookOver) return;
-      const parse = bestParse(
-        [transcript, ...alternatives],
-        expectedFormRef.current,
-        dictRef.current,
-        ignoreFormRef.current,
-      );
+      const parse = bestSpelledParse([transcript, ...alternatives], {
+        expectedForm: expectedFormRef.current,
+        dict: dictRef.current,
+        ignoreForm: ignoreFormRef.current,
+      });
       if (isTTSEcho()) {
         voiceLog('conj:drop-echo', `${parse.status} ${parse.answer}`);
         return;
@@ -224,7 +246,7 @@ export default function ConjVoiceInput({
       if (parse.status === 'letters') {
         voiceLog('conj:spelled', parse.answer);
         setEcho(parse.answer);
-        submit(parse.answer);
+        submitSpelled(parse.answer);
         return;
       }
 
@@ -235,11 +257,11 @@ export default function ConjVoiceInput({
       voiceLog(formOnly ? 'conj:form-only' : 'conj:unheard');
       setEcho('');
       setHint(formOnly ? 'spell-now' : 'again');
-      onNudge?.(formOnly ? 'conj-voice-spell' : 'conj-voice-again');
+      onNudge?.(formOnly ? NUDGE_KEYS.spell : NUDGE_KEYS.unheard);
       failsRef.current += 1;
       if (failsRef.current >= MAX_FAILS_BEFORE_KEYBOARD) setKeyboardOnly(true);
     },
-    [isTTSEcho, onNudge, submit, tookOver],
+    [disabledRef, expectedFormRef, isTTSEcho, onNudge, submitSpelled, tookOver],
   );
 
   const handleInterim = useCallback(
@@ -259,7 +281,7 @@ export default function ConjVoiceInput({
       });
       if (parse.letters.length > 0) setEcho(parse.answer);
     },
-    [isTTSEcho, onSpeechStart, tookOver],
+    [disabledRef, expectedFormRef, isTTSEcho, onSpeechStart, tookOver],
   );
 
   const { start, abort, isListening, error, isSupported } = useSpeechRecognition({
@@ -289,7 +311,7 @@ export default function ConjVoiceInput({
 
   const keyboard = (
     <LetterKeyboard
-      onSubmit={onSubmit}
+      onSubmit={submitTyped}
       disabled={disabled}
       prefix={prefix}
       // Écho poussé dans l'ardoise, sauf si l'enfant a pris la main.
@@ -298,7 +320,8 @@ export default function ConjVoiceInput({
     />
   );
 
-  // Reconnaissance vocale absente du navigateur : le clavier, sans un mot.
+  // Reconnaissance vocale absente du navigateur : le clavier, sans un mot. Même
+  // repli que le vocal des maths, qui retombe sur le pavé numérique.
   if (!isSupported) return keyboard;
 
   const permissionBlocked = error === 'not-allowed' || error === 'service-not-allowed';
@@ -306,7 +329,7 @@ export default function ConjVoiceInput({
   const hintText = tookOver
     ? t.voiceTookOver
     : !micLive
-      ? t.voiceTapToSpeak
+      ? tv.tapToSpeak
       : hint === 'again'
         ? t.voiceNotHeard
         : hint === 'spell-now'
@@ -328,12 +351,8 @@ export default function ConjVoiceInput({
             className={`conj-voice-mic${micLive && isListening ? ' listening' : ''}`}
             onClick={() => {
               if (disabled) return;
-              if (micLive) {
-                setMicOn(false);
-              } else {
-                setTookOver(false);
-                setMicOn(true);
-              }
+              if (micLive) setMicOn(false);
+              else resumeVoice();
             }}
             aria-label={micLive ? tv.listening : tv.speak}
             aria-pressed={micLive}
@@ -359,14 +378,11 @@ export default function ConjVoiceInput({
           className="session-input-switch"
           onClick={() => {
             failsRef.current = 0;
-            setKeyboardOnly(false);
-            setTookOver(false);
-            setMicOn(true);
-            setHint('spell');
+            resumeVoice();
           }}
           disabled={disabled}
         >
-          {'🎤'} {t.voiceRetry}
+          {'🎤'} {tv.retryWithVoice}
         </button>
       ) : (
         <button
@@ -375,7 +391,7 @@ export default function ConjVoiceInput({
           onClick={() => setInputMode('keypad')}
           disabled={disabled}
         >
-          {'⌨️'} {t.voiceUseKeyboard}
+          {'⌨️'} {tv.useKeyboard}
         </button>
       )}
     </div>

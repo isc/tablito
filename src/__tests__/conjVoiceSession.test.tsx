@@ -1,14 +1,16 @@
-import { act, cleanup, fireEvent, render } from '@testing-library/preact';
+import { act, cleanup, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SessionScreen from '../screens/SessionScreen';
-import type { BoxLevel, ConjFact, ConjSessionItem } from '../types';
+import type { ConjSessionItem } from '../types';
 import { CONJ_FAST_BASE_MS } from '../types';
 import type { ConjJudgement } from '../lib/conjugationComposer';
 import { INPUT_MODE_STORAGE_KEY } from '../hooks/useInputMode';
 import { conjStrings as t } from '../i18n/conjugation';
+import { letterFromWord } from '../lib/parseSpelledLetters';
 import { FEEDBACK_DISMISS_MS } from '../components/FeedbackOverlay';
-import { advance, text, typeLetters } from './helpers/dom';
+import { advance, tapLetters, tapValidate, text, typeLetters } from './helpers/dom';
+import { conjItem } from './helpers/conjItems';
 
 // Mode vocal épelé de la conjugaison (specs §15.10), monté dans le vrai
 // <SessionScreen /> avec une reconnaissance vocale simulée — même dispositif que
@@ -73,29 +75,6 @@ function emit(transcript: string, isFinal: boolean, alternatives: string[] = [])
 
 const say = (transcript: string, alternatives?: string[]) => emit(transcript, true, alternatives);
 const saying = (transcript: string) => emit(transcript, false);
-
-function conjItem(
-  key: string,
-  carrierIndex: number,
-  opts: { box?: BoxLevel; isIntroduction?: boolean } = {},
-): ConjSessionItem {
-  const fact: ConjFact = {
-    key,
-    box: opts.box ?? 1,
-    lastSeen: '',
-    nextDue: '',
-    history: [],
-    introduced: !opts.isIntroduction,
-  };
-  return {
-    kind: 'conj',
-    fact,
-    carrierIndex,
-    isIntroduction: opts.isIntroduction ?? false,
-    isRetry: false,
-    isBonusReview: false,
-  };
-}
 
 function renderSession(
   questions: ConjSessionItem[],
@@ -318,10 +297,24 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
     expect(document.querySelector('.letterpad-container')).not.toBeNull();
     expect(onConjAnswer).not.toHaveBeenCalled();
 
-    // La réponse tapée, elle, est jugée.
-    typeLetters('ons');
-    fireEvent.click(document.querySelector<HTMLButtonElement>('.letterpad-btn-ok')!);
-    expect(onConjAnswer).toHaveBeenCalledTimes(1);
+    // La réponse tapée, elle, est jugée — et jugée comme une réponse TAPÉE :
+    // le seuil du clavier (base + coût par caractère) et le mode « keypad »
+    // dans l'historique. C'est la surface qui a produit la réponse qui compte,
+    // pas le réglage : sinon la bascule de secours pénaliserait l'enfant deux
+    // fois, avec un seuil de vocal sur une réponse au clavier.
+    advance(CONJ_FAST_BASE_MS + 2_000);
+    tapLetters('ons');
+    const [, judgement, fast, , inputMode] = onConjAnswer.mock.calls[0] as [
+      unknown,
+      ConjJudgement,
+      boolean,
+      number,
+      string,
+    ];
+    expect(judgement.verdict).toBe('correct');
+    expect(inputMode).toBe('keypad');
+    // 5 s de base + 1 s par caractère de « ons » = 8 s : la frappe reste rapide.
+    expect(fast).toBe(true);
   });
 
   it('l’écho de la synthèse est jeté, et ne compte pas comme un raté', async () => {
@@ -360,9 +353,17 @@ describe('Correction au clavier (specs §15.10)', () => {
     say('o haine esse');
     expect(onConjAnswer).not.toHaveBeenCalled();
 
-    fireEvent.click(document.querySelector<HTMLButtonElement>('.letterpad-btn-ok')!);
-    const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
+    tapValidate();
+    const [, judgement, , , inputMode] = onConjAnswer.mock.calls[0] as [
+      unknown,
+      ConjJudgement,
+      boolean,
+      number,
+      string,
+    ];
     expect(judgement.verdict).toBe('correct');
+    // Corrigée à la main : c'est une réponse au clavier, pas une épellation.
+    expect(inputMode).toBe('keypad');
   });
 
   it('le clavier reste sous la main pendant l’écoute', async () => {
@@ -370,6 +371,18 @@ describe('Correction au clavier (specs §15.10)', () => {
     await settle();
     expect(document.querySelector('.letterpad-container')).not.toBeNull();
     expect(document.querySelector('.conj-voice-mic')).not.toBeNull();
+  });
+
+  it('chaque touche du clavier a un nom de lettre connu', () => {
+    // Le clavier et la table des noms de lettres décrivent le même périmètre,
+    // dans deux fichiers. Une touche sans nom serait une lettre impossible à
+    // épeler : l'enfant la dirait, on ne l'entendrait jamais.
+    renderSession([conjItem('pres-g1-nous', 1)]);
+    const keys = [...document.querySelectorAll('.letterpad-btn[aria-label]')]
+      .map((b) => b.getAttribute('aria-label') ?? '')
+      .filter((label) => [...label].length === 1);
+    expect(keys.length).toBeGreaterThan(20);
+    expect(keys.filter((k) => letterFromWord(k) === null)).toEqual([]);
   });
 });
 
