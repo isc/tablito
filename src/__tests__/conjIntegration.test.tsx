@@ -5,7 +5,7 @@ import App from '../App';
 import ParentStats from '../components/ParentStats';
 // Précharge les chunks lazy touchés par ces parcours pour qu'ils se résolvent
 // dans le test (même pratique que divisionJourney).
-import '../screens/ConjPlacementScreen';
+import ConjPlacementScreen from '../screens/ConjPlacementScreen';
 import '../screens/ProgressScreen';
 import '../screens/BadgesScreen';
 import { LangProvider } from '../i18n/LangProvider';
@@ -297,6 +297,25 @@ describe('Parcours : première ouverture → placement → première séance (sp
     expect(loadProfile()!.hasDoneConjPlacement).toBe(true);
   });
 
+  it('le placement juge comme la séance : la forme entière tapée reste juste', () => {
+    // Sonde 1 : « En ce moment, nous chant____ ». L'enfant qui tape la forme
+    // entière a compris la question — c'est le malentendu de consigne que
+    // `judgeConjAnswer` excuse explicitement en séance (§4.5). Le placement ne
+    // peut pas être plus sévère que le jeu : chaque faux échec rapproche de
+    // l'arrêt à 3 échecs, sur le premier geste de réassurance de la matière.
+    render(
+      <LangProvider>
+        <ConjPlacementScreen onComplete={() => {}} />
+      </LangProvider>,
+    );
+    fireEvent.click(button(/On y va/)!);
+
+    tapLetters('chantons');
+
+    expect(document.querySelector('.welcome-test-feedback.correct')).not.toBeNull();
+    expect(document.querySelector('.welcome-test-feedback.incorrect')).toBeNull();
+  });
+
   it('un placement réussi ensemence les boîtes — l’image démarre déjà révélée', () => {
     const p = createNewProfile('Zoé');
     const before = p.conjFacts!.filter((f) => f.introduced).length;
@@ -384,6 +403,38 @@ describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => 
 
     expect(text()).not.toMatch(/Conjugation|Verb forms mastered/);
     expect(document.querySelector('.progress-grid--plain')).toBeNull();
+  });
+});
+
+describe('Leitner de la matière (spec §4.5, §5.3)', () => {
+  it('un « presque » tapé vite est accepté, mais ne fait PAS monter la boîte', () => {
+    // « Demain, je serai en vacances. » tapé « cerai » : coquille lexicale,
+    // acceptée sans commentaire — et l'écran affiche une étoile SANS rayons.
+    // La boîte doit suivre l'écran : promouvoir ici, ce serait consolider une
+    // forme que l'enfant n'a pas su écrire.
+    const p = conjReadyProfile();
+    p.conjFacts = p.conjFacts!.map((f): ConjFact => {
+      if (f.key === 'fut-etre') {
+        return { ...f, introduced: true, box: 1, lastSeen: '2026-01-01', nextDue: '2026-01-01' };
+      }
+      // Les autres faits introduits ne sont plus dus : la séance s'ouvre à coup
+      // sûr sur « fut-etre ».
+      return f.introduced ? { ...f, nextDue: '2099-12-31' } : f;
+    });
+    saveProfile(p);
+
+    renderApp();
+    fireEvent.click(button(/Conjugaison/)!);
+
+    expect(expectedOf('fut-etre')).toBe('serai');
+    tapLetters('cerai');
+
+    const fact = loadProfile()!.conjFacts!.find((f) => f.key === 'fut-etre')!;
+    // `seen` prouve que la réponse a bien été enregistrée (sans quoi la boîte
+    // inchangée ne voudrait rien dire) : le fait a été posé une fois.
+    expect(fact.seen).toBe(1);
+    expect(fact.box).toBe(1);
+    expect(document.querySelector('.feedback-star-rays')).toBeNull();
   });
 });
 

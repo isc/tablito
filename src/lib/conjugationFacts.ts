@@ -643,10 +643,25 @@ export interface ConjQuestionView {
   lead: string;
   /** Fin de phrase : « des crêpes. » (chaîne vide si la phrase s'arrête là). */
   tail: string;
-  /** Phrase complète, forme incluse — énoncé TTS et rappel de correction. */
+  /**
+   * ÉNONCÉ lu quand la question est posée : « Demain, nous… chanter » (§4.1).
+   * L'infinitif, jamais la forme conjuguée — un MP3 qui dit « nous serons »
+   * dicterait la réponse au moment même où on la demande, et le Leitner
+   * promouvrait un rappel jamais testé sur tous les irréguliers non homophones.
+   */
+  prompt: string;
+  /** Clé stable du MP3 de l'énoncé. */
+  promptTtsKey: string;
+  /** Phrase complète, forme incluse — affichée à l'intro et à la correction. */
   sentence: string;
-  /** Clé stable du MP3 de la phrase porteuse. */
-  ttsKey: string;
+  /**
+   * Clé du MP3 de la phrase COMPLÈTE, lue à l'étape 1 de l'introduction (§5.2 :
+   * « la phrase en contexte, affichée et lue à voix haute, forme complète
+   * visible »). `null` hors de la 1ʳᵉ porteuse : une introduction utilise
+   * toujours la porteuse 0 (cf. composeConjSession), donc les autres n'ont pas
+   * de MP3 de forme complète — 63 fichiers au lieu de 151.
+   */
+  sentenceTtsKey: string | null;
 }
 
 /**
@@ -700,25 +715,40 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
     endingOnly,
     lead,
     tail,
+    // Le pronom SANS élision : rien ne le suit à l'oral, « j'… avoir » ne se dit
+    // pas. C'est l'énoncé de la spec, au mot près (« Demain, nous… chanter »).
+    prompt: `${carrier.before} ${person}… ${verb}`,
+    promptTtsKey: conjTtsKey(def.key, index),
     sentence: `${lead}${form}${tail}`,
-    ttsKey: conjTtsKey(def.key, index),
+    sentenceTtsKey: index === 0 ? conjSentenceTtsKey(def.key) : null,
   };
 }
 
 /**
- * Clé du MP3 d'une phrase porteuse. Stable : elle ne dépend que de la clé du
- * fait et du rang de la porteuse — à ajouter dans scripts/generate-tts.mjs.
+ * Clé du MP3 de l'ÉNONCÉ d'une porteuse. Stable : elle ne dépend que de la clé
+ * du fait et du rang de la porteuse — générée par scripts/generate-tts.mjs.
  */
 export function conjTtsKey(factKey: string, carrierIndex: number): string {
   return `conj-${factKey}-${carrierIndex}`;
 }
 
-/** Toutes les phrases porteuses de l'inventaire, pour la génération TTS. */
+/** Clé du MP3 de la phrase COMPLÈTE (introduction), porteuse 0 uniquement. */
+export function conjSentenceTtsKey(factKey: string): string {
+  return `conj-${factKey}-0-p`;
+}
+
+/**
+ * Toutes les entrées TTS de l'inventaire, pour la génération des MP3 :
+ * l'énoncé de chaque porteuse (151), plus la phrase complète de la porteuse 0
+ * de chaque fait (63), lue à l'étape 1 de l'introduction.
+ */
 export function allConjCarrierSentences(): { key: string; text: string }[] {
   return CONJ_FACT_DEFS.flatMap((def) =>
-    def.carriers.map((_, i) => {
+    def.carriers.flatMap((_, i) => {
       const view = resolveConjQuestion(def, i);
-      return { key: view.ttsKey, text: view.sentence };
+      const entries = [{ key: view.promptTtsKey, text: view.prompt }];
+      if (view.sentenceTtsKey) entries.push({ key: view.sentenceTtsKey, text: view.sentence });
+      return entries;
     }),
   );
 }

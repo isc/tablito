@@ -7,12 +7,8 @@ import {
   CONJ_PLACEMENT_PROBES,
   type ConjPlacementResult,
 } from '../lib/conjugationPlacement';
-import {
-  conjSubject,
-  normalizeConjAnswer,
-  requireConjFactDef,
-  resolveConjQuestion,
-} from '../lib/conjugationFacts';
+import { conjSubject, requireConjFactDef, resolveConjQuestion } from '../lib/conjugationFacts';
+import { judgeConjAnswer } from '../lib/conjugationComposer';
 import { useTTS } from '../hooks/useTTS';
 import { conjStrings as t } from '../i18n/conjugation';
 
@@ -54,9 +50,9 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
   // jamais commencer par un déchiffrage » (§8).
   useEffect(() => {
     if (step !== 'test') return;
-    speak(view.ttsKey);
+    speak(view.promptTtsKey);
     startedAt.current = Date.now();
-  }, [step, index, view.ttsKey, speak]);
+  }, [step, index, view.promptTtsKey, speak]);
 
   const record = useCallback(
     (correct: boolean) => {
@@ -89,11 +85,16 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
 
   const handleSubmit = useCallback(
     (typed: string) => {
-      // Même normalisation qu'en séance (accents et casse indifférents) ; le
-      // placement ne diagnostique qu'un plancher, pas une orthographe fine.
-      record(normalizeConjAnswer(typed) === normalizeConjAnswer(view.expected));
+      // EXACTEMENT le juge de la séance (§4.5), pas une égalité de chaînes : le
+      // placement serait sinon plus sévère que le jeu lui-même — « etais » sans
+      // accent refusé ici et accepté là, la forme entière tapée quand seule la
+      // terminaison est demandée comptée fausse. Or un échec de plus, c'est un
+      // pas de plus vers l'arrêt à 3 échecs consécutifs, sur le premier geste
+      // de réassurance de la matière (§6.1) — et on ne pénalise jamais
+      // l'orthographe lexicale (§8).
+      record(judgeConjAnswer(view, typed).accepted);
     },
-    [record, view.expected],
+    [record, view],
   );
 
   if (step === 'intro') {

@@ -40,25 +40,46 @@ describe('entrées TTS de la conjugaison', () => {
     // Garde-fou du mécanisme lui-même : si l'import esbuild échouait, `asked`
     // serait plein et la liste française vide de `conj-*`.
     expect(asked.length).toBeGreaterThan(100);
-    expect(fr.filter((e) => e.key.startsWith('conj-')).length).toBe(asked.length);
+    // Un énoncé par porteuse, plus une phrase complète par fait (l'intro).
+    expect(fr.filter((e) => e.key.startsWith('conj-')).length).toBe(
+      asked.length + CONJ_FACT_DEFS.length,
+    );
   });
 
-  it('couvre toutes les phrases porteuses de tous les faits', () => {
-    const missing = asked.filter((v) => !frByKey.has(v.ttsKey)).map((v) => v.ttsKey);
+  it('couvre l’énoncé de toutes les porteuses, et la phrase complète de l’intro', () => {
+    const missing = asked
+      .flatMap((v) => [v.promptTtsKey, v.sentenceTtsKey])
+      .filter((k) => k !== null && !frByKey.has(k));
     expect(missing).toEqual([]);
+    // La phrase complète n'existe que pour la porteuse 0 : c'est la seule
+    // qu'une introduction utilise (cf. composeConjSession).
+    expect(asked.filter((v) => v.sentenceTtsKey).length).toBe(CONJ_FACT_DEFS.length);
   });
 
-  it('fait dire au MP3 exactement la phrase affichée', () => {
-    // Un MP3 qui diverge de l'écran est pire que pas de MP3 du tout.
+  it('fait dire au MP3 exactement ce que l’écran demande', () => {
+    // Un MP3 qui diverge de l'écran est pire que pas de MP3 du tout — et
+    // l'énoncé de la question ne doit JAMAIS contenir la forme conjuguée,
+    // sinon il dicte la réponse au moment où on la demande.
     const diverging = asked
-      .filter((v) => frByKey.get(v.ttsKey) !== v.sentence)
-      .map((v) => v.ttsKey);
+      .filter((v) => frByKey.get(v.promptTtsKey) !== v.prompt)
+      .map((v) => v.promptTtsKey);
     expect(diverging).toEqual([]);
+
+    const divergingIntro = asked
+      .filter((v) => v.sentenceTtsKey && frByKey.get(v.sentenceTtsKey) !== v.sentence)
+      .map((v) => v.sentenceTtsKey);
+    expect(divergingIntro).toEqual([]);
+
+    // L'énoncé s'arrête à l'infinitif, jamais sur la forme conjuguée.
+    const leaking = asked
+      .filter((v) => !v.prompt.endsWith(`… ${v.verb}`))
+      .map((v) => v.promptTtsKey);
+    expect(leaking).toEqual([]);
   });
 
   it("n'oublie aucun fait de l'inventaire", () => {
     const covered = new Set(
-      fr.filter((e) => e.key.startsWith('conj-')).map((e) => e.key.replace(/-\d+$/, '')),
+      fr.filter((e) => e.key.startsWith('conj-')).map((e) => e.key.replace(/-\d+(-p)?$/, '')),
     );
     const uncovered = CONJ_FACT_DEFS.map((d) => `conj-${d.key}`).filter((k) => !covered.has(k));
     expect(uncovered).toEqual([]);

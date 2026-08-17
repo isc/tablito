@@ -158,17 +158,22 @@ function conjView(item: ConjSessionItem): ConjQuestionView {
 }
 
 // Clé TTS de l'énoncé d'une question (pré-générée par scripts/generate-tts.mjs).
-// En conjugaison, l'énoncé EST la phrase porteuse : même clé à la question, à
-// l'introduction et à la réécoute.
+// En conjugaison, l'énoncé s'arrête à l'infinitif (« Demain, nous… chanter »,
+// §4.1) : lire la phrase entière dicterait la réponse au moment où on la
+// demande, et les formes irrégulières n'auraient plus qu'à être transcrites.
 function questionKey(item: AnySessionItem): string {
-  return item.kind === 'conj' ? conjView(item).ttsKey : view(item).qKey;
+  return item.kind === 'conj' ? conjView(item).promptTtsKey : view(item).qKey;
 }
 
 // Clé TTS de l'écran d'intro d'un item.
 function introKey(item: AnySessionItem): string {
-  // §5.2 étape 1 : « la phrase en contexte, affichée et lue à voix haute ».
-  // C'est la porteuse elle-même — pas un énoncé d'intro distinct comme en maths.
-  if (item.kind === 'conj') return conjView(item).ttsKey;
+  // §5.2 étape 1 : « la phrase en contexte, affichée et lue à voix haute,
+  // forme complète visible ». C'est le SEUL moment où l'audio donne la forme —
+  // ici on montre, on ne teste pas encore.
+  if (item.kind === 'conj') {
+    const cv = conjView(item);
+    return cv.sentenceTtsKey ?? cv.promptTtsKey;
+  }
   if (item.kind === 'rem') return `intror-${item.fact.divisor}-${item.fact.quotient}`;
   if (item.kind === 'div') return `introd-${item.fact.dividend}-${item.fact.divisor}`;
   return `intro-${item.fact.a}-${item.fact.b}`;
@@ -792,7 +797,7 @@ export default function SessionScreen({
             <button
               type="button"
               className="conj-replay-btn"
-              onClick={() => speak(cv.ttsKey)}
+              onClick={() => speak(cv.promptTtsKey)}
               aria-label={tc.replay}
             >
               {'🔊'} {tc.replay}

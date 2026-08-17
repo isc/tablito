@@ -151,13 +151,21 @@ export function conjIntroRank(def: ConjFactDef): number {
 // --- Composition ------------------------------------------------------------
 
 /**
- * Rang de la phrase porteuse à utiliser : rotation sur l'historique du fait,
- * pour que les 2-3 phrases tournent (§10, mitigation de l'apprentissage
- * contextuel) sans jamais dépendre du hasard — le MP3 pré-généré doit coller
- * à la phrase affichée, et un test doit pouvoir prédire laquelle.
+ * Rang de la phrase porteuse à utiliser : rotation sur le nombre de fois où le
+ * fait a été POSÉ, pour que les 2-3 phrases tournent (§10, mitigation de
+ * l'apprentissage contextuel) sans jamais dépendre du hasard — le MP3
+ * pré-généré doit coller à la phrase affichée, et un test doit pouvoir prédire
+ * laquelle.
+ *
+ * `seen` plutôt que `history.length` : `processAnswer` tronque l'historique à
+ * 30 tentatives, et 30 % 2 = 30 % 3 = 0 — un fait fragile entretenu longtemps
+ * serait resté collé à sa première porteuse, exactement ce que la rotation
+ * doit éviter. Repli sur l'historique pour les profils antérieurs au compteur.
  */
-export function conjCarrierIndex(fact: ConjFact, def: ConjFactDef): number {
-  return fact.history.length % def.carriers.length;
+export function conjCarrierIndex(fact: ConjFact): number {
+  const def = conjFactDef(fact.key);
+  if (!def) return 0;
+  return (fact.seen ?? fact.history.length) % def.carriers.length;
 }
 
 function makeQuestion(
@@ -194,8 +202,11 @@ export function conjQuestionConflict(a: ConjSessionQuestion, b: ConjSessionQuest
   return !canConjBeAdjacent(a.fact, b.fact);
 }
 
-function interleave(questions: ConjSessionQuestion[]): ConjSessionQuestion[] {
-  return interleaveGreedy(questions, conjQuestionConflict);
+function interleave(
+  questions: ConjSessionQuestion[],
+  after?: ConjSessionQuestion,
+): ConjSessionQuestion[] {
+  return interleaveGreedy(questions, conjQuestionConflict, after);
 }
 
 /**
@@ -270,32 +281,47 @@ export function composeConjSession(profile: UserProfile, now: string): ConjSessi
     if (isMaintenance) maintenance++;
   }
 
-  const reviewQuestions = selected.map((fact) =>
-    makeQuestion(fact, conjCarrierIndex(fact, conjFactDef(fact.key) as ConjFactDef)),
-  );
-  // Intro : toujours la 1ʳᵉ porteuse (déterministe — l'écran d'introduction et
-  // son MP3 sont pré-générés, comme `introRemainder` au niveau 3).
-  const introQuestions = newFacts.map((fact) =>
-    makeQuestion(fact, 0, { isIntroduction: true }),
-  );
-
-  const result = [...introQuestions, ...interleave(reviewQuestions)];
-
-  if (result.length < CONJ_MIN_QUESTIONS) {
-    const used = new Set(result.map((q) => q.fact.key));
-    const bonus = pickBonusReviewFacts(
+  // Padding par révisions bonus, qui ne touchent pas au calendrier Leitner.
+  // Elles passent par le MÊME filtre d'interférence que les révisions dues :
+  // `pickBonusReviewFacts` trie les plus faibles d'abord, donc exactement les
+  // faits non consolidés que le §3.4 protège — sans ce filtre, une séance
+  // courte (les premiers jours) repêchait en bonus le fait que la sélection
+  // venait d'écarter, et « tu es » / « il est » se retrouvaient ensemble.
+  const bonusFacts: ConjFact[] = [];
+  if (selected.length + newFacts.length < CONJ_MIN_QUESTIONS) {
+    const need = CONJ_MIN_QUESTIONS - selected.length - newFacts.length;
+    const used = new Set([...newFacts, ...selected].map((f) => f.key));
+    const ranked = pickBonusReviewFacts(
       facts,
       (f) => used.has(f.key) || !conjFactDef(f.key),
-      CONJ_MIN_QUESTIONS - result.length,
-    ).map((fact) =>
-      makeQuestion(fact, conjCarrierIndex(fact, conjFactDef(fact.key) as ConjFactDef), {
-        isBonusReview: true,
-      }),
+      facts.length,
     );
-    result.push(...interleave(bonus));
+    for (const fact of ranked) {
+      if (bonusFacts.length >= need) break;
+      if (newFacts.some((nf) => !canConjCoexist(nf, fact))) continue;
+      if (selected.some((s) => !canConjCoexist(s, fact))) continue;
+      if (bonusFacts.some((b) => !canConjCoexist(b, fact))) continue;
+      bonusFacts.push(fact);
+    }
   }
 
-  return result;
+  // Intro : toujours la 1ʳᵉ porteuse (déterministe — l'écran d'introduction et
+  // son MP3 sont pré-générés, comme `introRemainder` au niveau 3).
+  const intros = newFacts.map((fact) => makeQuestion(fact, 0, { isIntroduction: true }));
+  // Chaque bloc est entrelacé EN TENANT COMPTE de la question qui le précède :
+  // entrelacer les blocs isolément laissait leurs jonctions hors contrôle, et
+  // deux questions consécutives pouvaient y partager le verbe ou la personne
+  // (§5.1), voire être en interférence.
+  const reviews = interleave(
+    selected.map((fact) => makeQuestion(fact, conjCarrierIndex(fact))),
+    intros.at(-1),
+  );
+  const bonus = interleave(
+    bonusFacts.map((fact) => makeQuestion(fact, conjCarrierIndex(fact), { isBonusReview: true })),
+    reviews.at(-1) ?? intros.at(-1),
+  );
+
+  return [...intros, ...reviews, ...bonus];
 }
 
 /**

@@ -36,14 +36,30 @@ export function pickRandom<T>(arr: readonly T[]): T {
  * en conflit. Greedy : premier élément au hasard, puis on prend le premier
  * candidat non conflictuel ; à défaut, le premier restant (best effort).
  * Partagé par l'entrelacement des séances multiplication et division.
+ *
+ * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
+ * (la dernière introduction du jour, par exemple) : il contraint alors le
+ * premier tirage, sans quoi la jonction entre deux blocs échapperait à
+ * l'entrelacement.
  */
-export function interleaveGreedy<T>(items: T[], conflicts: (a: T, b: T) => boolean): T[] {
-  if (items.length <= 1) return items;
+export function interleaveGreedy<T>(
+  items: T[],
+  conflicts: (a: T, b: T) => boolean,
+  after?: T,
+): T[] {
+  if (items.length === 0) return items;
+  if (items.length === 1 && after === undefined) return items;
 
   const remaining = [...items];
   const result: T[] = [];
 
-  const firstIdx = Math.floor(Math.random() * remaining.length);
+  const firstIdx =
+    after === undefined
+      ? Math.floor(Math.random() * remaining.length)
+      : Math.max(
+          0,
+          remaining.findIndex((item) => !conflicts(after, item)),
+        );
   result.push(remaining.splice(firstIdx, 1)[0]);
 
   while (remaining.length > 0) {

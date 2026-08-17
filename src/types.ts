@@ -98,6 +98,11 @@ export interface ConjFact {
   // sert l'espacement 48 h des introductions de faits en interférence (§3.4).
   // Absent pour les faits ensemencés par dominance au placement.
   introducedAt?: string;
+  // Nombre de fois où le fait a été POSÉ, révisions bonus comprises : pilote la
+  // rotation des phrases porteuses (cf. conjCarrierIndex). Distinct de
+  // `history.length`, tronqué à 30 tentatives par `processAnswer`. Absent des
+  // profils antérieurs à ce compteur.
+  seen?: number;
 }
 
 export interface Badge {

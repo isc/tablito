@@ -25,7 +25,15 @@ export interface ConjStrategy {
   lines: readonly string[];
 }
 
-/** Les marques de personne, quasi invariantes à travers les temps (§3.2). */
+/**
+ * Les marques de personne, quasi invariantes à travers les temps (§3.2).
+ *
+ * Aucun exemple pris dans la famille sont / ont / vont / font : cette astuce
+ * s'affiche en feedback d'un fait en boîte ≤ 2, donc au moment précis où ces
+ * quatre monosyllabes ne sont pas encore consolidés — et le §3.4 réserve leur
+ * air de famille à l'APRÈS-maîtrise (« donné trop tôt, il fabrique la confusion
+ * qu'il prétend expliquer »).
+ */
 export const PERSON_MARKS: ConjStrategy = {
   kind: 'person-marks',
   title: 'Chaque personne a sa marque',
@@ -33,7 +41,7 @@ export const PERSON_MARKS: ConjStrategy = {
     'Avec tu, ça finit presque toujours par s : tu chantes, tu vas, tu diras.',
     'Avec nous, ça finit par ons : nous chantons, nous allons, nous étions.',
     'Avec vous, ça finit par ez : vous chantez, vous venez, vous verrez.',
-    'Avec ils et elles, ça finit par nt : ils chantent, ils font, ils viendront.',
+    'Avec ils et elles, ça finit par nt : ils chantent, ils jouaient, ils viendront.',
     'Trois formes n’obéissent pas : vous êtes, vous faites, vous dites. Et une quatrième : nous sommes.',
   ],
 };

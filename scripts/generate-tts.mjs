@@ -303,9 +303,15 @@ async function buildEntriesFr() {
     text: "Pour multiplier par 10, les chiffres glissent d'une place vers la gauche, et un zéro vient prendre la place des unités. Par exemple, 3 devient 30, 7 devient 70, 12 devient 120. Astuce : tous les résultats de la table de 10 se terminent par zéro !",
   });
 
-  // Les phrases porteuses de la conjugaison — `conj-<clé du fait>-<rang>`, la
-  // clé que resolveConjQuestion() met dans `ttsKey`. Elles servent à la fois
-  // d'énoncé de question, d'introduction du fait et de réécoute (§15.5, §15.6).
+  // Les phrases porteuses de la conjugaison, en DEUX jeux de clés :
+  //   `conj-<clé du fait>-<rang>`   l'ÉNONCÉ (« Demain, nous… chanter »), lu
+  //                                 à la question et à la réécoute (§15.5) ;
+  //   `conj-<clé du fait>-0-p`      la phrase COMPLÈTE, forme conjuguée
+  //                                 incluse, lue à l'étape 1 de l'introduction
+  //                                 (§15.6) — porteuse 0 seulement, la seule
+  //                                 qu'une introduction utilise.
+  // L'énoncé s'arrête à l'infinitif : lire « Bientôt, nous serons prêts » au
+  // moment où l'on demande la forme dicterait la réponse.
   // Rien d'autre n'est parlé dans la matière : les astuces de
   // conjugationStrategies.ts et les messages de i18n/conjugation.ts sont
   // uniquement affichés.

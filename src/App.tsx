@@ -15,12 +15,10 @@ import {
   FAST_THRESHOLD_MS,
   DIVISION_FAST_THRESHOLD_MS,
   REMAINDER_FAST_THRESHOLD_MS,
-  conjFastThresholdMs,
 } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
 import { composeConjSession, type ConjJudgement } from './lib/conjugationComposer';
-import { requireConjFactDef, resolveConjQuestion } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
 import { processAnswer } from './lib/leitner';
 import {
@@ -704,12 +702,24 @@ export default function App({
         sessionConsecutiveCorrect.current = 0;
       }
 
-      // Révision bonus : feedback et stats seulement, pas de Leitner (comme en
-      // maths).
-      if (item.isBonusReview) return;
-
       const today = todayISO();
       const posedKey = item.fact.key;
+      // Le fait vient d'être PRÉSENTÉ : son compteur avance, révision bonus
+      // comprise. C'est lui qui fait tourner les phrases porteuses (§10) — un
+      // fait servi en bonus tous les jours resterait sinon sur la même phrase.
+      const bumpSeen = (fact: ConjFact): ConjFact =>
+        fact.key === posedKey
+          ? { ...fact, seen: (fact.seen ?? fact.history.length) + 1 }
+          : fact;
+
+      // Révision bonus : feedback et stats seulement, pas de Leitner (comme en
+      // maths).
+      if (item.isBonusReview) {
+        setProfile((prev) =>
+          prev?.conjFacts ? { ...prev, conjFacts: prev.conjFacts.map(bumpSeen) } : prev,
+        );
+        return;
+      }
 
       setProfile((prev) => {
         if (!prev?.conjFacts) return prev;
@@ -722,10 +732,13 @@ export default function App({
         if (judgement.accepted) outcomes.set(posedKey, true);
         else for (const key of judgement.blamedKeys) outcomes.set(key, false);
 
-        const fastMs = conjFastThresholdMs(
-          resolveConjQuestion(requireConjFactDef(posedKey), item.carrierIndex).expected,
-          'keypad',
-        );
+        // `fast` est calculé par l'écran, qui seul connaît le verdict : un
+        // « presque » est accepté, PAS promu (§5.3). Recalculer un seuil ici
+        // ferait monter la boîte sur une coquille lexicale tapée vite, en
+        // contradiction avec l'étoile sans rayons affichée au même moment — on
+        // neutralise donc le seuil plutôt que de trafiquer `timeMs`, qui reste
+        // vrai dans l'historique.
+        const fastMs = fast ? Number.POSITIVE_INFINITY : 0;
 
         const conjFacts = prev.conjFacts.map((fact) => {
           const outcome = outcomes.get(fact.key);
@@ -734,16 +747,27 @@ export default function App({
             // Fait posé non blâmé : rien ne bouge côté Leitner, mais une
             // première rencontre reste une introduction.
             return isPosed && !fact.introduced
-              ? { ...fact, introduced: true, introducedAt: today }
-              : fact;
+              ? { ...bumpSeen(fact), introduced: true, introducedAt: today }
+              : bumpSeen(fact);
           }
-          const updated: ConjFact = processAnswer(fact, outcome, timeMs, today, 'keypad', fastMs);
-          if (!updated.introduced) {
+          const updated: ConjFact = processAnswer(
+            bumpSeen(fact),
+            outcome,
+            timeMs,
+            today,
+            'keypad',
+            fastMs,
+          );
+          // `introduced` seulement pour le fait POSÉ : un fait blâmé par
+          // ricochet (la terminaison derrière « seron ») n'a jamais été
+          // présenté. Le marquer introduit le sortirait à jamais des candidats
+          // à l'introduction (§5.2) et le montrerait découvert sur l'image
+          // mystère sans qu'il ait été enseigné.
+          if (isPosed && !updated.introduced) {
             updated.introduced = true;
             // Date d'intro RÉELLE, qui pilote l'espacement 48 h des intros de
-            // faits en interférence (§3.4) — seulement pour le fait posé : un
-            // fait blâmé par ricochet n'a pas été présenté.
-            if (isPosed) updated.introducedAt = today;
+            // faits en interférence (§3.4).
+            updated.introducedAt = today;
           }
           if (isPosed) trackPromotion(fact.key, fact.box, updated.box);
           return updated;

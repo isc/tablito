@@ -95,11 +95,17 @@ describe('inventaire — la structure de la spec §3.3', () => {
     }
   });
 
-  it('borne le volume TTS (une clé unique par phrase, ~150 MP3)', () => {
+  it('borne le volume TTS (une clé unique par texte, ~200 MP3)', () => {
+    // Un énoncé par porteuse (151) + la phrase complète de l'intro, porteuse 0
+    // seulement (63) : le budget annoncé par la spec (« environ 200 »).
     const sentences = allConjCarrierSentences();
     expect(new Set(sentences.map((s) => s.key)).size).toBe(sentences.length);
-    expect(sentences.length).toBeLessThanOrEqual(200);
-    for (const { text } of sentences) expect(text).toMatch(/^[A-ZÀ-Ý].*[.!?]$/u);
+    expect(sentences.length).toBeLessThanOrEqual(220);
+    for (const { key, text } of sentences) {
+      // Énoncé : « Demain, nous… chanter » — l'infinitif clôt la phrase.
+      // Phrase complète : ponctuée, forme conjuguée comprise.
+      expect(text).toMatch(key.endsWith('-p') ? /^[A-ZÀ-Ý].*[.!?]$/u : /^[A-ZÀ-Ý].*… \p{L}+$/u);
+    }
   });
 
   it('n’utilise que les 8 verbes support pour les terminaisons', () => {
@@ -259,7 +265,19 @@ describe('réponse attendue et segmentation (§4.2, §4.5)', () => {
     expect(view.sentence).toBe('Demain, je chanterai à la fête.');
     expect(view.lead).toBe('Demain, je ');
     expect(view.tail).toBe(' à la fête.');
-    expect(view.ttsKey).toBe('conj-fut-je-0');
+    // La phrase complète n'est lue qu'à l'introduction (§5.2 étape 1).
+    expect(view.sentenceTtsKey).toBe('conj-fut-je-0-p');
+  });
+
+  it('n’énonce JAMAIS la forme demandée : l’audio de la question dit l’infinitif', () => {
+    // « Bientôt, nous… être » — pas « Bientôt, nous serons prêts », qui
+    // dicterait la réponse au moment même où on la demande (§4.1).
+    const view = resolveConjQuestion(conjFactDef('fut-etre')!, 1);
+    expect(view.prompt).toBe('Bientôt, nous… être');
+    expect(view.prompt).not.toContain(view.form);
+    expect(view.promptTtsKey).toBe('conj-fut-etre-1');
+    // Hors porteuse 0, aucune phrase complète n'est pré-générée.
+    expect(view.sentenceTtsKey).toBeNull();
   });
 
   it('boucle sur les porteuses quand l’index déborde', () => {
