@@ -54,6 +54,57 @@ export interface RemainderFact {
   introduced: boolean;
 }
 
+// === Matière conjugaison (cf. spec Verbito) ===
+// La conjugaison n'est PAS un niveau empilé sur les maths : c'est une MATIÈRE
+// séparée (séance propre, image mystère propre, badges propres ; seule la
+// flamme de série est partagée). Elle est fr-only — masquée quand la langue
+// d'interface est l'anglais.
+export type ConjTense = 'present' | 'imparfait' | 'futur';
+
+export type ConjPerson = 'je' | 'tu' | 'il' | 'nous' | 'vous' | 'ils';
+
+/**
+ * Nature d'un fait de conjugaison (spec §2.1, §3.3) :
+ * - `ending`   : une TERMINAISON régulière (le radical est affiché, l'enfant ne
+ *                tape que la terminaison) — « présent 1er groupe -ons » ;
+ * - `irregular`: une FORME irrégulière entière, stockée telle quelle en mémoire
+ *                (« vous faites ») — l'enfant tape la forme complète ;
+ * - `stem`     : un RADICAL irrégulier (« ser- », « ét- ») porté par des
+ *                terminaisons régulières — l'enfant tape la forme complète, et
+ *                la segmentation radical|terminaison permet l'attribution
+ *                d'erreur diagnostique (§4.5).
+ */
+export type ConjFactKind = 'ending' | 'irregular' | 'stem';
+
+/**
+ * État Leitner d'un fait de conjugaison.
+ *
+ * Contrairement à MultiFact/DivisionFact, le fait persisté ne porte QUE sa clé :
+ * la définition (temps, personne, verbe, phrases porteuses…) vit dans
+ * l'inventaire statique de `lib/conjugationFacts.ts`, résolue par
+ * `conjFactDef(key)`. Un inventaire de 63 entrées avec 2-3 phrases porteuses
+ * chacune n'a rien à faire dans le localStorage de chaque profil, et cette
+ * indirection rend les corrections de l'inventaire (typo dans une phrase,
+ * ajout d'une porteuse) rétro-actives sans migration.
+ */
+export interface ConjFact {
+  key: string;         // clé stable du fait (cf. lib/conjugationFacts.ts)
+  box: BoxLevel;
+  lastSeen: string;    // ISO date
+  nextDue: string;     // ISO date
+  history: Attempt[];
+  introduced: boolean;
+  // Date de l'écran d'introduction réel (≠ 1ʳᵉ révision), comme MultiFact :
+  // sert l'espacement 48 h des introductions de faits en interférence (§3.4).
+  // Absent pour les faits ensemencés par dominance au placement.
+  introducedAt?: string;
+  // Nombre de fois où le fait a été POSÉ, révisions bonus comprises : pilote la
+  // rotation des phrases porteuses (cf. conjCarrierIndex). Distinct de
+  // `history.length`, tronqué à 30 tentatives par `processAnswer`. Absent des
+  // profils antérieurs à ce compteur.
+  seen?: number;
+}
+
 export interface Badge {
   // Un badge persisté ne porte que sa clé de progression (`id`), sa date et son
   // `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par
@@ -106,6 +157,28 @@ export interface UserProfile {
   remainderFacts?: RemainderFact[];
   // Image mystère dédiée au niveau 3 (specs §12.6), distincte des deux autres.
   remainderMysteryTheme?: MysteryTheme;
+  // === Matière conjugaison (cf. spec Verbito). Optionnels : absents des
+  // profils antérieurs, backfillés par migrateProfile au chargement. ===
+  // Les 63 faits de conjugaison (cf. createInitialConjFacts).
+  conjFacts?: ConjFact[];
+  // Image mystère dédiée à la conjugaison (spec §7.1) : matière séparée ⇒ pool
+  // propre, tiré distinct des thèmes des niveaux de maths.
+  conjMysteryTheme?: MysteryTheme;
+  hasSeenConjIntro?: boolean;
+  // Le test de placement de la conjugaison (spec §6.1) a-t-il été passé ? Flag
+  // explicite plutôt qu'une inférence sur les boîtes : un enfant qui échoue à
+  // TOUTES les sondes ne doit pas repasser le test à chaque ouverture.
+  hasDoneConjPlacement?: boolean;
+  // === Séance quotidienne par matière ===
+  // `lastSessionDate` reste la date de la dernière séance TOUTES MATIÈRES
+  // CONFONDUES : c'est l'ancre de la flamme de série, partagée entre matières
+  // (spec §7.2 — une séance quelconque maintient la série). Ces deux champs
+  // disent, eux, quelle matière a déjà eu sa séance aujourd'hui : sans eux,
+  // faire ses maths fermerait la conjugaison du jour, et réciproquement.
+  // Backfill : `lastMathSessionDate` reprend `lastSessionDate` (avant la
+  // conjugaison, toute séance était une séance de maths).
+  lastMathSessionDate?: string | null;
+  lastConjSessionDate?: string | null;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -153,6 +226,31 @@ export const REMAINDER_FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
   voice: 6000,
 };
 
+// Matière conjugaison — seuil de rapidité (spec §4.5). Contrairement aux maths,
+// le seuil n'est pas une constante : la réponse n'est pas un nombre de 1-2
+// chiffres tapé sur un pavé numérique mais une chaîne de 1 à 8 caractères
+// tapée sur un clavier alphabétique. Le coût moteur est donc proportionnel à
+// la longueur — d'où « base + coût par caractère », proposition initiale de la
+// spec, explicitement donnée comme à calibrer en conditions réelles.
+export const CONJ_FAST_BASE_MS = 5000;
+export const CONJ_FAST_PER_CHAR_MS = 1000;
+
+/**
+ * Seuil « rapide » (étoile rayonnante + montée de boîte) d'une question de
+ * conjugaison, fonction de la réponse attendue (spec §4.5).
+ *
+ * En mode vocal épelé, le coût moteur disparaît : le chrono s'arrête au DÉBUT
+ * de l'épellation (latence de rappel pur), donc pas de terme par caractère —
+ * seule la base subsiste.
+ */
+export function conjFastThresholdMs(
+  expected: string,
+  inputMode: 'keypad' | 'voice' = 'keypad',
+): number {
+  if (inputMode === 'voice') return CONJ_FAST_BASE_MS;
+  return CONJ_FAST_BASE_MS + CONJ_FAST_PER_CHAR_MS * expected.length;
+}
+
 export interface SessionQuestion {
   fact: MultiFact;
   displayA: number;  // peut être inversé pour varier a×b / b×a
@@ -193,10 +291,46 @@ export function remainderDividend(q: Pick<RemainderSessionQuestion, 'fact' | 're
 // intégrer des révisions d'entretien des niveaux précédents, entrelacées. Le
 // discriminant `kind` permet à l'écran de séance de rendre chaque question
 // selon son type.
+// Question de conjugaison (spec §4.1). La question = un fait + UNE de ses 2-3
+// phrases porteuses (le choix de la phrase est fait à la composition, pas au
+// rendu : le MP3 pré-généré doit coller à la phrase affichée). Tout le reste
+// (pronom, radical affiché, réponse attendue, segmentation) se dérive du couple
+// (fait, porteuse) via `resolveConjQuestion`.
+export interface ConjSessionQuestion {
+  fact: ConjFact;
+  carrierIndex: number;
+  isIntroduction: boolean;
+  isRetry: boolean;
+  isBonusReview: boolean;
+}
+
+/**
+ * Nature d'une question : les trois niveaux de maths, plus la matière
+ * conjugaison. Un seul alias plutôt que l'union recopiée à chaque écran qui
+ * pilote un sélecteur d'opération (récap, images, espace parent, logs).
+ */
+export type FactKind = 'mult' | 'div' | 'rem' | 'conj';
+
 export type SessionItem =
   | ({ kind: 'mult' } & SessionQuestion)
   | ({ kind: 'div' } & DivisionSessionQuestion)
   | ({ kind: 'rem' } & RemainderSessionQuestion);
+
+// Variante conjugaison de la même famille de discriminants `kind` — c'est elle
+// que l'écran de séance unifié rendra pour une séance de conjugaison.
+//
+// Pourquoi PAS dans `SessionItem` : la conjugaison est une MATIÈRE, pas un
+// niveau. Une séance ne mélange jamais 'conj' avec les kinds mathématiques
+// (§7.2 : matières séparées, seule la flamme de série est partagée), et
+// `SessionItem` est précisément le type « une question de la séance de maths »
+// que lisent dailyComposer, itemDisplay, itemTable/itemConflict — tous
+// mathématiques par nature. Élargir ce type-là forcerait chacun de ces
+// consommateurs à écarter un cas qui ne peut pas se produire.
+// L'écran de séance, lui, prend `AnySessionItem` et dispatche par `kind`.
+export type ConjSessionItem = { kind: 'conj' } & ConjSessionQuestion;
+
+/** Une question de séance, toutes matières confondues. */
+export type AnySessionItem = SessionItem | ConjSessionItem;
 
 // Log par question pour les séances enregistrées depuis l'ajout du champ.
 // Permet de diagnostiquer vitesse et mode après coup, y compris pour les
@@ -210,10 +344,15 @@ export interface SessionQuestionLog {
   // quotient (le dividende = a × b), sinon `56 ÷ 7` serait illisible comme
   // `{a:7, b:8}`, identique à `7 × 8`. Pour 'rem', a = diviseur, b = quotient
   // (la zone), et `remainder` porte le reste tiré pour cette présentation.
-  kind?: 'mult' | 'div' | 'rem';
+  kind?: FactKind;
   // 'mult' : opérandes (canoniques). 'div'/'rem' : a = diviseur, b = quotient.
-  a: number;
-  b: number;
+  // ABSENTS en 'conj' : un fait de conjugaison n'est pas indexé par un couple
+  // de nombres, c'est `factKey` qui l'identifie — écrire des `0` sentinelles
+  // laissait un log de conjugaison passer pour la multiplication 0×0.
+  a?: number;
+  b?: number;
+  // Matière conjugaison uniquement : clé du fait posé (cf. lib/conjugationFacts).
+  factKey?: string;
   correct: boolean;
   responseTimeMs: number;
   answeredWith: number | null;
@@ -272,4 +411,11 @@ export const BADGE_IDS = {
   REM_PREMIERE_MAITRISE: 'rem-premiere-maitrise',
   REM_TABLE_PREFIX: 'rem-table-',
   REM_GENIE: 'rem-genie',
+  // Matière conjugaison (spec Verbito §7.2) : 3 badges de temps + 7 badges de
+  // verbe irrégulier. Masqués tant que la matière n'a pas été ouverte (et
+  // toujours en anglais, la matière étant fr-only). Les identifiants complets
+  // vivent dans lib/conjugationComposer (CONJ_TENSE_BADGE_ID, conjVerbBadgeId)
+  // — ces préfixes sont là pour les filtres (`id.startsWith(...)`).
+  CONJ_TENSE_PREFIX: 'conj-temps-',
+  CONJ_VERB_PREFIX: 'conj-verbe-',
 } as const;

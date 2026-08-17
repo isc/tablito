@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { SessionResult, Badge as BadgeType } from '../types';
+import type { FactKind, SessionResult, Badge as BadgeType } from '../types';
 import { BADGE_IDS } from '../types';
 import Mascot from '../components/Mascot';
 import { useSound } from '../hooks/useSound';
@@ -29,8 +29,8 @@ interface RecapScreenProps {
   onFinish: () => void;
   onShowProgress: () => void;
   // 'div'/'rem' selon la séance : change le nom affiché et le jalon surveillé
-  // (specs §11, §12). Défaut 'mult'.
-  mode?: 'mult' | 'div' | 'rem';
+  // (specs §11, §12). 'conj' = séance de la matière conjugaison. Défaut 'mult'.
+  mode?: FactKind;
 }
 
 function ImageCardIcon() {
@@ -88,7 +88,14 @@ export default function RecapScreen({
   const t = useRecapStrings();
   const hasPlayedRef = useRef(false);
 
-  const noun = mode === 'rem' ? t.remainders : mode === 'div' ? t.divisions : t.multiplications;
+  const noun =
+    mode === 'conj'
+      ? t.conjugations
+      : mode === 'rem'
+        ? t.remainders
+        : mode === 'div'
+          ? t.divisions
+          : t.multiplications;
   // Jalon majeur de la séance, par mode :
   // — mult : déblocage du niveau 2 (8e badge de table). PAS « Génie » : Génie
   //   (boîte 5 partout) arrive plus tard, pendant le niveau 2, et n'affiche
@@ -97,8 +104,13 @@ export default function RecapScreen({
   //   « Maître de la division » (toutes les divisions en boîte 5) ;
   // — rem : « Grand maître de la division » (les 64 zones en boîte 5, image
   //   complète — le jalon ultime du parcours).
+  // Aucun jalon en conjugaison : les déblocages de temps y sont « signalés par
+  // une pastille discrète, sans modale » (spec Verbito §6.2). Le badge de temps
+  // gagné apparaît, lui, dans la liste des nouveaux badges — comme les autres.
   const milestone =
-    mode === 'rem'
+    mode === 'conj'
+      ? null
+      : mode === 'rem'
       ? newBadges.some((b) => b.id === BADGE_IDS.REM_GENIE)
         ? { icon: '👑', title: t.milestoneRemTitle, subtitle: t.milestoneRemSubtitle }
         : null

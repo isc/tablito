@@ -1,6 +1,17 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
-import type { UserProfile, SessionItem, SessionResult, SessionQuestionLog, Badge, BoxLevel } from './types';
+import type {
+  UserProfile,
+  AnySessionItem,
+  ConjFact,
+  ConjSessionItem,
+  FactKind,
+  SessionItem,
+  SessionResult,
+  SessionQuestionLog,
+  Badge,
+  BoxLevel,
+} from './types';
 import {
   FAST_THRESHOLD_MS,
   DIVISION_FAST_THRESHOLD_MS,
@@ -8,6 +19,9 @@ import {
 } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
+import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
+import { createInitialConjFacts } from './lib/conjugationFacts';
+import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
 import { processAnswer } from './lib/leitner';
 import {
   checkBadges,
@@ -17,6 +31,8 @@ import {
   isRule11Unlocked,
   isDivisionUnlocked,
   isRemainderUnlocked,
+  isConjAvailable,
+  isConjVisible,
   activeLevel,
 } from './lib/badges';
 import {
@@ -45,6 +61,7 @@ import { syncLastSession } from './lib/push';
 import { listWatched } from './lib/watchStore';
 import type { WatchPairing } from './lib/watch';
 import { isVoiceMode } from './hooks/useInputMode';
+import { useLang } from './i18n/lang';
 import { useAppStrings } from './i18n/app';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
 // écrans sont hit par tout utilisateur, souvent plusieurs fois par jour
@@ -72,6 +89,12 @@ import ProgressScreen from './screens/ProgressScreen';
 // occasionnellement, leur coût parse/CPU au cold launch est gaspillé
 // pour la majorité des sessions. Précachés par le SW → cache hit
 // instantané quand l'utilisateur clique.
+// ConjPlacementScreen est lazy : c'est un écran ONE-SHOT (le tout premier
+// contact avec la matière conjugaison), hors boucle quotidienne, et fr-only —
+// exactement le profil des écrans secondaires. Il tire tout le clavier de
+// lettres et l'inventaire des sondes, qu'un utilisateur anglophone ne verra
+// jamais.
+const ConjPlacementScreen = lazy(() => import('./screens/ConjPlacementScreen'));
 const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
 const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
@@ -83,6 +106,7 @@ type Screen =
   | 'profiles'
   | 'rulesIntro'
   | 'home'
+  | 'conjPlacement'
   | 'session'
   | 'recap'
   | 'progress'
@@ -165,14 +189,16 @@ export default function App({
   // minuscule et ne change que via des flows qui re-rendent déjà App.
   const profileCount = listProfiles().length;
   // Liste unifiée de la séance en cours : 100% multiplication avant déblocage,
-  // mixte (division + entretien des tables) après (specs §11.6).
-  const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
+  // mixte (division + entretien des tables) après (specs §11.6), ou 100%
+  // conjugaison — une séance ne mélange jamais deux MATIÈRES (spec Verbito §7.2).
+  const [sessionItems, setSessionItems] = useState<AnySessionItem[]>([]);
   // Quelle « saveur » de récap afficher (multiplication, division, division
-  // avec reste) — pilote le nom affiché, le jalon surveillé et l'image cible.
-  const [recapMode, setRecapMode] = useState<'mult' | 'div' | 'rem'>('mult');
+  // avec reste, conjugaison) — pilote le nom affiché, le jalon surveillé et
+  // l'image cible.
+  const [recapMode, setRecapMode] = useState<FactKind>('mult');
   // Onglet ouvert à l'arrivée sur l'écran progression (« Mes images ») : sur
   // l'image du niveau de la séance quand on y va depuis le récap.
-  const [progressView, setProgressView] = useState<'mult' | 'div' | 'rem'>('mult');
+  const [progressView, setProgressView] = useState<FactKind>('mult');
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [newlyCompletedTables, setNewlyCompletedTables] = useState<number[]>([]);
@@ -381,13 +407,44 @@ export default function App({
   // Niveau de la séance du jour — composeDailySession branche lui-même sur le
   // niveau actif, on n'a besoin du mode que pour le récap et l'image cible.
   const sessionMode: 'mult' | 'div' | 'rem' = profile ? activeLevel(profile) : 'mult';
-  const sessionDone = !!profile && profile.lastSessionDate === today;
+  // « Fait aujourd'hui » se compte PAR MATIÈRE : faire ses maths ne ferme pas
+  // la conjugaison du jour, et réciproquement (spec Verbito §7.2). C'est
+  // `lastSessionDate` — inchangé, toutes matières confondues — qui reste
+  // l'ancre de la flamme de série, partagée.
+  const sessionDone = !!profile && profile.lastMathSessionDate === today;
   const pendingItems = useMemo<SessionItem[]>(() => {
     if (!profile || sessionDone) return [];
     if (divisionUnlocked) return composeDailySession(profile, today);
     return composeSession(profile, today).map((q): SessionItem => ({ kind: 'mult', ...q }));
   }, [profile, sessionDone, divisionUnlocked, today]);
   const hasSessionAvailable = pendingItems.length > 0;
+
+  // === Matière conjugaison (spec Verbito) ===
+  // Disponibilité = langue d'interface française, point. Elle ne se débloque
+  // pas par la progression : c'est une matière, pas un niveau.
+  const { lang } = useLang();
+  const conjAvailable = isConjAvailable(lang);
+  const conjSessionDone = !!profile && profile.lastConjSessionDate === today;
+  // Tant que le test de placement n'a pas été passé, la « séance du jour » de
+  // la matière EST ce test (il enchaîne ensuite sur la première séance, §6.1).
+  const conjNeedsPlacement = !!profile && conjAvailable && profile.hasDoneConjPlacement !== true;
+  // Dépendances restreintes à ce que la composition LIT (cf. `ConjProfile`) :
+  // sur `profile` entier, chaque réponse d'une séance de maths recomposait la
+  // séance de conjugaison du jour.
+  const conjFacts = profile?.conjFacts;
+  const badges = profile?.badges;
+  const conjPendingItems = useMemo<ConjSessionItem[]>(() => {
+    if (!conjFacts || !badges || !conjAvailable || conjSessionDone || conjNeedsPlacement) return [];
+    return composeConjSession({ conjFacts, badges }, today).map(
+      (q): ConjSessionItem => ({ kind: 'conj', ...q }),
+    );
+  }, [conjFacts, badges, conjAvailable, conjSessionDone, conjNeedsPlacement, today]);
+  const hasConjSessionAvailable =
+    conjAvailable && !conjSessionDone && (conjNeedsPlacement || conjPendingItems.length > 0);
+  // Matière ouverte au moins une fois : c'est ce qui allume ses onglets
+  // transverses (images, badges, espace parent) et éteint la pastille de
+  // découverte — révélation différée, pas de modale (§6.2).
+  const conjVisible = !!profile && isConjVisible(profile, lang);
 
   // Remet à zéro les compteurs de séance.
   const resetSessionTracking = useCallback(() => {
@@ -421,6 +478,72 @@ export default function App({
     setSessionItems(pendingItems);
     setScreen('session');
   }, [profile, pendingItems, resetSessionTracking]);
+
+  /**
+   * Séance de conjugaison du jour. Premier appui de la vie du profil : on part
+   * sur le test de placement (spec §6.1), qui enchaîne lui-même sur la première
+   * séance. Dans tous les cas, l'appui marque la matière comme ouverte — c'est
+   * ce qui éteint la pastille de découverte et fait apparaître ses onglets
+   * (badges, images, espace parent).
+   */
+  const handleStartConj = useCallback(() => {
+    if (!profile || !conjAvailable) return;
+    // Ensemencement des 63 faits À LA PREMIÈRE ENTRÉE, pas à la création du
+    // profil : `conjFacts` absent veut dire « matière jamais commencée », et
+    // les porter dans chaque profil coûtait ~6 Ko sérialisés à chaque réponse
+    // de maths (cf. lib/storage).
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const seed = prev.conjFacts ? null : createInitialConjFacts();
+      if (!seed && prev.hasSeenConjIntro) return prev;
+      return { ...prev, hasSeenConjIntro: true, ...(seed ? { conjFacts: seed } : {}) };
+    });
+    if (conjNeedsPlacement) {
+      setScreen('conjPlacement');
+      return;
+    }
+    if (conjPendingItems.length === 0) return;
+    resetSessionTracking();
+    setSessionItems(conjPendingItems);
+    setScreen('session');
+  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, resetSessionTracking]);
+
+  /**
+   * Fin du test de placement de la conjugaison. Le profil mis à jour est
+   * calculé ICI plutôt que dans un updater `setProfile` : la première séance se
+   * compose dans la foulée et doit voir les boîtes déjà ensemencées (même
+   * geste qu'`handleWelcomeComplete` côté maths).
+   */
+  const handleConjPlacementComplete = useCallback(
+    (results: ConjPlacementResult[]) => {
+      if (!profile) return;
+      const now = todayISO();
+      // Le placement est la porte d'entrée de la matière : c'est ici que les
+      // 63 faits existent pour la première fois si `handleStartConj` ne les a
+      // pas déjà ensemencés.
+      const conjFacts = (profile.conjFacts ?? createInitialConjFacts()).map((f) => ({ ...f }));
+      seedConjFromPlacement(conjFacts, results, now);
+      const updated: UserProfile = {
+        ...profile,
+        conjFacts,
+        hasDoneConjPlacement: true,
+        hasSeenConjIntro: true,
+      };
+      setProfile(updated);
+
+      const items = composeConjSession(updated, now).map(
+        (q): ConjSessionItem => ({ kind: 'conj', ...q }),
+      );
+      if (items.length === 0) {
+        setScreen('home');
+        return;
+      }
+      resetSessionTracking();
+      setSessionItems(items);
+      setScreen('session');
+    },
+    [profile, resetSessionTracking],
+  );
 
   // Met à jour le suivi « fait promu » (boîte finale > boîte initiale dans la
   // séance), qui pilote le « ton image a changé » du récap (§3.5). Idempotent —
@@ -555,6 +678,121 @@ export default function App({
     [trackPromotion],
   );
 
+  /**
+   * Réponse à une question de conjugaison (spec Verbito §4.5, §5.3). Canal
+   * séparé d'`handleSessionItemAnswer` : la réponse est une chaîne, le verdict
+   * n'est pas booléen, et surtout le fait à faire redescendre n'est PAS
+   * toujours celui qui a été posé — « seron » pour « serons », c'est la
+   * terminaison -ons qui a lâché, pas le radical ser-.
+   */
+  const handleConjAnswer = useCallback(
+    (
+      item: ConjSessionItem,
+      judgement: ConjJudgement,
+      fast: boolean,
+      timeMs: number,
+    ) => {
+      const accepted = isConjAccepted(judgement.verdict);
+
+      sessionQuestionLogs.current.push({
+        kind: 'conj',
+        // Pas d'`a`/`b` : c'est `factKey` qui identifie le fait.
+        factKey: item.fact.key,
+        correct: accepted,
+        responseTimeMs: timeMs,
+        answeredWith: null,
+        isBonusReview: item.isBonusReview,
+        inputMode: 'keypad',
+        fast,
+      });
+
+      if (accepted) {
+        sessionConsecutiveCorrect.current++;
+        sessionMaxConsecutiveCorrect.current = Math.max(
+          sessionMaxConsecutiveCorrect.current,
+          sessionConsecutiveCorrect.current,
+        );
+      } else {
+        sessionConsecutiveCorrect.current = 0;
+      }
+
+      const today = todayISO();
+      const posedKey = item.fact.key;
+      // Le fait vient d'être PRÉSENTÉ : son compteur avance, révision bonus
+      // comprise. C'est lui qui fait tourner les phrases porteuses (§10) — un
+      // fait servi en bonus tous les jours resterait sinon sur la même phrase.
+      const bumpSeen = (fact: ConjFact): ConjFact =>
+        fact.key === posedKey
+          ? { ...fact, seen: (fact.seen ?? fact.history.length) + 1 }
+          : fact;
+
+      // Révision bonus : feedback et stats seulement, pas de Leitner (comme en
+      // maths).
+      if (item.isBonusReview) {
+        setProfile((prev) =>
+          prev?.conjFacts ? { ...prev, conjFacts: prev.conjFacts.map(bumpSeen) } : prev,
+        );
+        return;
+      }
+
+      setProfile((prev) => {
+        if (!prev?.conjFacts) return prev;
+
+        // Qui monte, qui descend. Accepté ⇒ le fait posé (et lui seul) est
+        // crédité. Refusé ⇒ seuls les faits BLÂMÉS redescendent : le fait posé
+        // peut n'être pour rien dans l'erreur, il reste alors intact — ni
+        // promu, ni puni (§4.5).
+        const outcomes = new Map<string, boolean>();
+        if (accepted) outcomes.set(posedKey, true);
+        else for (const key of judgement.blamedKeys) outcomes.set(key, false);
+
+        // `fast` est calculé par l'écran, qui seul connaît le verdict : un
+        // « presque » est accepté, PAS promu (§5.3). Recalculer un seuil ici
+        // ferait monter la boîte sur une coquille lexicale tapée vite, en
+        // contradiction avec l'étoile sans rayons affichée au même moment — on
+        // neutralise donc le seuil plutôt que de trafiquer `timeMs`, qui reste
+        // vrai dans l'historique.
+        const fastMs = fast ? Number.POSITIVE_INFINITY : 0;
+
+        const conjFacts = prev.conjFacts.map((fact) => {
+          const outcome = outcomes.get(fact.key);
+          const isPosed = fact.key === posedKey;
+          if (outcome === undefined) {
+            // Fait posé non blâmé : rien ne bouge côté Leitner, mais une
+            // première rencontre reste une introduction.
+            return isPosed && !fact.introduced
+              ? { ...bumpSeen(fact), introduced: true, introducedAt: today }
+              : bumpSeen(fact);
+          }
+          const updated: ConjFact = processAnswer(
+            bumpSeen(fact),
+            outcome,
+            timeMs,
+            today,
+            'keypad',
+            fastMs,
+          );
+          // `introduced` seulement pour le fait POSÉ : un fait blâmé par
+          // ricochet (la terminaison derrière « seron ») n'a jamais été
+          // présenté. Le marquer introduit le sortirait à jamais des candidats
+          // à l'introduction (§5.2) et le montrerait découvert sur l'image
+          // mystère sans qu'il ait été enseigné.
+          if (isPosed && !updated.introduced) {
+            updated.introduced = true;
+            // Date d'intro RÉELLE, qui pilote l'espacement 48 h des intros de
+            // faits en interférence (§3.4).
+            updated.introducedAt = today;
+          }
+          if (isPosed) trackPromotion(fact.key, fact.box, updated.box);
+          return updated;
+        });
+
+        return { ...prev, conjFacts };
+      });
+    },
+    [trackPromotion],
+  );
+
   // Fin de séance — un seul handler pour les deux modes. Le récap suit le type
   // de séance : 'div' quand la division est débloquée (séance mixte div +
   // entretien tables), 'mult' sinon. Les tables « nouvellement complétées » ne
@@ -564,7 +802,13 @@ export default function App({
     (partial: Omit<SessionResult, 'factsPromoted'>) => {
       if (!profile) return;
 
-      const mode = sessionMode;
+      // Une séance appartient à UNE matière. `isConj` gouverne : le récap, la
+      // date de séance marquée, et les jalons de niveau (qui n'existent pas en
+      // conjugaison).
+      // Une séance ne mélange jamais deux matières (§7.2) : le `kind` de sa
+      // première question suffit à dire laquelle.
+      const isConj = sessionItems[0]?.kind === 'conj';
+      const mode: FactKind = isConj ? 'conj' : sessionMode;
       const result: SessionResult = {
         ...partial,
         factsPromoted: sessionPromoted.current.size,
@@ -587,7 +831,12 @@ export default function App({
         totalSessions: profile.totalSessions + 1,
         currentStreak: streakUpdate.currentStreak,
         longestStreak,
+        // Flamme de série PARTAGÉE : une séance de n'importe quelle matière
+        // maintient `lastSessionDate` (spec Verbito §7.2). Les deux dates par
+        // matière, elles, disent seulement quelle tuile de l'accueil est déjà
+        // faite aujourd'hui.
         lastSessionDate: today,
+        ...(isConj ? { lastConjSessionDate: today } : { lastMathSessionDate: today }),
         streakFreezes: streakUpdate.streakFreezes,
         sessionHistory,
       };
@@ -609,8 +858,11 @@ export default function App({
       // Tables fraîchement complétées (tous faits en boîte 5) de l'opération de
       // la séance : tables × en mode mult, « divisions par N » en mode div,
       // zones par diviseur en mode rem.
-      const completedNow =
-        mode === 'rem'
+      // Pas de « table complétée » en conjugaison : l'unité de célébration y est
+      // le badge de temps ou de verbe, pas une ligne de table.
+      const completedNow = isConj
+        ? []
+        : mode === 'rem'
           ? [...getCompletedRemainderTables(updatedProfile.remainderFacts ?? [])].filter(
               (t) => !remainderTablesCompletedBeforeSession.current.has(t),
             )
@@ -625,8 +877,10 @@ export default function App({
       // Déblocages : la condition (8 badges de table / de divisions) vient de
       // basculer cette séance. Les memos `*Unlocked` reflètent l'état d'AVANT
       // la séance, donc mode est encore celui du niveau précédent ici.
-      const divisionUnlockedNow = !divisionUnlocked && isDivisionUnlocked(updatedProfile);
-      const remainderUnlockedNow = !remainderUnlocked && isRemainderUnlocked(updatedProfile);
+      const divisionUnlockedNow =
+        !isConj && !divisionUnlocked && isDivisionUnlocked(updatedProfile);
+      const remainderUnlockedNow =
+        !isConj && !remainderUnlocked && isRemainderUnlocked(updatedProfile);
 
       setProfile(updatedProfile);
       setSessionResult(result);
@@ -657,7 +911,7 @@ export default function App({
         void import('./lib/watch').then((m) => m.publishWatchSnapshot(activeId, updatedProfile));
       }
     },
-    [profile, divisionUnlocked, remainderUnlocked, sessionMode],
+    [profile, divisionUnlocked, remainderUnlocked, sessionMode, sessionItems],
   );
 
   const exitRecap = useCallback((next: Screen) => {
@@ -678,11 +932,13 @@ export default function App({
   // de progression du récap (« Tu connais X / Y »).
   const recapFacts = !profile
     ? []
-    : recapMode === 'rem'
-      ? (profile.remainderFacts ?? [])
-      : recapMode === 'div'
-        ? (profile.divisionFacts ?? [])
-        : profile.facts;
+    : recapMode === 'conj'
+      ? (profile.conjFacts ?? [])
+      : recapMode === 'rem'
+        ? (profile.remainderFacts ?? [])
+        : recapMode === 'div'
+          ? (profile.divisionFacts ?? [])
+          : profile.facts;
 
   const handleExport = useCallback(() => {
     if (!profile) return;
@@ -801,6 +1057,10 @@ export default function App({
           hasSessionAvailable={hasSessionAvailable}
           hasNewRule={hasNewRule}
           divisionUnlocked={divisionUnlocked}
+          conjAvailable={conjAvailable}
+          hasConjSessionAvailable={hasConjSessionAvailable}
+          conjVisible={conjVisible}
+          onStartConj={handleStartConj}
           onStart={handleStart}
           onShowProgress={() => {
             // Post-déblocage, les images des niveaux passés sont complètes :
@@ -815,11 +1075,16 @@ export default function App({
         />
       )}
 
+      {screen === 'conjPlacement' && profile && (
+        <ConjPlacementScreen onComplete={handleConjPlacementComplete} />
+      )}
+
       {screen === 'session' && profile && sessionItems.length > 0 && (
         <SessionScreen
           questions={sessionItems}
           onComplete={handleSessionComplete}
           onAnswer={handleSessionItemAnswer}
+          onConjAnswer={handleConjAnswer}
         />
       )}
 

@@ -203,6 +203,123 @@
   text-align: center;
 }
 
+/* === Matière conjugaison (spec Verbito) ====================================
+   Une séance de conjugaison réutilise la coquille de la séance de maths
+   (.session-screen, .session-intro, .session-question) : mêmes marges, même
+   barrette de progression, même animation d'entrée. Seul change ce qui est
+   propre à la matière — la phrase porteuse, le blanc à remplir, le clavier. */
+
+/* L'intro conjugaison se déroule en 3 écrans successifs dans le même bloc :
+   la phrase, la mécanique en couleurs, la copie différée (§5.2). */
+.session-intro.conj-intro {
+  gap: 18px;
+}
+
+.conj-intro-sentence {
+  max-width: 340px;
+  margin-top: 8px;
+}
+
+/* Rappel de l'infinitif : la consigne, jamais l'énoncé. Discret par
+   construction — l'exercice ne doit pas commencer par un déchiffrage (§8). */
+.conj-intro-infinitive {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+/* Copie différée (§5.2 étape 3) : le modèle s'efface SANS que rien ne bouge —
+   `visibility` plutôt que démontage, pour que le clavier n'ait pas l'air de
+   sauter sous les doigts au moment du masquage. Le vide laissé est la
+   consigne : « je lis, je cache, j'écris ». */
+.conj-copy-model {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.conj-copy-model.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Le clavier tombe en bas de l'écran (pouces prêts), comme le NumPad. */
+.conj-keyboard-area {
+  width: 100%;
+  max-width: 420px;
+  margin-top: auto;
+  padding: 8px 0 4px;
+}
+
+.session-question.conj-question {
+  padding: 8px 16px 0;
+}
+
+/* Un seul item à l'écran, gros corps, interlignage généreux (§8). La phrase se
+   replie en gardant le blanc solidaire de ce qui le précède. */
+.conj-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 34px;
+  text-align: center;
+  padding: 16px 0 4px;
+}
+
+/* Le blanc à remplir : un trait, pas une case à cases — sa largeur est fixe et
+   ne trahit donc JAMAIS le nombre de lettres attendues. */
+.conj-blank {
+  display: inline-block;
+  width: 2.2em;
+  height: 0.9em;
+  border-bottom: 3px solid var(--indigo);
+  margin: 0 0.06em;
+}
+
+.conj-sentence-tail {
+  color: var(--ink-soft);
+  font-weight: 400;
+  white-space: pre-wrap;
+}
+
+.conj-question-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px 0 2px;
+}
+
+/* Réécoute : la phrase est lue d'office à l'affichage, ce bouton n'est là que
+   pour la redemander — d'où une pastille discrète, pas un bouton d'action. */
+.conj-replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--indigo-soft);
+  border: 1.5px solid var(--indigo);
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--indigo-ink);
+  padding: 8px 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.conj-replay-btn:active {
+  transform: translateY(1px);
+}
+
 /* « reste » intercalé dans la formule (« 45 ÷ 7 = 6, reste ? »). La virgule
    colle au quotient (::before sans marge gauche) et l'espacement se fait par
    marges explicites — l'espace typographique serait illisible à 0.45em. Encre

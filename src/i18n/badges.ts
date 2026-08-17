@@ -39,8 +39,20 @@ export interface BadgeI18n {
   remPremiereMaitrise: BadgeText;
   remTable: (n: number) => BadgeText;
   remGenie: BadgeText;
+  // Matière conjugaison (spec Verbito §7.2) : un badge par temps (3), un par
+  // verbe irrégulier (7). La matière est fr-only — l'entrée `en` existe pour
+  // que la table reste totale, elle n'est jamais affichée (les badges de
+  // conjugaison sont masqués quand la langue d'interface est l'anglais).
+  conjTense: (tense: 'present' | 'imparfait' | 'futur') => BadgeText;
+  conjVerb: (verb: string) => BadgeText;
   units: BadgeUnitLabels;
 }
+
+// Nom affichable d'un temps, par langue.
+const TENSE_NAMES: Record<Lang, Record<'present' | 'imparfait' | 'futur', string>> = {
+  fr: { present: 'présent', imparfait: 'imparfait', futur: 'futur' },
+  en: { present: 'present', imparfait: 'imperfect', futur: 'future' },
+};
 
 const fr: BadgeI18n = {
   premierPas: {
@@ -132,6 +144,16 @@ const fr: BadgeI18n = {
     description: 'Toutes les divisions avec reste en boîte 5',
     conditionText: 'Place toutes les divisions avec reste dans la boîte 5 (le top niveau !).',
   },
+  conjTense: (tense) => ({
+    name: `Le ${TENSE_NAMES.fr[tense]}, c’est fait !`,
+    description: `Maîtriser tout le ${TENSE_NAMES.fr[tense]}`,
+    conditionText: `Place toutes les formes du ${TENSE_NAMES.fr[tense]} dans la boîte 4 ou 5.`,
+  }),
+  conjVerb: (verb) => ({
+    name: `Le verbe « ${verb} »`,
+    description: `Maîtriser le verbe ${verb}`,
+    conditionText: `Place toutes les formes du verbe « ${verb} » dans la boîte 4 ou 5.`,
+  }),
   units: {
     session: 'séance',
     box4: 'en boîte 4',
@@ -231,6 +253,16 @@ const en: BadgeI18n = {
     description: 'Every division with remainder in box 5',
     conditionText: 'Move every division with remainder to box 5 (the top level!).',
   },
+  conjTense: (tense) => ({
+    name: `The ${TENSE_NAMES.en[tense]} tense, done!`,
+    description: `Master the whole ${TENSE_NAMES.en[tense]} tense`,
+    conditionText: `Move every ${TENSE_NAMES.en[tense]}-tense form to box 4 or 5.`,
+  }),
+  conjVerb: (verb) => ({
+    name: `The verb “${verb}”`,
+    description: `Master the verb ${verb}`,
+    conditionText: `Move every form of the verb “${verb}” to box 4 or 5.`,
+  }),
   units: {
     session: 'session',
     box4: 'in box 4',

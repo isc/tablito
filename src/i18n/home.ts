@@ -22,6 +22,19 @@ interface HomeStrings {
   greeting: (name: string) => string;
   letsGo: string;
   doneForToday: string;
+  // === Choix de matière (spec Verbito §9 : « l'accueil devient un choix de
+  // matière »). Affiché seulement quand la conjugaison est disponible, donc
+  // seulement en français — les entrées `en` gardent la table totale sans
+  // jamais être rendues.
+  subjectMaths: string;
+  subjectConj: string;
+  /** État d'une tuile dont la séance du jour est déjà faite. */
+  subjectDone: string;
+  /** aria-label d'une tuile jouable / déjà faite. */
+  subjectStart: (subject: string) => string;
+  subjectDoneLabel: (subject: string) => string;
+  /** Pastille de découverte (première disponibilité, pas de modale). */
+  subjectNewLabel: (subject: string) => string;
   myPictures: string;
   myPicture: string;
   badges: string;
@@ -43,6 +56,12 @@ const homeFr: HomeStrings = {
   greeting: (name) => `Salut ${name}\u00a0!`,
   letsGo: "C'est parti\u00a0!",
   doneForToday: "Bravo, c'est fait pour aujourd'hui\u00a0!",
+  subjectMaths: 'Maths',
+  subjectConj: 'Conjugaison',
+  subjectDone: 'Fait\u00a0!',
+  subjectStart: (subject) => `${subject} — commencer la séance du jour`,
+  subjectDoneLabel: (subject) => `${subject} — c'est fait pour aujourd'hui`,
+  subjectNewLabel: (subject) => `${subject} — nouveau\u00a0!`,
   myPictures: 'Mes images',
   myPicture: 'Mon image',
   badges: 'Badges',
@@ -64,6 +83,12 @@ const homeEn: HomeStrings = {
   greeting: (name) => `Hi ${name}!`,
   letsGo: "Let's go!",
   doneForToday: "Nice work, you're done for today!",
+  subjectMaths: 'Maths',
+  subjectConj: 'Conjugation',
+  subjectDone: 'Done!',
+  subjectStart: (subject) => `${subject} — start today's session`,
+  subjectDoneLabel: (subject) => `${subject} — done for today`,
+  subjectNewLabel: (subject) => `${subject} — new!`,
   myPictures: 'My pictures',
   myPicture: 'My picture',
   badges: 'Badges',

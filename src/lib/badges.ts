@@ -1,5 +1,22 @@
-import type { UserProfile, Badge, MultiFact, DivisionFact, RemainderFact } from '../types';
+import type {
+  UserProfile,
+  Badge,
+  MultiFact,
+  DivisionFact,
+  RemainderFact,
+  ConjFact,
+  ConjTense,
+} from '../types';
 import { BADGE_IDS } from '../types';
+import { CONJ_TENSE_BADGE_ID, allConjMastered, conjVerbBadgeId } from './conjugationComposer';
+import {
+  CONJ_IRREGULAR_VERBS,
+  CONJ_TENSES,
+  conjFactDef,
+  conjFactsOfTense,
+  conjFactsOfVerb,
+} from './conjugationFacts';
+import { MASTERY_BOX } from './leitner';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
 import { getLang, type Lang } from '../i18n/lang';
@@ -64,6 +81,39 @@ export function hasAllDivisionTableBadges(profile: UserProfile): boolean {
  */
 export function isRemainderUnlocked(profile: UserProfile): boolean {
   return hasAllDivisionTableBadges(profile);
+}
+
+// === Matière conjugaison (spec Verbito §7.2, §9) ==========================
+//
+// La conjugaison n'est pas un niveau empilé sur les maths mais une MATIÈRE :
+// elle ne se « débloque » pas par la progression, elle est simplement là — à
+// deux conditions.
+
+/**
+ * La matière est-elle proposée par cette installation ? Elle est **fr-only**
+ * (§9 : app publique et bilingue, matière française) : en anglais, rien ne doit
+ * en transparaître — ni tuile d'accueil, ni onglet d'image, ni badge.
+ *
+ * `lang` est explicite pour les appelants React : `getLang()` est un singleton
+ * module, il ne re-rend rien quand la langue change. Les composants passent la
+ * langue du contexte (`useLang()`), les modules hors-React laissent le défaut.
+ */
+export function isConjAvailable(lang: Lang = getLang()): boolean {
+  return lang === 'fr';
+}
+
+/** L'enfant a-t-il déjà ouvert la matière ? (pilote la pastille de découverte) */
+export function hasOpenedConj(profile: UserProfile): boolean {
+  return profile.hasSeenConjIntro === true;
+}
+
+/**
+ * La matière est-elle visible dans les écrans transverses (badges, images,
+ * espace parent) ? Révélation différée, comme la règle bonus ×11 et le niveau 2
+ * : on ne montre pas les onglets d'une matière jamais ouverte.
+ */
+export function isConjVisible(profile: UserProfile, lang: Lang = getLang()): boolean {
+  return isConjAvailable(lang) && hasOpenedConj(profile);
 }
 
 /**
@@ -382,6 +432,70 @@ function buildRemainderBadgeDefinitions(): BadgeDefinition[] {
   ];
 }
 
+// Badges de la matière conjugaison (spec §7.2) : 3 badges de temps + 7 badges
+// de verbe irrégulier. Les badges de TEMPS ne sont pas décoratifs — ce sont eux
+// qui débloquent le temps suivant (unlockedConjTenses), et c'est exactement le
+// point de la spec : les déblocages reposent sur des badges PERMANENTS, jamais
+// sur l'état Leitner en direct, pour qu'une mauvaise journée ne referme pas un
+// temps déjà conquis.
+// Glyphes des médaillons. Le disque est petit : il ne tient qu'un emoji ou
+// deux caractères (cf. ×N / ÷N). D'où un pictogramme par temps — le marqueur
+// temporel de la phrase porteuse : hier, aujourd'hui, demain…
+const CONJ_TENSE_ICON: Record<ConjTense, string> = {
+  present: '☀️',
+  imparfait: '🕰️',
+  futur: '🔮',
+};
+
+// …et un pictogramme par verbe irrégulier, choisi pour être reconnaissable
+// d'un coup d'œil par un enfant (l'œil = voir, la bulle = dire). Repli sur une
+// plume pour tout verbe ajouté plus tard sans son emoji.
+const CONJ_VERB_ICON: Record<string, string> = {
+  'être': '🧍',
+  'avoir': '🤲',
+  'aller': '🚶',
+  'faire': '🔨',
+  'dire': '💬',
+  'venir': '🚪',
+  'voir': '👁️',
+};
+
+function buildConjBadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  const u = i.units;
+  const conjFactsOf = (p: UserProfile) => p.conjFacts ?? [];
+  return [
+    ...CONJ_TENSES.map((tense) => ({
+      id: CONJ_TENSE_BADGE_ID[tense],
+      ...i.conjTense(tense),
+      icon: CONJ_TENSE_ICON[tense],
+      color: 'var(--indigo)',
+      progressFor: (p: UserProfile) => {
+        const facts = conjFactsOfTense(conjFactsOf(p), tense);
+        return {
+          current: facts.filter((f) => f.box >= MASTERY_BOX).length,
+          target: facts.length,
+          unitLabel: u.box4plus,
+        };
+      },
+    })),
+    ...CONJ_IRREGULAR_VERBS.map((verb) => ({
+      id: conjVerbBadgeId(verb),
+      ...i.conjVerb(verb),
+      icon: CONJ_VERB_ICON[verb] ?? '🪶',
+      color: 'var(--sage)',
+      progressFor: (p: UserProfile) => {
+        const facts = conjFactsOfVerb(conjFactsOf(p), verb);
+        return {
+          current: facts.filter((f) => f.box >= MASTERY_BOX).length,
+          target: facts.length,
+          unitLabel: u.box4plus,
+        };
+      },
+    })),
+  ];
+}
+
 // Cache mémoïsé par langue : les définitions ne dépendent que de la langue
 // (les chaînes), pas du profil (passé en argument à progressFor). On les
 // reconstruit donc seulement au changement de langue, pas à chaque appel —
@@ -391,6 +505,7 @@ let cacheLang: Lang | null = null;
 let cachedAll: BadgeDefinition[] = [];
 let cachedDivision: BadgeDefinition[] = [];
 let cachedRemainder: BadgeDefinition[] = [];
+let cachedConj: BadgeDefinition[] = [];
 let cachedMap: Map<string, BadgeDefinition> = new Map();
 
 function ensureCache(): void {
@@ -399,8 +514,9 @@ function ensureCache(): void {
   cachedAll = buildAllBadgeDefinitions();
   cachedDivision = buildDivisionBadgeDefinitions();
   cachedRemainder = buildRemainderBadgeDefinitions();
+  cachedConj = buildConjBadgeDefinitions();
   cachedMap = new Map(
-    [...cachedAll, ...cachedDivision, ...cachedRemainder].map((d) => [d.id, d]),
+    [...cachedAll, ...cachedDivision, ...cachedRemainder, ...cachedConj].map((d) => [d.id, d]),
   );
   cacheLang = lang;
 }
@@ -420,6 +536,11 @@ export function getRemainderBadgeDefinitions(): BadgeDefinition[] {
   return cachedRemainder;
 }
 
+export function getConjBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedConj;
+}
+
 function badgeMap(): Map<string, BadgeDefinition> {
   ensureCache();
   return cachedMap;
@@ -435,6 +556,9 @@ export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[]
   const defs = [...getAllBadgeDefinitions()];
   if (isDivisionUnlocked(profile)) defs.push(...getDivisionBadgeDefinitions());
   if (isRemainderUnlocked(profile)) defs.push(...getRemainderBadgeDefinitions());
+  // Conjugaison : visible seulement une fois la matière ouverte, et jamais en
+  // anglais (matière fr-only) — même révélation différée que ci-dessus.
+  if (isConjVisible(profile)) defs.push(...getConjBadgeDefinitions());
   return defs;
 }
 
@@ -516,7 +640,42 @@ export function checkBadges(
     }
   }
 
+  // Matière conjugaison — badges de temps et de verbe. Pas de garde de
+  // visibilité ici : ces badges DÉBLOQUENT les temps suivants, ils doivent donc
+  // tomber dès que le critère est atteint, indépendamment de la langue
+  // d'interface du moment (l'affichage, lui, reste gardé par isConjVisible).
+  //
+  // Court-circuit tant qu'aucun fait n'a été introduit : aucun badge n'est
+  // alors gagnable (un fait jamais posé reste en boîte 1), et c'est le cas de
+  // toutes les séances de maths — la matière n'a même pas de faits en mémoire
+  // tant qu'elle n'a pas été ouverte.
+  const conjFacts = profile.conjFacts;
+  if (conjFacts?.some((f) => f.introduced)) {
+    // UN passage sur les faits, regroupés à la fois par temps et par verbe, au
+    // lieu de 3 + 7 filtrages de l'inventaire complet.
+    const byTense = new Map<ConjTense, ConjFact[]>();
+    const byVerb = new Map<string, ConjFact[]>();
+    for (const fact of conjFacts) {
+      const def = conjFactDef(fact.key);
+      if (!def) continue;
+      pushTo(byTense, def.tense, fact);
+      if (def.verb) pushTo(byVerb, def.verb, fact);
+    }
+    for (const tense of CONJ_TENSES) {
+      if (allConjMastered(byTense.get(tense) ?? [])) earn(CONJ_TENSE_BADGE_ID[tense]);
+    }
+    for (const verb of CONJ_IRREGULAR_VERBS) {
+      if (allConjMastered(byVerb.get(verb) ?? [])) earn(conjVerbBadgeId(verb));
+    }
+  }
+
   return newBadges;
+}
+
+function pushTo<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const bucket = map.get(key);
+  if (bucket) bucket.push(value);
+  else map.set(key, [value]);
 }
 
 function hasConsecutiveTrue(values: boolean[], count: number): boolean {

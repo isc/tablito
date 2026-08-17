@@ -36,14 +36,30 @@ export function pickRandom<T>(arr: readonly T[]): T {
  * en conflit. Greedy : premier élément au hasard, puis on prend le premier
  * candidat non conflictuel ; à défaut, le premier restant (best effort).
  * Partagé par l'entrelacement des séances multiplication et division.
+ *
+ * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
+ * (la dernière introduction du jour, par exemple) : il contraint alors le
+ * premier tirage, sans quoi la jonction entre deux blocs échapperait à
+ * l'entrelacement.
  */
-export function interleaveGreedy<T>(items: T[], conflicts: (a: T, b: T) => boolean): T[] {
-  if (items.length <= 1) return items;
+export function interleaveGreedy<T>(
+  items: T[],
+  conflicts: (a: T, b: T) => boolean,
+  after?: T,
+): T[] {
+  if (items.length === 0) return items;
+  if (items.length === 1 && after === undefined) return items;
 
   const remaining = [...items];
   const result: T[] = [];
 
-  const firstIdx = Math.floor(Math.random() * remaining.length);
+  const firstIdx =
+    after === undefined
+      ? Math.floor(Math.random() * remaining.length)
+      : Math.max(
+          0,
+          remaining.findIndex((item) => !conflicts(after, item)),
+        );
   result.push(remaining.splice(firstIdx, 1)[0]);
 
   while (remaining.length > 0) {
@@ -62,4 +78,36 @@ export function interleaveGreedy<T>(items: T[], conflicts: (a: T, b: T) => boole
   }
 
   return result;
+}
+
+/**
+ * Longueur maximale d'une séance, REPRISES COMPRISES — toutes matières. La
+ * composition vise 12-15 questions ; chaque erreur en insère une de plus, et
+ * sans plafond une mauvaise passe (surtout en vocal) rend la séance
+ * interminable. Une seule source pour les maths et la conjugaison : les deux
+ * partagent l'écran de séance, donc la même file et les mêmes pastilles.
+ */
+export const MAX_SESSION_QUESTIONS = 20;
+
+/**
+ * Re-pose une question `gap` questions plus tard : après une erreur, et après
+ * l'introduction d'un fait nouveau. Renvoie la file INCHANGÉE si le plafond est
+ * atteint — on préfère une séance qui se termine proprement à une séance qui
+ * s'étire.
+ *
+ * Générique sur l'élément de file : l'écran de séance manipule des
+ * `AnySessionItem` (multiplication, division, reste, conjugaison), et seuls les
+ * deux drapeaux réécrits ici comptent.
+ */
+export function scheduleRetry<T extends { isIntroduction: boolean; isRetry: boolean }>(
+  queue: T[],
+  currentIndex: number,
+  question: T,
+  gap: number,
+  cap: number = MAX_SESSION_QUESTIONS,
+): T[] {
+  if (queue.length >= cap) return queue;
+  const at = Math.min(currentIndex + gap, queue.length);
+  const retry = { ...question, isIntroduction: false, isRetry: true };
+  return [...queue.slice(0, at), retry, ...queue.slice(at)];
 }

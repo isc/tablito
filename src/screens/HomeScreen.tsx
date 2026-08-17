@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import Mascot from '../components/Mascot';
 import Feather from '../components/Feather';
@@ -18,6 +18,18 @@ interface HomeScreenProps {
   // devient « Mes images » (l'écran progression montre alors les deux images,
   // multiplication et division).
   divisionUnlocked: boolean;
+  // === Matière conjugaison (spec Verbito §9 : « l'accueil devient un choix de
+  // matière »). Faux hors français : la matière est fr-only et RIEN n'en
+  // transparaît alors — l'accueil reste exactement celui d'avant.
+  conjAvailable: boolean;
+  // La séance de conjugaison du jour reste-t-elle à faire ? (Indépendante de
+  // celle de maths : faire l'une ne ferme pas l'autre.)
+  hasConjSessionAvailable: boolean;
+  // La matière a-t-elle déjà été ouverte ? Faux + `conjAvailable` = elle est
+  // là mais jamais touchée : c'est la pastille discrète de découverte
+  // (révélation différée, comme la règle bonus ×11 — jamais de modale).
+  conjVisible: boolean;
+  onStartConj: () => void;
   onStart: () => void;
   onShowProgress: () => void;
   onShowBadges: () => void;
@@ -96,6 +108,35 @@ function IconUsers() {
   );
 }
 
+// Icônes des deux matières. Volontairement sobres et de même facture (même
+// cadre, même trait) : c'est un choix entre deux pairs, pas une hiérarchie.
+function IconMaths() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="6" fill="var(--indigo-soft)" stroke="var(--ink)" strokeWidth="1.6" />
+      <path d="M11 11 L 15 15 M 15 11 L 11 15" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M18 20 H 23" stroke="var(--ink)" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="20.5" cy="17" r="1.2" fill="var(--ink)" />
+      <circle cx="20.5" cy="23" r="1.2" fill="var(--ink)" />
+    </svg>
+  );
+}
+
+function IconVerb() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="6" fill="var(--honey-soft)" stroke="var(--ink)" strokeWidth="1.6" />
+      {/* Un « mot » coupé en deux : radical en encre, terminaison en couleur —
+          la segmentation radical|terminaison est LA signature de la matière
+          (§2.3), et elle se lit même à 30 px, contrairement à des lettres. */}
+      <rect x="8.5" y="12" width="9" height="3.2" rx="1.6" fill="var(--ink)" />
+      <rect x="19" y="12" width="4.5" height="3.2" rx="1.6" fill="var(--coral)" />
+      <rect x="8.5" y="18" width="6" height="3.2" rx="1.6" fill="var(--ink)" opacity="0.35" />
+      <rect x="16" y="18" width="4.5" height="3.2" rx="1.6" fill="var(--coral)" opacity="0.45" />
+    </svg>
+  );
+}
+
 function IconRuler() {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -105,11 +146,53 @@ function IconRuler() {
   );
 }
 
+/**
+ * Tuile de matière (spec Verbito §9). Une matière dont la séance du jour est
+ * faite n'est pas grisée-punie : elle porte un ✓ tranquille et ne se relance
+ * pas — même esprit que « c'est fait pour aujourd'hui » du mono-matière.
+ */
+function SubjectTile({
+  icon,
+  label,
+  available,
+  isNew = false,
+  onStart,
+  t,
+}: {
+  icon: ReactNode;
+  label: string;
+  available: boolean;
+  isNew?: boolean;
+  onStart: () => void;
+  t: ReturnType<typeof useHomeStrings>;
+}) {
+  return (
+    <button
+      type="button"
+      className={`home-subject-btn${available ? '' : ' is-done'}`}
+      onClick={onStart}
+      disabled={!available}
+      aria-label={available ? t.subjectStart(label) : t.subjectDoneLabel(label)}
+    >
+      <span className="home-subject-icon">{icon}</span>
+      <span className="home-subject-label">{label}</span>
+      <span className="home-subject-state">{available ? `▶ ${t.letsGo}` : t.subjectDone}</span>
+      {isNew && (
+        <span className="home-subject-dot" aria-label={t.subjectNewLabel(label)} role="status" />
+      )}
+    </button>
+  );
+}
+
 export default function HomeScreen({
   profile,
   hasSessionAvailable,
   hasNewRule,
   divisionUnlocked,
+  conjAvailable = false,
+  hasConjSessionAvailable = false,
+  conjVisible = false,
+  onStartConj,
   onStart,
   onShowProgress,
   onShowBadges,
@@ -255,7 +338,28 @@ export default function HomeScreen({
         </div>
 
         <div className="home-cta-wrap">
-          {hasSessionAvailable ? (
+          {conjAvailable ? (
+            // Deux matières ⇒ deux tuiles jumelles. Chacune porte l'état de SA
+            // séance du jour ; la flamme de série, elle, reste partagée (§7.2 :
+            // une séance quelconque la maintient).
+            <div className="home-subjects">
+              <SubjectTile
+                icon={<IconMaths />}
+                label={t.subjectMaths}
+                available={hasSessionAvailable}
+                onStart={onStart}
+                t={t}
+              />
+              <SubjectTile
+                icon={<IconVerb />}
+                label={t.subjectConj}
+                available={hasConjSessionAvailable}
+                isNew={!conjVisible}
+                onStart={onStartConj}
+                t={t}
+              />
+            </div>
+          ) : hasSessionAvailable ? (
             <button className="btn btn--indigo home-start-btn" onClick={onStart}>
               {'▶'} {t.letsGo}
             </button>
@@ -267,7 +371,11 @@ export default function HomeScreen({
         <div className="home-nav">
           <button className="home-nav-btn" onClick={onShowProgress}>
             <span className="home-nav-btn-icon"><IconImage /></span>
-            <span className="home-nav-btn-label">{divisionUnlocked ? t.myPictures : t.myPicture}</span>
+            {/* Plusieurs images dès qu'un 2ᵉ inventaire existe : niveau 2
+                débloqué OU matière conjugaison ouverte. */}
+            <span className="home-nav-btn-label">
+              {divisionUnlocked || conjVisible ? t.myPictures : t.myPicture}
+            </span>
           </button>
           <button className="home-nav-btn" onClick={onShowBadges}>
             <span className="home-nav-btn-icon"><IconBadge /></span>

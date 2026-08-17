@@ -35,6 +35,9 @@ interface Strings {
   multiplications: string;
   divisions: string;
   remainders: string;
+  // Matière conjugaison : nom affiché dans la jauge « Tu connais X / Y … ».
+  // Entrée `en` pour garder la table totale ; jamais rendue (matière fr-only).
+  conjugations: string;
   newBadgeEyebrow: string;
   seeImage: string;
   finish: string;
@@ -77,6 +80,7 @@ const fr: Strings = {
   multiplications: 'multiplications',
   divisions: 'divisions',
   remainders: 'divisions avec reste',
+  conjugations: 'formes verbales',
   newBadgeEyebrow: 'Nouveau badge',
   seeImage: 'Voir mon image →',
   finish: 'À demain !',
@@ -119,6 +123,7 @@ const en: Strings = {
   multiplications: 'multiplications',
   divisions: 'divisions',
   remainders: 'divisions with remainder',
+  conjugations: 'verb forms',
   newBadgeEyebrow: 'New badge',
   seeImage: 'See my picture →',
   finish: 'See you tomorrow!',

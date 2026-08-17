@@ -1,0 +1,75 @@
+/* Mini-clavier AZERTY de la matière conjugaison (spec Verbito §4.2). Le socle
+   commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit dans
+   Pad.css — le geste doit être le même d'une matière à l'autre ; ici ne
+   restent que les dimensions propres à un clavier de lettres et l'ardoise à
+   radical. */
+
+.letterpad-display {
+  font-size: 32px;
+  letter-spacing: 1px;
+}
+
+/* Le radical déjà donné, en encre douce : l'enfant voit la forme entière se
+   construire (« chant » + « ons ») sans confondre ce qu'il a tapé avec ce qui
+   lui était offert. */
+.letterpad-display-prefix {
+  color: var(--conj-stem);
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.letterpad-display-input {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.letterpad-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.letterpad-row {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Rangée du bas : 6 touches, centrées et à la largeur des touches du milieu —
+   la silhouette d'un clavier, reconnaissable au premier coup d'œil. */
+.letterpad-row--bottom {
+  justify-content: center;
+  padding: 0 20%;
+}
+
+.letterpad-row--actions {
+  margin-top: 4px;
+  gap: 8px;
+}
+
+.letterpad-btn {
+  flex: 1;
+  min-width: 0;
+  /* Cible tactile : 52px de haut, au-dessus des 48px recommandés. La largeur,
+     elle, se partage l'écran comme sur un vrai clavier — c'est la hauteur qui
+     porte la précision du geste. */
+  height: 52px;
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.letterpad-btn-backspace {
+  flex: 1;
+  font-size: 20px;
+}
+
+/* Validation EXPLICITE : la longueur de la réponse n'étant pas prévisible, ce
+   bouton est le seul chemin de soumission — il doit donc être le plus gros
+   élément du clavier. */
+.letterpad-btn-ok {
+  flex: 2;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}

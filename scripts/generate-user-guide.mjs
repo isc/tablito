@@ -457,6 +457,19 @@ async function gotoHome(page) {
   await page.addStyleTag({ content: DISABLE_ANIMATIONS_CSS });
 }
 
+// Démarre la séance de maths depuis l'accueil. En FR, la matière conjugaison
+// est disponible : l'accueil montre deux tuiles (`.home-subject-btn`, maths en
+// premier) au lieu du bouton unique `.home-start-btn` que l'EN conserve.
+async function startMathsSession(page) {
+  await page.waitForSelector('.home-cta-wrap');
+  const tile = page.locator('.home-subjects .home-subject-btn').first();
+  if (await tile.count()) {
+    await tile.click();
+  } else {
+    await page.click('.home-start-btn');
+  }
+}
+
 async function shot(page, name, locator) {
   const path = join(SHOTS_DIR, `${name}.png`);
   const target = locator ?? page;
@@ -629,8 +642,7 @@ async function captureSessionScreens(page) {
   }
   await seedProfile(page, profile);
   await gotoHome(page);
-  await page.waitForSelector('.home-start-btn');
-  await page.click('.home-start-btn');
+  await startMathsSession(page);
   await page.waitForSelector('.session-screen');
 
   if (await page.locator('.session-intro').count()) {
@@ -758,8 +770,7 @@ async function captureVoiceInput(page) {
   }
   await seedProfile(page, profile);
   await gotoHome(page);
-  await page.waitForSelector('.home-start-btn');
-  await page.click('.home-start-btn');
+  await startMathsSession(page);
   await page.waitForSelector('.session-screen');
   await clickAllIntroSteps(page);
   await page.waitForSelector('.voice-mic.listening', { timeout: 3000 });
@@ -784,8 +795,7 @@ async function captureRecap(page) {
   }
   await seedProfile(page, profile);
   await gotoHome(page);
-  await page.waitForSelector('.home-start-btn');
-  await page.click('.home-start-btn');
+  await startMathsSession(page);
 
   for (let i = 0; i < 60; i++) {
     await sleep(200);
@@ -822,8 +832,8 @@ async function captureDivisionScreens(page) {
   await seedProfile(page, buildUnlockedDivisionProfile());
   await gotoHome(page);
   await page.waitForSelector('.home-screen');
-  // Niveau 2 débloqué : un seul bouton « C'est parti », et la tuile « Mon image »
-  // est devenue « Mes images » (pas de second bouton ni de tuile dédiée).
+  // Niveau 2 débloqué : la tuile maths reste unique (pas d'entrée dédiée aux
+  // divisions), et la tuile « Mon image » est devenue « Mes images ».
   await shot(page, '15-division-home');
 
   // Espace parent — version division débloquée : carte « Divisions maîtrisées »,
@@ -841,8 +851,9 @@ async function captureDivisionScreens(page) {
   await page.waitForSelector('.home-screen');
 
   // Séance de division : le seed n'a aucune table due → la séance du jour est
-  // la division. On clique le bouton unique « C'est parti ».
-  await page.click('.home-start-btn');
+  // la division. On démarre la séance de maths (bouton unique en EN, tuile
+  // maths en FR).
+  await startMathsSession(page);
   await page.waitForSelector('.session-screen');
   if (await page.locator('.session-intro').count()) {
     // Attend la révélation "lots" : grille remplie → paquets séparés → compte
@@ -879,7 +890,7 @@ async function captureRemainderScreens(page) {
 
   // Séance : intro de zone (rangées pleines + points du reste en couleur),
   // puis la saisie en deux temps sur la question qui suit.
-  await page.click('.home-start-btn');
+  await startMathsSession(page);
   await page.waitForSelector('.session-screen');
   if (await page.locator('.session-intro').count()) {
     // La rangée du reste est dans le DOM dès le montage mais reste `.hidden`
@@ -1080,9 +1091,9 @@ const SECTIONS_FR = [
       forme de division (« 56 ÷ 7 = ? »), avec sa propre image mystère — l'image
       des tables, elle, reste acquise. La tuile « Mon image » devient « Mes
       images » : on y bascule entre l'image des multiplications et celle des
-      divisions. Il n'y a toujours qu'un seul bouton « C'est parti » : la séance
-      du jour devient la division, et les quelques tables à réviser pour
-      l'entretien y sont glissées au passage (× et ÷ dans la même séance).
+      divisions. La tuile maths reste unique : la séance du jour devient la
+      division, et les quelques tables à réviser pour l'entretien y sont
+      glissées au passage (× et ÷ dans la même séance).
       Les divisions arrivent progressivement (pas toutes d'un coup), dans le même
       ordre pensé que les tables — du plus simple au plus difficile — et l'app
       enseigne explicitement l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois
