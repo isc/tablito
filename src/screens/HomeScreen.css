@@ -295,3 +295,83 @@
 .home-chrome-btn:active {
   background: var(--cream-deep);
 }
+
+/* === Choix de matière (spec Verbito §9) ==================================
+   Deux tuiles jumelles à la place du bouton unique quand la conjugaison est
+   disponible (français seulement). Même largeur, même poids visuel : c'est un
+   choix entre deux pairs, pas un niveau et son extension. */
+.home-subjects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.home-subject-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.home-subject-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  background: var(--cream-deep);
+}
+
+.home-subject-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+}
+
+.home-subject-label {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.home-subject-state {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+/* Séance du jour déjà faite : pas une punition, un constat tranquille. */
+.home-subject-btn.is-done {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  cursor: default;
+}
+
+.home-subject-btn.is-done .home-subject-state {
+  color: var(--sage);
+}
+
+.home-subject-btn.is-done .home-subject-icon {
+  opacity: 0.55;
+}
+
+/* Pastille de découverte : révélation différée, jamais de modale. */
+.home-subject-dot {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--coral);
+}
