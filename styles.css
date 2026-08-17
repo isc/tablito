@@ -308,6 +308,138 @@
   box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
 }
 
+/* ===== components/ConjFeedbackOverlay.css ===== */
+/* Feedback de la matière conjugaison (spec Verbito §5.3). Réutilise la coquille
+   de FeedbackOverlay.css (.feedback-overlay, .feedback-card, .feedback-message,
+   .feedback-ok-btn) : seule la zone « forme segmentée » — l'équivalent de la
+   grille de points côté maths — est propre à la conjugaison. */
+
+.conj-feedback-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 14px 0 6px;
+}
+
+/* Rappel de la phrase porteuse sous la forme corrigée : la forme se réancre
+   dans son contexte, pas dans le vide. Discret — c'est la forme segmentée qui
+   porte la correction. */
+.conj-feedback-sentence {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-muted);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+/* Chemin accepté (correct ou « presque ») : la forme prend la place que le
+   rappel « 7 × 8 = 56 » occupe côté maths — c'est la vraie récompense
+   pédagogique de l'écran, pas une légende. */
+.feedback-overlay.correct .conj-feedback-form {
+  margin-top: 4px;
+}
+
+/* ===== components/ConjForm.css ===== */
+/* Palette de la segmentation morphologique (spec Verbito §2.3). Deux couleurs
+   stables, valables partout où une forme verbale est affichée : le RADICAL en
+   bleu, la TERMINAISON en grenat. Volontairement distinctes de l'indigo (accent
+   d'interface) et du corail (couleur d'erreur) : la segmentation est une
+   information de structure, jamais un jugement. */
+:root {
+  --conj-stem: var(--sky);
+  --conj-mark: #B23A5D;
+  --conj-mark-soft: #F7E1E8;
+}
+
+.conj-form {
+  font-family: var(--serif);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.45;
+  font-size: 34px;
+  letter-spacing: -0.5px;
+  /* Les phrases porteuses sont passées avec leur espacement (« Demain, »,
+     « nous », « j’ ») : on le préserve tout en laissant la ligne se replier. */
+  white-space: pre-wrap;
+}
+
+.conj-form-context {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.conj-form-subject {
+  color: var(--ink);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.conj-form-stem {
+  color: var(--conj-stem);
+  font-weight: 600;
+  /* Élément positionné ⇒ peint AU-DESSUS des fonds des pastilles voisines :
+     sans ça, la pastille de la marque (plus tard dans le DOM, marge négative)
+     recouvre la descente du g de « mang·ions ». */
+  position: relative;
+}
+
+.conj-form-mark {
+  color: var(--conj-mark);
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+/* « Illuminé » : une pastille de couleur derrière le pronom ou sa marque
+   (spec §5.2 étape 2, §5.3 cas erreur). Le padding est négatif en marge pour
+   que l'illumination n'écarte pas les lettres — la forme ne doit pas bouger
+   quand elle s'allume. */
+.conj-form-subject.is-lit,
+.conj-form-mark.is-lit {
+  /* Le débord horizontal (padding compensé en marge, pour que la forme ne
+     bouge pas quand elle s'allume) reste sous la moitié d'une espace : deux
+     pastilles adjacentes (« je suis ») gardent ainsi un jour entre elles. */
+  padding: 0.06em 0.1em;
+  margin: 0 -0.1em;
+  animation: conjLightUp 0.45s ease both;
+}
+
+.conj-form-subject.is-lit {
+  background: var(--honey-soft);
+  box-shadow: 0 1px 0 var(--honey);
+}
+
+.conj-form-mark.is-lit {
+  background: var(--conj-mark-soft);
+  box-shadow: 0 1px 0 var(--conj-mark);
+}
+
+@keyframes conjLightUp {
+  from { background-color: transparent; box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conj-form-subject.is-lit,
+  .conj-form-mark.is-lit {
+    animation: none;
+  }
+}
+
+/* Terminaisons et radicaux mis en évidence DANS le texte des astuces (mini-
+   balisage de conjugationStrategies, rendu par renderConjHintLine) : mêmes
+   couleurs que la forme segmentée, pour que l'astuce et la forme se lisent
+   comme un seul système. */
+.conj-hint-mark {
+  color: var(--conj-mark);
+  font-weight: 700;
+}
+
+.conj-hint-stem {
+  color: var(--conj-stem);
+  font-weight: 600;
+}
+
 /* ===== components/DotGrid.css ===== */
 .dot-grid-wrapper {
   display: flex;
@@ -995,6 +1127,83 @@
   color: #fff;
 }
 
+/* ===== components/LetterKeyboard.css ===== */
+/* Mini-clavier AZERTY de la matière conjugaison (spec Verbito §4.2). Le socle
+   commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit dans
+   Pad.css — le geste doit être le même d'une matière à l'autre ; ici ne
+   restent que les dimensions propres à un clavier de lettres et l'ardoise à
+   radical. */
+
+.letterpad-display {
+  font-size: 32px;
+  letter-spacing: 1px;
+}
+
+/* Le radical déjà donné, en encre douce : l'enfant voit la forme entière se
+   construire (« chant » + « ons ») sans confondre ce qu'il a tapé avec ce qui
+   lui était offert. */
+.letterpad-display-prefix {
+  color: var(--conj-stem);
+  opacity: 0.65;
+  font-weight: 500;
+}
+
+.letterpad-display-input {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.letterpad-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.letterpad-row {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Rangée du bas : 6 touches, centrées et à la largeur des touches du milieu —
+   la silhouette d'un clavier, reconnaissable au premier coup d'œil. */
+.letterpad-row--bottom {
+  justify-content: center;
+  padding: 0 20%;
+}
+
+.letterpad-row--actions {
+  margin-top: 4px;
+  gap: 8px;
+}
+
+.letterpad-btn {
+  flex: 1;
+  min-width: 0;
+  /* Cible tactile : 52px de haut, au-dessus des 48px recommandés. La largeur,
+     elle, se partage l'écran comme sur un vrai clavier — c'est la hauteur qui
+     porte la précision du geste. */
+  height: 52px;
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.letterpad-btn-backspace {
+  flex: 1;
+  font-size: 20px;
+}
+
+/* Validation EXPLICITE : la longueur de la réponse n'étant pas prévisible, ce
+   bouton est le seul chemin de soumission — il doit donc être le plus gros
+   élément du clavier. */
+.letterpad-btn-ok {
+  flex: 2;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
 /* ===== components/Mascot.css ===== */
 .mascot {
   display: inline-flex;
@@ -1417,7 +1626,54 @@
 }
 
 /* ===== components/NumPad.css ===== */
-.numpad-container {
+/* Pavé numérique des maths. Le socle commun aux deux pavés (ardoise, relief,
+   états, curseur) vit dans Pad.css ; ici ne restent que les dimensions et la
+   typographie propres au pavé de chiffres. */
+
+.numpad-display {
+  font-size: 32px;
+  letter-spacing: 2px;
+}
+
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.numpad-btn {
+  /* Cible tactile confortable pour un chiffre : 3 colonnes seulement, donc de
+     la place en hauteur comme en largeur. */
+  height: 56px;
+  min-height: 44px;
+  border-radius: 14px;
+  font-size: 24px;
+}
+
+.numpad-btn-backspace {
+  font-size: 20px;
+}
+
+.numpad-btn-ok {
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+/* ===== components/Pad.css ===== */
+/* Socle commun des deux pavés de saisie : le pavé numérique des maths
+   (NumPad) et le mini-clavier AZERTY de la conjugaison (LetterKeyboard).
+   Même ardoise, même relief 2 px, même feedback tactile, mêmes états — le
+   geste doit être le même d'une matière à l'autre.
+
+   ⚠️ Ce fichier ne déclare AUCUNE des propriétés que les deux pavés règlent
+   différemment (height, min-height, border-radius, font-size, letter-spacing,
+   flex, min-width) : elles vivent uniquement dans NumPad.css et
+   LetterKeyboard.css. Aucune propriété n'est donc déclarée des deux côtés, et
+   le rendu ne dépend pas de l'ordre de concaténation des CSS (cf.
+   scripts/build.mjs, qui les trie par chemin). */
+
+.pad-container {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1429,9 +1685,9 @@
   -webkit-touch-callout: none;
 }
 
-.numpad-display {
+/* L'ardoise : ce que l'enfant a tapé jusqu'ici, en gros. */
+.pad-display {
   font-family: var(--serif);
-  font-size: 32px;
   font-weight: 500;
   line-height: 1;
   color: var(--ink);
@@ -1441,11 +1697,10 @@
   align-items: center;
   justify-content: center;
   border-bottom: 2px solid var(--indigo);
-  letter-spacing: 2px;
   position: relative;
 }
 
-.numpad-display-cursor {
+.pad-display-cursor {
   display: inline-block;
   width: 2px;
   height: 26px;
@@ -1459,20 +1714,9 @@
   51%, 100% { opacity: 0; }
 }
 
-.numpad-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  width: 100%;
-}
-
-.numpad-btn {
-  height: 56px;
-  min-height: 44px;
+.pad-btn {
   font-family: var(--sans);
-  font-size: 24px;
   font-weight: 800;
-  border-radius: 14px;
   background: var(--paper);
   color: var(--ink);
   border: 1.5px solid var(--line);
@@ -1488,26 +1732,28 @@
   touch-action: manipulation;
 }
 
-.numpad-btn:active {
+.pad-btn:active:not(:disabled) {
   transform: translateY(2px);
   box-shadow: 0 0 0 var(--line);
   background: var(--cream-deep);
 }
 
-.numpad-btn-backspace {
-  font-size: 20px;
+.pad-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pad-btn-backspace {
   color: var(--ink-soft);
 }
 
-.numpad-btn-backspace:active {
+.pad-btn-backspace:active:not(:disabled) {
   background: var(--coral-soft);
   color: var(--coral);
 }
 
-.numpad-btn-ok {
-  font-size: 16px;
+.pad-btn-ok {
   font-weight: 800;
-  letter-spacing: 0.5px;
   background: var(--line-soft);
   color: var(--ink-muted);
   border: 1.5px solid var(--line);
@@ -1515,26 +1761,17 @@
   line-height: 1;
 }
 
-.numpad-btn-ok:not(:disabled) {
+.pad-btn-ok:not(:disabled) {
   background: var(--ink);
   color: var(--cream);
   border: 1.5px solid var(--ink);
   box-shadow: 0 2px 0 #000;
 }
 
-.numpad-btn-ok:not(:disabled):active {
+.pad-btn-ok:not(:disabled):active {
   background: var(--ink);
   transform: translateY(2px);
   box-shadow: 0 0 0 #000;
-}
-
-.numpad-btn-ok:disabled {
-  cursor: not-allowed;
-}
-
-.numpad-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* ===== components/ParentGate.css ===== */
@@ -1690,6 +1927,13 @@
   gap: 3px;
   max-width: 360px;
   margin: 0 auto;
+}
+
+/* Variante sans en-têtes (matière conjugaison) : 8 colonnes pleines, pas de
+   gouttière de 32px pour les numéros de table. */
+.progress-grid--plain {
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
 }
 
 .progress-grid-header {
@@ -2856,6 +3100,86 @@ input, select, textarea {
   background: var(--cream-deep);
 }
 
+/* === Choix de matière (spec Verbito §9) ==================================
+   Deux tuiles jumelles à la place du bouton unique quand la conjugaison est
+   disponible (français seulement). Même largeur, même poids visuel : c'est un
+   choix entre deux pairs, pas un niveau et son extension. */
+.home-subjects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.home-subject-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.home-subject-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  background: var(--cream-deep);
+}
+
+.home-subject-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+}
+
+.home-subject-label {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.home-subject-state {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+/* Séance du jour déjà faite : pas une punition, un constat tranquille. */
+.home-subject-btn.is-done {
+  background: var(--sage-soft);
+  border-color: var(--sage);
+  cursor: default;
+}
+
+.home-subject-btn.is-done .home-subject-state {
+  color: var(--sage);
+}
+
+.home-subject-btn.is-done .home-subject-icon {
+  opacity: 0.55;
+}
+
+/* Pastille de découverte : révélation différée, jamais de modale. */
+.home-subject-dot {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--coral);
+}
+
 /* ===== screens/ParentDashboard.css ===== */
 .parent-dashboard {
   flex: 1;
@@ -3323,6 +3647,13 @@ input, select, textarea {
 
 .parent-hard-fact-kind--rem {
   background: var(--coral);
+}
+
+/* Matière conjugaison : pastille « Vb » — deux lettres, donc un cran plus
+   petit que les symboles d'opération, qui sont des glyphes uniques. */
+.parent-hard-fact-kind--conj {
+  background: var(--sage);
+  font-size: 12px;
 }
 
 /* === Suivi à distance === */
@@ -4818,6 +5149,123 @@ input, select, textarea {
   font-weight: 700;
   color: var(--ink-soft);
   text-align: center;
+}
+
+/* === Matière conjugaison (spec Verbito) ====================================
+   Une séance de conjugaison réutilise la coquille de la séance de maths
+   (.session-screen, .session-intro, .session-question) : mêmes marges, même
+   barrette de progression, même animation d'entrée. Seul change ce qui est
+   propre à la matière — la phrase porteuse, le blanc à remplir, le clavier. */
+
+/* L'intro conjugaison se déroule en 3 écrans successifs dans le même bloc :
+   la phrase, la mécanique en couleurs, la copie différée (§5.2). */
+.session-intro.conj-intro {
+  gap: 18px;
+}
+
+.conj-intro-sentence {
+  max-width: 340px;
+  margin-top: 8px;
+}
+
+/* Rappel de l'infinitif : la consigne, jamais l'énoncé. Discret par
+   construction — l'exercice ne doit pas commencer par un déchiffrage (§8). */
+.conj-intro-infinitive {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+/* Copie différée (§5.2 étape 3) : le modèle s'efface SANS que rien ne bouge —
+   `visibility` plutôt que démontage, pour que le clavier n'ait pas l'air de
+   sauter sous les doigts au moment du masquage. Le vide laissé est la
+   consigne : « je lis, je cache, j'écris ». */
+.conj-copy-model {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.conj-copy-model.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Le clavier tombe en bas de l'écran (pouces prêts), comme le NumPad. */
+.conj-keyboard-area {
+  width: 100%;
+  max-width: 420px;
+  margin-top: auto;
+  padding: 8px 0 4px;
+}
+
+.session-question.conj-question {
+  padding: 8px 16px 0;
+}
+
+/* Un seul item à l'écran, gros corps, interlignage généreux (§8). La phrase se
+   replie en gardant le blanc solidaire de ce qui le précède. */
+.conj-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 34px;
+  text-align: center;
+  padding: 16px 0 4px;
+}
+
+/* Le blanc à remplir : un trait, pas une case à cases — sa largeur est fixe et
+   ne trahit donc JAMAIS le nombre de lettres attendues. */
+.conj-blank {
+  display: inline-block;
+  width: 2.2em;
+  height: 0.9em;
+  border-bottom: 3px solid var(--indigo);
+  margin: 0 0.06em;
+}
+
+.conj-sentence-tail {
+  color: var(--ink-soft);
+  font-weight: 400;
+  white-space: pre-wrap;
+}
+
+.conj-question-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px 0 2px;
+}
+
+/* Réécoute : la phrase est lue d'office à l'affichage, ce bouton n'est là que
+   pour la redemander — d'où une pastille discrète, pas un bouton d'action. */
+.conj-replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--indigo-soft);
+  border: 1.5px solid var(--indigo);
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--indigo-ink);
+  padding: 8px 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+
+.conj-replay-btn:active {
+  transform: translateY(1px);
 }
 
 /* « reste » intercalé dans la formule (« 45 ÷ 7 = 6, reste ? »). La virgule

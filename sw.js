@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260812131241"
+const CACHE = 'tablito-' + "20260817130245"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -56,6 +56,11 @@ const ASSETS = [
   "/specs/index.html",
   "/src/App.js",
   "/src/__tests__/badges.test.js",
+  "/src/__tests__/conjIntegration.test.js",
+  "/src/__tests__/conjSession.test.js",
+  "/src/__tests__/conjugationComposer.test.js",
+  "/src/__tests__/conjugationFacts.test.js",
+  "/src/__tests__/conjugationInterference.test.js",
   "/src/__tests__/dailyComposer.test.js",
   "/src/__tests__/divisionBadges.test.js",
   "/src/__tests__/divisionComposer.test.js",
@@ -63,6 +68,7 @@ const ASSETS = [
   "/src/__tests__/divisionJourney.test.js",
   "/src/__tests__/dotGrid.test.js",
   "/src/__tests__/hardestFacts.test.js",
+  "/src/__tests__/helpers/dom.js",
   "/src/__tests__/helpers/watchServer.js",
   "/src/__tests__/leitner.test.js",
   "/src/__tests__/mixedSessionTTS.test.js",
@@ -91,6 +97,10 @@ const ASSETS = [
   "/src/components/BackChevron.js",
   "/src/components/Badge.js",
   "/src/components/BadgeDetailModal.js",
+  "/src/components/ConjFeedbackOverlay.js",
+  "/src/components/ConjForm.js",
+  "/src/components/ConjMysteryImage.js",
+  "/src/components/ConjProgressGrid.js",
   "/src/components/DivisionMysteryImage.js",
   "/src/components/DivisionProgressGrid.js",
   "/src/components/DivisionStrategyHint.js",
@@ -104,6 +114,7 @@ const ASSETS = [
   "/src/components/FlameIcon.js",
   "/src/components/LanguageToggle.js",
   "/src/components/LeitnerGrid.js",
+  "/src/components/LetterKeyboard.js",
   "/src/components/Mascot.js",
   "/src/components/Modal.js",
   "/src/components/MysteryGrid.js",
@@ -138,6 +149,7 @@ const ASSETS = [
   "/src/i18n/app.js",
   "/src/i18n/badges.js",
   "/src/i18n/changelog.js",
+  "/src/i18n/conjugation.js",
   "/src/i18n/home.js",
   "/src/i18n/lang.js",
   "/src/i18n/language.js",
@@ -153,6 +165,11 @@ const ASSETS = [
   "/src/lib/badges.js",
   "/src/lib/changelog.js",
   "/src/lib/codec.js",
+  "/src/lib/conjugationComposer.js",
+  "/src/lib/conjugationFacts.js",
+  "/src/lib/conjugationInterference.js",
+  "/src/lib/conjugationPlacement.js",
+  "/src/lib/conjugationStrategies.js",
   "/src/lib/dailyComposer.js",
   "/src/lib/debugTools.js",
   "/src/lib/divisionComposer.js",
@@ -188,6 +205,7 @@ const ASSETS = [
   "/src/main.js",
   "/src/screens/BadgesScreen.js",
   "/src/screens/ChangelogScreen.js",
+  "/src/screens/ConjPlacementScreen.js",
   "/src/screens/HomeScreen.js",
   "/src/screens/ParentDashboard.js",
   "/src/screens/PrivacyScreen.js",
@@ -211,7 +229,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"]}
-const LAZY_VERSIONS = {"audio":"7351114b1678","media":"2387459ab3c6"}
+const LAZY_VERSIONS = {"audio":"c219a8e6c9a0","media":"2387459ab3c6"}
 
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
