@@ -82,16 +82,16 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
   }, []);
 
   return (
-    <div className="numpad-container">
-      <div className="numpad-display" aria-live="polite">
+    <div className="pad-container numpad-container">
+      <div className="pad-display numpad-display" aria-live="polite">
         {input || ''}
-        {!disabled && <span className="numpad-display-cursor" />}
+        {!disabled && <span className="pad-display-cursor" />}
       </div>
       <div className="numpad-grid">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
           <button
             key={d}
-            className="numpad-btn"
+            className="pad-btn numpad-btn"
             onClick={() => handleDigit(d)}
             disabled={disabled}
             aria-label={d.toString()}
@@ -100,7 +100,7 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
           </button>
         ))}
         <button
-          className="numpad-btn numpad-btn-backspace"
+          className="pad-btn numpad-btn pad-btn-backspace numpad-btn-backspace"
           onClick={handleBackspace}
           disabled={disabled || input.length === 0}
           aria-label={t.backspace}
@@ -108,7 +108,7 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
           ⌫
         </button>
         <button
-          className="numpad-btn"
+          className="pad-btn numpad-btn"
           onClick={() => handleDigit(0)}
           disabled={disabled}
           aria-label="0"
@@ -116,7 +116,7 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
           0
         </button>
         <button
-          className="numpad-btn numpad-btn-ok"
+          className="pad-btn numpad-btn pad-btn-ok numpad-btn-ok"
           onClick={handleOk}
           disabled={disabled || input.length === 0}
           aria-label={t.submit}

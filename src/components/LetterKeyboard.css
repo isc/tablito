@@ -1,32 +1,12 @@
-/* Mini-clavier AZERTY de la matière conjugaison (spec Verbito §4.2). Mêmes
-   conventions visuelles que NumPad.css — mêmes rayons, même relief 2px, même
-   feedback tactile — pour que le geste soit le même d'une matière à l'autre. */
-
-.letterpad-container {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
-  width: 100%;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
+/* Mini-clavier AZERTY de la matière conjugaison (spec Verbito §4.2). Le socle
+   commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit dans
+   Pad.css — le geste doit être le même d'une matière à l'autre ; ici ne
+   restent que les dimensions propres à un clavier de lettres et l'ardoise à
+   radical. */
 
 .letterpad-display {
-  font-family: var(--serif);
   font-size: 32px;
-  font-weight: 500;
-  line-height: 1;
-  color: var(--ink);
-  height: 50px;
-  padding: 6px 12px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 2px solid var(--indigo);
   letter-spacing: 1px;
-  position: relative;
 }
 
 /* Le radical déjà donné, en encre douce : l'enfant voit la forme entière se
@@ -41,15 +21,6 @@
 .letterpad-display-input {
   color: var(--ink);
   font-weight: 600;
-}
-
-.letterpad-display-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 26px;
-  background: var(--indigo);
-  animation: blink 1s infinite;
-  margin-left: 2px;
 }
 
 .letterpad-rows {
@@ -85,45 +56,13 @@
      porte la précision du geste. */
   height: 52px;
   min-height: 48px;
-  font-family: var(--sans);
-  font-size: 20px;
-  font-weight: 800;
   border-radius: 10px;
-  background: var(--paper);
-  color: var(--ink);
-  border: 1.5px solid var(--line);
-  box-shadow: 0 2px 0 var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.1s ease, background 0.1s ease;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-.letterpad-btn:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 var(--line);
-  background: var(--cream-deep);
-}
-
-.letterpad-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  font-size: 20px;
 }
 
 .letterpad-btn-backspace {
   flex: 1;
   font-size: 20px;
-  color: var(--ink-soft);
-}
-
-.letterpad-btn-backspace:active:not(:disabled) {
-  background: var(--coral-soft);
-  color: var(--coral);
 }
 
 /* Validation EXPLICITE : la longueur de la réponse n'étant pas prévisible, ce
@@ -132,24 +71,5 @@
 .letterpad-btn-ok {
   flex: 2;
   font-size: 16px;
-  font-weight: 800;
   letter-spacing: 0.5px;
-  background: var(--line-soft);
-  color: var(--ink-muted);
-  border: 1.5px solid var(--line);
-  box-shadow: none;
-  line-height: 1;
-}
-
-.letterpad-btn-ok:not(:disabled) {
-  background: var(--ink);
-  color: var(--cream);
-  border: 1.5px solid var(--ink);
-  box-shadow: 0 2px 0 #000;
-}
-
-.letterpad-btn-ok:not(:disabled):active {
-  background: var(--ink);
-  transform: translateY(2px);
-  box-shadow: 0 0 0 #000;
 }

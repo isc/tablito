@@ -12,6 +12,13 @@ import { itemDisplay } from '../lib/sessionItemView';
 import { useFeedbackOverlayStrings } from '../i18n/session';
 import type { SessionItem } from '../types';
 
+/**
+ * Durée d'affichage d'un feedback ACCEPTÉ avant enchaînement automatique :
+ * assez pour voir l'étoile, trop court pour couper l'élan. Partagée avec le
+ * feedback de la conjugaison — c'est le même rythme de séance.
+ */
+export const FEEDBACK_DISMISS_MS = 1800;
+
 interface FeedbackOverlayProps {
   // Question à laquelle on vient de répondre (multiplication, division ou
   // division avec reste).
@@ -44,7 +51,7 @@ export default function FeedbackOverlay({
 
   useEffect(() => {
     if (!correct) return;
-    const timer = setTimeout(onDismiss, 1800);
+    const timer = setTimeout(onDismiss, FEEDBACK_DISMISS_MS);
     return () => clearTimeout(timer);
   }, [correct, onDismiss]);
 

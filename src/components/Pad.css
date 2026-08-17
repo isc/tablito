@@ -1,0 +1,112 @@
+/* Socle commun des deux pavés de saisie : le pavé numérique des maths
+   (NumPad) et le mini-clavier AZERTY de la conjugaison (LetterKeyboard).
+   Même ardoise, même relief 2 px, même feedback tactile, mêmes états — le
+   geste doit être le même d'une matière à l'autre.
+
+   ⚠️ Ce fichier ne déclare AUCUNE des propriétés que les deux pavés règlent
+   différemment (height, min-height, border-radius, font-size, letter-spacing,
+   flex, min-width) : elles vivent uniquement dans NumPad.css et
+   LetterKeyboard.css. Aucune propriété n'est donc déclarée des deux côtés, et
+   le rendu ne dépend pas de l'ordre de concaténation des CSS (cf.
+   scripts/build.mjs, qui les trie par chemin). */
+
+.pad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0;
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* L'ardoise : ce que l'enfant a tapé jusqu'ici, en gros. */
+.pad-display {
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
+  height: 50px;
+  padding: 6px 12px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid var(--indigo);
+  position: relative;
+}
+
+.pad-display-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 26px;
+  background: var(--indigo);
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.pad-btn {
+  font-family: var(--sans);
+  font-weight: 800;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  box-shadow: 0 2px 0 var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, background 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pad-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--line);
+  background: var(--cream-deep);
+}
+
+.pad-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pad-btn-backspace {
+  color: var(--ink-soft);
+}
+
+.pad-btn-backspace:active:not(:disabled) {
+  background: var(--coral-soft);
+  color: var(--coral);
+}
+
+.pad-btn-ok {
+  font-weight: 800;
+  background: var(--line-soft);
+  color: var(--ink-muted);
+  border: 1.5px solid var(--line);
+  box-shadow: none;
+  line-height: 1;
+}
+
+.pad-btn-ok:not(:disabled) {
+  background: var(--ink);
+  color: var(--cream);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 2px 0 #000;
+}
+
+.pad-btn-ok:not(:disabled):active {
+  background: var(--ink);
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #000;
+}

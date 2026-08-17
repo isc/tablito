@@ -106,11 +106,13 @@ function place(fact: ConjFact, box: BoxLevel, today: string): void {
 /**
  * Ensemence les boîtes à partir des résultats du placement.
  *
- * Passe 1 — les faits directement testés ET réussis, à la boîte que dit leur
- * vitesse. Un raté (faux ou « Je ne sais pas ») n'est PAS placé : le placement
- * diagnostique un plancher, il ne charge pas la boîte 1.
+ * Deux règles, appliquées sonde par sonde.
  *
- * Passe 2 — les faits démontrés par dominance (`implies`), à la boîte de la
+ * Directe — les faits testés ET réussis, à la boîte que dit leur vitesse. Un
+ * raté (faux ou « Je ne sais pas ») n'est PAS placé : le placement diagnostique
+ * un plancher, il ne charge pas la boîte 1.
+ *
+ * Dominance — les faits démontrés par `implies`, à la boîte de la
  * sonde qui les démontre : une preuve INDIRECTE ne peut pas placer plus haut
  * que la preuve directe qui la porte (une sonde réussie en 25 s vaut boîte 1,
  * les faits qu'elle démontre aussi). Sans cette passe, les faits jamais testés
@@ -132,16 +134,9 @@ export function seedConjFromPlacement(
   const probeByKey = new Map(CONJ_PLACEMENT_PROBES.map((p) => [p.key, p]));
   const testedKeys = new Set(results.map((r) => r.key));
 
-  for (const result of results) {
-    if (!result.correct) continue;
-    const fact = byKey.get(result.key);
-    const probe = probeByKey.get(result.key);
-    if (!fact || !probe) continue;
-    const expected = expectedOf(result.key, probe.carrierIndex);
-    if (expected === null) continue;
-    place(fact, boxFromResult(result, expected), today);
-  }
-
+  // Une seule boucle pour les deux passes : leurs cibles sont DISJOINTES — un
+  // fait démontré par dominance est par construction un fait non testé
+  // (`testedKeys` ci-dessous), donc jamais l'un des faits placés directement.
   for (const result of results) {
     if (!result.correct) continue;
     const probe = probeByKey.get(result.key);
@@ -149,6 +144,9 @@ export function seedConjFromPlacement(
     const expected = expectedOf(result.key, probe.carrierIndex);
     if (expected === null) continue;
     const box = boxFromResult(result, expected);
+
+    const tested = byKey.get(result.key);
+    if (tested) place(tested, box, today);
 
     for (const impliedKey of probe.implies) {
       if (testedKeys.has(impliedKey)) continue;

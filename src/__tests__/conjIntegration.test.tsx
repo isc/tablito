@@ -13,7 +13,12 @@ import { applyLang } from '../i18n/lang';
 import { createNewProfile, exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import { checkBadges, visibleBadgeDefinitions } from '../lib/badges';
 import { CONJ_TENSE_BADGE_ID, unlockedConjTenses } from '../lib/conjugationComposer';
-import { requireConjFactDef, resolveConjQuestion } from '../lib/conjugationFacts';
+import {
+  createInitialConjFacts,
+  requireConjFactDef,
+  resolveConjQuestion,
+} from '../lib/conjugationFacts';
+import { advance, findButton as button, tapLetters, text } from './helpers/dom';
 import { seedConjFromPlacement } from '../lib/conjugationPlacement';
 import type { ConjFact, UserProfile } from '../types';
 
@@ -23,24 +28,6 @@ import type { ConjFact, UserProfile } from '../types';
 // le parcours placement → première séance, et la flamme de série partagée.
 
 const TODAY = '2026-08-17';
-
-function text(): string {
-  return document.body.textContent ?? '';
-}
-
-function button(re: RegExp): HTMLButtonElement | null {
-  return (
-    (Array.from(document.querySelectorAll('button')).find((b) =>
-      re.test((b.getAttribute('aria-label') ?? '') + ' ' + (b.textContent ?? '')),
-    ) as HTMLButtonElement | undefined) ?? null
-  );
-}
-
-function advance(ms: number): void {
-  act(() => {
-    vi.advanceTimersByTime(ms);
-  });
-}
 
 /**
  * Laisse les imports dynamiques (lazy/Suspense) se résoudre. Plusieurs tours :
@@ -67,21 +54,15 @@ function expectedOf(key: string, carrierIndex = 0): string {
   return resolveConjQuestion(requireConjFactDef(key), carrierIndex).expected;
 }
 
-function tapLetters(value: string): void {
-  for (const ch of value) {
-    const btn = document.querySelector<HTMLButtonElement>(`.letterpad-btn[aria-label="${ch}"]`);
-    if (!btn) throw new Error(`Touche « ${ch} » introuvable sur le clavier`);
-    fireEvent.click(btn);
-  }
-  fireEvent.click(document.querySelector<HTMLButtonElement>('.letterpad-btn-ok')!);
-}
-
 /** Profil dont la matière est déjà ouverte et le placement passé. */
 function conjReadyProfile(): UserProfile {
   const p = createNewProfile('Zoé');
   p.hasSeenRulesIntro = true;
   p.hasSeenConjIntro = true;
   p.hasDoneConjPlacement = true;
+  // Un profil neuf n'a PAS de faits de conjugaison : ils sont ensemencés à la
+  // première entrée dans la matière (App). Un profil « prêt » les a donc.
+  p.conjFacts = createInitialConjFacts();
   p.lastSessionDate = null;
   p.lastMathSessionDate = null;
   p.lastConjSessionDate = null;
@@ -134,8 +115,10 @@ describe('Migration d’un profil antérieur à la matière (spec §7.1)', () =>
 
     const migrated = loadProfile()!;
 
-    expect(migrated.conjFacts).toHaveLength(63);
-    expect(migrated.conjFacts!.every((f) => f.box === 1 && !f.introduced)).toBe(true);
+    // Les 63 faits ne sont PAS backfillés : `conjFacts` absent veut dire
+    // « matière jamais commencée », et l'ensemencement attend la première
+    // entrée. Seule l'image de la matière est tirée d'avance.
+    expect(migrated.conjFacts).toBeUndefined();
     expect(migrated.conjMysteryTheme).toBeDefined();
     // Image propre à la matière : jamais celle d'un niveau de maths du profil.
     expect(migrated.conjMysteryTheme).not.toBe(migrated.mysteryTheme);
@@ -317,13 +300,16 @@ describe('Parcours : première ouverture → placement → première séance (sp
   });
 
   it('un placement réussi ensemence les boîtes — l’image démarre déjà révélée', () => {
+    // Un profil neuf n'a pas encore de faits : c'est l'entrée dans la matière
+    // qui les ensemence, tous non introduits.
     const p = createNewProfile('Zoé');
-    const before = p.conjFacts!.filter((f) => f.introduced).length;
-    expect(before).toBe(0);
+    expect(p.conjFacts).toBeUndefined();
+    const fresh = createInitialConjFacts();
+    expect(fresh.filter((f) => f.introduced)).toHaveLength(0);
 
     // On rejoue le geste du placement sur la couche domaine (l'écran, lui, est
     // couvert ci-dessus) : réussir « vous parlerez » démontre la règle du futur.
-    const seeded = { ...p, conjFacts: p.conjFacts!.map((f) => ({ ...f })) };
+    const seeded = { ...p, conjFacts: fresh };
     seedConjFromPlacement(
       seeded.conjFacts,
       [{ key: 'fut-vous', correct: true, timeMs: 1000 }],
@@ -378,8 +364,8 @@ describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => 
         questions: [
           {
             kind: 'conj',
-            a: 0,
-            b: 0,
+            // Ni `a` ni `b` : un fait de conjugaison n'est pas indexé par un
+            // couple de nombres, c'est `factKey` qui l'identifie.
             factKey: 'pres-g1-nous',
             correct: false,
             responseTimeMs: 4000,

@@ -3,8 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SessionScreen from '../screens/SessionScreen';
 import type { ConjFact, ConjSessionItem, BoxLevel } from '../types';
-import type { ConjJudgement } from '../lib/conjugationComposer';
+import { isConjAccepted, type ConjJudgement } from '../lib/conjugationComposer';
 import { conjStrings as t } from '../i18n/conjugation';
+import {
+  advance,
+  requireButton as findButton,
+  tapValidate,
+  text,
+  typeLetters as tapLetters,
+} from './helpers/dom';
 
 // Tests DOM de la matière conjugaison (spec Verbito) : rendu d'une question,
 // mini-clavier à validation explicite, introduction en 5 étapes (§5.2) et les
@@ -34,34 +41,6 @@ function conjItem(
     isBonusReview: false,
   };
 }
-
-function tapLetters(letters: string): void {
-  for (const ch of letters) {
-    const btn = document.querySelector<HTMLButtonElement>(`.letterpad-btn[aria-label="${ch}"]`);
-    if (!btn) throw new Error(`Touche « ${ch} » introuvable sur le clavier`);
-    fireEvent.click(btn);
-  }
-}
-
-function tapValidate(): void {
-  fireEvent.click(document.querySelector<HTMLButtonElement>('.letterpad-btn-ok')!);
-}
-
-function findButton(re: RegExp): HTMLButtonElement {
-  const btn = Array.from(document.querySelectorAll('button')).find((b) =>
-    re.test((b.textContent ?? '').trim()),
-  );
-  if (!btn) throw new Error(`Bouton ${re} introuvable`);
-  return btn as HTMLButtonElement;
-}
-
-function advance(ms: number): void {
-  act(() => {
-    vi.advanceTimersByTime(ms);
-  });
-}
-
-const text = () => document.body.textContent ?? '';
 
 // Compteur d'oscillateurs : `useSound` n'en crée QUE pour jouer un son. Zéro
 // oscillateur après une erreur = « aucun son négatif » (§5.3), vérifié à la
@@ -101,6 +80,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
         questions={[conjItem('pres-g1-nous', 0)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
 
@@ -122,6 +102,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
         questions={[conjItem('pres-etre-nous', 0)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
 
@@ -158,6 +139,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
         questions={[conjItem('fut-aller', 0)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
     // Laisse le préchargement + le décodage se résoudre (microtasks).
@@ -183,6 +165,7 @@ describe('Mini-clavier de lettres (spec §4.2)', () => {
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
 
@@ -219,6 +202,7 @@ describe('Mini-clavier de lettres (spec §4.2)', () => {
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
 
@@ -270,7 +254,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
     expect(document.querySelector('.feedback-message.correct')?.textContent).toBe(t.wellDone);
     expect(text()).not.toMatch(/lent|vite|rapide/i);
     const [, judgement, fast] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement, boolean];
-    expect(judgement.accepted).toBe(true);
+    expect(isConjAccepted(judgement.verdict)).toBe(true);
     expect(fast).toBe(false);
   });
 
@@ -291,7 +275,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
 
     const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
     expect(judgement.verdict).toBe('almost');
-    expect(judgement.accepted).toBe(true);
+    expect(isConjAccepted(judgement.verdict)).toBe(true);
     expect(judgement.blamedKeys).toEqual([]);
 
     // Accepté : pas de carte d'erreur, et la forme correcte segmentée.
@@ -339,6 +323,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
 
@@ -353,6 +338,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
         questions={[conjItem('pres-g1-nous', 0, { box: 2 })]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
     tapLetters('ons');
@@ -366,6 +352,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
         questions={[conjItem('pres-g1-nous', 0, { box: 3 })]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
     tapLetters('ons');
@@ -398,6 +385,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
         questions={[conjItem('pres-g1-nous', 0)]}
         onComplete={() => {}}
         onAnswer={() => {}}
+        onConjAnswer={() => {}}
       />,
     );
 
@@ -414,7 +402,12 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
   const intro = () => [conjItem('pres-g1-nous', 1, { isIntroduction: true })];
 
   it('étape 1 : la phrase en contexte, forme complète visible', () => {
-    render(<SessionScreen questions={intro()} onComplete={() => {}} onAnswer={() => {}} />);
+    render(<SessionScreen
+        questions={intro()}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={() => {}}
+      />);
 
     expect(text()).toContain(t.new);
     const sentence = document.querySelector('.conj-intro-sentence')!;
@@ -426,7 +419,12 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
   });
 
   it('étape 2 : le pronom s’illumine, puis sa marque, avec la règle en ancrage', () => {
-    render(<SessionScreen questions={intro()} onComplete={() => {}} onAnswer={() => {}} />);
+    render(<SessionScreen
+        questions={intro()}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={() => {}}
+      />);
     fireEvent.click(findButton(/Suivant/));
 
     expect(document.querySelector('.conj-form-subject.is-lit')).not.toBeNull();
@@ -439,7 +437,12 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
   });
 
   it('étape 3 : copie différée — le modèle s’affiche 4 s, se masque, l’enfant écrit', () => {
-    render(<SessionScreen questions={intro()} onComplete={() => {}} onAnswer={() => {}} />);
+    render(<SessionScreen
+        questions={intro()}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={() => {}}
+      />);
     fireEvent.click(findButton(/Suivant/));
     advance(800);
     fireEvent.click(findButton(/Suivant/));
@@ -479,6 +482,32 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
     expect(text()).toContain('Regarde encore');
     // La copie n'entre JAMAIS dans le Leitner.
     expect(onConjAnswer).not.toHaveBeenCalled();
+  });
+
+  it('étape 3 : la copie est jugée comme la séance — la forme entière recopiée passe', () => {
+    // Le modèle montré à l'étape 3 est la forme ENTIÈRE (« nous chantons »),
+    // alors que seule la terminaison est attendue. L'enfant qui recopie ce
+    // qu'il vient de voir a fait exactement ce qu'on lui demandait : la copie
+    // ne peut pas être plus sévère que la question qu'elle prépare.
+    render(
+      <SessionScreen
+        questions={intro()}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={() => {}}
+      />,
+    );
+    fireEvent.click(findButton(/Suivant/));
+    advance(800);
+    fireEvent.click(findButton(/Suivant/));
+    advance(4_000);
+
+    tapLetters('chantons');
+    tapValidate();
+
+    // On est passé à l'étape 4 (la question), pas revenu sur le modèle.
+    expect(document.querySelector('.conj-question')).not.toBeNull();
+    expect(text()).not.toContain('Regarde encore');
   });
 
   it('étapes 4 et 5 : la copie réussie enchaîne sur la question, qui programme un re-test', () => {
