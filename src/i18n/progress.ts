@@ -21,14 +21,21 @@ interface ProgressScreenStrings {
   multiplications: string;
   divisions: string;
   remainders: string;
+  // Matière conjugaison (spec Verbito §7.1). Comme les badges de la matière,
+  // l'entrée `en` existe pour que la table reste totale — elle n'est jamais
+  // rendue : l'onglet est masqué quand la langue d'interface est l'anglais.
+  conjugations: string;
   discoveredMult: string;
   discoveredDiv: string;
+  discoveredConj: string;
   masteredMult: string;
   masteredDiv: string;
+  masteredConj: string;
   total: string;
   legendMult: string;
   legendDiv: string;
   legendRem: string;
+  legendConj: string;
 }
 
 const progressScreenFr: ProgressScreenStrings = {
@@ -38,10 +45,13 @@ const progressScreenFr: ProgressScreenStrings = {
   multiplications: 'Multiplications',
   divisions: 'Divisions',
   remainders: 'Avec reste',
+  conjugations: 'Conjugaison',
   discoveredMult: 'découverts',
   discoveredDiv: 'découvertes',
+  discoveredConj: 'découvertes',
   masteredMult: 'maîtrisés',
   masteredDiv: 'maîtrisées',
+  masteredConj: 'maîtrisées',
   total: 'au total',
   legendMult:
     "Chaque multiplication que tu connais mieux dévoile un peu plus de l'image. Et si un fait a besoin d'être revu, sa case se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
@@ -49,6 +59,8 @@ const progressScreenFr: ProgressScreenStrings = {
     "Chaque division que tu connais mieux dévoile un peu plus de cette image. Et si un fait a besoin d'être revu, sa case se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
   legendRem:
     "Chaque division avec reste que tu connais mieux dévoile un peu plus de cette image. Et si une case a besoin d'être revue, elle se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
+  legendConj:
+    "Une seule image pour les trois temps : chaque forme que tu connais mieux en dévoile un morceau. Et si un fait a besoin d'être revu, sa case se brouille à nouveau — pas d'échec, juste la brume qui revient. Continue, et elle se complétera !",
 };
 
 const progressScreenEn: ProgressScreenStrings = {
@@ -58,10 +70,13 @@ const progressScreenEn: ProgressScreenStrings = {
   multiplications: 'Multiplications',
   divisions: 'Divisions',
   remainders: 'Remainders',
+  conjugations: 'Conjugation',
   discoveredMult: 'discovered',
   discoveredDiv: 'discovered',
+  discoveredConj: 'discovered',
   masteredMult: 'mastered',
   masteredDiv: 'mastered',
+  masteredConj: 'mastered',
   total: 'in total',
   legendMult:
     'Every multiplication you know better reveals a bit more of the picture. And if a fact needs reviewing, its square blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
@@ -69,6 +84,8 @@ const progressScreenEn: ProgressScreenStrings = {
     'Every division you know better reveals a bit more of this picture. And if a fact needs reviewing, its square blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
   legendRem:
     'Every division with remainder you know better reveals a bit more of this picture. And if a square needs reviewing, it blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
+  legendConj:
+    'One picture for all three tenses: every form you know better reveals a piece of it. And if a fact needs reviewing, its square blurs again. Keep going, and it will be complete!',
 };
 
 export const progressScreenStrings = { fr: progressScreenFr, en: progressScreenEn };

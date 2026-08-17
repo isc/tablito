@@ -160,6 +160,20 @@ export interface UserProfile {
   // propre, tiré distinct des thèmes des niveaux de maths.
   conjMysteryTheme?: MysteryTheme;
   hasSeenConjIntro?: boolean;
+  // Le test de placement de la conjugaison (spec §6.1) a-t-il été passé ? Flag
+  // explicite plutôt qu'une inférence sur les boîtes : un enfant qui échoue à
+  // TOUTES les sondes ne doit pas repasser le test à chaque ouverture.
+  hasDoneConjPlacement?: boolean;
+  // === Séance quotidienne par matière ===
+  // `lastSessionDate` reste la date de la dernière séance TOUTES MATIÈRES
+  // CONFONDUES : c'est l'ancre de la flamme de série, partagée entre matières
+  // (spec §7.2 — une séance quelconque maintient la série). Ces deux champs
+  // disent, eux, quelle matière a déjà eu sa séance aujourd'hui : sans eux,
+  // faire ses maths fermerait la conjugaison du jour, et réciproquement.
+  // Backfill : `lastMathSessionDate` reprend `lastSessionDate` (avant la
+  // conjugaison, toute séance était une séance de maths).
+  lastMathSessionDate?: string | null;
+  lastConjSessionDate?: string | null;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -318,10 +332,14 @@ export interface SessionQuestionLog {
   // quotient (le dividende = a × b), sinon `56 ÷ 7` serait illisible comme
   // `{a:7, b:8}`, identique à `7 × 8`. Pour 'rem', a = diviseur, b = quotient
   // (la zone), et `remainder` porte le reste tiré pour cette présentation.
-  kind?: 'mult' | 'div' | 'rem';
+  kind?: 'mult' | 'div' | 'rem' | 'conj';
   // 'mult' : opérandes (canoniques). 'div'/'rem' : a = diviseur, b = quotient.
+  // 'conj' : NON SIGNIFIATIFS (0/0) — un fait de conjugaison n'est pas indexé
+  // par un couple de nombres, c'est `factKey` qui l'identifie.
   a: number;
   b: number;
+  // Matière conjugaison uniquement : clé du fait posé (cf. lib/conjugationFacts).
+  factKey?: string;
   correct: boolean;
   responseTimeMs: number;
   answeredWith: number | null;
@@ -380,4 +398,11 @@ export const BADGE_IDS = {
   REM_PREMIERE_MAITRISE: 'rem-premiere-maitrise',
   REM_TABLE_PREFIX: 'rem-table-',
   REM_GENIE: 'rem-genie',
+  // Matière conjugaison (spec Verbito §7.2) : 3 badges de temps + 7 badges de
+  // verbe irrégulier. Masqués tant que la matière n'a pas été ouverte (et
+  // toujours en anglais, la matière étant fr-only). Les identifiants complets
+  // vivent dans lib/conjugationComposer (CONJ_TENSE_BADGE_ID, conjVerbBadgeId)
+  // — ces préfixes sont là pour les filtres (`id.startsWith(...)`).
+  CONJ_TENSE_PREFIX: 'conj-temps-',
+  CONJ_VERB_PREFIX: 'conj-verbe-',
 } as const;

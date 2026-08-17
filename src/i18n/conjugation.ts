@@ -37,6 +37,34 @@ export const conjStrings = {
   incorrectMessage: 'On regarde ensemble',
   youWrote: 'Tu as écrit',
   hintEyebrow: "L'astuce",
+
+  // --- Image mystère de la matière (spec §7.1) ---
+  /**
+   * 64ᵉ case : l'inventaire n'en compte que 63. Elle ne s'allume qu'une fois
+   * tous les faits découverts — le clin d'œil de complétion de la spec.
+   */
+  mysteryBonusLabel: 'Case bonus',
+  mysteryBonusHeading: 'La case bonus',
+  mysteryBonusText: 'Elle se dévoile quand tous les autres faits sont découverts !',
+
+  // --- Test de placement (spec §6.1) ---
+  // Ce n'est pas un examen : c'est le premier geste de réassurance du jeu.
+  placementTitle: 'On regarde ce que tu sais déjà',
+  placementSubtitle:
+    "Quelques phrases à compléter. Si tu ne sais pas, tu dis « je ne sais pas » — c'est permis !",
+  placementStart: 'On y va !',
+  placementDontKnow: 'Je ne sais pas',
+  placementDoneTitle: 'Regarde tout ce que tu sais déjà !',
+  placementDoneSubtitle: 'Ton image a déjà commencé à apparaître.',
+  /**
+   * Variante quand AUCUNE sonde n'a été réussie : rien n'a été ensemencé, donc
+   * ni « regarde tout ce que tu sais » ni « ton image a commencé » ne seraient
+   * vrais — et un enfant repère un compliment creux. On promet ce qui va se
+   * passer, sans jamais nommer l'échec.
+   */
+  placementEmptyTitle: 'On va tout découvrir ensemble',
+  placementEmptySubtitle: 'Piou va te montrer chaque forme, une par une. Prête ?',
+  placementDoneCta: 'Commencer ma séance',
 } as const;
 
 export type ConjStrings = typeof conjStrings;

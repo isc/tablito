@@ -4,6 +4,7 @@ import { checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
 import { createInitialRemainderFacts } from './remainderFacts';
+import { createInitialConjFacts } from './conjugationFacts';
 import { inferIntroductionsFromKnowns } from './placement';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
 import { pickRandom, todayISO } from './utils';
@@ -21,6 +22,15 @@ function pickDivisionTheme(multTheme: MysteryTheme): MysteryTheme {
 // pool le permet (specs §12.6).
 function pickRemainderTheme(multTheme: MysteryTheme, divTheme: MysteryTheme | undefined): MysteryTheme {
   const others = MYSTERY_POOL.filter((t) => t !== multTheme && t !== divTheme);
+  return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
+}
+
+// Matière conjugaison (spec Verbito §7.1) : pool propre, thème tiré distinct de
+// TOUS les thèmes de maths du profil quand le pool le permet — l'image de la
+// conjugaison doit se reconnaître au premier coup d'œil comme « celle-là, c'est
+// l'autre matière », pas comme un doublon d'un niveau de maths.
+function pickConjTheme(taken: (MysteryTheme | undefined)[]): MysteryTheme {
+  const others = MYSTERY_POOL.filter((t) => !taken.includes(t));
   return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
 }
 
@@ -328,6 +338,7 @@ export function createNewProfile(name: string): UserProfile {
   const now = todayISO();
   const mysteryTheme = pickRandom(MYSTERY_POOL);
   const divisionMysteryTheme = pickDivisionTheme(mysteryTheme);
+  const remainderMysteryTheme = pickRemainderTheme(mysteryTheme, divisionMysteryTheme);
   return {
     name,
     startDate: now,
@@ -346,7 +357,13 @@ export function createNewProfile(name: string): UserProfile {
     divisionMysteryTheme,
     hasSeenDivisionIntro: false,
     remainderFacts: createInitialRemainderFacts(),
-    remainderMysteryTheme: pickRemainderTheme(mysteryTheme, divisionMysteryTheme),
+    remainderMysteryTheme,
+    conjFacts: createInitialConjFacts(),
+    conjMysteryTheme: pickConjTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme]),
+    hasSeenConjIntro: false,
+    hasDoneConjPlacement: false,
+    lastMathSessionDate: null,
+    lastConjSessionDate: null,
   };
 }
 
@@ -407,6 +424,35 @@ function migrateProfile(profile: UserProfile): UserProfile {
       profile.mysteryTheme,
       profile.divisionMysteryTheme,
     );
+  }
+  // Matière conjugaison : même backfill silencieux que les niveaux de maths.
+  // Inoffensif tant que la matière n'est pas ouverte (63 faits en boîte 1, non
+  // introduits — aucun badge gagnable, rien d'affiché).
+  if (!Array.isArray(profile.conjFacts)) {
+    profile.conjFacts = createInitialConjFacts();
+  }
+  if (profile.conjMysteryTheme === undefined) {
+    profile.conjMysteryTheme = pickConjTheme([
+      profile.mysteryTheme,
+      profile.divisionMysteryTheme,
+      profile.remainderMysteryTheme,
+    ]);
+  }
+  if (typeof profile.hasSeenConjIntro !== 'boolean') {
+    profile.hasSeenConjIntro = false;
+  }
+  if (typeof profile.hasDoneConjPlacement !== 'boolean') {
+    profile.hasDoneConjPlacement = false;
+  }
+  // Séance du jour par matière. Avant la conjugaison, toute séance était une
+  // séance de maths : `lastSessionDate` EST la date de la dernière séance de
+  // maths — sans ce report, un profil migré se verrait reproposer sa séance de
+  // maths le jour même où il vient de la faire.
+  if (profile.lastMathSessionDate === undefined) {
+    profile.lastMathSessionDate = profile.lastSessionDate ?? null;
+  }
+  if (profile.lastConjSessionDate === undefined) {
+    profile.lastConjSessionDate = null;
   }
   // Fix les profils créés avant l'ajout de l'inférence par dominance lors
   // du test de placement : si des faits restent non introduits alors qu'on
@@ -473,6 +519,21 @@ function isValidProfile(obj: unknown): boolean {
       const f = fact as Record<string, unknown>;
       if (typeof f.divisor !== 'number') return false;
       if (typeof f.quotient !== 'number') return false;
+      if (typeof f.box !== 'number' || f.box < 1 || f.box > 5) return false;
+      if (typeof f.introduced !== 'boolean') return false;
+      if (!Array.isArray(f.history)) return false;
+    }
+  }
+
+  // conjFacts : même statut optionnel. Un fait de conjugaison ne porte que sa
+  // clé (la définition vit dans l'inventaire statique) — on valide donc la clé
+  // et l'état Leitner, rien d'autre.
+  if (p.conjFacts !== undefined) {
+    if (!Array.isArray(p.conjFacts)) return false;
+    for (const fact of p.conjFacts) {
+      if (typeof fact !== 'object' || fact === null) return false;
+      const f = fact as Record<string, unknown>;
+      if (typeof f.key !== 'string' || f.key === '') return false;
       if (typeof f.box !== 'number' || f.box < 1 || f.box > 5) return false;
       if (typeof f.introduced !== 'boolean') return false;
       if (!Array.isArray(f.history)) return false;

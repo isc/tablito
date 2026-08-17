@@ -2,6 +2,7 @@ import type { UserProfile, BoxLevel, Attempt, SessionResult } from '../types';
 import { getFactKey } from './facts';
 import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey } from './remainderFacts';
+import { conjFactDef, conjSubject, resolveConjQuestion } from './conjugationFacts';
 
 // Fait « difficile » unifié × / ÷ / reste, pour l'espace parent. Le discriminant
 // `kind` porte les champs propres à l'opération. En 'rem', la « difficulté »
@@ -9,7 +10,10 @@ import { getRemainderFactKey } from './remainderFacts';
 export type HardFact =
   | { kind: 'mult'; key: string; box: BoxLevel; errorCount: number; a: number; b: number; product: number }
   | { kind: 'div'; key: string; box: BoxLevel; errorCount: number; dividend: number; divisor: number; quotient: number }
-  | { kind: 'rem'; key: string; box: BoxLevel; errorCount: number; divisor: number; quotient: number };
+  | { kind: 'rem'; key: string; box: BoxLevel; errorCount: number; divisor: number; quotient: number }
+  // Matière conjugaison : rien de numérique à afficher — le fait EST une forme
+  // (« vous faites »), résolue ici une fois pour toutes plutôt que par l'UI.
+  | { kind: 'conj'; key: string; box: BoxLevel; errorCount: number; label: string };
 
 // Erreurs par fait (clé préfixée `mult:`/`div:`) depuis les logs par-question
 // des séances. C'est la MÊME source que le taux de bonnes réponses de l'espace
@@ -23,6 +27,13 @@ function countErrorsFromLogs(sessions: SessionResult[]): Map<string, number> {
   for (const s of sessions) {
     for (const q of s.questions ?? []) {
       if (q.correct) continue;
+      // Conjugaison : a/b ne veulent rien dire, c'est `factKey` qui identifie.
+      // Test explicite AVANT le repli 'mult' — sans lui, un log de conjugaison
+      // se compterait comme une erreur sur la multiplication 0×0.
+      if (q.kind === 'conj') {
+        if (q.factKey) errors.set(`conj:${q.factKey}`, (errors.get(`conj:${q.factKey}`) ?? 0) + 1);
+        continue;
+      }
       // Logs 'div'/'rem' : a = diviseur, b = quotient (dividende div = a × b).
       const key =
         q.kind === 'rem'
@@ -52,11 +63,17 @@ function countErrorsFromHistory(history: Attempt[], cutoff: string | null): numb
  * décroissantes puis boîte croissante, tronqué à `limit`, sans les faits à 0
  * erreur. Les deux opérations sont mélangées : le parent voit où l'enfant bute
  * en ce moment, toutes opérations confondues.
+ *
+ * `includeConj` fait entrer la matière conjugaison dans la même liste. Il est
+ * OPT-IN et par défaut faux : la matière est masquée tant qu'elle n'a pas été
+ * ouverte, et totalement absente en anglais (cf. isConjVisible) — c'est
+ * l'appelant qui détient cette décision d'affichage, pas cette fonction.
  */
 export function getHardestFacts(
   profile: UserProfile,
   windowSize: number,
   limit: number,
+  includeConj = false,
 ): HardFact[] {
   const sessions = profile.sessionHistory;
   const recent = sessions.slice(-windowSize);
@@ -115,7 +132,30 @@ export function getHardestFacts(
       };
     });
 
-  return [...mult, ...div, ...rem]
+  // Conjugaison — matière séparée, mais même fenêtre glissante et même liste :
+  // le parent veut UNE réponse à « où mon enfant bute en ce moment ».
+  const conj: HardFact[] = [];
+  if (includeConj) {
+    for (const f of profile.conjFacts ?? []) {
+      if (!f.introduced) continue;
+      // Un fait dont la clé a disparu de l'inventaire (profil d'une version
+      // antérieure) n'est pas affichable : on l'ignore, sans casser la liste.
+      const def = conjFactDef(f.key);
+      if (!def) continue;
+      const view = resolveConjQuestion(def, 0);
+      conj.push({
+        kind: 'conj',
+        key: f.key,
+        box: f.box,
+        errorCount: logErrors
+          ? (logErrors.get(`conj:${f.key}`) ?? 0)
+          : countErrorsFromHistory(f.history, cutoff),
+        label: `${conjSubject(view.person, view.form)}${view.form}`,
+      });
+    }
+  }
+
+  return [...mult, ...div, ...rem, ...conj]
     .filter((f) => f.errorCount > 0)
     .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
     .slice(0, limit);

@@ -33,9 +33,14 @@ interface ParentDashboardStrings {
   multiplications: string;
   divisions: string;
   remainders: string;
+  // Matière conjugaison (spec Verbito §8) : section miroir de l'espace parent.
+  // Entrée `en` présente pour que la table reste totale, jamais rendue — la
+  // matière est masquée quand la langue d'interface est l'anglais.
+  conjugations: string;
   divisionsMastered: string;
   multiplicationsMastered: string;
   remaindersMastered: string;
+  conjugationsMastered: string;
   boxDistribution: string;
   learnMoreLeitner: string;
   boxDistributionSubtitle: (op: string) => string;
@@ -47,9 +52,12 @@ interface ParentDashboardStrings {
   opDivisionsPlural: string;
   opMultiplicationsPlural: string;
   opRemaindersPlural: string;
+  opConjugation: string;
+  opConjugationsPlural: string;
   factDivision: string;
   factMultiplication: string;
   factRemainder: string;
+  factConjugation: string;
   correctAnswerRate: string;
   averageResponseTime: string;
   hardestFacts: string;
@@ -120,6 +128,7 @@ interface ParentDashboardStrings {
   divSymbol: string;
   multSymbol: string;
   remSymbol: string;
+  conjSymbol: string;
   formatDivFact: (dividend: number, divisor: number, quotient: number) => string;
   formatMultFact: (a: number, b: number, product: number) => string;
   // Niveau 3 : une « zone » de dividendes (specs §12.6) — « 42 à 48 ÷ 7 ».
@@ -139,9 +148,11 @@ const parentDashboardFr: ParentDashboardStrings = {
   multiplications: 'Multiplications',
   divisions: 'Divisions',
   remainders: 'Avec reste',
+  conjugations: 'Conjugaison',
   divisionsMastered: 'Divisions maîtrisées',
   multiplicationsMastered: 'Multiplications maîtrisées',
   remaindersMastered: 'Divisions avec reste maîtrisées',
+  conjugationsMastered: 'Formes verbales maîtrisées',
   boxDistribution: 'Répartition par boîte',
   learnMoreLeitner: 'En savoir plus sur le système de Leitner',
   boxDistributionSubtitle: (op) =>
@@ -155,9 +166,12 @@ const parentDashboardFr: ParentDashboardStrings = {
   opDivisionsPlural: 'divisions',
   opMultiplicationsPlural: 'multiplications',
   opRemaindersPlural: 'divisions avec reste',
+  opConjugation: 'forme verbale',
+  opConjugationsPlural: 'formes verbales',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
   factRemainder: 'Division avec reste',
+  factConjugation: 'Conjugaison',
   correctAnswerRate: 'Taux de bonnes réponses',
   averageResponseTime: 'Temps de réponse moyen',
   hardestFacts: 'Faits les plus difficiles',
@@ -240,6 +254,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   divSymbol: '÷',
   multSymbol: '×',
   remSymbol: '÷ʳ',
+  conjSymbol: 'Vb',
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
@@ -259,9 +274,11 @@ const parentDashboardEn: ParentDashboardStrings = {
   multiplications: 'Multiplication',
   divisions: 'Division',
   remainders: 'Remainders',
+  conjugations: 'Conjugation',
   divisionsMastered: 'Division facts mastered',
   multiplicationsMastered: 'Multiplication facts mastered',
   remaindersMastered: 'Remainder facts mastered',
+  conjugationsMastered: 'Verb forms mastered',
   boxDistribution: 'Distribution by box',
   learnMoreLeitner: 'Learn more about the Leitner system',
   boxDistributionSubtitle: (op) =>
@@ -276,9 +293,12 @@ const parentDashboardEn: ParentDashboardStrings = {
   opDivisionsPlural: 'division',
   opMultiplicationsPlural: 'multiplication',
   opRemaindersPlural: 'division-with-remainder',
+  opConjugation: 'verb form',
+  opConjugationsPlural: 'verb form',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
   factRemainder: 'Division with remainder',
+  factConjugation: 'Conjugation',
   correctAnswerRate: 'Correct answer rate',
   averageResponseTime: 'Average response time',
   hardestFacts: 'Hardest facts',
@@ -360,6 +380,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   divSymbol: '÷',
   multSymbol: '×',
   remSymbol: '÷ʳ',
+  conjSymbol: 'Vb',
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
