@@ -1,3 +1,0 @@
-import{jsx as t,jsxs as c}from"preact/jsx-runtime";import{pushConfigured as r,pushSupported as a}from"../lib/push.js";import{isIOS as i,isStandalone as u}from"../lib/install.js";import{useWeeklyRecapStrings as p}from"../i18n/parent.js";import{usePushPref as f}from"../hooks/usePushPref.js";import m from"./PushToggle.js";function b(){const e=p(),{enabled:s,busy:l,message:o,toggle:n}=f("weekly",e);return r?a()?c("div",{className:"parent-watch-block",children:[t("p",{className:"parent-section-subtitle",children:e.subtitle}),t(m,{enabled:s,busy:l,message:o,onToggle:n,onLabel:e.enabled,offLabel:e.enable})]}):i()&&!u()?t("p",{className:"parent-section-subtitle",children:e.iosInstallSubtitle}):null:null}export{b as default};
-
-//# sourceMappingURL=WeeklyRecapSettings.js.map
