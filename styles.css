@@ -1166,13 +1166,6 @@
   width: 100%;
 }
 
-/* Rangée du bas : 6 touches, centrées et à la largeur des touches du milieu —
-   la silhouette d'un clavier, reconnaissable au premier coup d'œil. */
-.letterpad-row--bottom {
-  justify-content: center;
-  padding: 0 20%;
-}
-
 .letterpad-row--actions {
   margin-top: 4px;
   gap: 8px;
