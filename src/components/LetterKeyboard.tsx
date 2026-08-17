@@ -49,19 +49,9 @@ export default function LetterKeyboard({
     setInput(next);
   }, []);
 
-  // Reset à la ré-activation (= nouvelle question), en render-time synchrone :
-  // un useEffect serait microtask-async sous Preact et laisserait passer des
-  // touches voyant encore l'ancienne valeur d'`inputRef` (cf. NumPad).
-  const [prevDisabled, setPrevDisabled] = useState(disabled);
-  if (prevDisabled !== disabled) {
-    setPrevDisabled(disabled);
-    if (!disabled) {
-      // Garde de transition (prev !== next) → ne peut pas créer de boucle.
-      // eslint-disable-next-line react-hooks/refs
-      inputRef.current = '';
-      setInput('');
-    }
-  }
+  // Pas de reset à la ré-activation : les trois appelants re-keyent le clavier
+  // à chaque question (`answer-<index>`, `copy-<index>-<essai>`,
+  // `probe-<index>`), donc chaque question repart d'un composant neuf.
 
   const handleLetter = useCallback(
     (letter: string) => {
@@ -107,7 +97,7 @@ export default function LetterKeyboard({
     <button
       key={letter}
       type="button"
-      className="letterpad-btn"
+      className="pad-btn letterpad-btn"
       onClick={() => handleLetter(letter)}
       disabled={disabled}
       aria-label={letter}
@@ -117,11 +107,11 @@ export default function LetterKeyboard({
   );
 
   return (
-    <div className="letterpad-container">
-      <div className="letterpad-display" aria-live="polite">
+    <div className="pad-container letterpad-container">
+      <div className="pad-display letterpad-display" aria-live="polite">
         {prefix && <span className="letterpad-display-prefix">{prefix}</span>}
         <span className="letterpad-display-input">{input}</span>
-        {!disabled && <span className="letterpad-display-cursor" />}
+        {!disabled && <span className="pad-display-cursor" />}
       </div>
       <div className="letterpad-rows">
         <div className="letterpad-row">{ROW_TOP.map(key)}</div>
@@ -130,7 +120,7 @@ export default function LetterKeyboard({
         <div className="letterpad-row letterpad-row--actions">
           <button
             type="button"
-            className="letterpad-btn letterpad-btn-backspace"
+            className="pad-btn letterpad-btn pad-btn-backspace letterpad-btn-backspace"
             onClick={handleBackspace}
             disabled={disabled || input.length === 0}
             aria-label={t.backspace}
@@ -139,7 +129,7 @@ export default function LetterKeyboard({
           </button>
           <button
             type="button"
-            className="letterpad-btn letterpad-btn-ok"
+            className="pad-btn letterpad-btn pad-btn-ok letterpad-btn-ok"
             onClick={handleOk}
             disabled={disabled || input.length === 0}
             aria-label={t.submit}

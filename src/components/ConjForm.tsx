@@ -10,9 +10,11 @@
 
 /**
  * Ce qui est « illuminé » (spec §5.2 étape 2, §5.3 cas erreur) : le pronom
- * d'abord, puis sa marque — c'est l'accord sujet/verbe qu'on met en scène.
+ * d'abord, puis sa marque — c'est l'accord sujet/verbe qu'on met en scène. La
+ * marque ne s'allume jamais seule : elle s'ajoute au pronom déjà allumé, c'est
+ * l'ACCORD qui est mis en scène, pas la terminaison.
  */
-export type ConjLit = 'none' | 'subject' | 'mark' | 'both';
+export type ConjLit = 'none' | 'subject' | 'both';
 
 interface ConjFormProps {
   /**
@@ -31,7 +33,6 @@ interface ConjFormProps {
   /** Fin de phrase porteuse : « des crêpes. ». */
   after?: string;
   lit?: ConjLit;
-  size?: 'normal' | 'large';
 }
 
 export default function ConjForm({
@@ -40,14 +41,13 @@ export default function ConjForm({
   before,
   after,
   lit = 'none',
-  size = 'normal',
 }: ConjFormProps) {
   const [stem, mark] = segment;
-  const subjectLit = lit === 'subject' || lit === 'both';
-  const markLit = lit === 'mark' || lit === 'both';
+  const subjectLit = lit !== 'none';
+  const markLit = lit === 'both';
 
   return (
-    <span className={`conj-form conj-form--${size}`}>
+    <span className="conj-form">
       {before && <span className="conj-form-context">{before} </span>}
       {subject && (
         <span className={`conj-form-subject${subjectLit ? ' is-lit' : ''}`}>{subject}</span>

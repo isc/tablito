@@ -24,13 +24,17 @@ import {
   remainderDividend,
 } from '../types';
 import {
-  conjSubject,
   requireConjFactDef,
   resolveConjQuestion,
   type ConjQuestionView,
 } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
-import { judgeConjAnswer, scheduleConjRetry, type ConjJudgement } from '../lib/conjugationComposer';
+import {
+  conjRetryGap,
+  isConjAccepted,
+  judgeConjAnswer,
+  type ConjJudgement,
+} from '../lib/conjugationComposer';
 import { conjStrings as tc } from '../i18n/conjugation';
 import { getStrategy, hasStrategy } from '../lib/strategies';
 import { getDivisionStrategy } from '../lib/divisionStrategies';
@@ -39,7 +43,7 @@ import { getDivisionFactKey } from '../lib/divisionFacts';
 import { getRemainderFactKey } from '../lib/remainderFacts';
 import { getFactKey } from '../lib/facts';
 import { itemDisplay } from '../lib/sessionItemView';
-import { todayISO } from '../lib/utils';
+import { MAX_SESSION_QUESTIONS, scheduleRetry, todayISO } from '../lib/utils';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
@@ -48,10 +52,6 @@ import { preflightMicPermission } from '../lib/micPreflight';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useSessionStrings } from '../i18n/session';
 
-// Borne dure sur la longueur d'une session : la composition vise 12-15
-// questions, chaque erreur peut insérer une retry. Sans cap, des erreurs en
-// chaîne (surtout en vocal) rendent la session interminable.
-const MAX_SESSION_LENGTH = 20;
 const STT_SUPPORTED = isSpeechRecognitionSupported();
 
 // Écran de séance UNIFIÉ (specs §11.6). Une séance est une liste de
@@ -70,7 +70,7 @@ type IntroStep = 'grid' | 'commute' | 'strategy';
  *   3. `copy`      : la copie différée — la forme s'affiche 4 s, se masque,
  *                    l'enfant la tape (le geste ELOR qu'elle connaît) ;
  *   4. la première question, en contexte → sortie de `showIntro` ;
- *   5. le re-test 2 à 3 questions plus tard → `scheduleConjRetry`.
+ *   5. le re-test 2 à 3 questions plus tard → `scheduleRetry`.
  */
 type ConjIntroStep = 'sentence' | 'mechanics' | 'copy';
 
@@ -104,12 +104,11 @@ interface SessionScreenProps {
    * attribue l'erreur (§4.5), et les faits à faire redescendre ne sont pas
    * forcément celui posé (`blamedKeys`).
    */
-  onConjAnswer?: (
+  onConjAnswer: (
     item: ConjSessionItem,
     judgement: ConjJudgement,
     fast: boolean,
     timeMs: number,
-    typed: string,
   ) => void;
 }
 
@@ -388,15 +387,10 @@ export default function SessionScreen({
         currentItem.kind === 'rem' ? (isRemainderStep ? value : null) : undefined;
       onAnswer(currentItem, correct, timeMs, answeredQuotient, inputMode, answeredRemainder);
 
-      // Réintroduction après erreur (capée — cf. MAX_SESSION_LENGTH).
-      if (!correct && questions.length < MAX_SESSION_LENGTH) {
-        const retryPosition = Math.min(currentIndex + 3, questions.length);
-        const retryItem = { ...currentItem, isRetry: true, isIntroduction: false } as SessionItem;
-        setQuestions((prev) => {
-          const next = [...prev];
-          next.splice(retryPosition, 0, retryItem);
-          return next;
-        });
+      // Réintroduction après erreur, plafond de séance compris (cf.
+      // MAX_SESSION_QUESTIONS) — même mécanique qu'en conjugaison.
+      if (!correct) {
+        setQuestions((prev) => scheduleRetry(prev, currentIndex, currentItem, 3));
       }
 
       setResults((prev) => [...prev, { correct }]);
@@ -420,7 +414,7 @@ export default function SessionScreen({
         }
       }
     },
-    [currentItem, currentIndex, questions.length, remQuotient, onAnswer, playCorrect, playIncorrect, stopSpeech, speak, inputMode],
+    [currentItem, currentIndex, remQuotient, onAnswer, playCorrect, playIncorrect, stopSpeech, speak, inputMode],
   );
 
   const handleFeedbackDismiss = useCallback(() => {
@@ -453,22 +447,23 @@ export default function SessionScreen({
       // un « presque » est accepté, pas promu.
       const fast =
         judgement.verdict === 'correct' && timeMs < conjFastThresholdMs(view.expected, 'keypad');
+      const accepted = isConjAccepted(judgement.verdict);
 
       totalTimeMs.current += timeMs;
-      if (judgement.accepted) correctCount.current++;
+      if (accepted) correctCount.current++;
 
       // Aucun son négatif en conjugaison (§5.3) : le silence, jamais le buzzer.
-      if (judgement.accepted) playCorrect();
+      if (accepted) playCorrect();
 
-      onConjAnswer?.(currentItem, judgement, fast, timeMs, typed);
+      onConjAnswer(currentItem, judgement, fast, timeMs);
 
       // Re-pose 2 à 3 questions plus tard : après une erreur, et après une
       // introduction (§5.2 étape 5 — le re-test différé).
-      if (!judgement.accepted || currentItem.isIntroduction) {
-        setQuestions((prev) => scheduleConjRetry(prev, currentIndex, currentItem));
+      if (!accepted || currentItem.isIntroduction) {
+        setQuestions((prev) => scheduleRetry(prev, currentIndex, currentItem, conjRetryGap()));
       }
 
-      setResults((prev) => [...prev, { correct: judgement.accepted }]);
+      setResults((prev) => [...prev, { correct: accepted }]);
       setConjFeedback({ view, judgement, fast, typed, box: currentItem.fact.box });
     },
     [currentItem, currentIndex, onConjAnswer, playCorrect, stopSpeech],
@@ -489,7 +484,13 @@ export default function SessionScreen({
     (typed: string) => {
       if (!currentItem || currentItem.kind !== 'conj') return;
       const view = conjView(currentItem);
-      const ok = typed.trim().toLowerCase() === view.expected.toLowerCase();
+      // EXACTEMENT le juge de la séance, pas une égalité de chaînes : la copie
+      // est un geste d'ancrage, elle ne peut pas être plus sévère que la
+      // question qu'elle prépare (même raison qu'au placement, §4.5). Le
+      // modèle affiché étant la forme ENTIÈRE, l'enfant qui la recopie en
+      // entier alors que seule la terminaison est attendue a fait ce qu'on lui
+      // montrait — et on ne pénalise jamais l'orthographe lexicale.
+      const ok = isConjAccepted(judgeConjAnswer(view, typed).verdict);
       conjCopyAttempts.current++;
       if (ok || conjCopyAttempts.current >= CONJ_COPY_MAX_ATTEMPTS) {
         finishConjIntro();
@@ -511,10 +512,10 @@ export default function SessionScreen({
       setConjIntroStep('copy');
       setConjCopyVisible(true);
       speak(introKey(currentItem));
-    } else {
-      finishConjIntro();
     }
-  }, [conjIntroStep, currentItem, finishConjIntro, speak]);
+    // Pas de cas 'copy' : l'étape de copie n'a pas de bouton « Suivant », c'est
+    // la copie réussie (ou trois essais) qui en sort — cf. `handleConjCopy`.
+  }, [conjIntroStep, currentItem, speak]);
 
   const handleIntroNext = useCallback(() => {
     if (!currentItem) return;
@@ -577,7 +578,7 @@ export default function SessionScreen({
     showIntro && currentItem.kind === 'rem' ? getRemainderStrategy(currentItem) : null;
   const conjIntroStrategy = showIntro && cv ? getConjStrategy(cv) : null;
 
-  const maxDots = Math.min(questions.length, MAX_SESSION_LENGTH);
+  const maxDots = Math.min(questions.length, MAX_SESSION_QUESTIONS);
   const progressDots = Array.from({ length: maxDots }, (_, i) => {
     if (i < results.length) return results[i].correct ? 'correct' : 'incorrect';
     if (i === results.length) return 'current';
@@ -701,7 +702,7 @@ export default function SessionScreen({
 
       {/* Introduction — conjugaison, 5 étapes (spec Verbito §5.2). Les trois
           premières vivent ici ; la 4ᵉ est la question elle-même, la 5ᵉ est le
-          re-test différé posé par `scheduleConjRetry`. */}
+          re-test différé posé par `scheduleRetry`. */}
       {showIntro && cv && (
         <div className="session-intro conj-intro">
           <div className="session-intro-title">{tc.new}</div>
@@ -712,10 +713,9 @@ export default function SessionScreen({
               <div className="conj-intro-sentence">
                 <ConjForm
                   before={cv.carrier.before}
-                  subject={conjSubject(cv.person, cv.form)}
+                  subject={cv.subject}
                   segment={cv.segment}
                   after={cv.tail}
-                  size="large"
                 />
               </div>
               <div className="conj-intro-infinitive">{tc.infinitive(cv.verb)}</div>
@@ -729,10 +729,9 @@ export default function SessionScreen({
               <div className="session-intro-explanation">{tc.mechanicsTitle}</div>
               <div className="conj-intro-sentence">
                 <ConjForm
-                  subject={conjSubject(cv.person, cv.form)}
+                  subject={cv.subject}
                   segment={cv.segment}
                   lit={conjMarkLit ? 'both' : 'subject'}
-                  size="large"
                 />
               </div>
               {conjIntroStrategy && (
@@ -757,11 +756,7 @@ export default function SessionScreen({
                   : tc.copyWrite}
               </div>
               <div className={`conj-copy-model${conjCopyVisible ? '' : ' is-hidden'}`}>
-                <ConjForm
-                  subject={conjSubject(cv.person, cv.form)}
-                  segment={cv.segment}
-                  size="large"
-                />
+                <ConjForm subject={cv.subject} segment={cv.segment} />
               </div>
               {!conjCopyVisible && (
                 <div className="conj-keyboard-area">
@@ -785,9 +780,8 @@ export default function SessionScreen({
           <div className="conj-sentence">
             <ConjForm
               before={cv.carrier.before}
-              subject={conjSubject(cv.person, cv.form)}
+              subject={cv.subject}
               segment={[cv.displayedStem, '']}
-              size="large"
             />
             <span className="conj-blank" aria-hidden="true" />
             <span className="conj-sentence-tail">{cv.tail}</span>
@@ -893,7 +887,6 @@ export default function SessionScreen({
         <ConjFeedbackOverlay
           view={conjFeedback.view}
           verdict={conjFeedback.judgement.verdict}
-          accepted={conjFeedback.judgement.accepted}
           fast={conjFeedback.fast}
           typed={conjFeedback.typed}
           box={conjFeedback.box}

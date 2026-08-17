@@ -7,8 +7,8 @@ import {
   CONJ_PLACEMENT_PROBES,
   type ConjPlacementResult,
 } from '../lib/conjugationPlacement';
-import { conjSubject, requireConjFactDef, resolveConjQuestion } from '../lib/conjugationFacts';
-import { judgeConjAnswer } from '../lib/conjugationComposer';
+import { requireConjFactDef, resolveConjQuestion } from '../lib/conjugationFacts';
+import { isConjAccepted, judgeConjAnswer } from '../lib/conjugationComposer';
 import { useTTS } from '../hooks/useTTS';
 import { conjStrings as t } from '../i18n/conjugation';
 
@@ -39,7 +39,8 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<ConjPlacementResult[]>([]);
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
-  const [disabled, setDisabled] = useState(false);
+  // Le verdict affiché est AUSSI le verrou de saisie : tant qu'il est là, la
+  // sonde est jouée et le clavier comme le « Je ne sais pas » ont disparu.
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const startedAt = useRef(0);
 
@@ -56,8 +57,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
 
   const record = useCallback(
     (correct: boolean) => {
-      if (disabled) return;
-      setDisabled(true);
+      if (feedback !== null) return;
       stopSpeech();
 
       const updated = [
@@ -71,7 +71,6 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
 
       setTimeout(() => {
         setFeedback(null);
-        setDisabled(false);
         const isLast = index + 1 >= CONJ_PLACEMENT_PROBES.length;
         if (isLast || failures >= CONJ_MAX_CONSECUTIVE_FAILURES) {
           setStep('done');
@@ -80,7 +79,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
         }
       }, correct ? FEEDBACK_MS.correct : FEEDBACK_MS.incorrect);
     },
-    [disabled, results, probe.key, consecutiveFailures, index, stopSpeech],
+    [feedback, results, probe.key, consecutiveFailures, index, stopSpeech],
   );
 
   const handleSubmit = useCallback(
@@ -92,7 +91,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
       // pas de plus vers l'arrêt à 3 échecs consécutifs, sur le premier geste
       // de réassurance de la matière (§6.1) — et on ne pénalise jamais
       // l'orthographe lexicale (§8).
-      record(judgeConjAnswer(view, typed).accepted);
+      record(isConjAccepted(judgeConjAnswer(view, typed).verdict));
     },
     [record, view],
   );
@@ -151,9 +150,8 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
         <div className="conj-sentence">
           <ConjForm
             before={view.carrier.before}
-            subject={conjSubject(view.person, view.form)}
+            subject={view.subject}
             segment={[view.displayedStem, '']}
-            size="large"
           />
           <span className="conj-blank" aria-hidden="true" />
           <span className="conj-sentence-tail">{view.tail}</span>
@@ -169,11 +167,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
             {feedback === 'correct' ? (
               '✓'
             ) : (
-              <ConjForm
-                subject={conjSubject(view.person, view.form)}
-                segment={view.segment}
-                size="large"
-              />
+              <ConjForm subject={view.subject} segment={view.segment} />
             )}
           </div>
         ) : (
@@ -182,15 +176,10 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
               <LetterKeyboard
                 key={`probe-${index}`}
                 onSubmit={handleSubmit}
-                disabled={disabled}
                 prefix={view.displayedStem}
               />
             </div>
-            <button
-              className="welcome-dontknow"
-              onClick={() => record(false)}
-              disabled={disabled}
-            >
+            <button className="welcome-dontknow" onClick={() => record(false)}>
               <span className="welcome-dontknow-mark">?</span>
               <span>{t.placementDontKnow}</span>
             </button>

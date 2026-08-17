@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { UserProfile } from '../types';
+import { useState, type ReactNode } from 'react';
+import type { FactKind, UserProfile } from '../types';
 import MysteryImage from '../components/MysteryImage';
 import DivisionMysteryImage from '../components/DivisionMysteryImage';
 import RemainderMysteryImage from '../components/RemainderMysteryImage';
@@ -12,7 +12,16 @@ import { useProgressScreenStrings } from '../i18n/progress';
 // La conjugaison est une MATIÈRE, pas un niveau : son onglet ne s'ouvre pas par
 // la progression des maths mais par le simple fait d'avoir ouvert la matière —
 // et jamais en anglais (matière fr-only, cf. isConjVisible).
-type ProgressView = 'mult' | 'div' | 'rem' | 'conj';
+type ProgressView = FactKind;
+
+// Tout ce qui change d'un onglet à l'autre, en un seul endroit.
+interface ProgressViewDescriptor {
+  facts: { introduced: boolean; box: number }[];
+  discovered: string;
+  mastered: string;
+  legend: string;
+  image: ReactNode;
+}
 
 interface ProgressScreenProps {
   profile: UserProfile;
@@ -38,14 +47,70 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
   const divFacts = profile.divisionFacts ?? [];
   const remFacts = profile.remainderFacts ?? [];
   const conjFacts = profile.conjFacts ?? [];
-  const showConj = conjVisible && view === 'conj';
-  const showDiv = !showConj && divUnlocked && view === 'div';
-  const showRem = !showConj && remUnlocked && view === 'rem';
 
-  const facts = showConj ? conjFacts : showRem ? remFacts : showDiv ? divFacts : profile.facts;
-  const introduced = facts.filter((f) => f.introduced).length;
-  const mastered = facts.filter((f) => f.box >= 4).length;
-  const total = facts.length;
+  // UN descripteur par onglet plutôt que quatre chaînes de ternaires
+  // parallèles (faits, deux libellés de compteur, image, légende) : ajouter un
+  // niveau ou une matière se fait alors en un seul endroit, et il n'y a plus de
+  // façon d'en oublier une.
+  const views: Record<ProgressView, () => ProgressViewDescriptor> = {
+    mult: () => ({
+      facts: profile.facts,
+      discovered: t.discoveredMult,
+      mastered: t.masteredMult,
+      legend: t.legendMult,
+      image: <MysteryImage facts={profile.facts} theme={profile.mysteryTheme} />,
+    }),
+    div: () => ({
+      facts: divFacts,
+      discovered: t.discoveredDiv,
+      mastered: t.masteredDiv,
+      legend: t.legendDiv,
+      image: (
+        <DivisionMysteryImage
+          facts={divFacts}
+          theme={profile.divisionMysteryTheme ?? profile.mysteryTheme}
+        />
+      ),
+    }),
+    rem: () => ({
+      facts: remFacts,
+      discovered: t.discoveredDiv,
+      mastered: t.masteredDiv,
+      legend: t.legendRem,
+      image: (
+        <RemainderMysteryImage
+          facts={remFacts}
+          theme={profile.remainderMysteryTheme ?? profile.mysteryTheme}
+        />
+      ),
+    }),
+    conj: () => ({
+      facts: conjFacts,
+      discovered: t.discoveredConj,
+      mastered: t.masteredConj,
+      legend: t.legendConj,
+      image: (
+        <ConjMysteryImage
+          facts={conjFacts}
+          theme={profile.conjMysteryTheme ?? profile.mysteryTheme}
+        />
+      ),
+    }),
+  };
+
+  // L'onglet actif ne peut pas désigner un inventaire fermé : le state part
+  // déjà d'un onglet autorisé, et un déblocage ne se perd jamais en cours de
+  // route — mais la garde reste la seule source de la retombée sur 'mult'.
+  const active =
+    (view === 'conj' && !conjVisible) ||
+    (view === 'div' && !divUnlocked) ||
+    (view === 'rem' && !remUnlocked)
+      ? views.mult()
+      : views[view]();
+
+  const introduced = active.facts.filter((f) => f.introduced).length;
+  const mastered = active.facts.filter((f) => f.box >= 4).length;
+  const total = active.facts.length;
 
   // Onglets : les niveaux de maths débloqués, puis la matière conjugaison —
   // en dernier, séparée, parce que ce n'en est pas un de plus.
@@ -91,15 +156,11 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
       <div className="progress-stats-summary">
         <div className="progress-stat">
           <div className="progress-stat-value">{introduced}</div>
-          <div className="progress-stat-label">
-            {showConj ? t.discoveredConj : showDiv || showRem ? t.discoveredDiv : t.discoveredMult}
-          </div>
+          <div className="progress-stat-label">{active.discovered}</div>
         </div>
         <div className="progress-stat">
           <div className="progress-stat-value">{mastered}</div>
-          <div className="progress-stat-label">
-            {showConj ? t.masteredConj : showDiv || showRem ? t.masteredDiv : t.masteredMult}
-          </div>
+          <div className="progress-stat-label">{active.mastered}</div>
         </div>
         <div className="progress-stat">
           <div className="progress-stat-value">{total}</div>
@@ -107,25 +168,9 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
         </div>
       </div>
 
-      {showConj ? (
-        <ConjMysteryImage
-          facts={conjFacts}
-          theme={profile.conjMysteryTheme ?? profile.mysteryTheme}
-        />
-      ) : showRem ? (
-        <RemainderMysteryImage
-          facts={remFacts}
-          theme={profile.remainderMysteryTheme ?? profile.mysteryTheme}
-        />
-      ) : showDiv ? (
-        <DivisionMysteryImage facts={divFacts} theme={profile.divisionMysteryTheme ?? profile.mysteryTheme} />
-      ) : (
-        <MysteryImage facts={profile.facts} theme={profile.mysteryTheme} />
-      )}
+      {active.image}
 
-      <div className="progress-legend">
-        {showConj ? t.legendConj : showRem ? t.legendRem : showDiv ? t.legendDiv : t.legendMult}
-      </div>
+      <div className="progress-legend">{active.legend}</div>
     </div>
   );
 }

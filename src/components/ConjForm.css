@@ -4,8 +4,7 @@
    d'interface) et du corail (couleur d'erreur) : la segmentation est une
    information de structure, jamais un jugement. */
 :root {
-  --conj-stem: #3E7EB6;        /* = --sky */
-  --conj-stem-soft: #DDE9F4;   /* = --sky-soft */
+  --conj-stem: var(--sky);
   --conj-mark: #B23A5D;
   --conj-mark-soft: #F7E1E8;
 }
@@ -15,18 +14,11 @@
   font-weight: 500;
   color: var(--ink);
   line-height: 1.45;
+  font-size: 34px;
+  letter-spacing: -0.5px;
   /* Les phrases porteuses sont passées avec leur espacement (« Demain, »,
      « nous », « j’ ») : on le préserve tout en laissant la ligne se replier. */
   white-space: pre-wrap;
-}
-
-.conj-form--normal {
-  font-size: 24px;
-}
-
-.conj-form--large {
-  font-size: 34px;
-  letter-spacing: -0.5px;
 }
 
 .conj-form-context {

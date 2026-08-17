@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import ConjForm from './ConjForm';
 import FeedbackStar from './FeedbackStar';
 import StrategyHintShell from './StrategyHintShell';
-import { conjSubject, type ConjQuestionView } from '../lib/conjugationFacts';
+import type { ConjQuestionView } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
 import { pickRandom } from '../lib/utils';
 import { conjStrings as t } from '../i18n/conjugation';
 import type { BoxLevel } from '../types';
-import type { ConjVerdict } from '../lib/conjugationComposer';
+import { isConjAccepted, type ConjVerdict } from '../lib/conjugationComposer';
+import { FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
 
 // Feedback de la matière conjugaison — quatre cas (spec Verbito §5.3), tous
 // non ego-involving (Butler 1988) :
@@ -22,16 +23,13 @@ import type { ConjVerdict } from '../lib/conjugationComposer';
 //                    le pronom et sa marque s'illuminent ; astuce seulement pour
 //                    les faits en boîte ≤ 2.
 
-/** Durée d'affichage d'un feedback accepté avant enchaînement automatique. */
-const DISMISS_MS = 1800;
-/** Le cas « presque » montre une forme à lire : un peu plus de temps. */
+/** Le cas « presque » montre une forme à lire : un peu plus de temps que le
+    délai commun d'un feedback accepté (cf. FEEDBACK_DISMISS_MS). */
 const DISMISS_ALMOST_MS = 2600;
 
 interface ConjFeedbackOverlayProps {
   view: ConjQuestionView;
   verdict: ConjVerdict;
-  /** Réponse acceptée par le Leitner (`correct` ou `almost`). */
-  accepted: boolean;
   fast: boolean;
   /** Ce que l'enfant a réellement tapé (chemin erreur uniquement). */
   typed: string;
@@ -43,7 +41,6 @@ interface ConjFeedbackOverlayProps {
 export default function ConjFeedbackOverlay({
   view,
   verdict,
-  accepted,
   fast,
   typed,
   box,
@@ -51,11 +48,14 @@ export default function ConjFeedbackOverlay({
 }: ConjFeedbackOverlayProps) {
   // Message tiré une fois pour toutes au montage (pas à chaque render).
   const [praise] = useState(() => pickRandom(t.correctMessages));
-  const subject = conjSubject(view.person, view.form);
+  const accepted = isConjAccepted(verdict);
 
   useEffect(() => {
     if (!accepted) return;
-    const timer = setTimeout(onDismiss, verdict === 'almost' ? DISMISS_ALMOST_MS : DISMISS_MS);
+    const timer = setTimeout(
+      onDismiss,
+      verdict === 'almost' ? DISMISS_ALMOST_MS : FEEDBACK_DISMISS_MS,
+    );
     return () => clearTimeout(timer);
   }, [accepted, verdict, onDismiss]);
 
@@ -68,7 +68,7 @@ export default function ConjFeedbackOverlay({
             manqué (la vitesse, la coquille) n'est nommé. */}
         <div className="feedback-message correct">{fast ? praise : t.wellDone}</div>
         <div className="conj-feedback-form">
-          <ConjForm segment={view.segment} subject={subject} size="large" />
+          <ConjForm segment={view.segment} subject={view.subject} />
         </div>
       </div>
     );
@@ -88,12 +88,7 @@ export default function ConjFeedbackOverlay({
         {/* La forme correcte, segmentée, pronom et marque illuminés : le support
             conceptuel de l'erreur — l'équivalent de la grille de points. */}
         <div className="conj-feedback-form">
-          <ConjForm
-            segment={view.segment}
-            subject={subject}
-            lit="both"
-            size="large"
-          />
+          <ConjForm segment={view.segment} subject={view.subject} lit="both" />
         </div>
         <div className="conj-feedback-sentence">{view.sentence}</div>
         {strategy && (

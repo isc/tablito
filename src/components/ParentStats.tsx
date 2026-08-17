@@ -8,8 +8,8 @@
 // appareil. Ce qui dépend de l'appareil (sauvegarde, transfert, notifications,
 // suppression de profil) reste dans ParentDashboard.
 
-import { memo, useMemo, useState } from 'react';
-import type { UserProfile } from '../types';
+import { memo, useMemo, useState, type ReactNode } from 'react';
+import type { FactKind, UserProfile } from '../types';
 import { isConjVisible, isDivisionUnlocked, isRemainderUnlocked, activeLevel } from '../lib/badges';
 import { countMastered } from '../lib/leitner';
 import { getHardestFacts } from '../lib/hardestFacts';
@@ -23,6 +23,16 @@ import ConjProgressGrid from './ConjProgressGrid';
 import EvolutionChart from './EvolutionChart';
 import { useGuideBase, useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
+
+// Tout ce qui change quand le parent bascule d'une opération à l'autre.
+interface ParentView {
+  facts: { introduced: boolean; box: number }[];
+  mastered: string;
+  masteredLabel: string;
+  opPlural: string;
+  opSingular: string;
+  grid: ReactNode;
+}
 
 const HARD_FACTS_WINDOW = 10;
 const EVOLUTION_WINDOW = 20;
@@ -48,59 +58,64 @@ function ParentStats({ profile }: { profile: UserProfile }) {
   // Onglet par défaut : le niveau actif — c'est l'activité d'apprentissage en
   // cours (les niveaux passés sont déjà en boîte 5 par hypothèse, et surtout
   // l'objet de l'attention du parent au quotidien).
-  const [gridView, setGridView] = useState<'mult' | 'div' | 'rem' | 'conj'>(() =>
+  const [gridView, setGridView] = useState<FactKind>(() =>
     activeLevel(profile),
   );
-  const showConj = conjVisible && gridView === 'conj';
-  const showRem = !showConj && remainderUnlocked && gridView === 'rem';
-  const showDiv = !showConj && divisionUnlocked && gridView === 'div';
+  // Descripteur de l'opération sélectionnée par le parent (× / ÷ / reste /
+  // conjugaison) — un seul point de vérité pour toutes les sections pilotées
+  // par le sélecteur (compteur de maîtrise, répartition par boîte, grille
+  // Leitner). Les entrées sont des fonctions : seule celle de l'onglet ouvert
+  // est évaluée, donc une seule grille est construite.
+  const views: Record<FactKind, () => ParentView> = {
+    mult: () => ({
+      facts: profile.facts,
+      mastered: `${countMastered(profile.facts)}/${profile.facts.length}`,
+      masteredLabel: t.multiplicationsMastered,
+      opPlural: t.opMultiplicationsPlural,
+      opSingular: t.opMultiplication,
+      grid: <ProgressGrid facts={profile.facts} />,
+    }),
+    div: () => ({
+      facts: divisionFacts,
+      mastered: `${countMastered(divisionFacts)}/${divisionFacts.length}`,
+      masteredLabel: t.divisionsMastered,
+      opPlural: t.opDivisionsPlural,
+      opSingular: t.opDivision,
+      grid: <DivisionProgressGrid facts={divisionFacts} />,
+    }),
+    rem: () => ({
+      facts: remainderFacts,
+      mastered: `${countMastered(remainderFacts)}/${remainderFacts.length}`,
+      masteredLabel: t.remaindersMastered,
+      opPlural: t.opRemaindersPlural,
+      opSingular: t.opRemainder,
+      grid: <RemainderProgressGrid facts={remainderFacts} />,
+    }),
+    conj: () => ({
+      facts: conjFacts,
+      mastered: `${countMastered(conjFacts)}/${conjFacts.length}`,
+      masteredLabel: t.conjugationsMastered,
+      opPlural: t.opConjugationsPlural,
+      opSingular: t.opConjugation,
+      grid: <ConjProgressGrid facts={conjFacts} />,
+    }),
+  };
 
-  // Descripteur de l'opération sélectionnée par le parent (× / ÷ / reste) —
-  // un seul point de vérité pour toutes les sections pilotées par le
-  // sélecteur (compteur de maîtrise, répartition par boîte, grille Leitner).
-  const activeView = showConj
-    ? {
-        facts: conjFacts,
-        mastered: `${countMastered(conjFacts)}/${conjFacts.length}`,
-        masteredLabel: t.conjugationsMastered,
-        opPlural: t.opConjugationsPlural,
-        opSingular: t.opConjugation,
-        grid: <ConjProgressGrid facts={conjFacts} />,
-      }
-    : showRem
-    ? {
-        facts: remainderFacts,
-        mastered: `${countMastered(remainderFacts)}/${remainderFacts.length}`,
-        masteredLabel: t.remaindersMastered,
-        opPlural: t.opRemaindersPlural,
-        opSingular: t.opRemainder,
-        grid: <RemainderProgressGrid facts={remainderFacts} />,
-      }
-    : showDiv
-      ? {
-          facts: divisionFacts,
-          mastered: `${countMastered(divisionFacts)}/${divisionFacts.length}`,
-          masteredLabel: t.divisionsMastered,
-          opPlural: t.opDivisionsPlural,
-          opSingular: t.opDivision,
-          grid: <DivisionProgressGrid facts={divisionFacts} />,
-        }
-      : {
-          facts: profile.facts,
-          mastered: `${countMastered(profile.facts)}/${profile.facts.length}`,
-          masteredLabel: t.multiplicationsMastered,
-          opPlural: t.opMultiplicationsPlural,
-          opSingular: t.opMultiplication,
-          grid: <ProgressGrid facts={profile.facts} />,
-        };
+  // Un onglet fermé (niveau non débloqué, matière jamais ouverte) retombe sur
+  // la multiplication : le sélecteur ne le propose pas, mais l'onglet par
+  // défaut vient du niveau actif et la langue peut changer sous nos pieds.
+  const activeView =
+    (gridView === 'conj' && conjVisible) ||
+    (gridView === 'rem' && remainderUnlocked) ||
+    (gridView === 'div' && divisionUnlocked)
+      ? views[gridView]()
+      : views.mult();
 
   // Onglets du sélecteur — même pattern que « Mes images » (ProgressScreen).
-  const opTabs: Array<{ key: 'mult' | 'div' | 'rem' | 'conj'; label: string }> = [
+  const opTabs: Array<{ key: FactKind; label: string }> = [
     { key: 'mult', label: t.multiplications },
     ...(divisionUnlocked ? [{ key: 'div' as const, label: t.divisions }] : []),
-    ...(divisionUnlocked && remainderUnlocked
-      ? [{ key: 'rem' as const, label: t.remainders }]
-      : []),
+    ...(remainderUnlocked ? [{ key: 'rem' as const, label: t.remainders }] : []),
     ...(conjVisible ? [{ key: 'conj' as const, label: t.conjugations }] : []),
   ];
 

@@ -21,15 +21,15 @@ interface HomeScreenProps {
   // === Matière conjugaison (spec Verbito §9 : « l'accueil devient un choix de
   // matière »). Faux hors français : la matière est fr-only et RIEN n'en
   // transparaît alors — l'accueil reste exactement celui d'avant.
-  conjAvailable?: boolean;
+  conjAvailable: boolean;
   // La séance de conjugaison du jour reste-t-elle à faire ? (Indépendante de
   // celle de maths : faire l'une ne ferme pas l'autre.)
-  hasConjSessionAvailable?: boolean;
+  hasConjSessionAvailable: boolean;
   // La matière a-t-elle déjà été ouverte ? Faux + `conjAvailable` = elle est
   // là mais jamais touchée : c'est la pastille discrète de découverte
   // (révélation différée, comme la règle bonus ×11 — jamais de modale).
-  conjVisible?: boolean;
-  onStartConj?: () => void;
+  conjVisible: boolean;
+  onStartConj: () => void;
   onStart: () => void;
   onShowProgress: () => void;
   onShowBadges: () => void;
@@ -163,7 +163,7 @@ function SubjectTile({
   label: string;
   available: boolean;
   isNew?: boolean;
-  onStart?: () => void;
+  onStart: () => void;
   t: ReturnType<typeof useHomeStrings>;
 }) {
   return (
@@ -171,7 +171,7 @@ function SubjectTile({
       type="button"
       className={`home-subject-btn${available ? '' : ' is-done'}`}
       onClick={onStart}
-      disabled={!available || !onStart}
+      disabled={!available}
       aria-label={available ? t.subjectStart(label) : t.subjectDoneLabel(label)}
     >
       <span className="home-subject-icon">{icon}</span>
@@ -354,7 +354,7 @@ export default function HomeScreen({
                 icon={<IconVerb />}
                 label={t.subjectConj}
                 available={hasConjSessionAvailable}
-                isNew={conjAvailable && !conjVisible}
+                isNew={!conjVisible}
                 onStart={onStartConj}
                 t={t}
               />
