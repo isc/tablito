@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Generates pre-recorded TTS audio files via the Mistral Voxtral TTS API.
  *
@@ -16,12 +14,23 @@
  * Voix : la voix française par défaut est figée ci-dessous. La voix anglaise
  * est surchargeable par la variable d'env MISTRAL_VOICE_ID_EN (sinon on réutilise
  * la voix par défaut, qui sait lire l'anglais — accent près).
+ *
+ * Les clés ne sont PAS forcément les mêmes d'une langue à l'autre : la
+ * conjugaison (specs §15) est une matière francophone, masquée quand la langue
+ * d'interface est l'anglais. Ses clés `conj-*` n'existent donc qu'en français
+ * (cf. buildEntriesFr) — générer 151 phrases françaises avec une voix anglaise
+ * produirait des MP3 que rien ne joue jamais.
+ *
+ * `buildEntriesFr`/`buildEntriesEn` sont exportées et main() n'est lancé qu'en
+ * CLI : scripts/generate-tts.test.mjs vérifie la couverture des clés sans clé
+ * d'API ni appel réseau.
  */
 
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import esbuild from 'esbuild';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TTS_ROOT = join(__dirname, '..', 'public', 'audio', 'tts');
@@ -34,10 +43,6 @@ const VOICE_ID_FR = 'e0580ce5-e63c-4cbe-88c8-a983b80c5f1f';
 const VOICE_ID_EN = process.env.MISTRAL_VOICE_ID_EN || '5de47977-6e47-4266-a938-3bc1d76b4676';
 
 const API_KEY = process.env.MISTRAL_API_KEY;
-if (!API_KEY) {
-  console.error('MISTRAL_API_KEY environment variable not set');
-  process.exit(1);
-}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -166,7 +171,33 @@ function strategyTextEn(a, b) {
   return null;
 }
 
-function buildEntriesFr() {
+// === Conjugaison (specs §15) ===
+//
+// Les énoncés de maths se CALCULENT (« 7 fois 8 »), donc ce script les
+// reconstruit. Les phrases porteuses de la conjugaison, elles, sont des données
+// rédigées à la main dans src/lib/conjugationFacts.ts (2 à 3 par fait, 151 en
+// tout) : les recopier ici garantirait la divergence silencieuse — un MP3 qui
+// dit autre chose que ce que l'écran affiche, et personne pour s'en apercevoir.
+//
+// On lit donc la source de vérité. Un .mjs ne peut pas importer un .ts, mais
+// esbuild est déjà une devDependency (scripts/build.mjs, scripts/dev.mjs) et
+// `npm ci` l'installe dans le workflow generate-tts : on transforme le fichier
+// et on importe le résultat en data: URL. `conjugationFacts.ts` n'a qu'un import
+// `type`, donc transformer ce seul fichier suffit — pas besoin de bundler.
+// (scripts/generate-tts.test.mjs échouerait si cette hypothèse cessait d'être
+// vraie, avant que le workflow ne casse.)
+async function loadConjEntries() {
+  const path = join(__dirname, '..', 'src', 'lib', 'conjugationFacts.ts');
+  const { code } = await esbuild.transform(await readFile(path, 'utf8'), {
+    loader: 'ts',
+    format: 'esm',
+  });
+  const url = `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+  const { allConjCarrierSentences } = await import(url);
+  return allConjCarrierSentences();
+}
+
+async function buildEntriesFr() {
   const entries = [];
 
   for (let a = 2; a <= 9; a++) {
@@ -271,6 +302,14 @@ function buildEntriesFr() {
     key: 'rules-intro-x10',
     text: "Pour multiplier par 10, les chiffres glissent d'une place vers la gauche, et un zéro vient prendre la place des unités. Par exemple, 3 devient 30, 7 devient 70, 12 devient 120. Astuce : tous les résultats de la table de 10 se terminent par zéro !",
   });
+
+  // Les phrases porteuses de la conjugaison — `conj-<clé du fait>-<rang>`, la
+  // clé que resolveConjQuestion() met dans `ttsKey`. Elles servent à la fois
+  // d'énoncé de question, d'introduction du fait et de réécoute (§15.5, §15.6).
+  // Rien d'autre n'est parlé dans la matière : les astuces de
+  // conjugationStrategies.ts et les messages de i18n/conjugation.ts sont
+  // uniquement affichés.
+  entries.push(...(await loadConjEntries()));
 
   return entries;
 }
@@ -379,8 +418,13 @@ function buildEntriesEn() {
     text: 'To multiply by 10, the digits shift one place to the left, and a zero takes the units place. For example, 3 becomes 30, 7 becomes 70, 12 becomes 120. Tip: every answer in the 10 times table ends in zero!',
   });
 
+  // Pas de `conj-*` ici : voir l'en-tête du fichier — la conjugaison n'existe
+  // pas dans l'interface anglaise, donc ses MP3 non plus.
+
   return entries;
 }
+
+export { buildEntriesFr, buildEntriesEn };
 
 const LANGS = {
   fr: { dir: join(TTS_ROOT, 'fr'), voice: VOICE_ID_FR, build: buildEntriesFr },
@@ -391,7 +435,7 @@ async function generateLang(lang) {
   const { dir, voice, build } = LANGS[lang];
   await mkdir(dir, { recursive: true });
 
-  const entries = build();
+  const entries = await build();
   console.log(`\n[${lang}] Generating ${entries.length} audio files into ${dir}...\n`);
 
   let success = 0;
@@ -427,6 +471,11 @@ async function generateLang(lang) {
 }
 
 async function main() {
+  if (!API_KEY) {
+    console.error('MISTRAL_API_KEY environment variable not set');
+    process.exit(1);
+  }
+
   // TTS_LANGS=fr,en (défaut : toutes les langues supportées).
   const requested = (process.env.TTS_LANGS || 'fr,en')
     .split(',')
@@ -441,7 +490,10 @@ async function main() {
   if (failed > 0) process.exit(1);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// N'exécuter main() que si lancé en CLI (pas à l'import depuis les tests).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
