@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-08-18',
+    items: [
+      "Conjugaison à voix haute : l'enfant peut désormais répondre en épelant, comme on révise à l'oral — « chantons : o, n, s ». Le mode s'active avec le même réglage que les réponses parlées des maths (bouton micro pendant une séance) et le clavier reste le mode par défaut. Les lettres reconnues s'écrivent au fur et à mesure et restent corrigeables au clavier ; si le micro n'a pas bien entendu, l'app redemande gentiment — ce n'est jamais compté comme une erreur — et repasse au clavier au bout de deux essais. Pourquoi épeler plutôt que dire la forme : « chante », « chantes » et « chantent » se prononcent pareil, seule l'épellation dit vraiment l'orthographe. Bonus : sans le temps de frappe, la mesure de rapidité reflète enfin ce que l'enfant sait vraiment.",
+    ],
+  },
+  {
     date: '2026-08-17',
     items: [
       "Nouvelle matière : la conjugaison. À côté des maths, l'accueil propose désormais une seconde tuile pour réviser les conjugaisons du CE2 — présent, imparfait et futur du 1er groupe et des verbes être, avoir, aller, faire, dire, venir, voir. Même méthode que les tables : un court test de placement au départ (l'image mystère démarre déjà partiellement révélée par ce qui est déjà su), des séances de 4 à 6 minutes, chaque phrase lue à voix haute, et une image mystère dédiée qui se dévoile au fil des révisions. L'enfant tape la terminaison sur un clavier de lettres, le radical étant déjà affiché — et l'orthographe du reste du mot n'est jamais pénalisée : une seule règle à la fois. La flamme de série est commune aux deux matières : une seule séance par jour suffit à l'entretenir.",
@@ -189,6 +195,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-08-18',
+    items: [
+      'Spelling out loud in French conjugation (a French-only subject, so this mode is too): the child can now answer by spelling the ending aloud, the way you would revise together — "chantons: o, n, s". It uses the same setting as spoken answers in math (the microphone button during a session), and the keyboard stays the default. Recognised letters appear as they are heard and can still be fixed on the keyboard; when the microphone mishears, the app simply asks again — never counted as a mistake — and hands over to the keyboard after two tries.',
+    ],
+  },
   {
     date: '2026-08-17',
     items: [

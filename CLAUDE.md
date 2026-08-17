@@ -79,6 +79,7 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 - `scripts/` — tooling (dev server, build, preview, vendor, SW templates, vendor-fonts, perf-audit, perf-compare)
 - `vendor/preact/` — Preact ESM vendoré (régénéré par `npm run vendor`)
 - `public/fonts/` — fontes self-hostées (régénéré par `npm run vendor:fonts`)
+- `public/phonetic/fr.txt` — dictionnaire de prononciation du mode vocal épelé (voir plus bas)
 - `index.html` — entry avec import map ET la landing statique + bootstrap script inline
 - `public/specs/index.html` — spécifications fonctionnelles complètes (déployées en `/specs/` via le `copyTree(PUBLIC, OUT)` du build, dans le thème du site). HTML écrit à la main : éditable directement, plus de `specs-multiplix.md`.
 - `TODO.md` — évolutions techniques envisagées (pistes non tranchées)
@@ -101,6 +102,29 @@ Un guide HTML avec captures d'écran est généré par `npm run user-guide` (scr
 ## Changelog in-app
 
 `src/lib/changelog.ts` alimente la page « Nouveautés » de l'espace parent. Le seuil est élevé : une entrée doit valoir le coup pour le parent qui ouvre la page. On y met les **vraies nouveautés fonctionnelles** (nouvelle feature, changement de comportement notable, bug fixe que le parent avait remarqué). On n'y met PAS les fixes d'UX mineurs (polish, scroll, espacement, typo), les refactos, le CI, le lint, ni les changements purement techniques. Au moindre doute : ne pas ajouter.
+
+## Mode vocal épelé (conjugaison)
+
+En conjugaison, l'enfant peut répondre à l'oral en **épelant** (specs §15.10) :
+mode optionnel, fr-only, activé par le même réglage que l'entrée vocale des
+maths (`useInputMode`), clavier par défaut. L'appariement ne compare **jamais**
+le transcript en orthographe : `src/lib/parseSpelledLetters.ts` projette les mots
+transcrits en phonèmes et les compare aux prononciations des noms de lettres
+(`src/lib/letterNames.ts`, table maison).
+
+Le dictionnaire de prononciation servi (`public/phonetic/fr.txt`, ~4 Ko) est
+**élagué** au vocabulaire fermé du mode par `scripts/generate-phonetic-dict.mjs`
+depuis un fichier source de 6 Mo (open-dict-data/ipa-dict, `data/fr_FR.txt`, MIT)
+qui n'est **pas dans le repo** :
+
+```bash
+PHONETIC_SRC=/chemin/vers/fr_FR.txt node scripts/generate-phonetic-dict.mjs
+```
+
+À régénérer quand l'inventaire de la conjugaison change (les formes verbales font
+partie des cibles d'appariement) ou quand `letterNames.ts` gagne une lettre. Le
+fichier vit dans son propre groupe de cache SW (`phonetic` dans `LAZY_GROUPS`) :
+il n'est téléchargé que si le mode vocal est actif.
 
 ## Génération des MP3 TTS
 
