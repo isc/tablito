@@ -23,7 +23,7 @@ export interface ConjStrategy {
   title: string;
   /**
    * Énoncé côté enfant : phrases courtes, une idée par ligne. Mini-balisage
-   * rendu par `renderConjHintLine` (ConjForm.tsx) : `*ons*` = terminaison dans
+   * rendu par `renderConjHintLine` (components/conjHintLine.tsx) : `*ons*` = terminaison dans
    * la couleur des marques, `_chant_` = radical dans celle des radicaux — les
    * mêmes couleurs que la forme segmentée affichée au-dessus de l'astuce.
    */

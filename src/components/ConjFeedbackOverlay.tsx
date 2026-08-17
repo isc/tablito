@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import ConjForm, { renderConjHintLine } from './ConjForm';
+import ConjForm from './ConjForm';
+import { renderConjHintLine } from './conjHintLine';
 import FeedbackStar from './FeedbackStar';
 import StrategyHintShell from './StrategyHintShell';
 import type { ConjQuestionView } from '../lib/conjugationFacts';
