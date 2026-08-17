@@ -8,6 +8,7 @@ import type {
 import NumPad from '../components/NumPad';
 import LetterKeyboard from '../components/LetterKeyboard';
 import VoiceInput from '../components/VoiceInput';
+import ConjVoiceInput from '../components/ConjVoiceInput';
 import DotGrid from '../components/DotGrid';
 import ConjForm from '../components/ConjForm';
 import { renderConjHintLine } from '../components/conjHintLine';
@@ -110,6 +111,7 @@ interface SessionScreenProps {
     judgement: ConjJudgement,
     fast: boolean,
     timeMs: number,
+    inputMode: 'keypad' | 'voice',
   ) => void;
 }
 
@@ -233,7 +235,20 @@ export default function SessionScreen({
     setInputMode('voice');
   }, [setInputMode]);
 
+  // Mode vocal épelé de la conjugaison (§15.10) : même réglage que le vocal des
+  // maths, donc même bascule et même persistance — le clavier reste le défaut.
+  // La matière étant francophone, aucune condition de langue à ajouter ici.
+  const conjVoiceMode = inputMode === 'voice' && STT_SUPPORTED;
+
   const questionStartTime = useRef(0);
+  /**
+   * Conjugaison en vocal épelé : latence de RAPPEL de la question en cours —
+   * l'écart entre la question posée et le premier son de la réponse (§15.10).
+   * C'est elle qui décide de « rapide », et non le temps jusqu'à la validation :
+   * le coût moteur de la frappe disparaissant, le seuil mesure enfin le rappel
+   * pur. `null` tant que l'enfant n'a pas parlé (réponse tapée, ou pas encore).
+   */
+  const conjRecallMs = useRef<number | null>(null);
   const correctCount = useRef(0);
   const totalTimeMs = useRef(0);
   const introducedFacts = useRef(new Set<string>());
@@ -284,6 +299,7 @@ export default function SessionScreen({
     }
     setNumpadDisabled(false);
     setRemQuotient(null);
+    conjRecallMs.current = null;
   }
 
   useEffect(() => {
@@ -443,11 +459,17 @@ export default function SessionScreen({
       const view = conjView(currentItem);
       const timeMs = Date.now() - questionStartTime.current;
       const judgement = judgeConjAnswer(view, typed);
-      // Le seuil de rapidité absorbe le coût moteur de la frappe : base + coût
-      // par caractère (§4.5). Seul un `correct` franc peut être « rapide » —
-      // un « presque » est accepté, pas promu.
+      // Au clavier, le seuil de rapidité absorbe le coût moteur de la frappe :
+      // base + coût par caractère (§4.5). En vocal épelé, ce coût n'existe plus
+      // et c'est la latence de rappel qui est mesurée (§15.10) — à défaut (une
+      // réponse finalement tapée après un raté de reconnaissance), le temps
+      // total fait foi. Seul un `correct` franc peut être « rapide » : un
+      // « presque » est accepté, pas promu.
+      const judgedMs =
+        inputMode === 'voice' && conjRecallMs.current !== null ? conjRecallMs.current : timeMs;
       const fast =
-        judgement.verdict === 'correct' && timeMs < conjFastThresholdMs(view.expected, 'keypad');
+        judgement.verdict === 'correct'
+        && judgedMs < conjFastThresholdMs(view.expected, inputMode);
       const accepted = isConjAccepted(judgement.verdict);
 
       totalTimeMs.current += timeMs;
@@ -456,7 +478,9 @@ export default function SessionScreen({
       // Aucun son négatif en conjugaison (§5.3) : le silence, jamais le buzzer.
       if (accepted) playCorrect();
 
-      onConjAnswer(currentItem, judgement, fast, timeMs);
+      // `timeMs` (et non `judgedMs`) part dans l'historique : le temps réel de
+      // la question reste vrai, c'est le SEUIL qui change de définition.
+      onConjAnswer(currentItem, judgement, fast, timeMs, inputMode);
 
       // Re-pose 2 à 3 questions plus tard : après une erreur, et après une
       // introduction (§5.2 étape 5 — le re-test différé).
@@ -467,8 +491,20 @@ export default function SessionScreen({
       setResults((prev) => [...prev, { correct: accepted }]);
       setConjFeedback({ view, judgement, fast, typed, box: currentItem.fact.box });
     },
-    [currentItem, currentIndex, onConjAnswer, playCorrect, stopSpeech],
+    [currentItem, currentIndex, onConjAnswer, playCorrect, stopSpeech, inputMode],
   );
+
+  /**
+   * Premier son de la réponse épelée (§15.10) : la question a été rappelée, le
+   * reste (épellation, correction éventuelle) n'est plus du rappel. On ne garde
+   * que le premier — après un raté de reconnaissance, la latence de rappel de
+   * l'enfant reste celle de sa première tentative.
+   */
+  const handleConjSpeechStart = useCallback(() => {
+    if (conjRecallMs.current === null) {
+      conjRecallMs.current = Date.now() - questionStartTime.current;
+    }
+  }, []);
 
   /** Fin de l'introduction : on enchaîne sur la première question (§5.2 §4). */
   const finishConjIntro = useCallback(() => {
@@ -477,6 +513,7 @@ export default function SessionScreen({
     submittingRef.current = false;
     setNumpadDisabled(false);
     questionStartTime.current = Date.now();
+    conjRecallMs.current = null;
     speakQuestion(currentItem);
   }, [currentItem, speakQuestion]);
 
@@ -578,6 +615,54 @@ export default function SessionScreen({
   const remIntroStrategy =
     showIntro && currentItem.kind === 'rem' ? getRemainderStrategy(currentItem) : null;
   const conjIntroStrategy = showIntro && cv ? getConjStrategy(cv) : null;
+
+  /**
+   * Surface de saisie de la conjugaison : le mini-clavier, ou le mode vocal
+   * épelé quand il est actif (§15.10) — qui rend le MÊME clavier, en le
+   * préremplissant des lettres entendues et en gardant la correction ouverte.
+   *
+   * `token` sert de clé de reset : le clavier est re-monté à chaque question
+   * (saisie vide), tandis que le composant vocal reçoit le token en prop et se
+   * réinitialise sans se re-monter — un re-montage rouvrirait le micro à chaque
+   * question, et iOS joue un « ding » à chaque ouverture.
+   */
+  const renderConjInput = (
+    q: ConjQuestionView,
+    token: string,
+    onSubmitTyped: (typed: string) => void,
+  ) =>
+    conjVoiceMode ? (
+      <ConjVoiceInput
+        expectedForm={q.form}
+        onSubmit={onSubmitTyped}
+        prefix={q.displayedStem}
+        endingOnly={q.endingOnly}
+        disabled={numpadDisabled}
+        isSpeaking={isSpeaking}
+        questionToken={token}
+        onSpeechStart={handleConjSpeechStart}
+        onNudge={speak}
+      />
+    ) : (
+      <>
+        <LetterKeyboard
+          key={token}
+          onSubmit={onSubmitTyped}
+          disabled={numpadDisabled}
+          prefix={q.displayedStem}
+        />
+        {STT_SUPPORTED && (
+          <button
+            type="button"
+            className="session-input-switch"
+            onClick={switchToVoice}
+            disabled={numpadDisabled}
+          >
+            {'🎤'} {tc.voiceUseMic}
+          </button>
+        )}
+      </>
+    );
 
   const maxDots = Math.min(questions.length, MAX_SESSION_QUESTIONS);
   const progressDots = Array.from({ length: maxDots }, (_, i) => {
@@ -761,11 +846,13 @@ export default function SessionScreen({
               </div>
               {!conjCopyVisible && (
                 <div className="conj-keyboard-area">
-                  <LetterKeyboard
-                    key={`copy-${currentIndex}-${conjCopyAttempts.current}`}
-                    onSubmit={handleConjCopy}
-                    prefix={cv.displayedStem}
-                  />
+                  {/* La copie différée s'épelle aussi bien qu'elle s'écrit : en
+                      mode vocal, l'enfant n'a jamais besoin du clavier. */}
+                  {renderConjInput(
+                    cv,
+                    `copy-${currentIndex}-${conjCopyAttempts.current}`,
+                    handleConjCopy,
+                  )}
                 </div>
               )}
             </>
@@ -799,12 +886,7 @@ export default function SessionScreen({
             </button>
           </div>
           <div className="conj-keyboard-area">
-            <LetterKeyboard
-              key={`answer-${currentIndex}`}
-              onSubmit={handleConjSubmit}
-              disabled={numpadDisabled}
-              prefix={cv.displayedStem}
-            />
+            {renderConjInput(cv, `answer-${currentIndex}`, handleConjSubmit)}
           </div>
         </div>
       )}

@@ -303,10 +303,16 @@ async function buildEntriesFr() {
   //                                 qu'une introduction utilise.
   // L'énoncé s'arrête à l'infinitif : lire « Bientôt, nous serons prêts » au
   // moment où l'on demande la forme dicterait la réponse.
-  // Rien d'autre n'est parlé dans la matière : les astuces de
-  // conjugationStrategies.ts et les messages de i18n/conjugation.ts sont
-  // uniquement affichés.
   entries.push(...(await loadConjEntries()));
+
+  // Les deux seules relances PARLÉES du mode vocal épelé (§15.10). En vocal,
+  // l'enfant a les yeux ailleurs que sur l'écran : une relance uniquement
+  // affichée serait une relance muette. Elles ne dépendent d'aucun fait, d'où
+  // ces clés statiques — le reste de la matière (astuces de
+  // conjugationStrategies.ts, messages de i18n/conjugation.ts) est affiché,
+  // jamais parlé.
+  entries.push({ key: 'conj-voice-again', text: "Je n'ai pas bien entendu. Tu peux répéter ?" });
+  entries.push({ key: 'conj-voice-spell', text: 'Maintenant, épelle !' });
 
   return entries;
 }

@@ -34,15 +34,19 @@ const asked = DEFS.flatMap((def) =>
   def.carriers.map((_, i) => resolveConjQuestion(def, i)),
 );
 
+// Clés `conj-*` DÉRIVÉES de l'inventaire (une par porteuse, plus la phrase
+// complète de la porteuse 0), reconnaissables à leur rang de porteuse final.
+// Les relances statiques du mode vocal (`conj-voice-*`) n'en font pas partie et
+// sont vérifiées à part.
+const conjCarrierKeys = fr.filter((e) => /^conj-.+-\d+(-p)?$/.test(e.key));
+
 describe('entrées TTS de la conjugaison', () => {
   it('charge les phrases depuis conjugationFacts.ts', () => {
     // Garde-fou du mécanisme lui-même : si l'import esbuild échouait, `asked`
     // serait plein et la liste française vide de `conj-*`.
     expect(asked.length).toBeGreaterThan(100);
     // Un énoncé par porteuse, plus une phrase complète par fait (l'intro).
-    expect(fr.filter((e) => e.key.startsWith('conj-')).length).toBe(
-      asked.length + DEFS.length,
-    );
+    expect(conjCarrierKeys.length).toBe(asked.length + DEFS.length);
   });
 
   it('couvre l’énoncé de toutes les porteuses, et la phrase complète de l’intro', () => {
@@ -76,10 +80,15 @@ describe('entrées TTS de la conjugaison', () => {
     expect(leaking).toEqual([]);
   });
 
+  it('parle les deux relances du mode vocal épelé', () => {
+    // Muettes, elles laisseraient un enfant qui épelle sans savoir qu'on ne
+    // l'a pas entendu — en vocal, il n'a pas forcément les yeux sur l'écran.
+    expect(frByKey.get('conj-voice-again')).toMatch(/pas bien entendu/);
+    expect(frByKey.get('conj-voice-spell')).toMatch(/épelle/);
+  });
+
   it("n'oublie aucun fait de l'inventaire", () => {
-    const covered = new Set(
-      fr.filter((e) => e.key.startsWith('conj-')).map((e) => e.key.replace(/-\d+(-p)?$/, '')),
-    );
+    const covered = new Set(conjCarrierKeys.map((e) => e.key.replace(/-\d+(-p)?$/, '')));
     const uncovered = DEFS.map((d) => `conj-${d.key}`).filter((k) => !covered.has(k));
     expect(uncovered).toEqual([]);
   });

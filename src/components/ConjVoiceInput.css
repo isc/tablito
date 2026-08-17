@@ -1,0 +1,80 @@
+/* Mode vocal épelé de la conjugaison (specs §15.10).
+
+   Le vocal des maths (VoiceInput.css) peut se payer un micro de 140 px : il
+   occupe l'écran seul. Ici le clavier reste dessous en permanence — c'est la
+   promesse de la spec, « correction au clavier toujours possible » — donc le
+   micro devient une barre compacte : l'icône, son halo d'écoute, et la
+   consigne à côté. L'écho des lettres entendues, lui, n'a pas de composant :
+   c'est l'ardoise du clavier qui se remplit (cf. LetterKeyboard `value`). */
+
+.conj-voice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.conj-voice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.conj-voice-mic {
+  position: relative;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.conj-voice-mic:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.conj-voice-mic.listening {
+  background: var(--secondary);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.conj-voice-mic:disabled {
+  background: var(--box-gray);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* La consigne parlée, écrite : « Dis la forme, puis épelle la fin ». C'est
+   aussi là que passent la re-demande neutre et l'invite à épeler — jamais un
+   reproche, jamais un constat sur l'enfant. */
+.conj-voice-hint {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+  line-height: 1.3;
+}
+
+/* Bascule automatique au clavier après deux ratés : on annonce le changement,
+   sans jamais nommer un échec de l'enfant — c'est le micro qui a fauté. */
+.conj-voice-fallback {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-align: center;
+  padding: 0 16px;
+}

@@ -34,12 +34,24 @@ interface LetterKeyboardProps {
    * jamais inclus dans la valeur soumise.
    */
   prefix?: string;
+  /**
+   * Texte imposé de l'extérieur, réappliqué à chaque fois qu'il CHANGE : c'est
+   * l'écho visuel du mode vocal épelé (§15.10), les lettres reconnues qui
+   * remplissent l'ardoise à mesure qu'on les entend. Entre deux changements, le
+   * clavier reste maître de sa saisie — sans quoi la correction au clavier,
+   * promise par la spec, serait effacée au render suivant.
+   */
+  value?: string;
+  /** L'enfant a pris la main au clavier (touche ou effacement). */
+  onEdit?: () => void;
 }
 
 export default function LetterKeyboard({
   onSubmit,
   disabled = false,
   prefix = '',
+  value,
+  onEdit,
 }: LetterKeyboardProps) {
   // `input` est miroré dans `inputRef` pour éviter les closures stales : sous
   // Preact, deux pressions rapides peuvent voir la même closure capturée si on
@@ -51,23 +63,32 @@ export default function LetterKeyboard({
     setInput(next);
   }, []);
 
-  // Pas de reset à la ré-activation : les trois appelants re-keyent le clavier
-  // à chaque question (`answer-<index>`, `copy-<index>-<essai>`,
-  // `probe-<index>`), donc chaque question repart d'un composant neuf.
+  // Pas de reset à la ré-activation : les appelants re-keyent le clavier à
+  // chaque question (`answer-<index>`, `copy-<index>-<essai>`, `probe-<index>`),
+  // donc chaque question repart d'un composant neuf.
+
+  // Écho vocal : on adopte la valeur imposée quand elle CHANGE, et seulement
+  // là — entre deux changements, le clavier garde la main, sinon la correction
+  // au clavier promise par la spec serait effacée au render suivant.
+  useEffect(() => {
+    if (value !== undefined) setInputBoth(value);
+  }, [value, setInputBoth]);
 
   const handleLetter = useCallback(
     (letter: string) => {
       if (disabled) return;
+      onEdit?.();
       if (inputRef.current.length >= MAX_LENGTH) return;
       setInputBoth(inputRef.current + letter);
     },
-    [disabled, setInputBoth],
+    [disabled, onEdit, setInputBoth],
   );
 
   const handleBackspace = useCallback(() => {
     if (disabled) return;
+    onEdit?.();
     setInputBoth(inputRef.current.slice(0, -1));
-  }, [disabled, setInputBoth]);
+  }, [disabled, onEdit, setInputBoth]);
 
   const handleOk = useCallback(() => {
     if (disabled || inputRef.current.length === 0) return;

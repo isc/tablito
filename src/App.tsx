@@ -486,7 +486,7 @@ export default function App({
    * ce qui éteint la pastille de découverte et fait apparaître ses onglets
    * (badges, images, espace parent).
    */
-  const handleStartConj = useCallback(() => {
+  const handleStartConj = useCallback(async () => {
     if (!profile || !conjAvailable) return;
     // Ensemencement des 63 faits À LA PREMIÈRE ENTRÉE, pas à la création du
     // profil : `conjFacts` absent veut dire « matière jamais commencée », et
@@ -499,10 +499,19 @@ export default function App({
       return { ...prev, hasSeenConjIntro: true, ...(seed ? { conjFacts: seed } : {}) };
     });
     if (conjNeedsPlacement) {
+      // Le placement se fait au clavier, quel que soit le réglage de saisie : ses
+      // sondes sont le premier contact avec la matière, ce n'est pas le moment de
+      // faire dépendre la réassurance d'une reconnaissance vocale (§15.7).
       setScreen('conjPlacement');
       return;
     }
     if (conjPendingItems.length === 0) return;
+    // Mode vocal épelé : on attend la réponse au prompt micro avant d'entrer en
+    // séance, sinon la première question (et son chrono de rappel) démarrerait
+    // pendant que l'utilisateur décide. Même geste que la séance de maths.
+    if (isVoiceMode()) {
+      await preflightMicPermission();
+    }
     resetSessionTracking();
     setSessionItems(conjPendingItems);
     setScreen('session');
@@ -691,6 +700,7 @@ export default function App({
       judgement: ConjJudgement,
       fast: boolean,
       timeMs: number,
+      inputMode: 'keypad' | 'voice',
     ) => {
       const accepted = isConjAccepted(judgement.verdict);
 
@@ -702,7 +712,9 @@ export default function App({
         responseTimeMs: timeMs,
         answeredWith: null,
         isBonusReview: item.isBonusReview,
-        inputMode: 'keypad',
+        // Clavier, ou mode vocal épelé (§15.10) : c'est l'écran de séance qui
+        // sait lequel a servi.
+        inputMode,
         fast,
       });
 
