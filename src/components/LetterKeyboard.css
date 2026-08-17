@@ -36,11 +36,11 @@
   width: 100%;
 }
 
-/* Rangée du bas : 8 touches, centrées sous les deux rangées de 10 — la
-   silhouette d'un clavier, reconnaissable au premier coup d'œil. */
+/* Rangée du bas : 6 touches, centrées et à la largeur des touches du milieu —
+   la silhouette d'un clavier, reconnaissable au premier coup d'œil. */
 .letterpad-row--bottom {
   justify-content: center;
-  padding: 0 10%;
+  padding: 0 20%;
 }
 
 .letterpad-row--actions {

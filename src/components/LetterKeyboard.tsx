@@ -3,16 +3,18 @@ import { conjStrings as t } from '../i18n/conjugation';
 
 // Mini-clavier AZERTY à grosses touches (spec Verbito §4.2). Disposition
 // scolaire familière, plus é et ê (les seuls diacritiques du périmètre :
-// j'étais, vous êtes).
+// j'étais, vous êtes) — placés juste après le « e », là où l'enfant les
+// cherche, plutôt qu'à leur place AZERTY (qui n'existe pas dans les trois
+// rangées de lettres).
 //
 // Différence de fond avec NumPad : la validation est EXPLICITE. Le pavé
 // numérique auto-valide à 2 chiffres parce que la longueur d'un produit est
 // bornée et prévisible ; ici la réponse fait de 1 (« a ») à 9 caractères
 // (« viendront »), on ne peut donc pas deviner qu'elle est finie.
 
-const ROW_TOP = ['a', 'z', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'];
+const ROW_TOP = ['a', 'z', 'e', 'é', 'ê', 'r', 't', 'y', 'u', 'i', 'o', 'p'];
 const ROW_MID = ['q', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm'];
-const ROW_BOTTOM = ['é', 'ê', 'w', 'x', 'c', 'v', 'b', 'n'];
+const ROW_BOTTOM = ['w', 'x', 'c', 'v', 'b', 'n'];
 
 const LETTERS = new Set([...ROW_TOP, ...ROW_MID, ...ROW_BOTTOM]);
 
