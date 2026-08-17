@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["lib/micPreflight.ts"],
+  "sourcesContent": ["// Demande la permission micro maintenant, en consommant un geste utilisateur\n// valide (requis par iOS pour getUserMedia). Stoppe imm\u00E9diatement le stream :\n// on ne veut pas garder le micro ouvert, on pr\u00E9-arme juste la permission pour\n// qu'elle soit d\u00E9j\u00E0 accord\u00E9e quand SpeechRecognition.start() sera appel\u00E9.\n//\n// \u00C0 awaiter avant d'entrer en s\u00E9ance, sinon la premi\u00E8re question (et son\n// timer) d\u00E9marrerait pendant que l'utilisateur d\u00E9cide.\nexport async function preflightMicPermission(): Promise<void> {\n  if (!navigator.mediaDevices?.getUserMedia) return;\n  try {\n    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });\n    stream.getTracks().forEach((t) => t.stop());\n  } catch {\n    // Refus, contexte non s\u00E9curis\u00E9, etc. : on retombera sur le prompt natif\n    // de SpeechRecognition.start() en s\u00E9ance.\n  }\n}\n"],
+  "mappings": "AAOA,eAAsBA,GAAwC,CAC5D,GAAK,UAAU,cAAc,aAC7B,GAAI,EACa,MAAM,UAAU,aAAa,aAAa,CAAE,MAAO,EAAK,CAAC,GACjE,UAAU,EAAE,QAASC,GAAMA,EAAE,KAAK,CAAC,CAC5C,MAAQ,CAGR,CACF",
+  "names": ["preflightMicPermission", "t"]
+}

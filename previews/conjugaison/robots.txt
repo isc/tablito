@@ -1,0 +1,6 @@
+# Tablito — servi à la racine du domaine (CNAME tablito.app), donc ce
+# robots.txt est bien le robots.txt du host et sera honoré par les crawlers.
+User-agent: *
+Allow: /
+
+Sitemap: https://tablito.app/sitemap.xml
