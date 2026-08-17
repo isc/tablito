@@ -275,6 +275,13 @@ export default function SessionScreen({
         keys.add('rem-rest');
         keys.add('strategy-rem');
       }
+      // Relances du mode vocal épelé (§15.10) : elles arrivent juste après une
+      // réponse mal entendue, donc au pire moment pour un décodage à la volée —
+      // et une relance qui traîne, c'est un enfant qui attend sans savoir quoi.
+      if (item.kind === 'conj' && inputMode === 'voice') {
+        keys.add('conj-voice-again');
+        keys.add('conj-voice-spell');
+      }
     }
     preload([...keys]);
     // Une seule fois à l'ouverture : les retrys réutilisent des clés déjà en cache.
