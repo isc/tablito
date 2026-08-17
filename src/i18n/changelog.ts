@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-08-17',
+    items: [
+      "Nouvelle matière : la conjugaison. À côté des maths, l'accueil propose désormais une seconde tuile pour réviser les conjugaisons du CE2 — présent, imparfait et futur du 1er groupe et des verbes être, avoir, aller, faire, dire, venir, voir. Même méthode que les tables : un court test de placement au départ (l'image mystère démarre déjà partiellement révélée par ce qui est déjà su), des séances de 4 à 6 minutes, chaque phrase lue à voix haute, et une image mystère dédiée qui se dévoile au fil des révisions. L'enfant tape la terminaison sur un clavier de lettres, le radical étant déjà affiché — et l'orthographe du reste du mot n'est jamais pénalisée : une seule règle à la fois. La flamme de série est commune aux deux matières : une seule séance par jour suffit à l'entretenir.",
+    ],
+  },
+  {
     date: '2026-07-27',
     items: [
       "Recap hebdomadaire du suivi à distance : si vous suivez la progression d'un enfant depuis votre appareil, vous pouvez recevoir une notification le dimanche soir pour penser à y jeter un œil. C'est indépendant du rappel quotidien de séance — celui-ci s'adresse à l'enfant sur son appareil, le recap à vous sur le vôtre, et vous pouvez activer l'un sans l'autre. La notification ne contient aucun chiffre (la progression reste chiffrée) : elle ouvre directement l'espace parent, où tout s'affiche.",
@@ -183,6 +189,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-08-17',
+    items: [
+      'New subject: French conjugation (visible when the app language is French). Alongside math, the home screen offers a second tile to review the conjugations taught in French grade 2 — present, imperfect and future tenses. Same method as the times tables: a short placement test to start (the mystery picture begins partially revealed by what is already known), 4-6 minute sessions, every sentence read aloud, and a dedicated mystery picture that sharpens as reviews go. The child types the ending on a letter keyboard, with the verb stem already displayed — and spelling outside the ending is never penalized: one rule at a time. The streak flame is shared across subjects: one session a day keeps it alive.',
+    ],
+  },
   {
     date: '2026-07-27',
     items: [
