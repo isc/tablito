@@ -273,7 +273,6 @@ export default function SessionScreen({
       setConjIntroStep('sentence');
       setConjMarkLit(false);
       setConjCopyVisible(true);
-      // eslint-disable-next-line react-hooks/refs
       conjCopyAttempts.current = 0;
     } else {
       setShowIntro(false);
