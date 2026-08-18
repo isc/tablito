@@ -15,6 +15,7 @@ export const MIME = {
   '.woff2':'font/woff2',
   '.ico':  'image/x-icon',
   '.mp3':  'audio/mpeg',
+  '.txt':  'text/plain; charset=utf-8',
   '.map':  'application/json',
   '.webmanifest': 'application/manifest+json',
 }

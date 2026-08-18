@@ -69,7 +69,6 @@ async function loadSW(existingCaches = []) {
     return { ok: true, type: 'basic', clone: () => ({ body: req.url }) };
   };
 
-  // eslint-disable-next-line no-new-func
   new Function('self', 'caches', 'fetch', src)(self, caches, fetchImpl);
   return { handlers, caches, fetched };
 }

@@ -1,4 +1,5 @@
 import { webcrypto } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 // Vitest setup file — runs once per test file before the tests.
 //
@@ -96,6 +97,10 @@ if (typeof HTMLMediaElement !== 'undefined') {
 // vrai sur localhost et échouerait. On stub fetch pour ces chemins en
 // renvoyant un arrayBuffer vide — useTTS gère gracieusement le cas où
 // decodeAudioData renvoie un buffer vide.
+//
+// Le dictionnaire de prononciation du mode vocal épelé (specs §15.10), lui, est
+// servi POUR DE VRAI depuis public/ : c'est un asset de 4 Ko généré, et le tester
+// avec un faux dictionnaire ne prouverait rien de l'appariement phonémique.
 const realFetch = globalThis.fetch;
 globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input.toString();
@@ -103,6 +108,10 @@ globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
     return Promise.resolve(
       new Response(new ArrayBuffer(0), { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }),
     );
+  }
+  if (url.includes('/phonetic/')) {
+    const file = `public/phonetic/${url.split('/phonetic/')[1]}`;
+    return Promise.resolve(new Response(readFileSync(file, 'utf8'), { status: 200 }));
   }
   return realFetch(input as RequestInfo, init);
 }) as typeof fetch;

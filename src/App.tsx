@@ -480,13 +480,32 @@ export default function App({
   }, [profile, pendingItems, resetSessionTracking]);
 
   /**
+   * Entre en séance de conjugaison. Les deux portes d'entrée de la matière — le
+   * bouton d'accueil et la sortie du test de placement — passent par ici : la
+   * permission micro se demande AVANT d'afficher la première question, sinon
+   * son chrono de rappel tournerait pendant que l'utilisateur répond au prompt
+   * natif du navigateur (§15.10).
+   */
+  const enterConjSession = useCallback(
+    async (items: ConjSessionItem[]) => {
+      if (isVoiceMode()) {
+        await preflightMicPermission();
+      }
+      resetSessionTracking();
+      setSessionItems(items);
+      setScreen('session');
+    },
+    [resetSessionTracking],
+  );
+
+  /**
    * Séance de conjugaison du jour. Premier appui de la vie du profil : on part
    * sur le test de placement (spec §6.1), qui enchaîne lui-même sur la première
    * séance. Dans tous les cas, l'appui marque la matière comme ouverte — c'est
    * ce qui éteint la pastille de découverte et fait apparaître ses onglets
    * (badges, images, espace parent).
    */
-  const handleStartConj = useCallback(() => {
+  const handleStartConj = useCallback(async () => {
     if (!profile || !conjAvailable) return;
     // Ensemencement des 63 faits À LA PREMIÈRE ENTRÉE, pas à la création du
     // profil : `conjFacts` absent veut dire « matière jamais commencée », et
@@ -499,14 +518,15 @@ export default function App({
       return { ...prev, hasSeenConjIntro: true, ...(seed ? { conjFacts: seed } : {}) };
     });
     if (conjNeedsPlacement) {
+      // Le placement se fait au clavier, quel que soit le réglage de saisie : ses
+      // sondes sont le premier contact avec la matière, ce n'est pas le moment de
+      // faire dépendre la réassurance d'une reconnaissance vocale (§15.7).
       setScreen('conjPlacement');
       return;
     }
     if (conjPendingItems.length === 0) return;
-    resetSessionTracking();
-    setSessionItems(conjPendingItems);
-    setScreen('session');
-  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, resetSessionTracking]);
+    await enterConjSession(conjPendingItems);
+  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, enterConjSession]);
 
   /**
    * Fin du test de placement de la conjugaison. Le profil mis à jour est
@@ -515,7 +535,7 @@ export default function App({
    * geste qu'`handleWelcomeComplete` côté maths).
    */
   const handleConjPlacementComplete = useCallback(
-    (results: ConjPlacementResult[]) => {
+    async (results: ConjPlacementResult[]) => {
       if (!profile) return;
       const now = todayISO();
       // Le placement est la porte d'entrée de la matière : c'est ici que les
@@ -538,11 +558,10 @@ export default function App({
         setScreen('home');
         return;
       }
-      resetSessionTracking();
-      setSessionItems(items);
-      setScreen('session');
+      // Le placement enchaîne DIRECTEMENT sur la première séance.
+      await enterConjSession(items);
     },
-    [profile, resetSessionTracking],
+    [profile, enterConjSession],
   );
 
   // Met à jour le suivi « fait promu » (boîte finale > boîte initiale dans la
@@ -691,6 +710,7 @@ export default function App({
       judgement: ConjJudgement,
       fast: boolean,
       timeMs: number,
+      inputMode: 'keypad' | 'voice',
     ) => {
       const accepted = isConjAccepted(judgement.verdict);
 
@@ -702,7 +722,9 @@ export default function App({
         responseTimeMs: timeMs,
         answeredWith: null,
         isBonusReview: item.isBonusReview,
-        inputMode: 'keypad',
+        // Clavier, ou mode vocal épelé (§15.10) : c'est l'écran de séance qui
+        // sait lequel a servi.
+        inputMode,
         fast,
       });
 

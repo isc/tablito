@@ -25,6 +25,33 @@ export const conjStrings = {
   backspace: 'Effacer',
   submit: 'Valider',
 
+  // --- Mode vocal épelé (spec §15.10) ---
+  // On révise la conjugaison à l'oral en épelant : « ils chantent — e, n, t ».
+  // Les consignes disent la forme PUIS l'épellation, dans cet ordre : énoncer la
+  // forme d'abord ajoute le lien phonie-graphie que le clavier n'a pas.
+  /** Consigne quand seule la terminaison est demandée (radical affiché). */
+  voiceSpellEnding: 'Dis la forme, puis épelle la fin',
+  /** Consigne quand la forme entière est demandée (irrégulière). */
+  voiceSpellWhole: 'Dis la forme, puis épelle-la en entier',
+  /** Invite quand la forme a été dite mais que l'épellation n'est pas venue. */
+  voiceSpellNow: 'Maintenant, épelle !',
+  /**
+   * Re-demande neutre après un raté de reconnaissance. Ce n'est JAMAIS une
+   * erreur : on n'évalue pas le micro, et rien n'est dit de l'enfant.
+   */
+  voiceNotHeard: "Je n'ai pas bien entendu",
+  /** Bascule automatique au clavier après deux ratés sur la même question. */
+  voiceFallbackToKeyboard: 'On va plutôt écrire, c’est plus simple !',
+  /** L'enfant a touché le clavier : c'est elle qui valide, plus le micro. */
+  voiceTookOver: 'Corrige, puis valide',
+  /**
+   * Bascule clavier → épellation, propre à la matière : « micro » ne dirait pas
+   * ce qu'il y a à faire. Les libellés communs au vocal des maths (parler,
+   * écouter, réessayer avec la voix, utiliser le clavier, micro bloqué, besoin
+   * d'internet) viennent de i18n/voice.ts — le geste est le même partout.
+   */
+  voiceUseMic: 'Épeler à voix haute',
+
   // --- Feedback (spec §5.3) ---
   correctMessages: ['Super !', 'Bravo !', 'Génial !', 'Bien joué !', 'Parfait !'],
   /**

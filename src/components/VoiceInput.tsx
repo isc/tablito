@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import NumPad from './NumPad';
 import { parseSpokenAnswer, speechRecognitionLang } from '../lib/parseSpokenNumber';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useLatestRef } from '../hooks/useLatestRef';
 import { isAndroid } from '../lib/install';
 import { voiceLog } from '../lib/voiceDebug';
 import { useInputMode } from '../hooks/useInputMode';
@@ -77,14 +78,11 @@ export default function VoiceInput({
   const { setInputMode } = useInputMode();
   const { lang } = useLang();
   const t = useVoiceStrings();
-  // Lu dans les callbacks de reconnaissance sans les recréer à chaque render.
-  const langRef = useRef(lang);
-  useEffect(() => {
-    langRef.current = lang;
-  }, [lang]);
+  // Lus dans les callbacks de reconnaissance sans les recréer à chaque render.
+  const langRef = useLatestRef(lang);
+  const disabledRef = useLatestRef(disabled);
+  const expectedRef = useLatestRef(expectedValue);
   const [prevQuestionToken, setPrevQuestionToken] = useState(questionToken);
-  const disabledRef = useRef(disabled);
-  const expectedRef = useRef(expectedValue);
   const lastSpeakEndRef = useRef<number>(0);
   const lastSubmitAtRef = useRef<number>(0);
   const lastSubmittedValueRef = useRef<number | null>(null);
@@ -94,12 +92,6 @@ export default function VoiceInput({
   const expectTrailingFinalRef = useRef(false);
   const trailingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    disabledRef.current = disabled;
-  }, [disabled]);
-  useEffect(() => {
-    expectedRef.current = expectedValue;
-  }, [expectedValue]);
   useEffect(() => {
     voiceLog('tts', isSpeaking ? 'speaking' : 'ended');
     if (!isSpeaking) {
@@ -189,7 +181,15 @@ export default function VoiceInput({
         });
       }
     },
-    [onSubmit, isEchoOfLastSubmit, pauseMicDuringTTS, clearTrailingFinal],
+    [
+      onSubmit,
+      isEchoOfLastSubmit,
+      pauseMicDuringTTS,
+      clearTrailingFinal,
+      disabledRef,
+      expectedRef,
+      langRef,
+    ],
   );
 
   const handleInterim = useCallback(
@@ -216,7 +216,7 @@ export default function VoiceInput({
         onSubmit(expected);
       }
     },
-    [onSubmit, isEchoOfLastSubmit],
+    [onSubmit, isEchoOfLastSubmit, disabledRef, expectedRef, langRef],
   );
 
   const { start, abort, isListening, error, isSupported } = useSpeechRecognition({
