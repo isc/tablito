@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260817145752"
+const CACHE = 'tablito-' + "20260818110729"
 const BASE = "/previews/vocal-epele/"
 const ASSETS = [
   "/previews/vocal-epele/CNAME",
@@ -69,6 +69,7 @@ const ASSETS = [
   "/previews/vocal-epele/src/__tests__/divisionJourney.test.js",
   "/previews/vocal-epele/src/__tests__/dotGrid.test.js",
   "/previews/vocal-epele/src/__tests__/hardestFacts.test.js",
+  "/previews/vocal-epele/src/__tests__/helpers/audio.js",
   "/previews/vocal-epele/src/__tests__/helpers/conjItems.js",
   "/previews/vocal-epele/src/__tests__/helpers/dom.js",
   "/previews/vocal-epele/src/__tests__/helpers/watchServer.js",
@@ -85,6 +86,7 @@ const ASSETS = [
   "/previews/vocal-epele/src/__tests__/remainderComposer.test.js",
   "/previews/vocal-epele/src/__tests__/remainderDaily.test.js",
   "/previews/vocal-epele/src/__tests__/remainderJourney.test.js",
+  "/previews/vocal-epele/src/__tests__/remainderVoice.test.js",
   "/previews/vocal-epele/src/__tests__/remainderZoneLabel.test.js",
   "/previews/vocal-epele/src/__tests__/remoteFollow.test.js",
   "/previews/vocal-epele/src/__tests__/sessionComposer.test.js",
@@ -238,7 +240,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/previews/vocal-epele/audio/"],"media":["/previews/vocal-epele/mystery/","/previews/vocal-epele/splash/","/previews/vocal-epele/video/","/previews/vocal-epele/vendor/qr-scanner/","/previews/vocal-epele/img/hero-poster"],"phonetic":["/previews/vocal-epele/phonetic/"]}
-const LAZY_VERSIONS = {"audio":"c219a8e6c9a0","media":"2387459ab3c6","phonetic":"fa4ee22f5b55"}
+const LAZY_VERSIONS = {"audio":"c219a8e6c9a0","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55"}
 
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
