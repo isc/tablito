@@ -11,12 +11,12 @@ import { letterFromWord } from '../lib/parseSpelledLetters';
 import { FEEDBACK_DISMISS_MS } from '../components/FeedbackOverlay';
 import { advance, tapLetters, tapValidate, text, typeLetters } from './helpers/dom';
 import { conjItem } from './helpers/conjItems';
+import { patchBufferSource, type PatchedBufferSource } from './helpers/audio';
 
 // Mode vocal épelé de la conjugaison (specs §15.10), monté dans le vrai
-// <SessionScreen /> avec une reconnaissance vocale simulée — même dispositif que
-// VoiceInput.test.tsx pour le vocal des maths, mais ici c'est le FLUX complet qui
-// est vérifié : ce que l'enfant dit, ce que l'écran affiche, ce qui part (ou ne
-// part pas) au Leitner.
+// <SessionScreen /> avec une reconnaissance vocale simulée. Ce qui est vérifié
+// ici, c'est le FLUX complet : ce que l'enfant dit, ce que l'écran affiche, ce
+// qui part (ou ne part pas) au Leitner.
 //
 // Le dictionnaire de prononciation servi est le vrai (public/phonetic/fr.txt, cf.
 // setup.ts) : l'appariement phonémique est la raison d'être du mode, le simuler
@@ -109,6 +109,11 @@ const TTS_MS = 500;
  * exportée : un module de composant n'exporte que son composant).
  */
 const ECHO_WINDOW_MS = 1_300;
+/**
+ * Silence au-delà duquel une épellation incomplète est redemandée
+ * (SPELLING_PAUSE_MS, non exportée pour la même raison).
+ */
+const SPELLING_PAUSE_MS = 3_500;
 
 /**
  * L'énoncé finit d'être lu, et la fenêtre d'écho se referme. En DEUX temps
@@ -125,10 +130,7 @@ function promptEnds(): void {
 // Le faux BufferSource de setup.ts ne termine jamais sa lecture : `isSpeaking`
 // resterait vrai pour toujours, et le composant jetterait tout ce qu'il entend
 // comme un écho de la synthèse. On lui donne donc une fin.
-const AC = globalThis.AudioContext as unknown as {
-  prototype: { createBufferSource: () => AudioBufferSourceNode };
-};
-const realCreateBufferSource = AC.prototype.createBufferSource;
+let audio: PatchedBufferSource;
 
 beforeEach(() => {
   vi.useFakeTimers({
@@ -138,22 +140,14 @@ beforeEach(() => {
   spy.starts = 0;
   spy.aborts = 0;
   onAndroid = false;
-  AC.prototype.createBufferSource = function (this: AudioContext) {
-    const node = realCreateBufferSource.call(this);
-    const start = node.start.bind(node);
-    node.start = ((...args: Parameters<AudioBufferSourceNode['start']>) => {
-      setTimeout(() => node.onended?.(new Event('ended')), TTS_MS);
-      return start(...args);
-    }) as AudioBufferSourceNode['start'];
-    return node;
-  };
+  audio = patchBufferSource({ endAfterMs: TTS_MS });
 });
 
 afterEach(() => {
   cleanup();
   vi.runOnlyPendingTimers();
   vi.useRealTimers();
-  AC.prototype.createBufferSource = realCreateBufferSource;
+  audio.restore();
 });
 
 it('le mode vocal est bien celui du réglage partagé avec les maths', () => {
@@ -317,6 +311,45 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
     expect(fast).toBe(true);
   });
 
+  it('une épellation coupée par une pause se recolle au lieu d’être jugée', async () => {
+    // Le recognizer tourne en sessions mono-énoncé : une pause d'enfant au
+    // milieu de « s, o, m, m, e, s » ferme la session et livre un final
+    // PARTIEL. Le soumettre, c'est compter « so » comme une faute de
+    // conjugaison alors que l'enfant a seulement repris son souffle.
+    const onConjAnswer = vi.fn();
+    renderSession([conjItem('pres-etre-nous', 0)], onConjAnswer);
+    await settle();
+    promptEnds();
+
+    say('sommes esse o');
+    // Rien n'est parti : la reconstruction n'a pas la longueur attendue. Mais
+    // ce qui est entendu s'affiche déjà, l'ardoise ne recule pas.
+    expect(onConjAnswer).not.toHaveBeenCalled();
+    expect(slate()).toBe('so');
+
+    // Elle reprend, et c'est la SOMME des deux finals qui est jugée.
+    advance(1_500);
+    say('emme emme e esse');
+    expect(slate()).toBe('sommes');
+    const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
+    expect(judgement.verdict).toBe('correct');
+  });
+
+  it('une épellation restée incomplète est redemandée, jamais jugée', async () => {
+    const onConjAnswer = vi.fn();
+    renderSession([conjItem('pres-etre-nous', 0)], onConjAnswer);
+    await settle();
+    promptEnds();
+
+    say('sommes esse o');
+    // Le silence s'installe : la suite ne viendra pas.
+    advance(SPELLING_PAUSE_MS);
+
+    expect(onConjAnswer).not.toHaveBeenCalled();
+    expect(text()).toContain(t.voiceNotHeard);
+    expect(slate()).toBe('');
+  });
+
   it('l’écho de la synthèse est jeté, et ne compte pas comme un raté', async () => {
     // Les phrases porteuses contiennent « aux billes », « à l'école » : leurs
     // mots sonnent comme les lettres o et a, donc un écho haut-parleur→micro
@@ -330,6 +363,23 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
     expect(onConjAnswer).not.toHaveBeenCalled();
     expect(text()).not.toContain(t.voiceNotHeard);
     expect(slate()).toBe('');
+  });
+
+  it('répondre par-dessus l’énoncé n’aboutit jamais à un silence', async () => {
+    // Une épellation PROPRE reçue dans la fenêtre d'écho, c'est presque
+    // sûrement l'enfant qui a parlé par-dessus l'énoncé : l'écho d'une phrase
+    // porteuse bute sur ses mots pleins. On la jette quand même — impossible de
+    // distinguer les deux voix — mais il faut le lui DIRE, sinon elle attend
+    // devant un écran qui n'a rien fait de sa réponse.
+    const onConjAnswer = vi.fn();
+    renderSession([conjItem('pres-g1-nous', 1)], onConjAnswer);
+    await settle();
+
+    say('chantons o haine esse');
+
+    expect(onConjAnswer).not.toHaveBeenCalled();
+    expect(slate()).toBe('');
+    expect(text()).toContain(t.voiceNotHeard);
   });
 });
 
@@ -418,6 +468,49 @@ describe('Seuil de rapidité en vocal : la latence de rappel (specs §15.10)', (
     const [, judgement, fast] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement, boolean];
     expect(judgement.verdict).toBe('correct');
     expect(fast).toBe(false);
+  });
+
+  it('la latence de rappel se mesure même par-dessus la fin de l’énoncé', async () => {
+    // La fenêtre d'écho disqualifie le CONTENU d'un transcript, pas l'instant
+    // où il arrive : l'enfant qui répond sur la fin de l'énoncé devra répéter,
+    // mais son rappel a bien eu lieu là. Sans ça sa réponse tomberait sans
+    // latence mesurée, donc jugée sur son temps total.
+    const onConjAnswer = vi.fn();
+    renderSession([conjItem('pres-g1-nous', 1)], onConjAnswer);
+    await settle();
+
+    advance(TTS_MS); // l'énoncé finit ; la fenêtre d'écho court encore
+    saying('chantons');
+    // Le contenu, lui, est bien jeté : l'ardoise reste vide.
+    expect(slate()).toBe('');
+
+    advance(ECHO_WINDOW_MS);
+    advance(20_000);
+    say('chantons o haine esse');
+
+    const [, judgement, fast] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement, boolean];
+    expect(judgement.verdict).toBe('correct');
+    expect(fast).toBe(true);
+  });
+
+  it('sans latence de rappel mesurée, c’est le seuil du CLAVIER qui s’applique', async () => {
+    // Aucun interim (certains navigateurs n'en émettent pas) : on ne juge alors
+    // que le temps TOTAL, épellation comprise. Le comparer à la base seule du
+    // vocal rendrait « rapide » inatteignable — l'étoile rayonnante dépendrait
+    // d'un aléa de reconnaissance.
+    const onConjAnswer = vi.fn();
+    renderSession([conjItem('pres-g1-nous', 1)], onConjAnswer);
+    await settle();
+    promptEnds();
+
+    // Au-delà de la base du vocal (5 s), en deçà du seuil clavier de « ons »
+    // (5 s + 1 s par caractère = 8 s).
+    advance(CONJ_FAST_BASE_MS + 500);
+    say('chantons o haine esse');
+
+    const [, judgement, fast] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement, boolean];
+    expect(judgement.verdict).toBe('correct');
+    expect(fast).toBe(true);
   });
 
   it('le mode de saisie remonte avec la réponse', async () => {

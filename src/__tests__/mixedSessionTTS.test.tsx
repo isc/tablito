@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 import SessionScreen from '../screens/SessionScreen';
 import type { SessionItem, MultiFact, DivisionFact } from '../types';
+import { patchBufferSource } from './helpers/audio';
 
 // Régression : la lecture TTS de la question ne doit jamais être perdue parce
 // que l'enfant répond avant la fin du décodage du MP3. Le SessionScreen
@@ -58,18 +59,7 @@ describe('Séance mixte — lecture audio des questions', () => {
       return origFetch(input as RequestInfo, init);
     }) as typeof fetch;
 
-    let startCount = 0;
-    const AC = globalThis.AudioContext as unknown as { prototype: { createBufferSource: () => AudioBufferSourceNode } };
-    const origCBS = AC.prototype.createBufferSource;
-    AC.prototype.createBufferSource = function (this: AudioContext) {
-      const node = origCBS.call(this);
-      const origStart = node.start.bind(node);
-      node.start = (...args: Parameters<AudioBufferSourceNode['start']>) => {
-        startCount++;
-        return origStart(...args);
-      };
-      return node;
-    };
+    const audio = patchBufferSource();
 
     const questions: SessionItem[] = [
       mult(2, 2), div(8, 2), mult(5, 3), div(15, 3), mult(8, 8), div(64, 8), mult(6, 9),
@@ -98,9 +88,9 @@ describe('Séance mixte — lecture audio des questions', () => {
     }
     await wait(40);
 
-    AC.prototype.createBufferSource = origCBS;
+    audio.restore();
     globalThis.fetch = origFetch;
 
-    expect(startCount).toBe(questions.length);
+    expect(audio.starts()).toBe(questions.length);
   });
 });

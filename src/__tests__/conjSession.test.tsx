@@ -12,6 +12,7 @@ import {
   typeLetters as tapLetters,
 } from './helpers/dom';
 import { conjItem } from './helpers/conjItems';
+import { patchBufferSource } from './helpers/audio';
 
 // Tests DOM de la matière conjugaison (spec Verbito) : rendu d'une question,
 // mini-clavier à validation explicite, introduction en 5 étapes (§5.2) et les
@@ -96,20 +97,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       return realFetch(input as RequestInfo, init);
     }) as typeof fetch;
 
-    let started = 0;
-    const AC = globalThis.AudioContext as unknown as {
-      prototype: { createBufferSource: () => AudioBufferSourceNode };
-    };
-    const origCBS = AC.prototype.createBufferSource;
-    AC.prototype.createBufferSource = function (this: AudioContext) {
-      const node = origCBS.call(this);
-      const start = node.start.bind(node);
-      node.start = ((...args: Parameters<AudioBufferSourceNode['start']>) => {
-        started++;
-        return start(...args);
-      }) as AudioBufferSourceNode['start'];
-      return node;
-    };
+    const audio = patchBufferSource();
 
     render(
       <SessionScreen
@@ -124,13 +112,13 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
 
     // Clé TTS de la porteuse : `conj-<clé du fait>-<rang de la porteuse>`.
     expect(urls.some((u) => u.includes('conj-fut-aller-0.mp3'))).toBe(true);
-    expect(started).toBeGreaterThan(0);
+    expect(audio.starts()).toBeGreaterThan(0);
 
-    const before = started;
+    const before = audio.starts();
     fireEvent.click(document.querySelector<HTMLButtonElement>('.conj-replay-btn')!);
-    expect(started).toBe(before + 1);
+    expect(audio.starts()).toBe(before + 1);
 
-    AC.prototype.createBufferSource = origCBS;
+    audio.restore();
     globalThis.fetch = realFetch;
   });
 });
