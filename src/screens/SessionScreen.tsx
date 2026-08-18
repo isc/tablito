@@ -465,14 +465,22 @@ export default function SessionScreen({
       // du réglage : après deux ratés de reconnaissance, l'enfant tape, et une
       // réponse tapée mérite le seuil du clavier. Au clavier donc, base + coût
       // par caractère, qui absorbe le coût moteur de la frappe (§4.5) ; en
-      // épellation, la latence de rappel et la base seule (§15.10). Seul un
-      // `correct` franc peut être « rapide » : un « presque » est accepté,
-      // pas promu.
-      const spoken = source === 'voice' && conjRecallMs.current !== null;
-      const judgedMs = spoken ? (conjRecallMs.current as number) : timeMs;
+      // épellation, la latence de rappel et la base seule (§15.10).
+      //
+      // Les deux vont ensemble, mesure ET seuil : en vocal sans latence de
+      // rappel mesurée (interims jamais reçus, ou avalés par la fenêtre d'écho
+      // parce que l'enfant a répondu par-dessus l'énoncé), on juge le temps
+      // TOTAL — épellation comprise — et il faut alors le seuil du clavier.
+      // Le comparer à la base seule rendrait « rapide » inatteignable, et
+      // l'étoile rayonnante dépendrait d'un aléa de reconnaissance.
+      //
+      // Seul un `correct` franc peut être « rapide » : un « presque » est
+      // accepté, pas promu.
+      const recallMs = source === 'voice' ? conjRecallMs.current : null;
       const fast =
         judgement.verdict === 'correct'
-        && judgedMs < conjFastThresholdMs(view.expected, source);
+        && (recallMs ?? timeMs)
+          < conjFastThresholdMs(view.expected, recallMs === null ? 'keypad' : 'voice');
       const accepted = isConjAccepted(judgement.verdict);
 
       totalTimeMs.current += timeMs;
@@ -637,6 +645,8 @@ export default function SessionScreen({
     conjVoiceMode ? (
       <ConjVoiceInput
         expectedForm={q.form}
+        expectedLength={q.expected.length}
+        subject={q.subject}
         onSubmit={onSubmitTyped}
         prefix={q.displayedStem}
         endingOnly={q.endingOnly}
