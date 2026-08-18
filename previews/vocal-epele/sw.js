@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260818110729"
+const CACHE = 'tablito-' + "20260818111830"
 const BASE = "/previews/vocal-epele/"
 const ASSETS = [
   "/previews/vocal-epele/CNAME",
@@ -86,7 +86,6 @@ const ASSETS = [
   "/previews/vocal-epele/src/__tests__/remainderComposer.test.js",
   "/previews/vocal-epele/src/__tests__/remainderDaily.test.js",
   "/previews/vocal-epele/src/__tests__/remainderJourney.test.js",
-  "/previews/vocal-epele/src/__tests__/remainderVoice.test.js",
   "/previews/vocal-epele/src/__tests__/remainderZoneLabel.test.js",
   "/previews/vocal-epele/src/__tests__/remoteFollow.test.js",
   "/previews/vocal-epele/src/__tests__/sessionComposer.test.js",
