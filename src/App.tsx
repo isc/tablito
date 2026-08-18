@@ -480,6 +480,25 @@ export default function App({
   }, [profile, pendingItems, resetSessionTracking]);
 
   /**
+   * Entre en séance de conjugaison. Les deux portes d'entrée de la matière — le
+   * bouton d'accueil et la sortie du test de placement — passent par ici : la
+   * permission micro se demande AVANT d'afficher la première question, sinon
+   * son chrono de rappel tournerait pendant que l'utilisateur répond au prompt
+   * natif du navigateur (§15.10).
+   */
+  const enterConjSession = useCallback(
+    async (items: ConjSessionItem[]) => {
+      if (isVoiceMode()) {
+        await preflightMicPermission();
+      }
+      resetSessionTracking();
+      setSessionItems(items);
+      setScreen('session');
+    },
+    [resetSessionTracking],
+  );
+
+  /**
    * Séance de conjugaison du jour. Premier appui de la vie du profil : on part
    * sur le test de placement (spec §6.1), qui enchaîne lui-même sur la première
    * séance. Dans tous les cas, l'appui marque la matière comme ouverte — c'est
@@ -506,16 +525,8 @@ export default function App({
       return;
     }
     if (conjPendingItems.length === 0) return;
-    // Mode vocal épelé : on attend la réponse au prompt micro avant d'entrer en
-    // séance, sinon la première question (et son chrono de rappel) démarrerait
-    // pendant que l'utilisateur décide. Même geste que la séance de maths.
-    if (isVoiceMode()) {
-      await preflightMicPermission();
-    }
-    resetSessionTracking();
-    setSessionItems(conjPendingItems);
-    setScreen('session');
-  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, resetSessionTracking]);
+    await enterConjSession(conjPendingItems);
+  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, enterConjSession]);
 
   /**
    * Fin du test de placement de la conjugaison. Le profil mis à jour est
@@ -547,17 +558,10 @@ export default function App({
         setScreen('home');
         return;
       }
-      // Le placement enchaîne DIRECTEMENT sur la première séance : en mode
-      // vocal, la permission micro se demande donc ici aussi, sinon la première
-      // question démarre pendant que l'utilisateur répond au prompt natif.
-      if (isVoiceMode()) {
-        await preflightMicPermission();
-      }
-      resetSessionTracking();
-      setSessionItems(items);
-      setScreen('session');
+      // Le placement enchaîne DIRECTEMENT sur la première séance.
+      await enterConjSession(items);
     },
-    [profile, resetSessionTracking],
+    [profile, enterConjSession],
   );
 
   // Met à jour le suivi « fait promu » (boîte finale > boîte initiale dans la
