@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260817175703"
+const CACHE = 'tablito-' + "20260818113355"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -58,6 +58,7 @@ const ASSETS = [
   "/src/__tests__/badges.test.js",
   "/src/__tests__/conjIntegration.test.js",
   "/src/__tests__/conjSession.test.js",
+  "/src/__tests__/conjVoiceSession.test.js",
   "/src/__tests__/conjugationComposer.test.js",
   "/src/__tests__/conjugationFacts.test.js",
   "/src/__tests__/conjugationInterference.test.js",
@@ -68,6 +69,8 @@ const ASSETS = [
   "/src/__tests__/divisionJourney.test.js",
   "/src/__tests__/dotGrid.test.js",
   "/src/__tests__/hardestFacts.test.js",
+  "/src/__tests__/helpers/audio.js",
+  "/src/__tests__/helpers/conjItems.js",
   "/src/__tests__/helpers/dom.js",
   "/src/__tests__/helpers/watchServer.js",
   "/src/__tests__/leitner.test.js",
@@ -75,6 +78,7 @@ const ASSETS = [
   "/src/__tests__/multiProfile.test.js",
   "/src/__tests__/parseEnglishNumber.test.js",
   "/src/__tests__/parseFrenchNumber.test.js",
+  "/src/__tests__/parseSpelledLetters.test.js",
   "/src/__tests__/placement.test.js",
   "/src/__tests__/pushDismiss.test.js",
   "/src/__tests__/recapCelebrations.test.js",
@@ -101,6 +105,7 @@ const ASSETS = [
   "/src/components/ConjForm.js",
   "/src/components/ConjMysteryImage.js",
   "/src/components/ConjProgressGrid.js",
+  "/src/components/ConjVoiceInput.js",
   "/src/components/DivisionMysteryImage.js",
   "/src/components/DivisionProgressGrid.js",
   "/src/components/DivisionStrategyHint.js",
@@ -135,9 +140,11 @@ const ASSETS = [
   "/src/components/VoiceInput.js",
   "/src/components/VoiceInput.test.js",
   "/src/components/WeeklyRecapSettings.js",
+  "/src/components/conjHintLine.js",
   "/src/env.d.js",
   "/src/hooks/useConfetti.js",
   "/src/hooks/useInputMode.js",
+  "/src/hooks/useLatestRef.js",
   "/src/hooks/usePushPref.js",
   "/src/hooks/useQrScan.js",
   "/src/hooks/useSound.js",
@@ -180,10 +187,13 @@ const ASSETS = [
   "/src/lib/hardestFacts.js",
   "/src/lib/install.js",
   "/src/lib/leitner.js",
+  "/src/lib/letterNames.js",
   "/src/lib/micPreflight.js",
   "/src/lib/parseEnglishNumber.js",
   "/src/lib/parseFrenchNumber.js",
+  "/src/lib/parseSpelledLetters.js",
   "/src/lib/parseSpokenNumber.js",
+  "/src/lib/phoneticDict.js",
   "/src/lib/placement.js",
   "/src/lib/push.js",
   "/src/lib/remainderComposer.js",
@@ -228,8 +238,8 @@ const ASSETS = [
 
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
-const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"]}
-const LAZY_VERSIONS = {"audio":"c219a8e6c9a0","media":"b0361ec4d40b"}
+const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"],"phonetic":["/phonetic/"]}
+const LAZY_VERSIONS = {"audio":"c219a8e6c9a0","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55"}
 
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
