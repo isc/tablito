@@ -203,6 +203,38 @@ describe('confiance dans la reconstruction (specs §15.10)', () => {
   });
 });
 
+describe('le pronom de la question, dit avant d’épeler (specs §15.10)', () => {
+  // « elle » est le nom de la lettre l. La règle du préambule n'y suffit pas :
+  // elle ignore les mots INCOMPRIS avant la première lettre, or celui-ci est
+  // parfaitement compris — il écrirait donc un l. D'où la consommation
+  // explicite du pronom de la question.
+  const spell = (transcript: string, subject: string, expectedForm = 'chante') =>
+    parseSpelledLetters(transcript, { expectedForm, subject, dict });
+
+  it('n’écrit pas de lettre parasite quand le pronom est « elle »', () => {
+    const r = spell('elle chante ce hache a haine té e', 'elle ');
+    expect(r.answer).toBe('chante');
+    expect(r.status).toBe('letters');
+  });
+
+  it('sans le pronom de la question, « elle » reste la lettre l', () => {
+    // Les doubles l du périmètre s'épellent « elle, elle » : hors préambule, le
+    // mot garde son sens de nom de lettre.
+    const r = spell('a elle elle o haine esse', 'nous ', 'allons');
+    expect(r.answer).toBe('allons');
+  });
+
+  it('le pronom n’est consommé qu’en préambule, jamais après une lettre', () => {
+    const r = spell('elle e elle elle e', 'elle ', 'aille');
+    expect(r.answer).toBe('elle');
+  });
+
+  it('laisse passer le pronom même quand l’enfant ne dit pas la forme', () => {
+    const r = spell('elle ce hache a haine té e', 'elle ');
+    expect(r.answer).toBe('chante');
+  });
+});
+
 describe('appariement de la forme dite (specs §15.10)', () => {
   it('reconnaît la forme par ses phonèmes, homophones compris', () => {
     expect(matchesSpokenForm('chante', 'chantent', dict)).toBe(true);

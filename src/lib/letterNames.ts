@@ -62,8 +62,12 @@ export const LETTER_NAMES: readonly LetterNameDef[] = [
   { letter: 'j', names: ['ji', 'gi', 'gis'], phonemes: ['ʒi'] },
   { letter: 'k', names: ['ka', 'kâ', 'cas'], phonemes: ['ka'] },
   // « elle » reste la lettre l, pas le pronom : les doubles l du périmètre
-  // (« allons », « allez », « elle ») s'épellent « elle, elle », et un pronom
-  // dit avant l'épellation est de toute façon ignoré (préambule).
+  // (« allons », « allez ») s'épellent « elle, elle ». Attention au sens de la
+  // règle du préambule : elle ignore les mots INCOMPRIS avant la première
+  // lettre, pas les mots compris — un pronom qui est aussi un nom de lettre
+  // n'est donc PAS ignoré, il écrit sa lettre. C'est pourquoi
+  // `parseSpelledLetters` consomme explicitement le pronom de la question
+  // (option `subject`) avant de chercher des lettres.
   { letter: 'l', names: ['elle', 'el', 'èl', 'aile', 'ailes'], phonemes: ['ɛl'] },
   { letter: 'm', names: ['emme', 'em', 'èm', 'aime', 'aimes'], phonemes: ['ɛm'] },
   { letter: 'n', names: ['enne', 'en', 'èn', 'haine', 'aine', 'ène'], phonemes: ['ɛn'] },
@@ -82,11 +86,23 @@ export const LETTER_NAMES: readonly LetterNameDef[] = [
   { letter: 'x', names: ['iks', 'ixe', 'ix'], phonemes: ['iks'] },
   { letter: 'y', names: ['i grec', 'y grec', 'igrec'], phonemes: ['igʁɛk'] },
   { letter: 'z', names: ['zède', 'zed', 'zèd'], phonemes: ['zɛd'] },
-  // é et ê se nomment par leur son, ou par leur son plus l'accent. « et » est
-  // ici la lettre é : c'est la transcription la plus probable d'un [e] isolé
-  // (le mot le plus fréquent du français à cette prononciation). Le coût d'un
-  // faux é est d'ailleurs borné — `judgeConjAnswer` traite « etais » pour
-  // « étais » en « presque » : accepté, jamais promu (§15.5).
+  // é et ê se nomment par leur son, ou par leur son plus l'accent.
+  //
+  // « et » = é est un ARBITRAGE DÉLIBÉRÉ, pas un oubli (§15.10, « arbitrages
+  // assumés »). Le nom de la lettre é et la conjonction « et » sont des
+  // homophones EXACTS (/e/) : aucun traitement phonémique ne pourra jamais les
+  // distinguer, il n'y a qu'un pari à prendre. On le prend du côté de la
+  // lettre, parce que le mode a besoin du é pour épeler « étais », « étions »,
+  // « était » — sans quoi tout l'imparfait d'être devient inépelable, et c'est
+  // un fait de l'inventaire, pas un cas d'école.
+  //
+  // Ce qui est sacrifié en connaissance de cause : l'enfant qui énumère « e, n
+  // ET t » écrit un é parasite au milieu de sa terminaison — la reconstruction
+  // devient « ené t », donc un raté de plus, jamais une erreur Leitner (§15.10).
+  // C'est rare (on épelle « e, n, t », on ne coordonne pas), et le coût du pari
+  // inverse serait permanent. Quand le faux é passe quand même, il est borné :
+  // `judgeConjAnswer` traite « etais » pour « étais » en « presque » — accepté,
+  // jamais promu (§15.5).
   {
     letter: 'é',
     names: ['et', 'hé', 'eh', 'e accent aigu', 'é accent aigu', 'accent aigu'],

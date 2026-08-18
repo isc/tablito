@@ -26,7 +26,11 @@ import { phonemesOf, sameSound, type PhoneticDict } from './phoneticDict';
 //
 //   - **le préambule est libre** : tout ce qui précède la première lettre
 //     reconnue est ignoré sans conséquence (la forme dite, un pronom, une
-//     hésitation, un bout de phrase répété) ;
+//     hésitation, un bout de phrase répété). Attention : « ignoré » vaut pour
+//     les mots INCOMPRIS — un mot du préambule qui est un nom de lettre écrit
+//     bel et bien sa lettre. D'où les deux consommations explicites qui
+//     encadrent la règle : la forme attendue (`expectedForm`) et le pronom de
+//     la question (`subject`, car « elle » est le nom de la lettre l) ;
 //   - **la fin ne l'est pas** : un mot incompris APRÈS la première lettre
 //     signifie qu'on a probablement perdu une lettre en route. On préfère
 //     redemander que soumettre une réponse trouée, qui serait comptée comme une
@@ -59,6 +63,19 @@ export interface SpelledParseOptions {
    * porte la discrimination orthographique (§15.5).
    */
   expectedForm: string;
+  /**
+   * Pronom sujet de la QUESTION, tel qu'affiché (« nous », « elle », « j’ »).
+   * Consommé comme préambule, avant toute recherche de lettre.
+   *
+   * Sans lui, un pronom qui est aussi un nom de lettre écrirait sa lettre :
+   * « elle » EST le nom de la lettre l (cf. letterNames), donc « elle chante :
+   * c, h, a, n, t, e » commencerait par un l parasite — et le « chante » qui
+   * suit, arrivant après une première lettre, passerait pour du bruit de fin,
+   * ce qui condamne tout le reste de l'épellation. La règle du préambule
+   * (§15.10) ne suffit pas ici : elle ignore les mots INCOMPRIS avant la
+   * première lettre, or un nom de lettre est justement compris.
+   */
+  subject?: string;
   /** Dictionnaire de prononciation ; absent, les étages 1-3 suffisent. */
   dict?: PhoneticDict | null;
   /**
@@ -180,9 +197,10 @@ export function matchesSpokenForm(
  */
 export function parseSpelledLetters(
   transcript: string,
-  { expectedForm, dict = null, ignoreForm = false }: SpelledParseOptions,
+  { expectedForm, subject = '', dict = null, ignoreForm = false }: SpelledParseOptions,
 ): SpelledParse {
   const tokens = tokenizeTranscript(transcript);
+  const subjectWords = new Set(tokenizeTranscript(subject).map((t) => t.norm));
   const letters: string[] = [];
   let saidForm = false;
   let junkAfterLetters = false;
@@ -212,21 +230,26 @@ export function parseSpelledLetters(
 
     if (FILLERS.has(token.norm)) continue;
 
-    // 2. La forme dite avant l'épellation — seulement tant qu'aucune lettre
+    // 2. Le pronom de la question, redit avant d'épeler — et seulement avant
+    //    la première lettre : après, « elle » est bien la lettre l (les doubles
+    //    l s'épellent « elle, elle »).
+    if (letters.length === 0 && subjectWords.has(token.norm)) continue;
+
+    // 3. La forme dite avant l'épellation — seulement tant qu'aucune lettre
     //    n'est arrivée : après, un mot qui sonne comme la forme est du bruit.
     if (!ignoreForm && letters.length === 0 && matchesSpokenForm(token.norm, expectedForm, dict)) {
       saidForm = true;
       continue;
     }
 
-    // 3. Une suite de capitales épelée d'un trait.
+    // 4. Une suite de capitales épelée d'un trait.
     const run = uppercaseRun(token);
     if (run) {
       letters.push(...run);
       continue;
     }
 
-    // 4. Lettre seule, nom connu, ou appariement phonémique.
+    // 5. Lettre seule, nom connu, ou appariement phonémique.
     const letter = letterFromWord(token.norm, dict);
     if (letter) {
       letters.push(letter);
@@ -253,15 +276,25 @@ export function parseSpelledLetters(
  * constat d'échec. Les alternatives sont gratuites — le recognizer les fournit
  * avec le résultat — et souvent meilleures que l'hypothèse principale sur des
  * lettres isolées, où la principale part vers un vrai mot français.
+ *
+ * Paresseux : on s'arrête à la première épellation exploitable, sans lire les
+ * hypothèses suivantes. Le cas nominal (la principale est la bonne) ne fait
+ * donc qu'une lecture au lieu de cinq, sur le chemin d'un enfant qui attend.
  */
 export function bestSpelledParse(
   candidates: string[],
   options: SpelledParseOptions,
 ): SpelledParse {
-  const parses = candidates.map((c) => parseSpelledLetters(c, options));
-  return (
-    parses.find((p) => p.status === 'letters')
-    ?? parses.find((p) => p.status === 'form-only')
-    ?? parses[0]
-  );
+  let fallback: SpelledParse | null = null;
+  for (const candidate of candidates) {
+    const parse = parseSpelledLetters(candidate, options);
+    if (parse.status === 'letters') return parse;
+    // À défaut d'épellation : la première forme dite l'emporte sur le premier
+    // constat d'échec — elle mène à « maintenant, épelle ! » plutôt qu'à un
+    // « je n'ai pas bien entendu » qui serait faux.
+    if (fallback === null || (fallback.status === 'unheard' && parse.status === 'form-only')) {
+      fallback = parse;
+    }
+  }
+  return fallback ?? { status: 'unheard', letters: [], answer: '', saidForm: false };
 }
