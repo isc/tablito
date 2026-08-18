@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260818113355"
+const CACHE = 'tablito-' + "20260818124707"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -239,7 +239,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"],"phonetic":["/phonetic/"]}
-const LAZY_VERSIONS = {"audio":"c219a8e6c9a0","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55"}
+const LAZY_VERSIONS = {"audio":"cc876539251c","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55"}
 
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
