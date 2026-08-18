@@ -259,33 +259,13 @@
   padding: 8px 16px 0;
 }
 
-/* Un seul item à l'écran, gros corps, interlignage généreux (§8). La phrase se
-   replie en gardant le blanc solidaire de ce qui le précède. */
+/* Un seul item à l'écran, gros corps, interlignage généreux (§8). Toute la
+   mise en scène (pile de trois lignes, verbe insécable, contexte en encre
+   douce) vit dans ConjForm en mode `stacked` — ici, seul l'espacement. */
 .conj-sentence {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
   justify-content: center;
-  font-family: var(--serif);
-  font-size: 34px;
-  text-align: center;
   padding: 16px 0 4px;
-}
-
-/* Le blanc à remplir : un trait, pas une case à cases — sa largeur est fixe et
-   ne trahit donc JAMAIS le nombre de lettres attendues. */
-.conj-blank {
-  display: inline-block;
-  width: 2.2em;
-  height: 0.9em;
-  border-bottom: 3px solid var(--indigo);
-  margin: 0 0.06em;
-}
-
-.conj-sentence-tail {
-  color: var(--ink-soft);
-  font-weight: 400;
-  white-space: pre-wrap;
 }
 
 .conj-question-meta {

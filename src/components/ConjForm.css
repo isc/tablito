@@ -16,14 +16,33 @@
   line-height: 1.45;
   font-size: 34px;
   letter-spacing: -0.5px;
-  /* Les phrases porteuses sont passées avec leur espacement (« Demain, »,
-     « nous », « j’ ») : on le préserve tout en laissant la ligne se replier. */
-  white-space: pre-wrap;
+  /* LE groupe verbal (pronom + radical + terminaison ou trait) est insécable :
+     une coupure entre « chant » et « ions » — ou entre le radical et son
+     trait — casserait l'objet même que la segmentation met en scène. Seul le
+     contexte (.conj-form-context) retrouve le droit de se replier. */
+  white-space: nowrap;
 }
 
 .conj-form-context {
   color: var(--ink-soft);
   font-weight: 400;
+  white-space: normal;
+}
+
+/* Mise en scène « question » (prop `stacked`) : trois lignes empilées et
+   centrées — contexte avant, groupe verbal seul, contexte après. Le verbe ne
+   partage jamais sa ligne avec le reste de la phrase, et le contexte passe en
+   corps réduit : c'est le verbe qu'on interroge. */
+.conj-form--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.conj-form--stacked .conj-form-context {
+  font-size: 0.75em;
 }
 
 .conj-form-subject {
@@ -94,4 +113,14 @@
 .conj-hint-stem {
   color: var(--conj-stem);
   font-weight: 600;
+}
+
+/* Le trait de la terminaison à compléter. Largeur FIXE : elle ne doit jamais
+   trahir le nombre de lettres attendues. */
+.conj-blank {
+  display: inline-block;
+  width: 2.2em;
+  height: 0.9em;
+  border-bottom: 3px solid var(--indigo);
+  margin: 0 0.06em;
 }

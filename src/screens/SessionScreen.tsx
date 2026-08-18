@@ -798,9 +798,11 @@ export default function SessionScreen({
 
           {conjIntroStep === 'sentence' ? (
             <>
-              {/* 1. La phrase en contexte, lue à voix haute, forme visible. */}
+              {/* 1. La phrase en contexte, lue à voix haute, forme visible —
+                  même mise en scène empilée que la question. */}
               <div className="conj-intro-sentence">
                 <ConjForm
+                  stacked
                   before={cv.carrier.before}
                   subject={cv.subject}
                   segment={cv.segment}
@@ -870,12 +872,13 @@ export default function SessionScreen({
         <div className="session-question conj-question">
           <div className="conj-sentence">
             <ConjForm
+              stacked
               before={cv.carrier.before}
               subject={cv.subject}
               segment={[cv.displayedStem, '']}
+              blank
+              after={cv.tail}
             />
-            <span className="conj-blank" aria-hidden="true" />
-            <span className="conj-sentence-tail">{cv.tail}</span>
           </div>
           <div className="conj-question-meta">
             <span className="conj-intro-infinitive">{tc.infinitive(cv.verb)}</span>

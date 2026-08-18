@@ -28,6 +28,20 @@ interface ConjFormProps {
   segment: readonly [string, string];
   /** Pronom sujet, espace ou apostrophe comprise : « nous », « j’ ». */
   subject?: string;
+  /**
+   * Rend le trait de la terminaison à compléter juste après le radical, dans
+   * le groupe insécable. Toujours accompagné d'une terminaison vide — le
+   * trait REMPLACE la marque, il ne s'y ajoute pas.
+   */
+  blank?: boolean;
+  /**
+   * Mise en scène « question » : trois lignes empilées et centrées — contexte
+   * avant, groupe verbal seul, contexte après (en encre douce, corps réduit).
+   * Le verbe ne partage jamais sa ligne : c'est l'objet de la question
+   * (défaut de repli relevé en test réel, 17/08/2026). Sans `stacked`, tout
+   * se rend en ligne (corrections, image mystère).
+   */
+  stacked?: boolean;
   /** Début de phrase porteuse, marqueur temporel compris : « Demain, ». */
   before?: string;
   /** Fin de phrase porteuse : « des crêpes. ». */
@@ -40,6 +54,8 @@ export default function ConjForm({
   subject,
   before,
   after,
+  blank = false,
+  stacked = false,
   lit = 'none',
 }: ConjFormProps) {
   const [stem, mark] = segment;
@@ -47,27 +63,38 @@ export default function ConjForm({
   const markLit = lit === 'both';
 
   return (
-    <span className="conj-form">
-      {before && <span className="conj-form-context">{before} </span>}
-      {subject && (
-        // L'éventuelle espace finale du pronom (« nous ») reste HORS du span :
-        // la pastille d'illumination doit épouser le mot, pas son espacement —
-        // et cette espace est ce qui sépare visuellement les deux pastilles
-        // quand pronom et marque sont adjacents (« je suis »).
-        <>
-          <span className={`conj-form-subject${subjectLit ? ' is-lit' : ''}`}>
-            {subject.trimEnd()}
-          </span>
-          {subject.slice(subject.trimEnd().length)}
-        </>
+    <span className={`conj-form${stacked ? ' conj-form--stacked' : ''}`}>
+      {/* Les espaces de séparation des porteuses (finale de `before`, initiale
+          de `after`) sont retirées : en pile, chaque segment a sa ligne ; en
+          ligne, ConjForm rend lui-même l'espace, hors des spans de contexte. */}
+      {before && (
+        <span className="conj-form-context">{before.trimEnd()}</span>
       )}
-      <span className="conj-form-stem">{stem}</span>
-      {/* Pas de <span> vide pour les formes insécables : « nous sommes » doit se
-          lire comme un bloc, pas comme un radical suivi d'un trou. */}
-      {mark !== '' && (
-        <span className={`conj-form-mark${markLit ? ' is-lit' : ''}`}>{mark}</span>
-      )}
-      {after && <span className="conj-form-context">{after}</span>}
+      {before && !stacked && ' '}
+      {/* Le groupe verbal est insécable — cf. .conj-form dans ConjForm.css. */}
+      <span className="conj-form-unit">
+        {subject && (
+          // L'éventuelle espace finale du pronom (« nous ») reste HORS du span :
+          // la pastille d'illumination doit épouser le mot, pas son espacement —
+          // et cette espace est ce qui sépare visuellement les deux pastilles
+          // quand pronom et marque sont adjacents (« je suis »).
+          <>
+            <span className={`conj-form-subject${subjectLit ? ' is-lit' : ''}`}>
+              {subject.trimEnd()}
+            </span>
+            {subject.slice(subject.trimEnd().length)}
+          </>
+        )}
+        <span className="conj-form-stem">{stem}</span>
+        {/* Pas de <span> vide pour les formes insécables : « nous sommes » doit se
+            lire comme un bloc, pas comme un radical suivi d'un trou. */}
+        {mark !== '' && (
+          <span className={`conj-form-mark${markLit ? ' is-lit' : ''}`}>{mark}</span>
+        )}
+        {blank && <span className="conj-blank" aria-hidden="true" />}
+      </span>
+      {after && !stacked && ' '}
+      {after && <span className="conj-form-context">{after.trimStart()}</span>}
     </span>
   );
 }

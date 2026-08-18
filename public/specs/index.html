@@ -1189,6 +1189,7 @@ interface Badge {
     <p>🔊 « Demain, nous… <em>chanter</em> »</p>
     <p>Demain, nous <code>chant</code>____ &nbsp;<em>(chanter)</em></p>
   </blockquote>
+  <p>La phrase s'affiche en <strong>trois lignes empilées et centrées</strong> : le contexte avant, le groupe verbal <strong>seul au milieu</strong> — pronom, radical et trait forment une unité insécable — puis le contexte après, en encre douce et corps réduit. Le verbe ne partage jamais sa ligne : c'est lui qu'on interroge, et une coupure entre le radical et son trait (constatée en test réel sur petit écran) casserait l'objet même de la question.</p>
   <p>Chaque fait dispose de <strong>2 à 3 phrases porteuses fixes</strong>. Des phrases stables réduisent la charge de lecture — elles deviennent familières au bout de quelques passages — et bornent le volume audio à pré-générer (environ 200 fichiers, contre 773 côté maths).</p>
 
   <h4>On ne tape que ce qui porte la connaissance testée</h4>
@@ -1196,7 +1197,8 @@ interface Badge {
     <li><strong>Verbe régulier</strong> : le radical est affiché, l'enfant tape la <strong>terminaison</strong> seule (2 à 5 lettres). Aucune friction motrice sur ce qui n'est pas testé.</li>
     <li><strong>Forme irrégulière</strong> : la forme entière est tapée — elles sont courtes (<em>suis, vont, êtes, serons</em>) et c'est la forme elle-même qui constitue le fait.</li>
   </ul>
-  <p>La saisie se fait sur un <strong>mini-clavier AZERTY à grosses touches</strong> (3 rangées, plus <code>é</code> et <code>ê</code>), disposition scolaire familière. C'est le principal chantier d'interface neuf de la matière : le pavé numérique (§3.3) ne se transpose pas. La validation est <strong>explicite</strong> — contrairement aux nombres, la longueur de la réponse n'est pas prévisible, donc l'auto-validation à N caractères n'a pas de sens.</p>
+  <p>La saisie se fait sur un <strong>mini-clavier alphabétique à grosses touches</strong> : 26 lettres + <code>é</code> et <code>ê</code> = 28 touches en <strong>4 rangées de 7, toutes de même largeur</strong>, é et ê rangés naturellement après le e. C'est le principal chantier d'interface neuf de la matière : le pavé numérique (§3.3) ne se transpose pas. La validation est <strong>explicite</strong> — contrairement aux nombres, la longueur de la réponse n'est pas prévisible, donc l'auto-validation à N caractères n'a pas de sens.</p>
+  <blockquote class="note"><p><strong>Pourquoi pas l'AZERTY ?</strong> Essayé d'abord (« disposition scolaire familière »), abandonné après test en conditions réelles : à cet âge, la géographie AZERTY n'est pas connue — l'enfant cherche ses lettres visuellement, et c'est l'ordre alphabétique, su par cœur, qui donne une stratégie de recherche (« le s est vers la fin »). L'insertion de é/ê brisait de toute façon la disposition standard, au prix de rangées inégales et de touches de largeurs variables. Et l'argument du transfert vers le clavier réel est à mettre en balance avec l'usage grandissant de la voix (§15.10).</p></blockquote>
 
   <h4>Alternatives rejetées</h4>
   <ul>
