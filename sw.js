@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260818124707"
+const CACHE = 'tablito-' + "20260822084537"
 const BASE = "/"
 const ASSETS = [
   "/CNAME",
@@ -86,6 +86,7 @@ const ASSETS = [
   "/src/__tests__/remainderComposer.test.js",
   "/src/__tests__/remainderDaily.test.js",
   "/src/__tests__/remainderJourney.test.js",
+  "/src/__tests__/remainderVoice.test.js",
   "/src/__tests__/remainderZoneLabel.test.js",
   "/src/__tests__/remoteFollow.test.js",
   "/src/__tests__/sessionComposer.test.js",
