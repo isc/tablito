@@ -151,7 +151,7 @@ export function loadProfileById(id: string): UserProfile | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!isValidProfile(parsed)) return null;
-    return migrateProfile(parsed as UserProfile);
+    return normalizeProfile(parsed as UserProfile);
   } catch {
     return null;
   }
@@ -323,7 +323,7 @@ export function importProfile(json: string): UserProfile | null {
   try {
     const parsed = JSON.parse(json);
     if (!isValidProfile(parsed)) return null;
-    return migrateProfile(parsed as UserProfile);
+    return normalizeProfile(parsed as UserProfile);
   } catch {
     return null;
   }
@@ -372,10 +372,19 @@ export function createNewProfile(name: string): UserProfile {
 }
 
 /**
- * Migrates older profiles to the current shape.
- * Ensures backward compatibility when new fields are added.
+ * Point de passage UNIQUE de tout profil entrant : chargement local, bascule
+ * d'enfant, import (collage, URL, QR de transfert). Trois rôles, dans l'ordre :
+ *
+ *  1. backfill des champs ajoutés après coup (un localStorage n'est réécrit
+ *     que quand l'enfant joue, et un QR peut venir d'un appareil resté sur une
+ *     version datée : un profil entrant peut donc dater de n'importe quand) ;
+ *  2. assainissement des valeurs — le JSON est exportable, donc éditable ;
+ *  3. mises à jour dépendantes du calendrier qu'aucune séance ne déclenche :
+ *     règlement des gels de série, rétro-attribution des badges d'état.
+ *
+ * Pas seulement de la migration, donc — d'où le nom.
  */
-function migrateProfile(profile: UserProfile): UserProfile {
+function normalizeProfile(profile: UserProfile): UserProfile {
   if (!Array.isArray(profile.sessionHistory)) {
     profile.sessionHistory = [];
   }

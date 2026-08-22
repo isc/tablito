@@ -162,7 +162,7 @@ export interface UserProfile {
   hasSeenRule11: boolean;
   mysteryTheme: MysteryTheme;
   // === Niveau 2 — division (cf. specs §11). Champs optionnels : absents des
-  // profils v1, backfillés par migrateProfile au chargement. ===
+  // profils v1, backfillés par normalizeProfile au chargement. ===
   // Les 64 faits de division. Toujours présents après migration (même tant
   // que le niveau n'est pas débloqué — ils restent box 1 / non introduits).
   divisionFacts?: DivisionFact[];
@@ -171,12 +171,12 @@ export interface UserProfile {
   divisionMysteryTheme?: MysteryTheme;
   hasSeenDivisionIntro?: boolean;
   // === Niveau 3 — division avec reste (cf. specs §12). Optionnels : absents
-  // des profils antérieurs, backfillés par migrateProfile au chargement. ===
+  // des profils antérieurs, backfillés par normalizeProfile au chargement. ===
   remainderFacts?: RemainderFact[];
   // Image mystère dédiée au niveau 3 (specs §12.6), distincte des deux autres.
   remainderMysteryTheme?: MysteryTheme;
   // === Matière conjugaison (cf. spec Verbito). Optionnels : absents des
-  // profils antérieurs, backfillés par migrateProfile au chargement. ===
+  // profils antérieurs, backfillés par normalizeProfile au chargement. ===
   // Les 63 faits de conjugaison (cf. createInitialConjFacts).
   conjFacts?: ConjFact[];
   // Image mystère dédiée à la conjugaison (spec §7.1) : matière séparée ⇒ pool

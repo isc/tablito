@@ -218,7 +218,7 @@ describe('intégration : profil legacy déjà au top niveau débloque ×11', () 
 
   // Scénario plus subtil : un profil dont les faits sont tous en box 4+ mais
   // dont la liste de badges est incomplète (ex : profil créé avant l'ajout
-  // d'un des badges). Le filet de sécurité de migrateProfile (rétro-attribution
+  // d'un des badges). Le filet de sécurité de normalizeProfile (rétro-attribution
   // via checkBadges) doit combler le trou et débloquer la règle.
   it('faits en box 4+ mais badges manquants → retro-attribution puis déblocage', () => {
     const legacy = makeProfile() as Partial<UserProfile>;

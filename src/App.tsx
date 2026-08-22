@@ -245,7 +245,7 @@ export default function App({
   // Règle les jours d'absence pour l'app laissée ouverte à travers minuit :
   // `today` se rafraîchit au retour au premier plan, et le gel du jour manqué
   // doit partir à ce moment-là. Tous les autres chemins sont déjà couverts en
-  // amont par `migrateProfile` (tout profil chargé sort réglé), donc la seule
+  // amont par `normalizeProfile` (tout profil chargé sort réglé), donc la seule
   // dépendance est `today`. `settleStreak` est idempotent : pas de boucle.
   useEffect(() => {
     setProfile((prev) => {
