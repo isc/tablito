@@ -18,7 +18,6 @@ vi.mock('../lib/install', async (importOriginal) => ({
 }));
 
 let startCalls = 0;
-let abortCalls = 0;
 let live: FakeRecognition | null = null;
 
 class FakeRecognition {
@@ -38,12 +37,13 @@ class FakeRecognition {
     if (this.running) throw new Error('InvalidStateError');
     startCalls += 1;
     this.running = true;
+    // Le fake s'expose aux tests pour qu'ils pilotent la session en cours.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     live = this;
     this.onstart?.();
   }
 
   abort(): void {
-    abortCalls += 1;
     if (!this.running) return;
     // Le vrai abort() est ASYNCHRONE : la session reste ouverte jusqu'à onend,
     // et tout start() lancé dans cet intervalle lève. Modéliser l'abort comme
@@ -103,7 +103,6 @@ let origCreateBufferSource: () => AudioBufferSourceNode;
 beforeEach(() => {
   FakeRecognition.asyncAbort = false;
   startCalls = 0;
-  abortCalls = 0;
   live = null;
   pendingSources = [];
 
