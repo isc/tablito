@@ -4,6 +4,8 @@ import {
   getActiveStreak,
   isStreakProtectedByFreeze,
   applyStreakUpdate,
+  applySettlement,
+  settleStreak,
   STREAK_FREEZE_INTERVAL,
   STREAK_FREEZE_MAX,
 } from '../lib/streak';
@@ -12,6 +14,10 @@ import type { UserProfile } from '../types';
 
 function makeProfile(overrides: Partial<UserProfile>): UserProfile {
   return { ...createNewProfile('Test'), ...overrides };
+}
+
+function settleOn(profile: UserProfile, today: string): UserProfile {
+  return applySettlement(profile, settleStreak(profile, today));
 }
 
 describe('getActiveStreak', () => {
@@ -68,33 +74,118 @@ describe('isStreakProtectedByFreeze', () => {
   });
 
   it('est faux si la dernière séance est aujourd\'hui', () => {
-    const profile = makeProfile({ lastSessionDate: '2026-04-30', streakFreezes: 1 });
+    const profile = makeProfile({ lastSessionDate: '2026-04-30', currentStreak: 5, streakFreezes: 1 });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(false);
   });
 
   it('est faux si la dernière séance est hier (série naturellement active)', () => {
-    const profile = makeProfile({ lastSessionDate: '2026-04-29', streakFreezes: 1 });
+    const profile = makeProfile({ lastSessionDate: '2026-04-29', currentStreak: 5, streakFreezes: 1 });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(false);
   });
 
   it('est vrai si la dernière séance est avant-hier ET qu\'un gel est disponible', () => {
-    const profile = makeProfile({ lastSessionDate: '2026-04-28', streakFreezes: 1 });
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 1 });
+    expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(true);
+  });
+
+  it('reste vrai une fois le gel déjà débité par le règlement', () => {
+    // État d'un profil rechargé le lendemain du règlement : le gel est parti,
+    // mais la série est bien protégée jusqu'à la prochaine séance.
+    const profile = makeProfile({
+      lastSessionDate: '2026-04-28',
+      currentStreak: 5,
+      streakFreezes: 0,
+      freezeSettledDate: '2026-04-29',
+    });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(true);
   });
 
   it('est vrai si 2 jours manqués sont couverts par 2 gels', () => {
-    const profile = makeProfile({ lastSessionDate: '2026-04-27', streakFreezes: 2 });
+    const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 5, streakFreezes: 2 });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(true);
   });
 
   it('est faux si 2 jours manqués mais 1 seul gel (couverture insuffisante)', () => {
-    const profile = makeProfile({ lastSessionDate: '2026-04-27', streakFreezes: 1 });
+    const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 5, streakFreezes: 1 });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(false);
   });
 
   it('est faux si la dernière séance est avant-hier mais aucun gel', () => {
-    const profile = makeProfile({ lastSessionDate: '2026-04-28', streakFreezes: 0 });
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 0 });
     expect(isStreakProtectedByFreeze(profile, '2026-04-30')).toBe(false);
+  });
+});
+
+describe('settleStreak — débit des gels au jour manqué', () => {
+  it('ne touche à rien tant que le jour en cours n\'est pas écoulé', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-29', currentStreak: 5, streakFreezes: 2 });
+    const r = settleStreak(profile, '2026-04-30');
+    expect(r.changed).toBe(false);
+    expect(r.streakFreezes).toBe(2);
+    expect(r.currentStreak).toBe(5);
+  });
+
+  it('débite un gel dès le lendemain du jour manqué, sans attendre la séance', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 2 });
+    const r = settleStreak(profile, '2026-04-30');
+    expect(r.changed).toBe(true);
+    expect(r.streakFreezes).toBe(1);
+    expect(r.currentStreak).toBe(5);
+    expect(r.freezeSettledDate).toBe('2026-04-29');
+  });
+
+  it('est idempotent : un 2e passage le même jour ne redébite pas', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 2 });
+    const second = settleStreak(settleOn(profile, '2026-04-30'), '2026-04-30');
+    expect(second.changed).toBe(false);
+    expect(second.streakFreezes).toBe(1);
+  });
+
+  it('débite un gel de plus au fil des jours manqués successifs', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 2 });
+    const day2 = settleStreak(settleOn(profile, '2026-04-30'), '2026-05-01');
+    expect(day2.streakFreezes).toBe(0);
+    expect(day2.currentStreak).toBe(5);
+    expect(day2.freezeSettledDate).toBe('2026-04-30');
+  });
+
+  it('casse la série une fois les gels épuisés', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 2 });
+    const day2 = settleOn(settleOn(profile, '2026-04-30'), '2026-05-01');
+    const day3 = settleStreak(day2, '2026-05-02');
+    expect(day3.currentStreak).toBe(0);
+    expect(day3.streakFreezes).toBe(0);
+  });
+
+  // Un gel dépensé l'est pour de bon : sans ça, le solde dépendrait du fait
+  // d'avoir ouvert l'app pendant l'absence.
+  it('donne le même solde que le règlement soit fait jour par jour ou en un bloc', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 2 });
+    const dayByDay = settleOn(
+      settleOn(settleOn(profile, '2026-04-30'), '2026-05-01'),
+      '2026-05-02',
+    );
+    const inOneGo = settleOn(profile, '2026-05-02');
+    expect(inOneGo.currentStreak).toBe(dayByDay.currentStreak);
+    expect(inOneGo.streakFreezes).toBe(dayByDay.streakFreezes);
+  });
+
+  it('ne dépense plus rien une fois la série cassée', () => {
+    const profile = makeProfile({
+      lastSessionDate: '2026-04-20',
+      currentStreak: 0,
+      streakFreezes: 2,
+    });
+    const r = settleStreak(profile, '2026-04-30');
+    expect(r.changed).toBe(false);
+    expect(r.streakFreezes).toBe(2);
+  });
+
+  it('ne débite rien si l\'horloge recule (changement de fuseau)', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-30', currentStreak: 5, streakFreezes: 2 });
+    const r = settleStreak(profile, '2026-04-28');
+    expect(r.changed).toBe(false);
+    expect(r.streakFreezes).toBe(2);
   });
 });
 
@@ -156,7 +247,7 @@ describe('applyStreakUpdate', () => {
     expect(r.freezeJustEarned).toBe(false);
   });
 
-  it('reset la série à 1 après 1 jour manqué si pas de gel (les gels actuels sont conservés)', () => {
+  it('reset la série à 1 après 1 jour manqué si pas de gel', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 5, streakFreezes: 0 });
     const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.currentStreak).toBe(1);
@@ -177,7 +268,8 @@ describe('applyStreakUpdate', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-27', currentStreak: 10, streakFreezes: 1 });
     const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.currentStreak).toBe(1);
-    expect(r.streakFreezes).toBe(1);
+    // Le gel a bien servi à couvrir le 1er jour manqué avant que la série casse.
+    expect(r.streakFreezes).toBe(0);
     expect(r.freezeJustUsed).toBe(false);
   });
 
@@ -185,15 +277,15 @@ describe('applyStreakUpdate', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-26', currentStreak: 10, streakFreezes: 2 });
     const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.currentStreak).toBe(1);
-    expect(r.streakFreezes).toBe(2);
+    expect(r.streakFreezes).toBe(0);
     expect(r.freezeJustUsed).toBe(false);
   });
 
-  it('conserve les gels quand la série casse vraiment', () => {
+  it('brûle les gels jusqu\'à épuisement quand la série casse vraiment', () => {
     const profile = makeProfile({ lastSessionDate: '2026-04-20', currentStreak: 8, streakFreezes: 2 });
     const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.currentStreak).toBe(1);
-    expect(r.streakFreezes).toBe(2);
+    expect(r.streakFreezes).toBe(0);
   });
 
   it('peut consommer un gel ET en gagner un dans le même tour (cas limite)', () => {

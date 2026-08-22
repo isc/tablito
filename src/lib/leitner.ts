@@ -1,6 +1,6 @@
 import type { BoxLevel, Attempt } from '../types';
 import { BOX_INTERVALS, FAST_THRESHOLD_MS } from '../types';
-import { shuffle } from './utils';
+import { addDays, shuffle } from './utils';
 
 // Forme minimale de planification Leitner, commune à MultiFact et DivisionFact.
 // Les fonctions ci-dessous opèrent uniquement sur ces champs (jamais sur a/b/
@@ -13,14 +13,10 @@ type Schedulable = {
   history: Attempt[];
 };
 
-/**
- * Adds `days` calendar days to an ISO date string and returns the new ISO date string.
- */
-export function addDays(isoDate: string, days: number): string {
-  const d = new Date(isoDate);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
+// `addDays` a rejoint utils.ts (à côté de daysBetween/todayISO) : c'est de
+// l'arithmétique de calendrier, pas de la planification Leitner. Ré-exporté
+// ici pour les appelants historiques.
+export { addDays };
 
 /**
  * Computes the next due date for a fact based on its box level.

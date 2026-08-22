@@ -54,7 +54,7 @@ import { getRemainderFactKey } from './lib/remainderFacts';
 import { seedFromPlacement } from './lib/placement';
 import type { PlacementResult } from './lib/placement';
 import { todayISO } from './lib/utils';
-import { applyStreakUpdate } from './lib/streak';
+import { applySettlement, applyStreakUpdate, settleStreak } from './lib/streak';
 import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { syncLastSession } from './lib/push';
@@ -241,6 +241,19 @@ export default function App({
       saveProfile(profile);
     }
   }, [profile]);
+
+  // Règle les jours d'absence pour l'app laissée ouverte à travers minuit :
+  // `today` se rafraîchit au retour au premier plan, et le gel du jour manqué
+  // doit partir à ce moment-là. Tous les autres chemins sont déjà couverts en
+  // amont par `migrateProfile` (tout profil chargé sort réglé), donc la seule
+  // dépendance est `today`. `settleStreak` est idempotent : pas de boucle.
+  useEffect(() => {
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const settled = settleStreak(prev, today);
+      return settled.changed ? applySettlement(prev, settled) : prev;
+    });
+  }, [today]);
 
   // Si on tourne en standalone (PWA installée), le flag "skip" du navigateur
   // n'a plus d'utilité. On nettoie pour qu'un éventuel retour navigateur
@@ -853,6 +866,7 @@ export default function App({
         totalSessions: profile.totalSessions + 1,
         currentStreak: streakUpdate.currentStreak,
         longestStreak,
+        freezeSettledDate: streakUpdate.freezeSettledDate,
         // Flamme de série PARTAGÉE : une séance de n'importe quelle matière
         // maintient `lastSessionDate` (spec Verbito §7.2). Les deux dates par
         // matière, elles, disent seulement quelle tuile de l'accueil est déjà

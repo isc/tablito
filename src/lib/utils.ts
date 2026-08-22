@@ -9,6 +9,18 @@ export function todayISO(): string {
  * Returns the number of calendar days between two ISO date strings.
  * Positive if dateB is after dateA.
  */
+/**
+ * Décale une date nue « YYYY-MM-DD » de `days` jours.
+ * Arithmétique en UTC : avec les accesseurs locaux, la veille du lendemain
+ * d'une bascule d'heure d'été retombe un jour trop tôt (Europe/Paris,
+ * 2026-10-26 → 2026-10-24).
+ */
+export function addDays(isoDate: string, days: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function daysBetween(dateA: string, dateB: string): number {
   const a = new Date(dateA);
   const b = new Date(dateB);

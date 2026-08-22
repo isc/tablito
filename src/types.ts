@@ -148,6 +148,10 @@ export interface UserProfile {
   // Gels de série en réserve, consommés automatiquement quand l'enfant manque
   // 1 jour. Cf. STREAK_FREEZE_* et applyStreakUpdate dans lib/streak.ts.
   streakFreezes: number;
+  // Dernier jour d'absence déjà payé par un gel (« YYYY-MM-DD »), absent tant
+  // qu'aucun jour n'a été manqué depuis la dernière séance. Sert uniquement à
+  // empêcher `settleStreak` de débiter deux fois le même jour manqué.
+  freezeSettledDate?: string | null;
   badges: Badge[];
   sessionHistory: SessionResult[];
   hasSeenRulesIntro: boolean;

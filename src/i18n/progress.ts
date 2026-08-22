@@ -264,7 +264,7 @@ const streakDetailFr: StreakDetailStrings = {
   explanationInactive:
     'Ta série de jours d’affilée est à zéro. Tes progrès sur les multiplications sont conservés : joue aujourd’hui pour repartir.',
   explanationFreeze:
-    'Tu n’as pas joué hier, mais un de tes gels protège ta série. Joue aujourd’hui pour le consommer et la prolonger.',
+    'Tu n’as pas joué hier : un gel a été utilisé pour sauver ta série. Joue aujourd’hui pour la prolonger.',
   explanationDoneToday:
     'Bravo, ta séance d’aujourd’hui est faite ! Reviens demain pour faire +1.',
   explanationActive:
@@ -284,7 +284,7 @@ const streakDetailEn: StreakDetailStrings = {
   explanationInactive:
     'Your streak of days in a row is at zero. Your progress on the multiplication tables is kept: play today to get going again.',
   explanationFreeze:
-    "You didn't play yesterday, but one of your freezes is protecting your streak. Play today to use it and extend your streak.",
+    "You didn't play yesterday: a freeze was used to save your streak. Play today to extend it.",
   explanationDoneToday:
     'Well done, your session for today is done! Come back tomorrow to add +1.',
   explanationActive:

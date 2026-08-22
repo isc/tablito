@@ -5,7 +5,7 @@ import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
 import { createInitialRemainderFacts } from './remainderFacts';
 import { inferIntroductionsFromKnowns } from './placement';
-import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX } from './streak';
+import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX, settleStreak } from './streak';
 import { pickRandom, todayISO } from './utils';
 import { gunzip, urlBase64ToUint8Array } from './codec';
 
@@ -347,6 +347,7 @@ export function createNewProfile(name: string): UserProfile {
     longestStreak: 0,
     lastSessionDate: null,
     streakFreezes: 0,
+    freezeSettledDate: null,
     badges: [],
     sessionHistory: [],
     hasSeenRulesIntro: false,
@@ -456,6 +457,25 @@ function migrateProfile(profile: UserProfile): UserProfile {
   }
   if (profile.lastConjSessionDate === undefined) {
     profile.lastConjSessionDate = null;
+  }
+  // Dernier jour d'absence déjà payé par un gel. Le JSON étant éditable à la
+  // main (cf. export/import), tout ce qui n'est pas une date repart à null —
+  // une valeur bancale rendrait `daysBetween` NaN et pourrait persister un
+  // `streakFreezes: NaN` irrattrapable.
+  if (typeof profile.freezeSettledDate !== 'string') {
+    profile.freezeSettledDate = null;
+  }
+  // Règle les jours d'absence écoulés dès le chargement, quel que soit le
+  // chemin (démarrage, bascule d'enfant, import) : les gels sont débités au
+  // jour manqué, pas à la séance suivante. Sans ça, le premier rendu affiche
+  // « un gel protège ta série » à côté d'une réserve encore intacte
+  // (feedback du 22/08/2026). `settleStreak` est pur et son résultat ne
+  // dépend que du calendrier : régler ici ou plus tard donne le même solde.
+  const settled = settleStreak(profile, todayISO());
+  if (settled.changed) {
+    profile.currentStreak = settled.currentStreak;
+    profile.streakFreezes = settled.streakFreezes;
+    profile.freezeSettledDate = settled.freezeSettledDate;
   }
   // Fix les profils créés avant l'ajout de l'inférence par dominance lors
   // du test de placement : si des faits restent non introduits alors qu'on
