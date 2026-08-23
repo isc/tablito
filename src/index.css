@@ -12,12 +12,18 @@
   --line: #E6DECE;
   --line-soft: #EFE7D6;
 
-  /* Brand + semantic */
+  /* Brand + semantic. Suffix convention: -light = the brand color lightened
+     (still reads as the color), -soft = a pale wash for backgrounds, -ink = the
+     darkened version for text and edges, -shadow = the color at low alpha, for
+     glows whose geometry varies per caller. */
   --indigo: #4F46BA;
+  --indigo-light: #6D64D1;
   --indigo-soft: #E8E6F7;
   --indigo-ink: #2B2478;
+  --indigo-shadow: rgba(79, 70, 186, 0.15);
 
   --coral: #E8623D;
+  --coral-light: #F2856A;
   --coral-soft: #FBE4DA;
 
   --honey: #D99A1F;
@@ -46,28 +52,6 @@
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(30, 26, 46, 0.04);
   --shadow-md: 0 2px 4px rgba(62, 42, 16, 0.06), 0 8px 20px rgba(62, 42, 16, 0.06);
-
-  /* Legacy aliases. A finite, greppable set — not an open-ended safety net:
-     grep the names below, migrate the last callers to the palette above, and
-     this block goes away. Don't add to it; new code uses --ink / --cream /
-     --line directly. */
-  --primary: var(--indigo);
-  --primary-light: #6D64D1;
-  --secondary: var(--coral);
-  --secondary-light: #F2856A;
-  --surface: var(--paper);
-  --text: var(--ink);
-  --text-light: var(--ink-soft);
-  --text-muted: var(--ink-muted);
-  --border: var(--line);
-  --shadow: rgba(79, 70, 186, 0.15);
-
-  --box-gray: var(--box0);
-  --box-red: var(--box1);
-  --box-orange: var(--box2);
-  --box-yellow: var(--box3);
-  --box-lightgreen: var(--box4);
-  --box-green: var(--box5);
 }
 
 * {

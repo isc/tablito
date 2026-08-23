@@ -35,7 +35,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--indigo);
   color: white;
   border: none;
   display: flex;
@@ -43,7 +43,7 @@
   justify-content: center;
   font-size: 1.6rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px var(--shadow);
+  box-shadow: 0 4px 12px var(--indigo-shadow);
   transition: transform 0.15s ease, background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -53,12 +53,12 @@
 }
 
 .conj-voice-mic.listening {
-  background: var(--secondary);
+  background: var(--coral);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
 .conj-voice-mic:disabled {
-  background: var(--box-gray);
+  background: var(--line);
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -69,7 +69,7 @@
 .conj-voice-hint {
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--ink);
   text-align: left;
   line-height: 1.3;
 }
@@ -79,7 +79,7 @@
 .conj-voice-fallback {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-light);
+  color: var(--ink-soft);
   text-align: center;
   padding: 0 16px;
 }

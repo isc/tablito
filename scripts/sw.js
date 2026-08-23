@@ -44,6 +44,9 @@ const ASSETS = __ASSETS__
 const LAZY_GROUPS = __LAZY_GROUPS__
 const LAZY_VERSIONS = __LAZY_VERSIONS__
 
+// cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
+const STANDALONE_DOCS = __STANDALONE_DOCS__
+
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
   LAZY_CACHES[group] = 'tablito-' + group + '-' + LAZY_VERSIONS[group]
@@ -97,7 +100,7 @@ self.addEventListener('fetch', (e) => {
   // vivent dans le scope du SW de prod mais ne doivent pas être masquées
   // par le shell de prod. On laisse le browser gérer.
   if (e.request.mode === 'navigate') {
-    if (url.pathname.includes('/guide/') || url.pathname.includes('/specs/') || url.pathname.includes('/previews/')) {
+    if (STANDALONE_DOCS.some((d) => url.pathname.includes(d))) {
       return
     }
     e.respondWith(

@@ -50,7 +50,7 @@ export default function EvolutionChart({
                 y1={y}
                 x2={padding.left + chartW}
                 y2={y}
-                stroke="var(--border)"
+                stroke="var(--line)"
                 strokeWidth="1"
               />
               <text
@@ -59,7 +59,7 @@ export default function EvolutionChart({
                 textAnchor="end"
                 dominantBaseline="middle"
                 fontSize="10"
-                fill="var(--text-muted)"
+                fill="var(--ink-muted)"
                 fontFamily="Nunito, sans-serif"
               >
                 {formatY(tick)}
@@ -82,7 +82,7 @@ export default function EvolutionChart({
               cx={p.x}
               cy={p.y}
               r="4"
-              fill="var(--surface)"
+              fill="var(--paper)"
               stroke={color}
               strokeWidth="2"
             />
@@ -92,7 +92,7 @@ export default function EvolutionChart({
                 y={padding.top + chartH + 16}
                 textAnchor="middle"
                 fontSize="9"
-                fill="var(--text-light)"
+                fill="var(--ink-soft)"
                 fontFamily="Nunito, sans-serif"
               >
                 {p.date}

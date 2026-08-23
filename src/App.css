@@ -25,7 +25,7 @@
 }
 
 .app-boot-banner--error {
-  border-color: var(--box-red);
+  border-color: var(--coral);
 }
 
 .app-boot-banner--success {

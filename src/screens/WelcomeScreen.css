@@ -245,7 +245,7 @@
   margin-top: 18px;
   background: none;
   border: none;
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   font-size: 0.9rem;
   text-decoration: underline;
   cursor: pointer;

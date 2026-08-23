@@ -17,6 +17,7 @@ import esbuild from 'esbuild'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { LAZY_GROUPS, STANDALONE_DOCS, classify } from './cache-config.mjs'
 
 const ROOT     = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC      = path.join(ROOT, 'src')
@@ -48,35 +49,6 @@ const ENV_DEFINE = {
 }
 
 const SRC_EXTS = ['.tsx', '.ts', '.jsx', '.js']
-
-// Assets hors shell : trop lourds pour un précache à l'install, donc cachés à la
-// demande par le SW. Un groupe = un cache SW à part, versionné par le contenu du
-// groupe : régénérer les MP3 n'invalide pas les images mystère, et inversement.
-// Cette table est la source unique — elle décide à la fois ce qu'on retire du
-// précache et vers quel cache le SW écrit (elle lui est injectée telle quelle).
-const LAZY_GROUPS = {
-  audio: ['/audio/'],
-  media: [
-    '/mystery/',
-    '/splash/',
-    '/video/', // démo de la landing : la PWA installée saute la landing (skip-static-landing)
-    '/vendor/qr-scanner/', // scan de transfert : ~58 KB utilisés au plus une fois par appareil, et le transfert exige le réseau de toute façon
-    '/img/hero-poster', // idem : poster de la démo, hors shell de l'app
-  ],
-  // Dictionnaire de prononciation du mode vocal épelé (specs §15.10) : demandé
-  // seulement quand ce mode optionnel est actif, donc jamais précaché. Groupe à
-  // part et non `media` : son cycle de vie est le sien (il ne change qu'avec
-  // l'inventaire de la conjugaison), et le mêler aux images mystère jetterait
-  // ~13 Mo déjà téléchargés à la moindre régénération.
-  phonetic: ['/phonetic/'],
-}
-
-function lazyGroup(rel) {
-  for (const [group, prefixes] of Object.entries(LAZY_GROUPS)) {
-    if (prefixes.some((p) => rel.startsWith(p))) return group
-  }
-  return null
-}
 
 async function exists(p) { try { await fs.access(p); return true } catch { return false } }
 async function ensureDir(p) { await fs.mkdir(p, { recursive: true }) }
@@ -137,12 +109,16 @@ await ensureDir(OUT)
 const isTestFile = (rel) =>
   rel.split(path.sep).includes('__tests__') || /\.test\.[jt]sx?$/.test(rel)
 
+// Un .d.ts ne décrit que des types : le transformer produit un .js vide, copié
+// dans dist/ et précaché pour rien (c'était le cas de src/env.d.ts).
+const isDeclaration = (rel) => rel.endsWith('.d.ts')
+
 // 1) Transforme/copie src/. Les .css sources sont collectés pour
 // concaténation en bundle unique (étape 1.5).
 const cssFiles = []
 for await (const file of walk(SRC)) {
   const rel = path.relative(SRC, file)
-  if (isTestFile(rel)) continue
+  if (isTestFile(rel) || isDeclaration(rel)) continue
   const ext = path.extname(file)
   const outDir = path.join(OUT, 'src', path.dirname(rel))
 
@@ -215,22 +191,22 @@ if (BASE !== '/') {
 // 4) Liste les assets pour le SW :
 //    - shell : tout ce qui est nécessaire pour le 1er render (HTML, JS, CSS,
 //      vendor, icônes, manifest). Précaché à l'install.
-//    - lazy : audio + grosses images (mystery, splash). Caché à la demande
-//      lors de la 1re utilisation, pour éviter un install lourd de 10 Mo.
+//    - lazy : cachés à la demande lors de la 1re utilisation, pour éviter un
+//      install lourd de 80 Mo. Qui va où : `classify`, dans cache-config.mjs.
 const BASE_PREFIX = BASE.replace(/\/$/, '')
 const shellAssets = []
+let shellBytes = 0
 const lazyFiles = Object.fromEntries(Object.keys(LAZY_GROUPS).map((g) => [g, []])) // groupe -> [{ rel, file }], pour hasher le contenu
 for await (const f of walk(OUT)) {
   const rel = '/' + path.relative(OUT, f).split(path.sep).join('/')
-  if (rel.endsWith('/sw.js')) continue
-  if (rel.endsWith('.map')) continue
-  if (rel === '/og-image.png' || rel === '/robots.txt' || rel === '/sitemap.xml') continue // assets lus par les crawlers, jamais par l'app
-  const group = lazyGroup(rel)
-  if (group) {
-    lazyFiles[group].push({ rel, file: f })
+  const kind = classify(rel)
+  if (kind === 'skip') continue
+  if (kind !== 'shell') {
+    lazyFiles[kind.slice('lazy:'.length)].push({ rel, file: f })
     continue
   }
   shellAssets.push(BASE_PREFIX + rel)
+  shellBytes += (await fs.stat(f)).size
 }
 
 // Version de chaque groupe lazy = hash de son CONTENU, pas du build. Le cache
@@ -260,6 +236,7 @@ sw = sw
       .map(([g, prefixes]) => [g, prefixes.map((p) => BASE_PREFIX + p)])),
   ))
   .replaceAll('__LAZY_VERSIONS__', JSON.stringify(lazyVersions))
+  .replaceAll('__STANDALONE_DOCS__', JSON.stringify(STANDALONE_DOCS))
 await fs.writeFile(path.join(OUT, 'sw.js'), sw)
 
 let reg = await fs.readFile(REG_SRC, 'utf8')
@@ -267,11 +244,10 @@ reg = reg.replaceAll('__SW_PATH__', JSON.stringify(BASE + 'sw.js'))
 await fs.writeFile(path.join(OUT, 'pwa-register.js'), reg)
 
 const totalKB = Math.round((await du(OUT)) / 1024)
-const shellKB = Math.round((await du(OUT, (f) => {
-  const rel = path.relative(OUT, f)
-  return !rel.startsWith('audio') && !rel.startsWith('mystery') && !rel.startsWith('splash') && !rel.endsWith('.map')
-})) / 1024)
-console.log(`Build OK : ${shellAssets.length} shell assets (precache), shell ${shellKB} KB / total ${totalKB} KB`)
+// Somme des assets réellement précachés, accumulée pendant la marche : le
+// chiffre annoncé ne peut plus diverger de ce que le SW télécharge.
+const precacheKB = Math.round(shellBytes / 1024)
+console.log(`Build OK : ${shellAssets.length} assets précachés, ${precacheKB} KB / total ${totalKB} KB`)
 
 async function du(dir, filter = () => true) {
   let total = 0
