@@ -35,10 +35,9 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260823165319"
+const CACHE = 'tablito-' + "20260823170655"
 const BASE = "/previews/chore-dead-code/"
 const ASSETS = [
-  "/previews/chore-dead-code/CNAME",
   "/previews/chore-dead-code/favicon.svg",
   "/previews/chore-dead-code/fonts/fonts.css",
   "/previews/chore-dead-code/fonts/fraunces-italic-eQ7ZXk8g.woff2",
@@ -52,7 +51,6 @@ const ASSETS = [
   "/previews/chore-dead-code/index.html",
   "/previews/chore-dead-code/manifest.en.webmanifest",
   "/previews/chore-dead-code/manifest.webmanifest",
-  "/previews/chore-dead-code/specs/index.html",
   "/previews/chore-dead-code/src/App.js",
   "/previews/chore-dead-code/src/components/BackChevron.js",
   "/previews/chore-dead-code/src/components/Badge.js",
@@ -96,7 +94,6 @@ const ASSETS = [
   "/previews/chore-dead-code/src/components/VoiceInput.js",
   "/previews/chore-dead-code/src/components/WeeklyRecapSettings.js",
   "/previews/chore-dead-code/src/components/conjHintLine.js",
-  "/previews/chore-dead-code/src/env.d.js",
   "/previews/chore-dead-code/src/hooks/useConfetti.js",
   "/previews/chore-dead-code/src/hooks/useInputMode.js",
   "/previews/chore-dead-code/src/hooks/useLatestRef.js",
@@ -182,7 +179,6 @@ const ASSETS = [
   "/previews/chore-dead-code/src/screens/WelcomeScreen.js",
   "/previews/chore-dead-code/src/types.js",
   "/previews/chore-dead-code/styles.css",
-  "/previews/chore-dead-code/vendor/lean-qr/index.mjs",
   "/previews/chore-dead-code/vendor/preact/compat-client.mjs",
   "/previews/chore-dead-code/vendor/preact/compat.module.js",
   "/previews/chore-dead-code/vendor/preact/hooks.module.js",
@@ -192,8 +188,11 @@ const ASSETS = [
 
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
-const LAZY_GROUPS = {"audio":["/previews/chore-dead-code/audio/"],"media":["/previews/chore-dead-code/mystery/","/previews/chore-dead-code/splash/","/previews/chore-dead-code/video/","/previews/chore-dead-code/vendor/qr-scanner/","/previews/chore-dead-code/img/hero-poster"],"phonetic":["/previews/chore-dead-code/phonetic/"]}
-const LAZY_VERSIONS = {"audio":"cc876539251c","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55"}
+const LAZY_GROUPS = {"audio":["/previews/chore-dead-code/audio/"],"media":["/previews/chore-dead-code/mystery/","/previews/chore-dead-code/splash/","/previews/chore-dead-code/video/","/previews/chore-dead-code/vendor/qr-scanner/","/previews/chore-dead-code/img/hero-poster"],"phonetic":["/previews/chore-dead-code/phonetic/"],"qrgen":["/previews/chore-dead-code/vendor/lean-qr/"]}
+const LAZY_VERSIONS = {"audio":"cc876539251c","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+
+// cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
+const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
 
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
@@ -248,7 +247,7 @@ self.addEventListener('fetch', (e) => {
   // vivent dans le scope du SW de prod mais ne doivent pas être masquées
   // par le shell de prod. On laisse le browser gérer.
   if (e.request.mode === 'navigate') {
-    if (url.pathname.includes('/guide/') || url.pathname.includes('/specs/') || url.pathname.includes('/previews/')) {
+    if (STANDALONE_DOCS.some((d) => url.pathname.includes(d))) {
       return
     }
     e.respondWith(
