@@ -1,12 +1,15 @@
-// Détection du contexte d'exécution et de la plateforme (module de référence
-// pour tout sniffing iOS/Android), historiquement pour piloter le parcours
-// d'installation PWA. Côté iOS Safari, l'utilisateur DOIT installer manuellement
-// via le menu de partage ; côté Android/Chromium, on capture beforeinstallprompt.
-// isAndroid() sert aussi à la stratégie micro de la saisie vocale (VoiceInput).
+// Détection du contexte d'exécution et de la plateforme : module de référence
+// pour tout sniffing iOS/Android. Le parcours d'installation PWA lui-même vit
+// dans l'inline script de index.html (c'est lui qui capture
+// beforeinstallprompt) ; ici on ne garde que les prédicats dont les modules ont
+// besoin — isAndroid() pilote aussi la stratégie micro de la saisie vocale
+// (VoiceInput), et isIOS()/isStandalone() les préambules "installe d'abord"
+// des réglages de notifications.
 
-// ⚠ Cette clé est aussi référencée en dur dans l'inline script de
-// index.html (pour décider si la landing statique doit s'afficher).
-// Si tu la renommes, mets à jour les deux.
+// ⚠ Cette clé appartient à l'inline script de index.html, qui l'écrit (le
+// visiteur quitte la landing) et la relit (faut-il encore afficher la landing ?).
+// Le seul geste côté module est de l'effacer. Si tu la renommes, mets à jour
+// les deux.
 const SKIP_INSTALL_KEY = 'multiplix-skip-install';
 
 export function isStandalone(): boolean {
@@ -31,36 +34,11 @@ export function isAndroid(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-export function isIOSSafari(): boolean {
-  if (!isIOS()) return false;
-  const ua = navigator.userAgent;
-  // ⚠ Cette denylist est aussi dupliquée dans l'inline script de index.html
-  // (détection pré-paint `ios-other-browser`). Si tu la modifies, mets à jour
-  // les deux.
-  return /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua);
-}
-
-export function hasSkippedInstall(): boolean {
-  try {
-    return localStorage.getItem(SKIP_INSTALL_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-export function markInstallSkipped(): void {
-  try {
-    localStorage.setItem(SKIP_INSTALL_KEY, '1');
-  } catch {
-    // localStorage indisponible (mode privé strict) — on ignore, l'utilisateur
-    // reverra simplement la landing au prochain chargement.
-  }
-}
-
 export function clearInstallSkipped(): void {
   try {
     localStorage.removeItem(SKIP_INSTALL_KEY);
   } catch {
-    // idem
+    // localStorage indisponible (mode privé strict) — sans importance : au pire
+    // le drapeau survit et la landing reste sautée.
   }
 }

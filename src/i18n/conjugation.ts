@@ -93,5 +93,3 @@ export const conjStrings = {
   placementEmptySubtitle: 'Piou va te montrer chaque forme, une par une. Prête ?',
   placementDoneCta: 'Commencer ma séance',
 } as const;
-
-export type ConjStrings = typeof conjStrings;

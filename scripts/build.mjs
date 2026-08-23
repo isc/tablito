@@ -131,11 +131,18 @@ console.log(`Building into ${OUT} (BASE=${BASE}, VERSION=${VERSION})`)
 await fs.rm(OUT, { recursive: true, force: true })
 await ensureDir(OUT)
 
+// Les tests vivent dans src/ mais n'ont rien à faire en ligne : sans ce filtre,
+// leurs ~40 bundles partent dans dist/ ET dans le précache du SW, soit ~150 Ko
+// téléchargés à chaque install/mise à jour pour du code que personne n'exécute.
+const isTestFile = (rel) =>
+  rel.split(path.sep).includes('__tests__') || /\.test\.[jt]sx?$/.test(rel)
+
 // 1) Transforme/copie src/. Les .css sources sont collectés pour
 // concaténation en bundle unique (étape 1.5).
 const cssFiles = []
 for await (const file of walk(SRC)) {
   const rel = path.relative(SRC, file)
+  if (isTestFile(rel)) continue
   const ext = path.extname(file)
   const outDir = path.join(OUT, 'src', path.dirname(rel))
 

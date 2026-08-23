@@ -1,4 +1,3 @@
-import type { ConjPerson } from '../types';
 import { regularStem, type ConjQuestionView } from './conjugationFacts';
 
 // === Les règles de la conjugaison (spec Verbito §3.2) ===
@@ -12,14 +11,7 @@ import { regularStem, type ConjQuestionView } from './conjugationFacts';
 // quand la langue d'interface est l'anglais), donc pas de table { fr, en } —
 // contrairement aux stratégies mathématiques de i18n/strategies.ts.
 
-export type ConjStrategyKind =
-  | 'person-marks'
-  | 'imparfait-nous'
-  | 'futur-infinitif'
-  | 'son-doux';
-
 export interface ConjStrategy {
-  kind: ConjStrategyKind;
   title: string;
   /**
    * Énoncé côté enfant : phrases courtes, une idée par ligne. Mini-balisage
@@ -39,8 +31,7 @@ export interface ConjStrategy {
  * air de famille à l'APRÈS-maîtrise (« donné trop tôt, il fabrique la confusion
  * qu'il prétend expliquer »).
  */
-export const PERSON_MARKS: ConjStrategy = {
-  kind: 'person-marks',
+const PERSON_MARKS: ConjStrategy = {
   title: 'Chaque personne a sa marque',
   lines: [
     'Avec tu, ça finit presque toujours par *s* : tu chante*s*, tu va*s*, tu dira*s*.',
@@ -52,8 +43,7 @@ export const PERSON_MARKS: ConjStrategy = {
 };
 
 /** L'imparfait se FABRIQUE — 6 terminaisons pour toute la langue (§3.2). */
-export const IMPARFAIT_RULE: ConjStrategy = {
-  kind: 'imparfait-nous',
+const IMPARFAIT_RULE: ConjStrategy = {
   title: 'L’imparfait se fabrique avec « nous »',
   lines: [
     'Dis le verbe avec nous, au présent : nous _chant_*ons*.',
@@ -65,8 +55,7 @@ export const IMPARFAIT_RULE: ConjStrategy = {
 };
 
 /** Le futur se FABRIQUE — infinitif + terminaisons (§3.2). */
-export const FUTUR_RULE: ConjStrategy = {
-  kind: 'futur-infinitif',
+const FUTUR_RULE: ConjStrategy = {
   title: 'Le futur se fabrique avec l’infinitif',
   lines: [
     'Prends le verbe en entier : _chanter_.',
@@ -78,8 +67,7 @@ export const FUTUR_RULE: ConjStrategy = {
 };
 
 /** Les pièges de son : -geons, -çons (§3.2). */
-export const SON_DOUX_RULE: ConjStrategy = {
-  kind: 'son-doux',
+const SON_DOUX_RULE: ConjStrategy = {
   title: 'Le piège du g et du c',
   lines: [
     'Devant a, o, u, le g et le c changent de son.',
@@ -89,32 +77,6 @@ export const SON_DOUX_RULE: ConjStrategy = {
     'Avec un c, on met une cédille : nous lan*çons*.',
   ],
 };
-
-export const CONJ_STRATEGIES: readonly ConjStrategy[] = [
-  PERSON_MARKS,
-  IMPARFAIT_RULE,
-  FUTUR_RULE,
-  SON_DOUX_RULE,
-];
-
-/**
- * Marque régulière de la personne (§3.2), ou null quand la personne n'en porte
- * pas (je, il). Sert au feedback : « le pronom et sa marque s'illuminent ».
- */
-export function personMark(person: ConjPerson): string | null {
-  switch (person) {
-    case 'tu':
-      return 's';
-    case 'nous':
-      return 'ons';
-    case 'vous':
-      return 'ez';
-    case 'ils':
-      return 'nt';
-    default:
-      return null;
-  }
-}
 
 /**
  * L'astuce à afficher pour une question donnée (§5.3 : seulement pour les faits

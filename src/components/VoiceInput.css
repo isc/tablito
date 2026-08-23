@@ -84,14 +84,6 @@
   justify-content: center;
 }
 
-.voice-transcript-number {
-  font-family: var(--serif, var(--sans));
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-
 .voice-error {
   font-size: 0.95rem;
   color: var(--secondary);
