@@ -5214,21 +5214,15 @@ input, select, textarea {
   color: var(--ink-muted);
 }
 
-/* Copie différée (§5.2 étape 3) : le modèle s'efface SANS que rien ne bouge —
-   `visibility` plutôt que démontage, pour que le clavier n'ait pas l'air de
-   sauter sous les doigts au moment du masquage. Le vide laissé est la
-   consigne : « je lis, je cache, j'écris ». */
+/* Copie différée (§5.2 étape 3). Le masquage se joue dans le JSX (la
+   terminaison cède la place au trait), pas ici : plus de fondu, la couverture
+   est nette — « je lis, je cache, j'écris » est un geste franc. Hauteur
+   réservée pour que le clavier n'ait pas l'air de sauter sous les doigts. */
 .conj-copy-model {
   min-height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.3s ease;
-}
-
-.conj-copy-model.is-hidden {
-  opacity: 0;
-  visibility: hidden;
 }
 
 /* Le clavier tombe en bas de l'écran (pouces prêts). */
