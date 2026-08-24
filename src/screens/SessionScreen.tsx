@@ -49,6 +49,7 @@ import { itemDisplay } from '../lib/sessionItemView';
 import { MATH_RETRY_GAPS } from '../lib/dailyComposer';
 import { MAX_SESSION_QUESTIONS, scheduleRetry, todayISO } from '../lib/utils';
 import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock';
+import { normalizedAverageMs } from '../lib/sessionTiming';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
@@ -257,7 +258,8 @@ export default function SessionScreen({
    */
   const conjRecallMs = useRef<number | null>(null);
   const correctCount = useRef(0);
-  const totalTimeMs = useRef(0);
+  /** Temps de réponse de la séance, un par question posée — cf. lib/sessionTiming. */
+  const answerTimesMs = useRef<number[]>([]);
   const introducedFacts = useRef(new Set<string>());
 
   const currentItem = questions[currentIndex] as AnySessionItem | undefined;
@@ -353,19 +355,18 @@ export default function SessionScreen({
   const moveToNext = useCallback(() => {
     const nextIndex = currentIndex + 1;
     if (nextIndex >= questions.length) {
-      const totalQuestions = results.length + (feedback ? 1 : 0);
-      const avgTime = totalQuestions > 0 ? totalTimeMs.current / totalQuestions : 0;
+      const avgTime = normalizedAverageMs(answerTimesMs.current);
       onComplete({
         date: todayISO(),
         questionsCount: questions.length,
         correctCount: correctCount.current,
-        averageTimeMs: Math.round(avgTime),
+        averageTimeMs: avgTime,
         newFactsIntroduced: introducedFacts.current.size,
       });
     } else {
       setCurrentIndex(nextIndex);
     }
-  }, [currentIndex, questions, results.length, feedback, onComplete]);
+  }, [currentIndex, questions, onComplete]);
 
   const handleAnswer = useCallback(
     (value: number) => {
@@ -400,7 +401,7 @@ export default function SessionScreen({
         : value === v.answer;
       const fast = correct && timeMs < v.fastMs[inputMode];
 
-      totalTimeMs.current += timeMs;
+      answerTimesMs.current.push(timeMs);
       if (correct) correctCount.current++;
 
       if (correct) playCorrect();
@@ -488,7 +489,7 @@ export default function SessionScreen({
           < conjFastThresholdMs(view.expected, recallMs === null ? 'keypad' : 'voice');
       const accepted = isConjAccepted(judgement.verdict);
 
-      totalTimeMs.current += timeMs;
+      answerTimesMs.current.push(timeMs);
       if (accepted) correctCount.current++;
 
       // Aucun son négatif en conjugaison (§5.3) : le silence, jamais le buzzer.

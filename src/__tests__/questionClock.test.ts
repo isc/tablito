@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   activeMsSince,
-  MAX_ANSWER_MS,
   resetHiddenTimeForTests,
   startQuestion,
 } from '../lib/questionClock';
@@ -86,21 +85,13 @@ describe('questionClock', () => {
     expect(activeMsSince(start)).toBe(2_000);
   });
 
-  it('plafonne une absence écran allumé, que la visibilité ne voit pas', () => {
-    // Le seul cas que la soustraction n'attrape pas : l'enfant part sans
-    // verrouiller. Borné, faute de pouvoir le distinguer d'une réflexion.
+  it('ne tronque pas une absence écran allumé — ce n’est pas son rôle', () => {
+    // Le seul cas que la visibilité n'attrape pas. Il se repère au niveau de la
+    // séance, qui a une norme à quoi comparer (cf. sessionTiming), pas ici.
     const start = startQuestion();
     vi.advanceTimersByTime(14 * 60_000);
 
-    expect(activeMsSince(start)).toBe(MAX_ANSWER_MS);
-  });
-
-  it('laisse passer intact le plus long temps de réponse légitime', () => {
-    // ~19 s : la réponse la plus lente réellement observée dans un profil.
-    const start = startQuestion();
-    vi.advanceTimersByTime(19_000);
-
-    expect(activeMsSince(start)).toBe(19_000);
+    expect(activeMsSince(start)).toBe(14 * 60_000);
   });
 
   it('ne renvoie jamais de durée négative si l’horloge recule', () => {

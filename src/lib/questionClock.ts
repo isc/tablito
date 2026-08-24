@@ -18,21 +18,10 @@
 // moyenne bénéficie aux trois usages d'un coup, et n'écrit jamais dans
 // l'historique une durée que l'enfant n'a pas vécue.
 //
-// La soustraction ne voit pas tout : l'enfant qui s'éloigne en laissant l'écran
-// allumé produit une durée que rien ne distingue d'une longue réflexion. D'où le
-// plafond ci-dessous, en filet — les deux mécanismes ne couvrent pas le même
-// cas, et le plafond seul n'aurait pas suffi (une réponse plafonnée reste
-// « lente », donc le fait perdrait quand même sa montée de boîte).
-
-/**
- * Plafond d'un temps de réponse. Au-delà, ce n'est plus une mesure de rappel :
- * c'est une absence. La borne est haute exprès — les plus longues réponses
- * réellement observées dans un profil (division avec reste au clavier, forme
- * verbale épelée à la voix) tiennent sous 20 s, donc rien de légitime n'est
- * tronqué ; seul l'aberrant l'est, et de façon bornée. Le seuil « rapide », lui,
- * se joue à 3-5 s (§3.3) : une réponse plafonnée reste lente, jamais promue.
- */
-export const MAX_ANSWER_MS = 60_000;
+// Ce que la soustraction ne voit pas : l'enfant qui s'éloigne en laissant
+// l'écran allumé. Rien ne distingue ça d'une longue réflexion sur UNE question,
+// et on ne tronque donc rien ici — c'est au niveau de la séance, qui a une norme
+// à quoi comparer, que l'aberration se repère (cf. lib/sessionTiming).
 
 /** Total du temps passé caché depuis le chargement de la page. */
 let hiddenTotalMs = 0;
@@ -85,15 +74,13 @@ export function startQuestion(): QuestionStart {
 }
 
 /**
- * Temps éveillé écoulé depuis `start`, plafonné à `MAX_ANSWER_MS`.
- *
- * Plancher à 0 : l'horloge système peut reculer (fuseau, réglage manuel) et une
- * durée négative n'a aucun sens pour un seuil de rapidité.
+ * Temps éveillé écoulé depuis `start`. Plancher à 0 : l'horloge système peut
+ * reculer (fuseau, réglage manuel) et une durée négative n'a aucun sens pour un
+ * seuil de rapidité.
  */
 export function activeMsSince(start: QuestionStart): number {
   const hidden = hiddenMsSoFar() - start.hiddenMs;
-  const awake = Date.now() - start.at - hidden;
-  return Math.min(MAX_ANSWER_MS, Math.max(0, awake));
+  return Math.max(0, Date.now() - start.at - hidden);
 }
 
 /** Remise à zéro du compteur global — réservée aux tests. */

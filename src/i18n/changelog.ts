@@ -11,7 +11,7 @@ const fr: ChangelogEntry[] = [
   {
     date: '2026-08-24',
     items: [
-      "Temps de réponse : les pauses ne comptent plus. Si le téléphone se verrouille au milieu d'une séance et que l'enfant reprend dix minutes plus tard, ces dix minutes n'entrent plus dans le temps de réponse — ni dans le temps moyen que vous voyez ici, ni dans le jugement « rapide » qui décide qu'un fait est assez solide pour être revu plus tard. Une réponse sue mais interrompue coûtait jusqu'ici sa progression au fait concerné. Un plafond attrape en plus le cas où l'enfant s'éloigne sans verrouiller. Les séances déjà enregistrées gardent leur ancienne moyenne : elles ne sont pas recalculées.",
+      "Temps de réponse : les pauses ne comptent plus. Si le téléphone se verrouille au milieu d'une séance et que l'enfant reprend dix minutes plus tard, ces dix minutes n'entrent plus dans le temps de réponse — ni dans le temps moyen que vous voyez ici, ni dans le jugement « rapide » qui décide qu'un fait est assez solide pour être revu plus tard. Une réponse sue mais interrompue coûtait jusqu'ici sa progression au fait concerné. Et si l'enfant s'éloigne sans verrouiller, le temps moyen de la séance ne se laisse plus emporter : une réponse très au-dessus du rythme de la séance elle-même est ramenée à la plus longue réponse normale de cette séance — le seuil suit donc le tempo de votre enfant, il n'est pas fixé à sa place. Les séances déjà enregistrées gardent leur ancienne moyenne : elles ne sont pas recalculées.",
     ],
   },
   {
@@ -204,7 +204,7 @@ const en: ChangelogEntry[] = [
   {
     date: '2026-08-24',
     items: [
-      "Response times no longer count pauses. If the phone locks mid-session and your child picks it up ten minutes later, those ten minutes no longer count towards the response time — neither in the average shown here, nor in the \"quick answer\" judgement that decides a fact is solid enough to be reviewed later on. Until now, an answer your child knew but was interrupted on cost that fact its progress. A ceiling also catches the case where they walk away without locking the screen. Sessions already recorded keep their old average: they are not recomputed.",
+      "Response times no longer count pauses. If the phone locks mid-session and your child picks it up ten minutes later, those ten minutes no longer count towards the response time — neither in the average shown here, nor in the \"quick answer\" judgement that decides a fact is solid enough to be reviewed later on. Until now, an answer your child knew but was interrupted on cost that fact its progress. And if they walk away without locking the screen, the session average no longer runs away with it: an answer far above the session's own rhythm is brought back to the longest normal answer of that session — so the bar follows your child's pace rather than being set for them. Sessions already recorded keep their old average: they are not recomputed.",
     ],
   },
   {
