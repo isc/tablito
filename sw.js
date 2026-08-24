@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260824064303"
+const CACHE = 'tablito-' + "20260824070301"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
@@ -147,11 +147,13 @@ const ASSETS = [
   "/src/lib/phoneticDict.js",
   "/src/lib/placement.js",
   "/src/lib/push.js",
+  "/src/lib/questionClock.js",
   "/src/lib/remainderComposer.js",
   "/src/lib/remainderFacts.js",
   "/src/lib/remainderStrategies.js",
   "/src/lib/sessionComposer.js",
   "/src/lib/sessionItemView.js",
+  "/src/lib/sessionTiming.js",
   "/src/lib/similarity.js",
   "/src/lib/spokenNumber.js",
   "/src/lib/storage.js",
