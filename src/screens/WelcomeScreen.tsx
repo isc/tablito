@@ -10,6 +10,7 @@ import {
 } from '../lib/placement';
 import { useTTS } from '../hooks/useTTS';
 import { useWelcomeStrings } from '../i18n/onboarding';
+import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock';
 
 export type { PlacementResult };
 
@@ -74,7 +75,7 @@ export default function WelcomeScreen({
   const [numpadDisabled, setNumpadDisabled] = useState(false);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [lastAnswer, setLastAnswer] = useState<number | null>(null);
-  const questionStartTime = useRef(0);
+  const questionStartTime = useRef(NOT_STARTED);
 
   // TTS for the welcome steps
   useEffect(() => {
@@ -95,7 +96,7 @@ export default function WelcomeScreen({
     } else if (step === 2) {
       // Start placement test
       setStep(3);
-      questionStartTime.current = Date.now();
+      questionStartTime.current = startQuestion();
     }
   };
 
@@ -137,7 +138,7 @@ export default function WelcomeScreen({
 
       const fact = PLACEMENT_FACTS[testIndex];
       const [a, b] = fact;
-      const timeMs = Date.now() - questionStartTime.current;
+      const timeMs = activeMsSince(questionStartTime.current);
 
       const result: PlacementResult = {
         a: Math.min(a, b),
@@ -166,7 +167,7 @@ export default function WelcomeScreen({
           onComplete(name.trim(), updatedResults);
         } else {
           setTestIndex(testIndex + 1);
-          questionStartTime.current = Date.now();
+          questionStartTime.current = startQuestion();
         }
       }, correct ? 600 : 1200);
     },

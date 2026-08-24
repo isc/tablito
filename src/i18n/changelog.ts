@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-08-24',
+    items: [
+      "Temps de réponse : les pauses ne comptent plus. Si le téléphone se verrouille au milieu d'une séance et que l'enfant reprend dix minutes plus tard, ces dix minutes n'entrent plus dans le temps de réponse — ni dans le temps moyen que vous voyez ici, ni dans le jugement « rapide » qui décide qu'un fait est assez solide pour être revu plus tard. Une réponse sue mais interrompue coûtait jusqu'ici sa progression au fait concerné. Un plafond attrape en plus le cas où l'enfant s'éloigne sans verrouiller. Les séances déjà enregistrées gardent leur ancienne moyenne : elles ne sont pas recalculées.",
+    ],
+  },
+  {
     date: '2026-08-18',
     items: [
       "Conjugaison à voix haute : l'enfant peut désormais répondre en épelant, comme on révise à l'oral — « chantons : o, n, s ». Le mode s'active avec le même réglage que les réponses parlées des maths (bouton micro pendant une séance) et le clavier reste le mode par défaut. Les lettres reconnues s'écrivent au fur et à mesure et restent corrigeables au clavier ; si le micro n'a pas bien entendu, l'app redemande gentiment — ce n'est jamais compté comme une erreur — et repasse au clavier au bout de deux essais. Pourquoi épeler plutôt que dire la forme : « chante », « chantes » et « chantent » se prononcent pareil, seule l'épellation dit vraiment l'orthographe. Bonus : sans le temps de frappe, la mesure de rapidité reflète enfin ce que l'enfant sait vraiment.",
@@ -195,6 +201,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-08-24',
+    items: [
+      "Response times no longer count pauses. If the phone locks mid-session and your child picks it up ten minutes later, those ten minutes no longer count towards the response time — neither in the average shown here, nor in the \"quick answer\" judgement that decides a fact is solid enough to be reviewed later on. Until now, an answer your child knew but was interrupted on cost that fact its progress. A ceiling also catches the case where they walk away without locking the screen. Sessions already recorded keep their old average: they are not recomputed.",
+    ],
+  },
   {
     date: '2026-08-18',
     items: [

@@ -11,6 +11,7 @@ import { requireConjFactDef, resolveConjQuestion } from '../lib/conjugationFacts
 import { isConjAccepted, judgeConjAnswer } from '../lib/conjugationComposer';
 import { useTTS } from '../hooks/useTTS';
 import { conjStrings as t } from '../i18n/conjugation';
+import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock';
 
 /**
  * Test de placement de la matière conjugaison (spec Verbito §6.1).
@@ -42,7 +43,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
   // Le verdict affiché est AUSSI le verrou de saisie : tant qu'il est là, la
   // sonde est jouée et le clavier comme le « Je ne sais pas » ont disparu.
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
-  const startedAt = useRef(0);
+  const startedAt = useRef(NOT_STARTED);
 
   const probe = CONJ_PLACEMENT_PROBES[index];
   const view = resolveConjQuestion(requireConjFactDef(probe.key), probe.carrierIndex);
@@ -52,7 +53,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
   useEffect(() => {
     if (step !== 'test') return;
     speak(view.promptTtsKey);
-    startedAt.current = Date.now();
+    startedAt.current = startQuestion();
   }, [step, index, view.promptTtsKey, speak]);
 
   const record = useCallback(
@@ -62,7 +63,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
 
       const updated = [
         ...results,
-        { key: probe.key, correct, timeMs: Date.now() - startedAt.current },
+        { key: probe.key, correct, timeMs: activeMsSince(startedAt.current) },
       ];
       setResults(updated);
       const failures = correct ? 0 : consecutiveFailures + 1;

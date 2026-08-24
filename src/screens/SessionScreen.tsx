@@ -48,6 +48,7 @@ import { getFactKey } from '../lib/facts';
 import { itemDisplay } from '../lib/sessionItemView';
 import { MATH_RETRY_GAPS } from '../lib/dailyComposer';
 import { MAX_SESSION_QUESTIONS, scheduleRetry, todayISO } from '../lib/utils';
+import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
@@ -244,7 +245,9 @@ export default function SessionScreen({
   // composant qui retombe sur le clavier si le navigateur ne sait pas écouter.
   const conjVoiceMode = inputMode === 'voice';
 
-  const questionStartTime = useRef(0);
+  // Chronomètre de la question, en temps éveillé : le téléphone mis en veille au
+  // milieu d'une séance ne compte pas (cf. lib/questionClock).
+  const questionStartTime = useRef(NOT_STARTED);
   /**
    * Conjugaison en vocal épelé : latence de RAPPEL de la question en cours —
    * l'écart entre la question posée et le premier son de la réponse (§15.10).
@@ -314,7 +317,7 @@ export default function SessionScreen({
     } else {
       speakQuestion(currentItem);
     }
-    questionStartTime.current = Date.now();
+    questionStartTime.current = startQuestion();
   }, [currentIndex, currentItem, speak, speakQuestion]);
 
   // En vocal, démarrer le timer à la fin du TTS (ne pas compter la lecture).
@@ -326,7 +329,7 @@ export default function SessionScreen({
     if (showIntro) return;
     if (remQuotient !== null) return;
     if (!isSpeaking) {
-      questionStartTime.current = Date.now();
+      questionStartTime.current = startQuestion();
     }
   }, [isSpeaking, inputMode, showIntro, currentIndex, remQuotient]);
 
@@ -389,7 +392,7 @@ export default function SessionScreen({
       stopSpeech();
 
       const v = view(currentItem);
-      const timeMs = Date.now() - questionStartTime.current;
+      const timeMs = activeMsSince(questionStartTime.current);
       const isRemainderStep = currentItem.kind === 'rem' && remQuotient !== null;
       // Étape 2 : la valeur saisie est le reste ; le quotient est déjà validé.
       const correct = isRemainderStep
@@ -461,7 +464,7 @@ export default function SessionScreen({
       stopSpeech();
 
       const view = conjView(currentItem);
-      const timeMs = Date.now() - questionStartTime.current;
+      const timeMs = activeMsSince(questionStartTime.current);
       const judgement = judgeConjAnswer(view, typed);
       // Le seuil dépend de la surface qui a RÉELLEMENT produit la réponse, pas
       // du réglage : après deux ratés de reconnaissance, l'enfant tape, et une
@@ -519,7 +522,7 @@ export default function SessionScreen({
    */
   const handleConjSpeechStart = useCallback(() => {
     if (conjRecallMs.current === null) {
-      conjRecallMs.current = Date.now() - questionStartTime.current;
+      conjRecallMs.current = activeMsSince(questionStartTime.current);
     }
   }, []);
 
@@ -529,7 +532,7 @@ export default function SessionScreen({
     setShowIntro(false);
     submittingRef.current = false;
     setNumpadDisabled(false);
-    questionStartTime.current = Date.now();
+    questionStartTime.current = startQuestion();
     conjRecallMs.current = null;
     speakQuestion(currentItem);
   }, [currentItem, speakQuestion]);
@@ -579,7 +582,7 @@ export default function SessionScreen({
 
     const finish = () => {
       setShowIntro(false);
-      questionStartTime.current = Date.now();
+      questionStartTime.current = startQuestion();
       speakQuestion(currentItem);
     };
 
