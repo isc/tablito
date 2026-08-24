@@ -12,7 +12,7 @@
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--indigo);
   color: white;
   border: none;
   display: flex;
@@ -21,7 +21,7 @@
   font-size: 3.5rem;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
-  box-shadow: 0 6px 20px var(--shadow);
+  box-shadow: 0 6px 20px var(--indigo-shadow);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -30,12 +30,12 @@
 }
 
 .voice-mic.listening {
-  background: var(--secondary);
+  background: var(--coral);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
 .voice-mic.disabled {
-  background: var(--box-gray);
+  background: var(--line);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -50,7 +50,7 @@
   position: absolute;
   inset: -10px;
   border-radius: 50%;
-  border: 3px solid var(--secondary-light);
+  border: 3px solid var(--coral-light);
   opacity: 0.6;
   animation: voice-ring 1.4s ease-out infinite;
   pointer-events: none;
@@ -71,12 +71,12 @@
   min-height: 40px;
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--ink);
   text-align: center;
   padding: 8px 16px;
   border-radius: 12px;
-  background: var(--surface);
-  border: 2px dashed var(--border);
+  background: var(--paper);
+  border: 2px dashed var(--line);
   min-width: 180px;
   max-width: 90%;
   display: flex;
@@ -84,17 +84,9 @@
   justify-content: center;
 }
 
-.voice-transcript-number {
-  font-family: var(--serif, var(--sans));
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-
 .voice-error {
   font-size: 0.95rem;
-  color: var(--secondary);
+  color: var(--coral);
   text-align: center;
   max-width: 320px;
   line-height: 1.4;
@@ -110,13 +102,13 @@
 
 .voice-fallback-msg {
   font-size: 1rem;
-  color: var(--text-light);
+  color: var(--ink-soft);
   text-align: center;
   padding: 0 16px;
 }
 
 .voice-retry-btn {
-  background: var(--primary-light);
+  background: var(--indigo-light);
   color: white;
   font-weight: 700;
   font-size: 0.95rem;
@@ -126,7 +118,7 @@
 }
 
 .voice-retry-btn:active {
-  background: var(--primary);
+  background: var(--indigo);
   transform: scale(0.97);
 }
 

@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { STANDALONE_DOCS } from './cache-config.mjs';
 
 const SW_SRC = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sw.js');
 
@@ -52,7 +53,8 @@ async function loadSW(existingCaches = []) {
     .replaceAll('__BASE__', JSON.stringify('/'))
     .replaceAll('__ASSETS__', JSON.stringify(['/index.html']))
     .replaceAll('__LAZY_GROUPS__', JSON.stringify(LAZY_GROUPS))
-    .replaceAll('__LAZY_VERSIONS__', JSON.stringify(LAZY_VERSIONS));
+    .replaceAll('__LAZY_VERSIONS__', JSON.stringify(LAZY_VERSIONS))
+    .replaceAll('__STANDALONE_DOCS__', JSON.stringify(STANDALONE_DOCS));
 
   const handlers = {};
   const self = {
@@ -79,6 +81,15 @@ async function get(handlers, url) {
   let responded;
   handlers.fetch({ request, respondWith: (p) => { responded = p; } });
   await responded;
+}
+
+// Fait passer une NAVIGATION dans le handler `fetch`. Renvoie la réponse promise
+// par le SW, ou null s'il s'est abstenu — auquel cas le navigateur gère seul.
+function navigate(handlers, url) {
+  const request = { method: 'GET', url: new URL(url, 'https://tablito.app').href, mode: 'navigate' };
+  let responded = null;
+  handlers.fetch({ request, respondWith: (p) => { responded = p; } });
+  return responded;
 }
 
 describe('activate', () => {
@@ -139,5 +150,30 @@ describe('lazy-cache', () => {
     await get(sw.handlers, '/mystery/ocean/level-3.png');
 
     expect(sw.fetched).toEqual(['https://tablito.app/mystery/ocean/level-3.png']);
+  });
+});
+
+// Les documents autonomes (guide, specs, previews de PR) ont leur propre
+// index.html : si le shell les masquait, on servirait l'app à la place. La liste
+// est celle de cache-config.mjs, pas une copie — c'est elle que le build utilise
+// aussi pour les exclure du précache.
+describe('documents autonomes', () => {
+  it('laisse le navigateur gérer leurs navigations', async () => {
+    const { handlers } = await loadSW();
+
+    for (const doc of STANDALONE_DOCS) {
+      expect(navigate(handlers, doc), doc).toBe(null);
+      expect(navigate(handlers, `${doc}en/index.html`), doc).toBe(null);
+    }
+  });
+
+  it("sert l'index.html précaché pour une navigation de l'app", async () => {
+    const { handlers, fetched } = await loadSW();
+    const installs = [];
+    await handlers.install({ waitUntil: (p) => installs.push(p) });
+    await Promise.all(installs);
+
+    await expect(navigate(handlers, '/quelque-chose')).resolves.toEqual({ body: '/index.html' });
+    expect(fetched).toEqual([]); // cold launch : rien ne part sur le réseau
   });
 });

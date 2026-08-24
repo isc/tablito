@@ -12,12 +12,18 @@
   --line: #E6DECE;
   --line-soft: #EFE7D6;
 
-  /* Brand + semantic */
+  /* Brand + semantic. Suffix convention: -light = the brand color lightened
+     (still reads as the color), -soft = a pale wash for backgrounds, -ink = the
+     darkened version for text and edges, -shadow = the color at low alpha, for
+     glows whose geometry varies per caller. */
   --indigo: #4F46BA;
+  --indigo-light: #6D64D1;
   --indigo-soft: #E8E6F7;
   --indigo-ink: #2B2478;
+  --indigo-shadow: rgba(79, 70, 186, 0.15);
 
   --coral: #E8623D;
+  --coral-light: #F2856A;
   --coral-soft: #FBE4DA;
 
   --honey: #D99A1F;
@@ -46,31 +52,6 @@
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(30, 26, 46, 0.04);
   --shadow-md: 0 2px 4px rgba(62, 42, 16, 0.06), 0 8px 20px rgba(62, 42, 16, 0.06);
-
-  /* Legacy aliases — kept so any unmigrated screen still resolves. */
-  --primary: var(--indigo);
-  --primary-light: #6D64D1;
-  --primary-dark: var(--indigo-ink);
-  --secondary: var(--coral);
-  --secondary-light: #F2856A;
-  --success: var(--sage);
-  --success-light: #7FAE6E;
-  --warning: var(--honey);
-  --warning-light: #F1B856;
-  --background: var(--cream);
-  --surface: var(--paper);
-  --text: var(--ink);
-  --text-light: var(--ink-soft);
-  --text-muted: var(--ink-muted);
-  --border: var(--line);
-  --shadow: rgba(79, 70, 186, 0.15);
-
-  --box-gray: var(--box0);
-  --box-red: var(--box1);
-  --box-orange: var(--box2);
-  --box-yellow: var(--box3);
-  --box-lightgreen: var(--box4);
-  --box-green: var(--box5);
 }
 
 * {
@@ -191,14 +172,6 @@ input, select, textarea {
   background: var(--cream-deep);
 }
 
-.screen-title {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--ink);
-  letter-spacing: -0.3px;
-}
-
 .eyebrow {
   font-family: var(--sans);
   font-size: 11px;
@@ -206,49 +179,6 @@ input, select, textarea {
   color: var(--ink-muted);
   letter-spacing: 0.6px;
   text-transform: uppercase;
-}
-
-.btn-primary {
-  background: var(--indigo);
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 16px 28px;
-  font-family: var(--sans);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-  width: 100%;
-  box-shadow: 0 2px 0 var(--indigo-ink), 0 6px 20px rgba(79, 70, 186, 0.3);
-  transition: transform 0.1s ease;
-}
-
-.btn-primary:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 var(--indigo-ink), 0 3px 10px rgba(79, 70, 186, 0.25);
-}
-
-.btn-primary:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.btn-ghost {
-  background: var(--paper);
-  color: var(--ink);
-  border: 1.5px solid var(--line);
-  border-radius: 999px;
-  padding: 12px 22px;
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.btn-ghost:active {
-  transform: translateY(1px);
 }
 
 .card {

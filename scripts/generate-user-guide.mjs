@@ -58,9 +58,8 @@ const PORT = Number(process.env.GUIDE_PORT ?? 4173);
 const BASE_PATH = process.env.BASE ?? '/';
 const BASE_URL = `http://localhost:${PORT}${BASE_PATH}`;
 
-// Mobile-ish portrait viewport. Matches the 360×760 iPhone logical frame
-// the mockup (Redesign Multiplix.html) uses, so side-by-side comparisons
-// line up without rescaling tricks.
+// Mobile-ish portrait viewport: the 360×760 iPhone logical frame, i.e. the
+// smallest screen the app has to look right on.
 const VIEWPORT = { width: 360, height: 760 };
 const DEVICE_SCALE = 2;
 

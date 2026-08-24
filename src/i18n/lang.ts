@@ -66,11 +66,6 @@ export function localeFor(lang: Lang): string {
   return LOCALE[lang];
 }
 
-/** Locale BCP-47 de la langue courante (consommateur hors-React). */
-export function getLocale(): string {
-  return LOCALE[currentLang];
-}
-
 /** Applique une langue : met à jour le singleton + persiste. Cf. LangProvider. */
 export function applyLang(lang: Lang): void {
   currentLang = lang;
@@ -102,7 +97,6 @@ export function useLang(): LangContextValue {
   return useContext(LangContext);
 }
 
-/** Locale BCP-47 de la langue courante du contexte (pour les composants React). */
 /**
  * Base du guide utilisateur pour la langue courante : FR à `/guide/`, autres
  * langues sous `/guide/<lang>/` (cf. scripts/generate-user-guide.mjs). Partagé
@@ -113,6 +107,7 @@ export function useGuideBase(): string {
   return `${import.meta.env.BASE_URL}guide/${lang === 'fr' ? '' : `${lang}/`}`;
 }
 
+/** Locale BCP-47 de la langue courante du contexte (pour les composants React). */
 export function useLocale(): string {
   return LOCALE[useContext(LangContext).lang];
 }

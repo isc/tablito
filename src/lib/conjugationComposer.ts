@@ -109,12 +109,6 @@ export function unlockedConjTenses(badges: Badge[]): ConjTense[] {
   return unlocked;
 }
 
-/** Temps ACTIF du jour : le dernier temps débloqué (§6.2, « un seul bouton »). */
-export function activeConjTense(profile: ConjProfile): ConjTense {
-  const unlocked = unlockedConjTenses(profile.badges);
-  return unlocked[unlocked.length - 1];
-}
-
 /**
  * Tout ce que la composition lit d'un profil. Restreint EXPRÈS à ces deux
  * champs : c'est le contrat que l'appelant peut mémoïser, sans recomposer la

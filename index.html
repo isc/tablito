@@ -103,8 +103,8 @@
             // « Sur l'écran d'accueil » : on affichera un préambule "ouvre dans
             // Safari". Détection fail-safe : par défaut on suppose Safari (le
             // visiteur n'a pas à se voir dire d'ouvrir Safari s'il y est déjà).
-            // ⚠ Même denylist que isIOSSafari() dans src/lib/install.ts — ce
-            // script inline tourne pré-paint (avant tout module), d'où la copie.
+            // Ce script inline tourne pré-paint (avant tout module) : la
+            // denylist vit ici, et nulle part ailleurs.
             if (/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/.test(ua)) {
               document.documentElement.classList.add('ios-other-browser');
             }

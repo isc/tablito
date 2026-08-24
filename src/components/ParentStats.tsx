@@ -167,8 +167,8 @@ function ParentStats({ profile }: { profile: UserProfile }) {
   const multMastered = `${countMastered(profile.facts)}/${profile.facts.length}`;
 
   const boxColors = [
-    'var(--box-gray)', 'var(--box-red)', 'var(--box-orange)',
-    'var(--box-yellow)', 'var(--box-lightgreen)', 'var(--box-green)',
+    'var(--box0)', 'var(--box1)', 'var(--box2)',
+    'var(--box3)', 'var(--box4)', 'var(--box5)',
   ];
   const boxLabels = ['N/A', 'B1', 'B2', 'B3', 'B4', 'B5'];
 
@@ -301,7 +301,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
               yMax={100}
               yTicks={[0, 25, 50, 75, 100]}
               formatY={(v) => `${v}%`}
-              color="var(--primary)"
+              color="var(--indigo)"
             />
           </div>
           <div className="parent-section">

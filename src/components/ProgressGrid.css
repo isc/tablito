@@ -3,14 +3,6 @@
   animation: fadeIn 0.3s ease;
 }
 
-.progress-grid-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 12px;
-  color: var(--text);
-}
-
 .progress-grid {
   display: grid;
   grid-template-columns: 32px repeat(8, 1fr);
@@ -33,7 +25,7 @@
   justify-content: center;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--text-light);
+  color: var(--ink-soft);
 }
 
 .progress-grid-corner {
@@ -63,29 +55,29 @@
 }
 
 .progress-grid-cell.box-0 {
-  background: var(--box-gray);
-  color: var(--text-muted);
+  background: var(--box0);
+  color: var(--ink-muted);
 }
 
 .progress-grid-cell.box-1 {
-  background: var(--box-red);
+  background: var(--box1);
 }
 
 .progress-grid-cell.box-2 {
-  background: var(--box-orange);
+  background: var(--box2);
 }
 
 .progress-grid-cell.box-3 {
-  background: var(--box-yellow);
-  color: var(--text);
+  background: var(--box3);
+  color: var(--ink);
 }
 
 .progress-grid-cell.box-4 {
-  background: var(--box-lightgreen);
+  background: var(--box4);
 }
 
 .progress-grid-cell.box-5 {
-  background: var(--box-green);
+  background: var(--box5);
 }
 
 .progress-grid-cell.diagonal {

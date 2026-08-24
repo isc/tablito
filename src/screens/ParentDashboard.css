@@ -343,12 +343,12 @@
 }
 
 .parent-action-btn--danger {
-  color: var(--box-red);
-  border-color: var(--box-red);
+  color: var(--coral);
+  border-color: var(--coral);
 }
 
 .parent-action-btn--danger:active {
-  background: color-mix(in srgb, var(--box-red) 12%, var(--paper));
+  background: color-mix(in srgb, var(--coral) 12%, var(--paper));
 }
 
 .parent-import-area {
@@ -393,7 +393,7 @@
 }
 
 .parent-transfer-status--error {
-  color: var(--box-red);
+  color: var(--coral);
 }
 
 .parent-import-textarea {
@@ -494,7 +494,7 @@
 }
 
 .parent-remote-status--error {
-  color: var(--box-red);
+  color: var(--coral);
 }
 
 /* Bouton compact : il vit dans la barre, pas dans une grille d'actions. */
@@ -543,7 +543,7 @@
   padding: 4px 0;
   font: inherit;
   font-size: 13px;
-  color: var(--box-red);
+  color: var(--coral);
   text-decoration: underline;
   cursor: pointer;
 }

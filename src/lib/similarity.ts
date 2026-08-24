@@ -63,18 +63,3 @@ export function computeSimilarity(
 
   return 'none';
 }
-
-/**
- * Returns true if the given list of facts has no pair with "strong" similarity.
- * This is used to verify that a session respects the anti-interference constraint.
- */
-export function areCompatibleInSession(facts: MultiFact[]): boolean {
-  for (let i = 0; i < facts.length; i++) {
-    for (let j = i + 1; j < facts.length; j++) {
-      if (computeSimilarity(facts[i], facts[j]) === 'strong') {
-        return false;
-      }
-    }
-  }
-  return true;
-}
