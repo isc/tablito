@@ -49,9 +49,16 @@ export const CONJ_MAX_NEW_FACTS = 2;
 // 6 minutes, budget temps saturé par ailleurs (§1). C'est exactement la borne
 // des séances de maths : cf. MAX_SESSION_QUESTIONS (lib/utils).
 
-/** Écart de re-pose après une erreur ou une intro : 2 à 3 questions (§5.2). */
-export const CONJ_RETRY_MIN_GAP = 2;
-export const CONJ_RETRY_MAX_GAP = 3;
+/**
+ * Écarts de re-pose après une erreur ou une intro : 2 à 3 questions (§5.2),
+ * par ordre de préférence — cf. `scheduleRetry`, qui prend le premier créneau
+ * libre. L'ordre CROISSANT porte le correctif : les deux intros du jour
+ * ouvrent la séance dos à dos, donc la seconde re-pose ne peut s'écarter de la
+ * première qu'en prenant un écart PLUS GRAND. Avec 3 en tête, les deux seuls
+ * créneaux de la fenêtre touchent la première reprise et les re-tests
+ * revenaient collés (avis parent du 23/08/2026).
+ */
+export const CONJ_RETRY_GAPS = [2, 3] as const;
 
 /**
  * Entretien des temps déjà travaillés, plafonné (§6.2) : la séance du jour est
@@ -339,14 +346,16 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
 }
 
 /**
- * Écart de re-pose de la matière : 2 ou 3 questions plus tard (§5.2 étape 5,
- * §5.3). Tiré ici, la mécanique d'insertion elle-même étant générique
- * (`scheduleRetry`, partagée avec le chemin maths).
+ * Question de re-test d'une intro RÉUSSIE : même fait, phrase porteuse
+ * SUIVANTE. L'enfant vient de voir la forme dans la porteuse 0 (l'intro les
+ * fixe toutes à 0) ; la re-poser à l'identique testerait la mémoire de l'écran
+ * plutôt que le fait (§10, apprentissage contextuel). Après une ERREUR au
+ * contraire, la question revient telle quelle — c'est la correction qu'on
+ * re-teste. Le choix de la porteuse reste ainsi entièrement dans ce module,
+ * avec `conjCarrierIndex` et la rotation qu'il documente.
  */
-export function conjRetryGap(): number {
-  return (
-    CONJ_RETRY_MIN_GAP + Math.floor(Math.random() * (CONJ_RETRY_MAX_GAP - CONJ_RETRY_MIN_GAP + 1))
-  );
+export function conjRetryQuestion<T extends ConjSessionQuestion>(question: T): T {
+  return { ...question, carrierIndex: question.carrierIndex + 1 };
 }
 
 // --- Attribution d'erreur (spec §4.5) ---------------------------------------

@@ -32,7 +32,8 @@ import {
 } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
 import {
-  conjRetryGap,
+  CONJ_RETRY_GAPS,
+  conjRetryQuestion,
   isConjAccepted,
   judgeConjAnswer,
   type ConjJudgement,
@@ -45,6 +46,7 @@ import { getDivisionFactKey } from '../lib/divisionFacts';
 import { getRemainderFactKey } from '../lib/remainderFacts';
 import { getFactKey } from '../lib/facts';
 import { itemDisplay } from '../lib/sessionItemView';
+import { MATH_RETRY_GAPS } from '../lib/dailyComposer';
 import { MAX_SESSION_QUESTIONS, scheduleRetry, todayISO } from '../lib/utils';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
@@ -409,7 +411,7 @@ export default function SessionScreen({
       // Réintroduction après erreur, plafond de séance compris (cf.
       // MAX_SESSION_QUESTIONS) — même mécanique qu'en conjugaison.
       if (!correct) {
-        setQuestions((prev) => scheduleRetry(prev, currentIndex, currentItem, 3));
+        setQuestions((prev) => scheduleRetry(prev, currentIndex, currentItem, MATH_RETRY_GAPS));
       }
 
       setResults((prev) => [...prev, { correct }]);
@@ -494,9 +496,13 @@ export default function SessionScreen({
       onConjAnswer(currentItem, judgement, fast, timeMs, source);
 
       // Re-pose 2 à 3 questions plus tard : après une erreur, et après une
-      // introduction (§5.2 étape 5 — le re-test différé).
+      // introduction (§5.2 étape 5 — le re-test différé). Ici `accepted`
+      // implique donc `isIntroduction` : le re-test d'une intro réussie change
+      // de phrase porteuse, celui d'une erreur re-pose la question telle quelle
+      // (cf. `conjRetryQuestion`).
       if (!accepted || currentItem.isIntroduction) {
-        setQuestions((prev) => scheduleRetry(prev, currentIndex, currentItem, conjRetryGap()));
+        const retryItem = accepted ? conjRetryQuestion(currentItem) : currentItem;
+        setQuestions((prev) => scheduleRetry(prev, currentIndex, retryItem, CONJ_RETRY_GAPS));
       }
 
       setResults((prev) => [...prev, { correct: accepted }]);

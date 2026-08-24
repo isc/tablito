@@ -82,6 +82,18 @@ function itemConflict(a: SessionItem, b: SessionItem): boolean {
   return false;
 }
 
+/**
+ * Écarts de re-pose après une erreur en maths, par ordre de préférence : « 2-3
+ * questions plus tard » (§3.3). Le 3 d'abord : c'est l'écart historique du
+ * chemin maths, et le resserrer par défaut n'apporterait rien ici — les intros
+ * de maths ne sont pas re-testées (seules les erreurs le sont), donc deux
+ * reprises dos à dos y supposent deux erreurs sur deux questions consécutives.
+ * Dans ce cas-là seulement, la fenêtre est trop étroite pour les séparer et la
+ * reprise reste collée : c'est assumé, contrairement à `CONJ_RETRY_GAPS`, dont
+ * l'ordre croissant sépare les re-tests des deux intros du jour.
+ */
+export const MATH_RETRY_GAPS = [3, 2] as const;
+
 // Conflit entre un item niveau 3 et un item d'entretien (× ou ÷ exact).
 function remCrossConflict(
   rem: Extract<SessionItem, { kind: 'rem' }>,

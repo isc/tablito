@@ -5,6 +5,7 @@ import {
   composeConjSession,
   conjCarrierIndex,
   conjQuestionConflict,
+  conjRetryQuestion,
   isConjAccepted,
   judgeConjAnswer,
 } from '../lib/conjugationComposer';
@@ -116,6 +117,22 @@ describe('anti-interférence, y compris sur le chemin des révisions bonus (§3.
 });
 
 describe('rotation des phrases porteuses (§10)', () => {
+  it('le re-test d’une intro réussie change de phrase porteuse', () => {
+    // L'intro affiche la forme dans la porteuse 0 ; re-poser cette phrase-là
+    // deux questions plus loin testerait la mémoire de l'écran, pas le fait.
+    const profile = profileWith({ 'pres-g1-nous': { box: 2 } });
+    const intro = composeConjSession(profile, TODAY)[0];
+
+    const retest = conjRetryQuestion(intro);
+
+    expect(retest.fact.key).toBe(intro.fact.key);
+    expect(retest.carrierIndex).toBe(intro.carrierIndex + 1);
+    const def = requireConjFactDef(intro.fact.key);
+    expect(resolveConjQuestion(def, retest.carrierIndex).prompt).not.toBe(
+      resolveConjQuestion(def, intro.carrierIndex).prompt,
+    );
+  });
+
   it('continue de tourner au-delà des 30 tentatives gardées en historique', () => {
     const saturated: ConjFact = {
       key: 'pres-g1-nous',
