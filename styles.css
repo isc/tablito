@@ -5231,12 +5231,33 @@ input, select, textarea {
   visibility: hidden;
 }
 
-/* Le clavier tombe en bas de l'écran (pouces prêts), comme le NumPad. */
+/* Le clavier tombe en bas de l'écran (pouces prêts). */
 .conj-keyboard-area {
   width: 100%;
   max-width: 420px;
   margin-top: auto;
   padding: 8px 0 4px;
+}
+
+/* La bascule micro ↔ clavier est une sortie de secours, pas une action de la
+   question : elle prend l'air que le vocal des maths lui donne déjà (28 px sous
+   la saisie, cf. .session-numpad-area). Les deux modes la posent à un endroit
+   différent — dans .conj-voice en vocal, à nu dans la zone en clavier — d'où
+   les deux sélecteurs, mais une seule décision.
+   En vocal, le `gap: 10px` de .conj-voice tient la barre micro contre le
+   clavier (un seul bloc de saisie) et collait donc ce bouton à la rangée
+   « Valider » ; en clavier, la zone n'étant pas un conteneur flex, le bouton
+   restait en plus calé à gauche. Remonté par un parent le 23/08/2026 : « le
+   bouton utiliser le clavier est collé au reste ». */
+.conj-voice > .session-input-switch,
+.conj-keyboard-area > .session-input-switch {
+  margin-top: 18px;
+}
+
+.conj-keyboard-area > .session-input-switch {
+  display: flex;
+  width: fit-content;
+  margin-inline: auto;
 }
 
 .session-question.conj-question {
@@ -5245,11 +5266,20 @@ input, select, textarea {
 
 /* Un seul item à l'écran, gros corps, interlignage généreux (§8). Toute la
    mise en scène (pile de trois lignes, verbe insécable, contexte en encre
-   douce) vit dans ConjForm en mode `stacked` — ici, seul l'espacement. */
+   douce) vit dans ConjForm en mode `stacked` — ici, seul l'espacement.
+
+   `margin-top: auto` ici et `margin-bottom: auto` sur le méta juste dessous :
+   l'énoncé et son infinitif forment UN groupe, posé dans le mou que laisse le
+   clavier ancré en bas, au lieu de rester collés en haut. Sans ça tout le mou
+   s'accumulait d'un coup entre l'infinitif et le clavier — « un gros espace
+   vide au milieu et tout coincé en bas », remonté par un parent le 23/08/2026
+   sur un écran de 841 px. Le clavier, lui, ne bouge pas d'une question à
+   l'autre : ce sont les pouces qui l'attendent là, pas l'inverse. */
 .conj-sentence {
   display: flex;
   justify-content: center;
   padding: 16px 0 4px;
+  margin-top: auto;
 }
 
 .conj-question-meta {
@@ -5259,6 +5289,8 @@ input, select, textarea {
   flex-wrap: wrap;
   gap: 12px;
   padding: 4px 0 2px;
+  /* Contrepoids du `margin-top: auto` de .conj-sentence — cf. son commentaire. */
+  margin-bottom: auto;
 }
 
 /* Réécoute : la phrase est lue d'office à l'affichage, ce bouton n'est là que
