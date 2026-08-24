@@ -35,10 +35,9 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260822085316"
+const CACHE = 'tablito-' + "20260824043429"
 const BASE = "/"
 const ASSETS = [
-  "/CNAME",
   "/favicon.svg",
   "/fonts/fonts.css",
   "/fonts/fraunces-italic-eQ7ZXk8g.woff2",
@@ -49,56 +48,10 @@ const ASSETS = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon.svg",
-  "/icons.svg",
   "/index.html",
   "/manifest.en.webmanifest",
   "/manifest.webmanifest",
-  "/specs/index.html",
   "/src/App.js",
-  "/src/__tests__/badges.test.js",
-  "/src/__tests__/conjIntegration.test.js",
-  "/src/__tests__/conjSession.test.js",
-  "/src/__tests__/conjVoiceSession.test.js",
-  "/src/__tests__/conjugationComposer.test.js",
-  "/src/__tests__/conjugationFacts.test.js",
-  "/src/__tests__/conjugationInterference.test.js",
-  "/src/__tests__/dailyComposer.test.js",
-  "/src/__tests__/divisionBadges.test.js",
-  "/src/__tests__/divisionComposer.test.js",
-  "/src/__tests__/divisionFacts.test.js",
-  "/src/__tests__/divisionJourney.test.js",
-  "/src/__tests__/dotGrid.test.js",
-  "/src/__tests__/hardestFacts.test.js",
-  "/src/__tests__/helpers/audio.js",
-  "/src/__tests__/helpers/conjItems.js",
-  "/src/__tests__/helpers/dom.js",
-  "/src/__tests__/helpers/watchServer.js",
-  "/src/__tests__/leitner.test.js",
-  "/src/__tests__/mixedSessionTTS.test.js",
-  "/src/__tests__/multiProfile.test.js",
-  "/src/__tests__/parseEnglishNumber.test.js",
-  "/src/__tests__/parseFrenchNumber.test.js",
-  "/src/__tests__/parseSpelledLetters.test.js",
-  "/src/__tests__/placement.test.js",
-  "/src/__tests__/pushDismiss.test.js",
-  "/src/__tests__/recapCelebrations.test.js",
-  "/src/__tests__/remainderBadges.test.js",
-  "/src/__tests__/remainderComposer.test.js",
-  "/src/__tests__/remainderDaily.test.js",
-  "/src/__tests__/remainderJourney.test.js",
-  "/src/__tests__/remainderVoice.test.js",
-  "/src/__tests__/remainderZoneLabel.test.js",
-  "/src/__tests__/remoteFollow.test.js",
-  "/src/__tests__/sessionComposer.test.js",
-  "/src/__tests__/setup.js",
-  "/src/__tests__/strategies.test.js",
-  "/src/__tests__/streak.test.js",
-  "/src/__tests__/transfer.test.js",
-  "/src/__tests__/userJourney.test.js",
-  "/src/__tests__/watch.test.js",
-  "/src/assets/hero.png",
-  "/src/assets/react.svg",
-  "/src/assets/vite.svg",
   "/src/components/BackChevron.js",
   "/src/components/Badge.js",
   "/src/components/BadgeDetailModal.js",
@@ -139,10 +92,8 @@ const ASSETS = [
   "/src/components/StrategyHintShell.js",
   "/src/components/StreakDetailModal.js",
   "/src/components/VoiceInput.js",
-  "/src/components/VoiceInput.test.js",
   "/src/components/WeeklyRecapSettings.js",
   "/src/components/conjHintLine.js",
-  "/src/env.d.js",
   "/src/hooks/useConfetti.js",
   "/src/hooks/useInputMode.js",
   "/src/hooks/useLatestRef.js",
@@ -150,7 +101,6 @@ const ASSETS = [
   "/src/hooks/useQrScan.js",
   "/src/hooks/useSound.js",
   "/src/hooks/useSpeechRecognition.js",
-  "/src/hooks/useSpeechRecognition.test.js",
   "/src/hooks/useTTS.js",
   "/src/hooks/useWakeLock.js",
   "/src/i18n/LangProvider.js",
@@ -229,7 +179,6 @@ const ASSETS = [
   "/src/screens/WelcomeScreen.js",
   "/src/types.js",
   "/styles.css",
-  "/vendor/lean-qr/index.mjs",
   "/vendor/preact/compat-client.mjs",
   "/vendor/preact/compat.module.js",
   "/vendor/preact/hooks.module.js",
@@ -239,8 +188,11 @@ const ASSETS = [
 
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
-const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"],"phonetic":["/phonetic/"]}
-const LAZY_VERSIONS = {"audio":"cc876539251c","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55"}
+const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/","/splash/","/video/","/vendor/qr-scanner/","/img/hero-poster"],"phonetic":["/phonetic/"],"qrgen":["/vendor/lean-qr/"]}
+const LAZY_VERSIONS = {"audio":"cc876539251c","media":"b0361ec4d40b","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+
+// cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
+const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
 
 const LAZY_CACHES = {}
 for (const group of Object.keys(LAZY_GROUPS)) {
@@ -295,7 +247,7 @@ self.addEventListener('fetch', (e) => {
   // vivent dans le scope du SW de prod mais ne doivent pas être masquées
   // par le shell de prod. On laisse le browser gérer.
   if (e.request.mode === 'navigate') {
-    if (url.pathname.includes('/guide/') || url.pathname.includes('/specs/') || url.pathname.includes('/previews/')) {
+    if (STANDALONE_DOCS.some((d) => url.pathname.includes(d))) {
       return
     }
     e.respondWith(
