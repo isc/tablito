@@ -866,8 +866,17 @@ export default function SessionScreen({
                     : tc.copyLook
                   : tc.copyWrite}
               </div>
-              <div className={`conj-copy-model${conjCopyVisible ? '' : ' is-hidden'}`}>
-                <ConjForm subject={cv.subject} segment={cv.segment} />
+              {/* Masqué, le modèle devient EXACTEMENT la question (§5.2 étape
+                  3) : pronom, radical affiché, trait à compléter. Un vide
+                  intégral ne disait plus quelle personne était demandée — et
+                  couvrir le radical n'aurait rien couvert, le clavier juste
+                  dessous l'affiche déjà en préfixe. */}
+              <div className="conj-copy-model">
+                <ConjForm
+                  subject={cv.subject}
+                  segment={conjCopyVisible ? cv.segment : [cv.displayedStem, '']}
+                  blank={!conjCopyVisible}
+                />
               </div>
               {!conjCopyVisible && (
                 <div className="conj-keyboard-area">

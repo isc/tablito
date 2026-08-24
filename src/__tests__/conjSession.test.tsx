@@ -419,13 +419,18 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
 
     // Modèle visible, clavier encore absent : « je lis ».
     expect(text()).toContain('Regarde bien');
-    expect(document.querySelector('.conj-copy-model.is-hidden')).toBeNull();
+    expect(document.querySelector('.conj-copy-model .conj-form-mark')?.textContent).toBe('ons');
     expect(document.querySelector('.letterpad-container')).toBeNull();
 
     advance(4_000);
 
-    // « Je cache, j'écris ».
-    expect(document.querySelector('.conj-copy-model.is-hidden')).not.toBeNull();
+    // « Je cache, j'écris » : seule la TERMINAISON se couvre. Le pronom et le
+    // radical restent — sans le pronom, l'écran ne dit plus quelle personne est
+    // demandée, et le radical est de toute façon affiché par le clavier.
+    expect(document.querySelector('.conj-copy-model .conj-form-mark')).toBeNull();
+    expect(document.querySelector('.conj-copy-model .conj-form-subject')?.textContent).toBe('nous');
+    expect(document.querySelector('.conj-copy-model .conj-form-stem')?.textContent).toBe('chant');
+    expect(document.querySelector('.conj-copy-model .conj-blank')).not.toBeNull();
     expect(document.querySelector('.letterpad-container')).not.toBeNull();
     expect(text()).toContain(t.copyWrite);
   });
@@ -448,7 +453,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
     tapLetters('on');
     tapValidate();
 
-    expect(document.querySelector('.conj-copy-model.is-hidden')).toBeNull();
+    expect(document.querySelector('.conj-copy-model .conj-form-mark')?.textContent).toBe('ons');
     expect(text()).toContain('Regarde encore');
     // La copie n'entre JAMAIS dans le Leitner.
     expect(onConjAnswer).not.toHaveBeenCalled();
