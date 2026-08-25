@@ -4001,6 +4001,10 @@ input, select, textarea {
 
 .progress-tabs {
   display: flex;
+  /* Sans quoi la ligne ne cède jamais : les pastilles se serrent jusqu'à leur
+     mot le plus long, puis passent sous le bord de l'écran, où l'`overflow-x:
+     hidden` du body les escamote sans bruit. */
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
   padding: 2px 20px 12px;
@@ -4016,6 +4020,27 @@ input, select, textarea {
   background: var(--paper);
   color: var(--ink-soft);
   cursor: pointer;
+}
+
+/* À partir de quatre pastilles — les trois niveaux de maths plus la
+   conjugaison — aucune largeur de téléphone ne tient la ligne, et rogner la
+   typo ou les marges ne rattrape pas l'écart. Le retour à la ligne est donc
+   acquis : on le range en deux colonnes égales plutôt que de subir le
+   « 3 + 1 » du passage à la ligne naturel. */
+.progress-tabs:has(> .progress-tab:nth-child(4)) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.progress-tabs:has(> .progress-tab:nth-child(4)) > .progress-tab {
+  /* Étirée sur une demi-largeur, une pastille n'a plus besoin de ses marges
+     intérieures : les rendre au libellé, qui sinon se casse en deux lignes
+     dans sa colonne sur un écran de 320 px. */
+  padding-inline: 12px;
+  /* Filet pour le sélecteur d'appareils de l'espace parent, qui partage ces
+     classes avec des prénoms de longueur inconnue : un mot plus large que sa
+     colonne se casse au lieu de pousser la grille sous le bord de l'écran. */
+  overflow-wrap: anywhere;
 }
 
 .progress-tab.active {
