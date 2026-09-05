@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@playwright/cli": "^0.1.9",
+    "@playwright/cli": "^0.1.19",
     "@testing-library/preact": "^3.2.4",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.12.0",
@@ -47,7 +47,7 @@
     "jsdom": "^29.0.2",
     "lean-qr": "^2.7.2",
     "lighthouse": "^13.3.0",
-    "playwright": "^1.59.1",
+    "playwright": "^1.63.0",
     "qr-scanner": "^1.4.2",
     "sharp": "^0.34.5",
     "typescript": "~5.9.3",
