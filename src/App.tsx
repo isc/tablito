@@ -846,6 +846,7 @@ export default function App({
       const mode: FactKind = isConj ? 'conj' : sessionMode;
       const result: SessionResult = {
         ...partial,
+        kind: mode,
         factsPromoted: sessionPromoted.current.size,
         // Log par-question persisté pour diagnostic (cf. SessionResult.questions).
         // Désormais peuplé pour TOUTES les séances, division comprise.

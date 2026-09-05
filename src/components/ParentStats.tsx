@@ -104,12 +104,13 @@ function ParentStats({ profile }: { profile: UserProfile }) {
   // Un onglet fermé (niveau non débloqué, matière jamais ouverte) retombe sur
   // la multiplication : le sélecteur ne le propose pas, mais l'onglet par
   // défaut vient du niveau actif et la langue peut changer sous nos pieds.
-  const activeView =
+  const activeKind: FactKind =
     (gridView === 'conj' && conjVisible) ||
     (gridView === 'rem' && remainderUnlocked) ||
     (gridView === 'div' && divisionUnlocked)
-      ? views[gridView]()
-      : views.mult();
+      ? gridView
+      : 'mult';
+  const activeView = views[activeKind]();
 
   // Onglets du sélecteur — même pattern que « Mes images » (ProgressScreen).
   const opTabs: Array<{ key: FactKind; label: string }> = [
@@ -136,13 +137,23 @@ function ParentStats({ profile }: { profile: UserProfile }) {
     [profile, conjVisible],
   );
 
-  const recentSessions = useMemo(
-    () => [...profile.sessionHistory].reverse().slice(0, 10),
-    [profile.sessionHistory],
+  // Séances de la matière sélectionnée — l'onglet pilote aussi l'évolution et
+  // l'historique, pas seulement les grilles. Maths vs conjugaison est la bonne
+  // granularité : rappeler 7 × 8 et écrire une forme verbale ne se mesurent pas
+  // au même mètre, alors qu'à l'intérieur des maths une séance est mixte par
+  // construction (entretien des tables mêlé au niveau actif). D'où la dépendance
+  // sur ce booléen et non sur `activeKind` : basculer × ↔ ÷ ne refiltre rien.
+  const conjSubject = activeKind === 'conj';
+  const subjectSessions = useMemo(
+    () => profile.sessionHistory.filter((s) => (s.kind === 'conj') === conjSubject),
+    [profile.sessionHistory, conjSubject],
   );
+  // Deux séances de la même matière peuvent tomber le même jour : la date ne
+  // suffit pas à identifier une ligne, le rang dans la liste si.
+  const recentSessions = useMemo(() => subjectSessions.slice(-10).reverse(), [subjectSessions]);
 
   const evolution = useMemo(() => {
-    const sessions = profile.sessionHistory.slice(-EVOLUTION_WINDOW);
+    const sessions = subjectSessions.slice(-EVOLUTION_WINDOW);
     if (sessions.length < 2) return null;
 
     const accuracy: Array<{ date: string; value: number }> = [];
@@ -160,11 +171,20 @@ function ParentStats({ profile }: { profile: UserProfile }) {
     const timeYMax = Math.max(Math.ceil(Math.max(...time.map((t) => t.value))), 4);
 
     return { accuracy, time, timeYMax };
-  }, [profile.sessionHistory, t]);
+  }, [subjectSessions, t]);
 
   // Compteurs de maîtrise (× et ÷) au même format — réutilisés par la carte
   // « Faits maîtrisés » (avant déblocage) et la carte de maîtrise (après).
   const multMastered = `${countMastered(profile.facts)}/${profile.facts.length}`;
+
+  // Le sélecteur d'opération est plus fin que la matière : les sections pilotées
+  // par les séances disent donc laquelle des deux elles montrent. Inutile tant
+  // que la conjugaison n'est pas ouverte — tout est de maths.
+  const subjectNote = conjVisible ? (
+    <p className="parent-section-subtitle">
+      {conjSubject ? t.conjSessionsOnly : t.mathSessionsOnly}
+    </p>
+  ) : null;
 
   const boxColors = [
     'var(--box0)', 'var(--box1)', 'var(--box2)',
@@ -295,6 +315,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
         <>
           <div className="parent-section">
             <h3>{t.correctAnswerRate}</h3>
+            {subjectNote}
             <EvolutionChart
               data={evolution.accuracy}
               yMin={0}
@@ -306,6 +327,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
           </div>
           <div className="parent-section">
             <h3>{t.averageResponseTime}</h3>
+            {subjectNote}
             <EvolutionChart
               data={evolution.time}
               yMin={0}
@@ -367,15 +389,16 @@ function ParentStats({ profile }: { profile: UserProfile }) {
       )}
 
       {/* Session history */}
-      {profile.sessionHistory.length > 0 && (
+      {recentSessions.length > 0 && (
         <div className="parent-section">
           <h3>{t.sessionHistory}</h3>
+          {subjectNote}
           <div className="parent-session-history">
-            {recentSessions.map((session) => {
+            {recentSessions.map((session, i) => {
               const dateStr = t.formatLongDate(new Date(session.date));
               const avgSec = (session.averageTimeMs / 1000).toFixed(1);
               return (
-                <div key={session.date} className="parent-session-row">
+                <div key={i} className="parent-session-row">
                   <span className="parent-session-date">{dateStr}</span>
                   <span className="parent-session-score">
                     {session.correctCount}/{session.questionsCount}

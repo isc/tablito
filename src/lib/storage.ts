@@ -457,6 +457,15 @@ function normalizeProfile(profile: UserProfile): UserProfile {
   if (typeof profile.hasDoneConjPlacement !== 'boolean') {
     profile.hasDoneConjPlacement = false;
   }
+  // Matière d'une séance enregistrée. Même raisonnement que la date de séance
+  // ci-dessous : avant la conjugaison, toute séance était une séance de maths.
+  // Les séances postérieures qui n'ont pas encore le champ portent leur journal
+  // de questions, qui le dit (une séance ne mélange jamais deux matières,
+  // §15.1). Réglé ici plutôt qu'à la lecture pour que l'espace parent puisse
+  // lire `session.kind` sans connaître l'histoire du champ.
+  for (const session of profile.sessionHistory) {
+    session.kind ??= session.questions?.[0]?.kind ?? 'mult';
+  }
   // Séance du jour par matière. Avant la conjugaison, toute séance était une
   // séance de maths : `lastSessionDate` EST la date de la dernière séance de
   // maths — sans ce report, un profil migré se verrait reproposer sa séance de

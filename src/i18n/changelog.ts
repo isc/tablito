@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-09-05',
+    items: [
+      "Espace parent : les maths et la conjugaison ne se mélangent plus. Le temps de réponse moyen, le taux de bonnes réponses et l'historique des séances additionnaient les deux matières sur une même courbe — or rappeler 7 × 8 et écrire « nous chantions » ne se mesurent pas au même mètre, et la moyenne du jour ne disait plus grand-chose d'autre que la matière pratiquée ce jour-là. Ces trois sections suivent désormais le sélecteur de matière, comme le faisaient déjà la répartition par boîte et la grille Leitner. Les séances déjà enregistrées sont reclassées : rien n'est perdu.",
+    ],
+  },
+  {
     date: '2026-08-24',
     items: [
       "Temps de réponse : les pauses ne comptent plus. Si le téléphone se verrouille au milieu d'une séance et que l'enfant reprend dix minutes plus tard, ces dix minutes n'entrent plus dans le temps de réponse — ni dans le temps moyen que vous voyez ici, ni dans le jugement « rapide » qui décide qu'un fait est assez solide pour être revu plus tard. Une réponse sue mais interrompue coûtait jusqu'ici sa progression au fait concerné. Et si l'enfant s'éloigne sans verrouiller, le temps moyen de la séance ne se laisse plus emporter : une réponse très au-dessus du rythme de la séance elle-même est ramenée à la plus longue réponse normale de cette séance — le seuil suit donc le tempo de votre enfant, il n'est pas fixé à sa place. Les séances déjà enregistrées gardent leur ancienne moyenne : elles ne sont pas recalculées.",
@@ -201,6 +207,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-09-05',
+    items: [
+      "Parent space: math and conjugation no longer share a curve. The average response time, the correct answer rate and the session history added both subjects together — but recalling 7 × 8 and writing a verb form are not measured with the same yardstick, and the daily average ended up saying little beyond which subject was practised that day. Those three sections now follow the subject selector, just as the box distribution and the Leitner grid already did. Sessions already recorded are sorted into the right subject: nothing is lost.",
+    ],
+  },
   {
     date: '2026-08-24',
     items: [

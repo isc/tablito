@@ -390,6 +390,12 @@ export interface SessionQuestionLog {
 
 export interface SessionResult {
   date: string;
+  // Matière de la séance : une séance n'en mélange jamais deux (§15.1). Sans
+  // elle, l'espace parent traçait le temps de réponse moyen des maths et de la
+  // conjugaison sur une même courbe — deux gestes qui n'ont ni la même nature
+  // ni le même ordre de grandeur. Optionnel dans le JSON stocké (séances
+  // antérieures), backfillé par normalizeProfile au chargement.
+  kind?: FactKind;
   questionsCount: number;
   correctCount: number;
   averageTimeMs: number;

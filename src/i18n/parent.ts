@@ -60,6 +60,8 @@ interface ParentDashboardStrings {
   factConjugation: string;
   correctAnswerRate: string;
   averageResponseTime: string;
+  mathSessionsOnly: string;
+  conjSessionsOnly: string;
   hardestFacts: string;
   hardestFactsSubtitle: (window: number) => string;
   errors: (count: number) => string;
@@ -174,6 +176,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   factConjugation: 'Conjugaison',
   correctAnswerRate: 'Taux de bonnes réponses',
   averageResponseTime: 'Temps de réponse moyen',
+  mathSessionsOnly: 'Séances de maths uniquement.',
+  conjSessionsOnly: 'Séances de conjugaison uniquement.',
   hardestFacts: 'Faits les plus difficiles',
   hardestFactsSubtitle: (window) => `Sur les ${window} dernières séances.`,
   errors: (count) => `${count} erreur${count > 1 ? 's' : ''}`,
@@ -301,6 +305,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   factConjugation: 'Conjugation',
   correctAnswerRate: 'Correct answer rate',
   averageResponseTime: 'Average response time',
+  mathSessionsOnly: 'Math sessions only.',
+  conjSessionsOnly: 'Conjugation sessions only.',
   hardestFacts: 'Hardest facts',
   hardestFactsSubtitle: (window) => `Over the last ${window} sessions.`,
   errors: (count) => `${count} error${count > 1 ? 's' : ''}`,
