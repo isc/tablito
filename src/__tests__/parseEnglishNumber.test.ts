@@ -143,6 +143,16 @@ describe('parseEnglishAnswer', () => {
     expect(parseEnglishAnswer('6 times 5')).toBeNull();
   });
 
+  it('accepts a trailing "times" ("four times")', () => {
+    // Level 3 step 1 asks "How many times?" — the answer naturally echoes the
+    // word. A TRAILING marker belongs to the answer; between two numbers it is
+    // still the signature of a TTS echo.
+    expect(parseEnglishAnswer('four times')).toBe(4);
+    expect(parseEnglishAnswer('4 times')).toBe(4);
+    expect(parseEnglishAnswer('six times five')).toBeNull();
+    expect(parseEnglishAnswer('times')).toBeNull();
+  });
+
   it('accepts an identically repeated number (isolated word missed by Android VAD)', () => {
     expect(parseEnglishAnswer('four four')).toBe(4);
     expect(parseEnglishAnswer('six six')).toBe(6);

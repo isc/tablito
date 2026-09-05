@@ -161,6 +161,20 @@ describe('parseFrenchAnswer', () => {
     expect(parseFrenchAnswer('6 fois 5')).toBeNull();
   });
 
+  it('accepte « quatre fois » (réponse au « Combien de fois ? » du niveau 3)', () => {
+    // Division avec reste, étape 1 : la question est « Combien de fois ? », et
+    // la réponse naturelle reprend le mot. Le marqueur en QUEUE fait partie de
+    // la réponse — sans ça, l'enfant enchaînait trois échecs de parsing et
+    // tombait sur le clavier de secours.
+    expect(parseFrenchAnswer('quatre fois')).toBe(4);
+    expect(parseFrenchAnswer('4 fois')).toBe(4);
+    expect(parseFrenchAnswer('vingt-quatre fois')).toBe(24);
+    // Le marqueur ENTRE deux nombres reste la signature de l'écho.
+    expect(parseFrenchAnswer('six fois cinq')).toBeNull();
+    // Marqueur seul : rien à soumettre.
+    expect(parseFrenchAnswer('fois')).toBeNull();
+  });
+
   it('reconnaît "vin"/"vint" comme "vingt" (t final muet)', () => {
     expect(parseFrenchAnswer('vin')).toBe(20);
     expect(parseFrenchAnswer('vint')).toBe(20);
