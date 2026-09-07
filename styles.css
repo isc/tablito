@@ -341,6 +341,20 @@
   margin-top: 4px;
 }
 
+/* La pastille du temps (apparence dans TenseChip.css) : sujet de la carte
+   d'erreur, juste sous son titre — c'est la place que tient l'eyebrow de la
+   grille de points côté maths. Le `align-self` est pour la carte, dont la
+   colonne étire ses enfants ; sur le chemin accepté, l'overlay centre déjà. */
+.conj-feedback .tense-chip {
+  align-self: center;
+  margin: 2px 0 8px;
+}
+
+/* Chemin accepté : pas de carte, la pastille ferme l'écran sous la forme. */
+.feedback-overlay.correct .tense-chip {
+  margin: 10px 0 0;
+}
+
 /* ===== components/ConjForm.css ===== */
 /* Palette de la segmentation morphologique (spec Verbito §2.3). Deux couleurs
    stables, valables partout où une forme verbale est affichée : le RADICAL en
@@ -2362,6 +2376,29 @@
   line-height: 1.4;
   color: var(--ink-soft);
   margin: 6px 0 0;
+}
+
+/* ===== components/TenseChip.css ===== */
+/* Pastille du nom d'un temps — présent, imparfait, futur. Apparence seulement,
+   comme Formula.css ou Medallion.css : le positionnement reste à la charge du
+   point d'appel (l'introduction d'un fait, la carte de feedback).
+
+   Volontairement ABSENTE de la question : le marqueur temporel de la phrase
+   porteuse (« Hier, », « Demain, ») est ce qui porte le temps, et c'est en le
+   lisant que se travaille la discrimination futur -ai / imparfait -ais. Voir
+   `tenseName` dans i18n/conjugation.ts pour la décision complète.
+
+   Se compose avec `.eyebrow` (index.css) : la pastille n'ajoute que le chrome.
+   Seule l'encre est reprise — sur le fond crème sombre, le gris d'eyebrow
+   tombe sous le contraste AA à ce corps. Encre neutre par ailleurs : la
+   pastille nomme, elle n'agit pas (ni l'indigo des boutons, ni les couleurs
+   radical/terminaison de la forme). */
+.tense-chip {
+  background: var(--cream-deep);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 14px;
+  color: var(--ink-soft);
 }
 
 /* ===== components/VoiceInput.css ===== */
@@ -5222,6 +5259,15 @@ input, select, textarea {
    la phrase, la mécanique en couleurs, la copie différée (§5.2). */
 .session-intro.conj-intro {
   gap: 18px;
+}
+
+/* La pastille du temps (apparence dans TenseChip.css) étiquette la phrase juste
+   dessous : les deux forment un groupe, d'où l'espace resserré. Le `gap` de
+   .session-intro sépare des blocs, pas un libellé de son objet — sans ce
+   rattrapage, le nom du temps flottait à mi-chemin entre le titre « Nouveau ! »
+   et la phrase, sans appartenir à l'un ni à l'autre. */
+.tense-chip + .conj-intro-sentence {
+  margin-top: -6px;
 }
 
 .conj-intro-sentence {
