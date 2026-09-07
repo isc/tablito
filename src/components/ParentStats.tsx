@@ -16,6 +16,7 @@ import { getHardestFacts } from '../lib/hardestFacts';
 import { remainderZoneBounds } from '../lib/remainderFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
+import ActivityStrip from './ActivityStrip';
 import ProgressGrid from './ProgressGrid';
 import DivisionProgressGrid from './DivisionProgressGrid';
 import RemainderProgressGrid from './RemainderProgressGrid';
@@ -44,6 +45,7 @@ const EVOLUTION_WINDOW = 20;
 // grille Leitner (~100 cases), deux graphes SVG, historique.
 function ParentStats({ profile }: { profile: UserProfile }) {
   const t = useParentDashboardStrings();
+  const today = todayISO();
   const guideBase = useGuideBase();
   const { lang } = useLang();
 
@@ -199,6 +201,12 @@ function ParentStats({ profile }: { profile: UserProfile }) {
           vivent plus bas sous le sélecteur (cf. carte de maîtrise). */}
       <div className="parent-section">
         <h3>{t.overview}</h3>
+        {/* Bandeau d'activité en tête : les cartes qui suivent sont toutes
+            cumulatives (total, série, record) et ne disent rien de la journée
+            en cours — or « a-t-il fait sa séance aujourd'hui, et laquelle ? »
+            est la question qu'on vient poser ici en premier. Avant le sélecteur
+            d'opération, parce qu'il montre les deux matières à la fois. */}
+        <ActivityStrip profile={profile} today={today} conjVisible={conjVisible} />
         {/* Trois cartes quand un sélecteur existe (le compteur de maîtrise vit
             alors sous celui-ci), quatre sinon. */}
         <div className={`parent-stats-grid${opTabs.length > 1 ? ' parent-stats-grid--three' : ''}`}>
@@ -207,7 +215,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
             <div className="parent-stat-label">{t.sessions}</div>
           </div>
           <div className="parent-stat-card">
-            <div className="parent-stat-value">{getActiveStreak(profile, todayISO())}</div>
+            <div className="parent-stat-value">{getActiveStreak(profile, today)}</div>
             <div className="parent-stat-label">{t.currentStreak}</div>
           </div>
           <div className="parent-stat-card">

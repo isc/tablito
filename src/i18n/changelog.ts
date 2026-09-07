@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-09-07',
+    items: [
+      "Espace parent : un coup d'œil suffit pour savoir où en est la journée. En haut de la vue d'ensemble, une phrase dit ce qui a été fait aujourd'hui et ce qui reste — « Aujourd'hui : maths faites », « Conjugaison pas encore » — suivie des quatorze derniers jours, une colonne par jour et une couleur par matière. Depuis que la conjugaison existe, une journée peut contenir deux séances, une seule ou aucune, et les compteurs cumulés (séances, série) ne le disaient pas : il fallait ouvrir l'historique et compter. Les jours antérieurs à l'ouverture de la conjugaison restent vides plutôt que barrés : ce ne sont pas des séances manquées.",
+    ],
+  },
+  {
     date: '2026-09-05',
     items: [
       "Espace parent : les maths et la conjugaison ne se mélangent plus. Le temps de réponse moyen, le taux de bonnes réponses et l'historique des séances additionnaient les deux matières sur une même courbe — or rappeler 7 × 8 et écrire « nous chantions » ne se mesurent pas au même mètre, et la moyenne du jour ne disait plus grand-chose d'autre que la matière pratiquée ce jour-là. Ces trois sections suivent désormais le sélecteur de matière, comme le faisaient déjà la répartition par boîte et la grille Leitner. Les séances déjà enregistrées sont reclassées : rien n'est perdu.",
@@ -207,6 +213,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-09-07',
+    items: [
+      "Parent area: one glance now tells you where the day stands. At the top of the overview, a line says what has been done today and what is left — \"Today: math done\", \"Conjugation not done yet\" — followed by the last fourteen days, one column per day and one colour per subject. Since conjugation exists, a day can hold two sessions, one, or none, and the running totals (sessions, streak) never said which: you had to open the history and count. Days before conjugation was unlocked stay blank rather than marked as missed — they were not missed sessions.",
+    ],
+  },
   {
     date: '2026-09-05',
     items: [

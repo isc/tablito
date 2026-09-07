@@ -18,6 +18,13 @@ function timeAgo(iso: string, lang: Lang): string | null {
   return hours < 24 ? rtf.format(-hours, 'hour') : rtf.format(-Math.round(hours / 24), 'day');
 }
 
+// « hier » / « il y a 3 jours » — `numeric: 'auto'` donne le mot du jour d'hier
+// dans chaque langue, ce qu'une interpolation à la main devrait coder par
+// langue en même temps que la règle du pluriel.
+function daysAgoLabel(daysAgo: number, lang: Lang): string {
+  return new Intl.RelativeTimeFormat(localeFor(lang), { numeric: 'auto' }).format(-daysAgo, 'day');
+}
+
 // === ParentDashboard ===
 
 interface ParentDashboardStrings {
@@ -25,6 +32,21 @@ interface ParentDashboardStrings {
   parentArea: string;
   profileSuffix: (name: string) => string;
   overview: string;
+  // Bandeau d'activité : une phrase qui dit l'état du jour, puis 14 colonnes.
+  // Le titre est composé (« Aujourd'hui : … ») pour que la partie variable
+  // reste une phrase entière traduisible, pas un assemblage de mots.
+  activityHeading: (state: string) => string;
+  activityNothingYet: string;
+  activitySessionDone: string;
+  activityMathDone: string;
+  activityConjDone: string;
+  activityBothDone: string;
+  activityMathPending: string;
+  activityConjPending: string;
+  activityLastSession: (daysAgo: number) => string;
+  activityNoSessionEver: string;
+  activityMath: string;
+  activityAlt: (days: number) => string;
   sessions: string;
   currentStreak: string;
   bestStreak: string;
@@ -126,6 +148,8 @@ interface ParentDashboardStrings {
   shareText: string;
   // formats de date / opérande
   formatShortDate: (date: Date) => string;
+  // Initiale du jour de la semaine sous les colonnes du bandeau d'activité.
+  formatWeekdayNarrow: (date: Date) => string;
   formatLongDate: (date: Date) => string;
   divSymbol: string;
   multSymbol: string;
@@ -142,6 +166,18 @@ const parentDashboardFr: ParentDashboardStrings = {
   parentArea: 'Espace parent',
   profileSuffix: (name) => `${name}\u00a0· profil`,
   overview: "Vue d'ensemble",
+  activityHeading: (state) => `Aujourd'hui\u00a0: ${state}`,
+  activityNothingYet: 'pas encore de séance',
+  activitySessionDone: 'séance faite',
+  activityMathDone: 'maths faites',
+  activityConjDone: 'conjugaison faite',
+  activityBothDone: 'maths et conjugaison faites',
+  activityMathPending: 'Maths pas encore.',
+  activityConjPending: 'Conjugaison pas encore.',
+  activityLastSession: (daysAgo) => `Dernière séance ${daysAgoLabel(daysAgo, 'fr')}.`,
+  activityNoSessionEver: 'Aucune séance pour le moment.',
+  activityMath: 'Maths',
+  activityAlt: (days) => `Activité des ${days} derniers jours`,
   sessions: 'Séances',
   currentStreak: 'Série actuelle',
   bestStreak: 'Meilleure série',
@@ -253,6 +289,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   shareText: 'Tablito — pour apprendre les tables de multiplication.',
   formatShortDate: (date) =>
     date.toLocaleDateString(localeFor('fr'), { day: 'numeric', month: 'short' }),
+  formatWeekdayNarrow: (date) =>
+    date.toLocaleDateString(localeFor('fr'), { weekday: 'narrow' }),
   formatLongDate: (date) =>
     date.toLocaleDateString(localeFor('fr'), { weekday: 'short', day: 'numeric', month: 'long' }),
   divSymbol: '÷',
@@ -270,6 +308,18 @@ const parentDashboardEn: ParentDashboardStrings = {
   parentArea: 'Parent area',
   profileSuffix: (name) => `${name}\u00a0· profile`,
   overview: 'Overview',
+  activityHeading: (state) => `Today: ${state}`,
+  activityNothingYet: 'no session yet',
+  activitySessionDone: 'session done',
+  activityMathDone: 'math done',
+  activityConjDone: 'conjugation done',
+  activityBothDone: 'math and conjugation done',
+  activityMathPending: 'Math not done yet.',
+  activityConjPending: 'Conjugation not done yet.',
+  activityLastSession: (daysAgo) => `Last session ${daysAgoLabel(daysAgo, 'en')}.`,
+  activityNoSessionEver: 'No session yet.',
+  activityMath: 'Math',
+  activityAlt: (days) => `Activity over the last ${days} days`,
   sessions: 'Sessions',
   currentStreak: 'Current streak',
   bestStreak: 'Best streak',
@@ -381,6 +431,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   shareText: 'Tablito — to learn the multiplication tables.',
   formatShortDate: (date) =>
     date.toLocaleDateString(localeFor('en'), { day: 'numeric', month: 'short' }),
+  formatWeekdayNarrow: (date) =>
+    date.toLocaleDateString(localeFor('en'), { weekday: 'narrow' }),
   formatLongDate: (date) =>
     date.toLocaleDateString(localeFor('en'), { weekday: 'short', day: 'numeric', month: 'long' }),
   divSymbol: '÷',
