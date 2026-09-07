@@ -53,6 +53,119 @@
   color: var(--ink-soft);
 }
 
+/* ===== components/ActivityStrip.css ===== */
+/* Bandeau d'activité de l'espace parent (cf. ActivityStrip.tsx). Le châssis de
+   carte et la typo du sous-titre viennent de `.parent-stat-card` et
+   `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
+   éléments : on ne redéclare ici que ce qui diffère. */
+
+.parent-activity {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.parent-activity-heading {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+
+.parent-activity-sub {
+  margin: 2px 0 0;
+}
+
+.parent-activity-strip {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.parent-activity-day {
+  flex: 1;
+  min-width: 0;
+}
+
+.parent-activity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 7px;
+}
+
+/* Le jour en cours : c'est LA colonne que le parent cherche, elle doit se
+   trouver sans compter les autres. */
+.parent-activity-day.is-today .parent-activity-cell {
+  background: var(--indigo-soft);
+}
+
+.parent-activity-seg {
+  display: block;
+  height: 13px;
+  border-radius: 4px;
+  background: var(--line-soft);
+}
+
+.parent-activity-seg--math.is-done {
+  background: var(--indigo);
+}
+
+.parent-activity-seg--conj.is-done {
+  background: var(--sage);
+}
+
+/* Jour antérieur à l'ouverture de la conjugaison : pas de case vide (qui se
+   lirait « séance manquée »), pas de case pleine — rien. */
+.parent-activity-seg.is-void {
+  background: transparent;
+}
+
+.parent-activity-label {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-align: center;
+  margin-top: 3px;
+}
+
+.parent-activity-day.is-today .parent-activity-label {
+  color: var(--indigo);
+}
+
+.parent-activity-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.parent-activity-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.parent-activity-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.parent-activity-swatch--math {
+  background: var(--indigo);
+}
+
+.parent-activity-swatch--conj {
+  background: var(--sage);
+}
+
 /* ===== components/Badge.css ===== */
 .badge {
   display: flex;
