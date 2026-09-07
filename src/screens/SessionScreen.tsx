@@ -39,6 +39,7 @@ import {
   type ConjJudgement,
 } from '../lib/conjugationComposer';
 import { conjStrings as tc } from '../i18n/conjugation';
+import { TENSE_NAMES } from '../i18n/tense';
 import { getStrategy, hasStrategy } from '../lib/strategies';
 import { getDivisionStrategy } from '../lib/divisionStrategies';
 import { getRemainderStrategy } from '../lib/remainderStrategies';
@@ -818,6 +819,9 @@ export default function SessionScreen({
 
           {conjIntroStep === 'sentence' ? (
             <>
+              {/* Le nom du temps — nommé ici et au feedback, jamais sur la
+                  question (cf. `tenseName` dans i18n/conjugation). */}
+              <div className="eyebrow tense-chip">{TENSE_NAMES.fr[cv.def.tense]}</div>
               {/* 1. La phrase en contexte, lue à voix haute, forme visible —
                   même mise en scène empilée que la question. */}
               <div className="conj-intro-sentence">

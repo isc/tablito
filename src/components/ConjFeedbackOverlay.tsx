@@ -7,6 +7,7 @@ import type { ConjQuestionView } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
 import { pickRandom } from '../lib/utils';
 import { conjStrings as t } from '../i18n/conjugation';
+import { TENSE_NAMES } from '../i18n/tense';
 import type { BoxLevel } from '../types';
 import { isConjAccepted, type ConjVerdict } from '../lib/conjugationComposer';
 import { FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
@@ -51,6 +52,11 @@ export default function ConjFeedbackOverlay({
   const [praise] = useState(() => pickRandom(t.correctMessages));
   const accepted = isConjAccepted(verdict);
 
+  // Le nom du temps, une fois la réponse donnée : l'appariement « Demain, … »
+  // → futur se construit par répétition, sans servir d'indice pendant la
+  // question (cf. `tenseName` dans i18n/conjugation).
+  const tenseChip = <div className="eyebrow tense-chip">{TENSE_NAMES.fr[view.def.tense]}</div>;
+
   useEffect(() => {
     if (!accepted) return;
     const timer = setTimeout(
@@ -71,6 +77,7 @@ export default function ConjFeedbackOverlay({
         <div className="conj-feedback-form">
           <ConjForm segment={view.segment} subject={view.subject} />
         </div>
+        {tenseChip}
       </div>
     );
   }
@@ -83,6 +90,10 @@ export default function ConjFeedbackOverlay({
     <div className="feedback-overlay incorrect conj-feedback">
       <div className="feedback-card">
         <div className="feedback-message incorrect">{t.incorrectMessage}</div>
+        {/* Sujet de la carte, pas légende de la forme : l'astuce éventuelle,
+            plus bas, nomme déjà le temps dans son titre — les deux se
+            télescopaient en fin de carte. */}
+        {tenseChip}
         <div className="feedback-user-answer">
           {t.youWrote} <b>{view.displayedStem}{typed}</b>
         </div>

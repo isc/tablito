@@ -12,6 +12,7 @@ import {
   typeLetters as tapLetters,
 } from './helpers/dom';
 import { conjItem } from './helpers/conjItems';
+import type { ConjSessionItem } from '../types';
 import { patchBufferSource } from './helpers/audio';
 
 // Tests DOM de la matière conjugaison (spec Verbito) : rendu d'une question,
@@ -365,6 +366,55 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
     fireEvent.click(findButton(/J'ai compris/));
     // La file s'est allongée d'un re-test.
     expect(document.querySelectorAll('.session-progress-dot')).toHaveLength(2);
+  });
+});
+
+describe('Nom du temps — pastille', () => {
+  const mount = (item: ConjSessionItem) =>
+    render(
+      <SessionScreen
+        questions={[item]}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={() => {}}
+      />,
+    );
+  // Le texte est en minuscules dans le DOM — la capitale vient du `text-transform`.
+  const chip = () => document.querySelector('.tense-chip')?.textContent;
+
+  // Le cœur de la décision : « imparfait » et « futur » ne se distinguent, à la
+  // 1re personne, que par le marqueur temporel de la phrase (§15.4). Nommer le
+  // temps au-dessus de l'énoncé donnerait la réponse — on ne le nomme donc que
+  // là où il n'y a plus rien à deviner.
+  it('la question ne nomme jamais le temps', () => {
+    mount(conjItem('imp-je', 0));
+
+    expect(chip()).toBeUndefined();
+    expect(text()).not.toMatch(/imparfait/i);
+  });
+
+  it('l’introduction le nomme, à côté de la forme complète', () => {
+    mount(conjItem('imp-je', 0, { isIntroduction: true }));
+
+    expect(chip()).toBe('imparfait');
+  });
+
+  it('le feedback le nomme quand la réponse est juste', () => {
+    mount(conjItem('imp-je', 0));
+    tapLetters('ais');
+    tapValidate();
+
+    expect(chip()).toBe('imparfait');
+  });
+
+  it('le feedback le nomme quand la réponse est fausse', () => {
+    // « Demain, je chanterai » — tapé la terminaison de l'imparfait.
+    mount(conjItem('fut-je', 0));
+    tapLetters('ais');
+    tapValidate();
+
+    expect(document.querySelector('.feedback-message.incorrect')).not.toBeNull();
+    expect(chip()).toBe('futur');
   });
 });
 

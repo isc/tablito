@@ -1,4 +1,6 @@
 import { pickStrings, type Lang } from './lang';
+import { TENSE_NAMES } from './tense';
+import type { ConjTense } from '../types';
 
 // Traductions des badges. Les métadonnées non textuelles (id, icône, couleur,
 // logique de progression) vivent dans lib/badges.ts ; ici, uniquement les
@@ -43,16 +45,10 @@ export interface BadgeI18n {
   // verbe irrégulier (7). La matière est fr-only — l'entrée `en` existe pour
   // que la table reste totale, elle n'est jamais affichée (les badges de
   // conjugaison sont masqués quand la langue d'interface est l'anglais).
-  conjTense: (tense: 'present' | 'imparfait' | 'futur') => BadgeText;
+  conjTense: (tense: ConjTense) => BadgeText;
   conjVerb: (verb: string) => BadgeText;
   units: BadgeUnitLabels;
 }
-
-// Nom affichable d'un temps, par langue.
-const TENSE_NAMES: Record<Lang, Record<'present' | 'imparfait' | 'futur', string>> = {
-  fr: { present: 'présent', imparfait: 'imparfait', futur: 'futur' },
-  en: { present: 'present', imparfait: 'imperfect', futur: 'future' },
-};
 
 const fr: BadgeI18n = {
   premierPas: {

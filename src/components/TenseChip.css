@@ -1,0 +1,21 @@
+/* Pastille du nom d'un temps — présent, imparfait, futur. Apparence seulement,
+   comme Formula.css ou Medallion.css : le positionnement reste à la charge du
+   point d'appel (l'introduction d'un fait, la carte de feedback).
+
+   Volontairement ABSENTE de la question : le marqueur temporel de la phrase
+   porteuse (« Hier, », « Demain, ») est ce qui porte le temps, et c'est en le
+   lisant que se travaille la discrimination futur -ai / imparfait -ais. Voir
+   `tenseName` dans i18n/conjugation.ts pour la décision complète.
+
+   Se compose avec `.eyebrow` (index.css) : la pastille n'ajoute que le chrome.
+   Seule l'encre est reprise — sur le fond crème sombre, le gris d'eyebrow
+   tombe sous le contraste AA à ce corps. Encre neutre par ailleurs : la
+   pastille nomme, elle n'agit pas (ni l'indigo des boutons, ni les couleurs
+   radical/terminaison de la forme). */
+.tense-chip {
+  background: var(--cream-deep);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 14px;
+  color: var(--ink-soft);
+}

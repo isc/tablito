@@ -29,3 +29,17 @@
 .feedback-overlay.correct .conj-feedback-form {
   margin-top: 4px;
 }
+
+/* La pastille du temps (apparence dans TenseChip.css) : sujet de la carte
+   d'erreur, juste sous son titre — c'est la place que tient l'eyebrow de la
+   grille de points côté maths. Le `align-self` est pour la carte, dont la
+   colonne étire ses enfants ; sur le chemin accepté, l'overlay centre déjà. */
+.conj-feedback .tense-chip {
+  align-self: center;
+  margin: 2px 0 8px;
+}
+
+/* Chemin accepté : pas de carte, la pastille ferme l'écran sous la forme. */
+.feedback-overlay.correct .tense-chip {
+  margin: 10px 0 0;
+}

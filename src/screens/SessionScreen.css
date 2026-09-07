@@ -215,6 +215,15 @@
   gap: 18px;
 }
 
+/* La pastille du temps (apparence dans TenseChip.css) étiquette la phrase juste
+   dessous : les deux forment un groupe, d'où l'espace resserré. Le `gap` de
+   .session-intro sépare des blocs, pas un libellé de son objet — sans ce
+   rattrapage, le nom du temps flottait à mi-chemin entre le titre « Nouveau ! »
+   et la phrase, sans appartenir à l'un ni à l'autre. */
+.tense-chip + .conj-intro-sentence {
+  margin-top: -6px;
+}
+
 .conj-intro-sentence {
   max-width: 340px;
   margin-top: 8px;

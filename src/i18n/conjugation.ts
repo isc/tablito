@@ -3,6 +3,12 @@
 // est fr-only (masquée quand la langue d'interface est l'anglais), exactement
 // comme `lib/conjugationStrategies.ts`. Une traduction anglaise serait du texte
 // mort — et un `useStrings` ici laisserait croire que l'écran est bilingue.
+//
+// AUCUN import runtime ici : `scripts/generate-tts.mjs` charge ce module via
+// `importTs` (transformation fichier à fichier, import en data: URL), et un
+// import relatif ne s'y résout pas. C'est pourquoi le nom des temps vit dans
+// `i18n/tense.ts` et non dans cette table — la matière est fr-only, mais les
+// badges sont bilingues et lisent la même table.
 
 export const conjStrings = {
   // --- Écran de séance ---
