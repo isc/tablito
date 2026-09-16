@@ -588,7 +588,11 @@ interface FeedbackModalStrings {
   messagePlaceholder: string;
   emailLabel: string;
   emailPlaceholder: string;
-  attachHistory: string;
+  // Nommé : le formulaire vit dans l'espace parent, qui peut afficher un profil
+  // suivi À DISTANCE alors que la case jointe, elle, ne peut joindre que le
+  // profil local en cours (cf. buildContext). Sans le prénom, un parent qui
+  // consulte l'onglet de son enfant croit joindre CE profil-là.
+  attachHistory: (name: string) => string;
   attachHistoryHint: string;
   errorPrefix: (msg: string) => string;
   sendFailed: string;
@@ -607,9 +611,9 @@ const feedbackModalFr: FeedbackModalStrings = {
   messagePlaceholder: 'Votre message…',
   emailLabel: 'Email (optionnel, si vous souhaitez une réponse)',
   emailPlaceholder: 'vous@exemple.com',
-  attachHistory: "Joindre l'historique détaillé du profil",
+  attachHistory: (name) => `Joindre l'historique détaillé du profil de ${name}`,
   attachHistoryHint:
-    'Si vous signalez un bug précis, ça aide à reproduire. Inclut les multiplications posées et les réponses données — pas le prénom.',
+    "Si vous signalez un bug précis, ça aide à reproduire. Inclut les questions posées et les réponses données — pas le prénom. Ce profil uniquement : ni les autres profils de cet appareil, ni les profils suivis à distance.",
   errorPrefix: (msg) => `Erreur : ${msg}`,
   sendFailed: 'Envoi impossible',
   cancel: 'Annuler',
@@ -626,9 +630,9 @@ const feedbackModalEn: FeedbackModalStrings = {
   messagePlaceholder: 'Your message…',
   emailLabel: "Email (optional, if you'd like a reply)",
   emailPlaceholder: 'you@example.com',
-  attachHistory: 'Attach the detailed profile history',
+  attachHistory: (name) => `Attach the detailed profile history for ${name}`,
   attachHistoryHint:
-    "If you're reporting a specific bug, this helps reproduce it. Includes the multiplications asked and the answers given — not the first name.",
+    "If you're reporting a specific bug, this helps reproduce it. Includes the questions asked and the answers given — not the first name. This profile only: neither the other profiles on this device, nor the profiles you follow remotely.",
   errorPrefix: (msg) => `Error: ${msg}`,
   sendFailed: "Couldn't send",
   cancel: 'Cancel',

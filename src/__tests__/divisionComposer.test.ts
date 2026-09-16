@@ -93,6 +93,29 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     expect(session.filter((q) => q.isIntroduction).length).toBeGreaterThan(0);
   });
 
+  it('reprend les intros en fin de parcours même avec un fait coincé en boîte 1', () => {
+    // Cas remonté par un parent : 52/64 divisions introduites, tout le reste en
+    // boîte 4-5, et plus aucune intro pendant des semaines. Avec 52 faits
+    // introduits, la règle boîte≥2 exige une séance SANS la moindre erreur —
+    // sinon un fait retombe en boîte 1 et gèle l'introduction des 12 derniers.
+    // La phase finale (dernier cinquième du jeu) doit lever cette règle, comme
+    // elle le fait depuis toujours pour les 36 multiplications.
+    const p = createNewProfile('Zoé');
+    p.facts = p.facts.map((f) => ({ ...f, box: 5 as const, introduced: true }));
+    p.divisionFacts = p.divisionFacts!.map((f, i) =>
+      i < 52
+        ? {
+            ...f,
+            introduced: true,
+            box: i === 0 ? (1 as const) : (5 as const),
+            nextDue: '2026-12-31',
+          }
+        : f,
+    );
+    const session = composeDivisionSession(p, NOW);
+    expect(session.filter((q) => q.isIntroduction).length).toBeGreaterThan(0);
+  });
+
   it('inclut les faits de division déjà introduits et dus en révision', () => {
     const p = withMastered([[2, 2], [3, 3], [4, 4], [5, 5]]);
     // Introduit + dû (nextDue vide = dû) quelques faits de division.

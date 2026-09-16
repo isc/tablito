@@ -100,7 +100,7 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
                 disabled={status === 'sending'}
               />
               <span>
-                <strong>{t.attachHistory}</strong>
+                <strong>{t.attachHistory(profile.name)}</strong>
                 <span className="feedback-checkbox-hint">
                   {t.attachHistoryHint}
                 </span>

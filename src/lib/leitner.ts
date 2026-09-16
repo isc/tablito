@@ -113,7 +113,21 @@ export function processAnswer<T extends Schedulable>(
 // difficile au-delà du dernier fait réussi au placement (ex : 7×9, 8×9, 9×9 —
 // 3 faits). Le seuil englobe ce coin avec marge (≤ 7 restants ⇔ ≥ 29/36
 // introduits = clairement en fin de parcours).
-const TAIL_INTRO_THRESHOLD = 7;
+//
+// ⚠ Le seuil est RELATIF à la taille du jeu de faits, pas absolu. Écrit en dur
+// à 7, il était calibré sur les 36 multiplications (7/36 ≈ 20 %) et réutilisé
+// tel quel par la division (64), le reste (64) et la conjugaison (63) — où
+// « ≤ 7 restants » veut dire 89 % du jeu introduit au lieu de 81 %. Vécu en
+// prod : un profil avec 52/64 divisions introduites et tout le reste en boîte
+// 4-5 n'introduisait plus rien pendant des semaines — le mode tail ne s'ouvrait
+// qu'à 57/64, et entre-temps la règle boîte≥2 exigeait une séance SANS AUCUNE
+// erreur (une seule faute renvoie un fait en boîte 1 et gèle l'intro jusqu'à ce
+// qu'il remonte). Sur 52 faits introduits, cette séance parfaite n'arrive
+// presque jamais. Le cinquième du jeu redonne à chaque matière la fin de
+// parcours prévue par les specs : 7/36 (inchangé), 12/64, 12/63.
+function tailIntroThreshold(total: number): number {
+  return Math.floor(total / 5);
+}
 
 /**
  * Returns true if a new fact should be introduced.
@@ -125,7 +139,7 @@ const TAIL_INTRO_THRESHOLD = 7;
 export function shouldIntroduceNew(facts: { introduced: boolean; box: BoxLevel }[]): boolean {
   const introduced = facts.filter((f) => f.introduced);
   if (introduced.length === 0) return true;
-  if (facts.length - introduced.length <= TAIL_INTRO_THRESHOLD) return true;
+  if (facts.length - introduced.length <= tailIntroThreshold(facts.length)) return true;
   return introduced.every((f) => f.box >= 2);
 }
 

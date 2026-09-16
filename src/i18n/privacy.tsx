@@ -74,6 +74,14 @@ const fr: PrivacyStrings = {
       quelques statistiques agrégées (nombre de séances, faits
       maîtrisés, streak, jours depuis le début).
     </>,
+    <>
+      si — et seulement si — vous cochez{' '}
+      <strong>«&nbsp;Joindre l'historique détaillé du profil&nbsp;»</strong>&nbsp;:
+      l'historique de ce profil (boîtes, questions posées, réponses données,
+      séances). <strong>Ce profil-là uniquement</strong>&nbsp;: celui qui est
+      ouvert sur cet appareil, jamais les autres profils de l'appareil ni un
+      profil suivi à distance.
+    </>,
   ],
   feedbackOutro: (
     <>
@@ -219,6 +227,13 @@ const en: PrivacyStrings = {
       anonymous context: browser, language, screen size, and a few
       aggregated statistics (number of sessions, mastered facts, streak,
       days since you started).
+    </>,
+    <>
+      if — and only if — you tick{' '}
+      <strong>"Attach the detailed profile history"</strong>: that profile's
+      history (boxes, questions asked, answers given, sessions).{' '}
+      <strong>That profile only</strong>: the one open on this device, never the
+      other profiles on the device nor a profile you follow remotely.
     </>,
   ],
   feedbackOutro: (
