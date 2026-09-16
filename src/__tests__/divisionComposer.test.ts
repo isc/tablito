@@ -9,12 +9,14 @@ import { processAnswer, isDue } from '../lib/leitner';
 import { getFactKey } from '../lib/facts';
 
 // Marque les paires multiplicatives données comme prêtes (boîte 4+, boîte 5 par
-// défaut). Le gate d'intro division est aligné sur boîte ≥ 4 (isDivisionUnlocked).
-function withMastered(masteredPairs: [number, number][], box: 4 | 5 = 5): UserProfile {
+// défaut), ou toute la table avec 'all'. Le gate d'intro division est aligné sur
+// boîte ≥ 4 (isDivisionUnlocked) — il a déjà bougé une fois, d'où le helper.
+function withMastered(masteredPairs: [number, number][] | 'all', box: 4 | 5 = 5): UserProfile {
   const p = createNewProfile('Zoé');
-  const keys = new Set(masteredPairs.map(([a, b]) => getFactKey(a, b)));
+  const keys =
+    masteredPairs === 'all' ? null : new Set(masteredPairs.map(([a, b]) => getFactKey(a, b)));
   p.facts = p.facts.map((f) =>
-    keys.has(getFactKey(f.a, f.b)) ? { ...f, box, introduced: true } : f,
+    !keys || keys.has(getFactKey(f.a, f.b)) ? { ...f, box, introduced: true } : f,
   );
   return p;
 }
@@ -100,8 +102,7 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     // sinon un fait retombe en boîte 1 et gèle l'introduction des 12 derniers.
     // La phase finale (dernier cinquième du jeu) doit lever cette règle, comme
     // elle le fait depuis toujours pour les 36 multiplications.
-    const p = createNewProfile('Zoé');
-    p.facts = p.facts.map((f) => ({ ...f, box: 5 as const, introduced: true }));
+    const p = withMastered('all');
     p.divisionFacts = p.divisionFacts!.map((f, i) =>
       i < 52
         ? {

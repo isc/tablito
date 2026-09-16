@@ -17,6 +17,8 @@ CLAUDE.local.md
 # vivent aussi dans .claude/ — on ignore seulement les artefacts runtime.
 .claude/*.lock
 .claude/settings.local.json
+# Worktrees des agents lancés en parallèle (clones jetables du repo).
+.claude/worktrees/
 
 # Skills installées via `npx skills add` (HyperFrames & co) : tooling local
 # vendoré dans .agents/, symlinké dans .claude/skills/. Hors périmètre app.

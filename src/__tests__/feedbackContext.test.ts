@@ -14,8 +14,6 @@ describe('buildContext — ce que joint la case « historique détaillé »', ()
     const profile = createNewProfile('Zoé');
     const ctx = buildContext(profile, true);
     expect(ctx.profile_snapshot).toBeDefined();
-    // Un objet profil, pas une collection : aucune chance d'en embarquer deux.
-    expect(Array.isArray(ctx.profile_snapshot)).toBe(false);
     expect(ctx.profile_snapshot?.facts).toHaveLength(profile.facts.length);
   });
 

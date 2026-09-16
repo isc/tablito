@@ -76,7 +76,10 @@ const fr: PrivacyStrings = {
     </>,
     <>
       si — et seulement si — vous cochez{' '}
-      <strong>«&nbsp;Joindre l'historique détaillé du profil&nbsp;»</strong>&nbsp;:
+      <strong>
+        «&nbsp;Joindre l'historique détaillé du profil de <em>prénom</em>&nbsp;»
+      </strong>
+      &nbsp;:
       l'historique de ce profil (boîtes, questions posées, réponses données,
       séances). <strong>Ce profil-là uniquement</strong>&nbsp;: celui qui est
       ouvert sur cet appareil, jamais les autres profils de l'appareil ni un
@@ -230,8 +233,11 @@ const en: PrivacyStrings = {
     </>,
     <>
       if — and only if — you tick{' '}
-      <strong>"Attach the detailed profile history"</strong>: that profile's
-      history (boxes, questions asked, answers given, sessions).{' '}
+      <strong>
+        "Attach the detailed profile history for <em>name</em>"
+      </strong>
+      : that profile's history (boxes, questions asked, answers given,
+      sessions).{' '}
       <strong>That profile only</strong>: the one open on this device, never the
       other profiles on the device nor a profile you follow remotely.
     </>,

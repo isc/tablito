@@ -80,15 +80,8 @@ describe('shouldIntroduceNew — phase finale sur les jeux de faits plus grands'
     }));
   }
 
-  it('relâche la règle à 52/64 (division) — le cas remonté par un parent', () => {
-    expect(shouldIntroduceNew(deck(64, 52))).toBe(true);
-  });
-
-  it('protège encore à 49/64 (15 restants, pas encore la fin de parcours)', () => {
-    expect(shouldIntroduceNew(deck(64, 49))).toBe(false);
-  });
-
   it('place la frontière au cinquième du jeu : 12 restants oui, 13 non (64 faits)', () => {
+    // 52/64 est exactement le cas remonté par un parent : il bascule du bon côté.
     expect(shouldIntroduceNew(deck(64, 52))).toBe(true); // 12 restants
     expect(shouldIntroduceNew(deck(64, 51))).toBe(false); // 13 restants
   });

@@ -712,41 +712,41 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
   const carrier = def.carriers[index];
   const { person, verb } = carrier;
 
-  let displayedStem: string;
-  let expected: string;
   let segment: [string, string];
   let endingOnly: boolean;
 
   if (def.kind === 'ending') {
-    const [stem, ending] = applyEuphony(regularStem(verb, def.tense), def.ending as string);
-    segment = [stem, ending];
-    // Au FUTUR, le radical régulier EST l'infinitif (« trouver » + « ons ») :
-    // l'afficher donnerait la moitié de la réponse, et justement la moitié
-    // qu'on teste — « le futur se fabrique sur l'infinitif entier, e compris »
-    // est LE fait du temps (avis parent du 15/09/2026). L'enfant écrit donc la
-    // forme entière, comme pour un radical irrégulier. Aux autres temps le
-    // radical affiché ne trahit rien : il se déduit de l'infinitif déjà donné
-    // sous la question (chanter → chant), et la connaissance testée est bien
-    // la seule terminaison.
-    endingOnly = def.tense !== 'futur';
-    displayedStem = endingOnly ? stem : '';
-    expected = endingOnly ? ending : stem + ending;
+    const raw = regularStem(verb, def.tense);
+    segment = applyEuphony(raw, def.ending as string);
+    // Le radical n'est affiché que s'il est un vrai raccourci. Au FUTUR il n'en
+    // est pas un : regularStem rend l'infinitif entier (« trouver » + « ons »,
+    // « dire » → « dir »). L'afficher donnerait la moitié de la réponse, et
+    // justement la moitié qu'on teste — « le futur se fabrique sur l'infinitif
+    // entier, e compris » est LE fait du temps (avis parent du 15/09/2026).
+    // L'enfant écrit donc la forme entière, comme pour un radical irrégulier.
+    // Aux autres temps le radical ne trahit rien : il se déduit de l'infinitif
+    // déjà donné sous la question (chanter → chant), et la connaissance testée
+    // est bien la seule terminaison.
+    //
+    // Condition lue dans la DONNÉE, pas dans le nom du temps : un temps qui se
+    // fabriquerait lui aussi sur l'infinitif (le conditionnel, candidat
+    // évident) serait couvert sans qu'on ait à repasser ici.
+    endingOnly = raw.length < verb.length - 1;
   } else if (def.kind === 'stem') {
-    const ending = conjEndings(def.tense)[person];
-    const stem = def.stem as string;
-    displayedStem = '';
-    expected = stem + ending;
-    segment = [stem, ending];
+    segment = [def.stem as string, conjEndings(def.tense)[person]];
     endingOnly = false;
   } else {
     const [stem, mark] = def.segment as readonly [string, string];
-    displayedStem = '';
-    expected = def.form as string;
     segment = [stem, mark];
     endingOnly = false;
   }
 
   const form = segment[0] + segment[1];
+  // Une seule politique « qu'est-ce que l'enfant tape ? », au lieu d'une par
+  // `kind` : ou bien le radical est affiché et seule la terminaison est
+  // attendue, ou bien la ligne est vide et la forme entière est attendue.
+  const displayedStem = endingOnly ? segment[0] : '';
+  const expected = endingOnly ? segment[1] : form;
   const subject = conjSubject(person, form);
   const lead = `${carrier.before} ${subject}`;
   const tail = carrier.after ? ` ${carrier.after}` : '';

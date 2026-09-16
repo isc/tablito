@@ -34,8 +34,13 @@ const LETTERS = new Set(KEYS);
  * du périmètre — le futur régulier se tape en entier (§4.2), il a détrôné
  * « viendront » (9). 14 laisse de la marge pour une hésitation sans laisser
  * l'enfant remplir l'écran.
+ *
+ * ⚠ Donnée DÉRIVÉE de l'inventaire de conjugaison : un verbe plus long ajouté
+ * à `CONJ_GROUP1_VERBS` tronquerait la réponse de l'enfant en silence (aucune
+ * erreur, juste une bonne réponse impossible à saisir). L'invariant est
+ * verrouillé par `conjugationFacts.test.ts`, pas maintenu à la main.
  */
-const MAX_LENGTH = 14;
+export const MAX_LENGTH = 14;
 
 interface LetterKeyboardProps {
   onSubmit: (value: string) => void;

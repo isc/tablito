@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { conjFastThresholdMs, CONJ_FAST_BASE_MS, CONJ_FAST_PER_CHAR_MS } from '../types';
+import { MAX_LENGTH } from '../components/LetterKeyboard';
 import {
   conjFactDefs,
   CONJ_GROUP1_VERBS,
@@ -340,5 +341,24 @@ describe('seuil de rapidité (§4.5)', () => {
 
   it('retombe sur la base en vocal épelé (le coût moteur disparaît)', () => {
     expect(conjFastThresholdMs('viendront', 'voice')).toBe(CONJ_FAST_BASE_MS);
+  });
+});
+
+describe("garde-fou de saisie du clavier de lettres", () => {
+  // Le passage du futur à la forme entière a fait passer la plus longue
+  // réponse de « viendront » (9) à « regarderons » (11) : MAX_LENGTH avait dû
+  // être recalculé à la main. Un verbe plus long ajouté à l'inventaire
+  // tronquerait la saisie sans le moindre message d'erreur — on verrouille
+  // l'invariant plutôt que le nombre.
+  it("laisse de la marge au-dessus de la plus longue réponse de l'inventaire", () => {
+    let longest = '';
+    for (const def of conjFactDefs()) {
+      for (let i = 0; i < def.carriers.length; i++) {
+        const { expected } = resolveConjQuestion(def, i);
+        if (expected.length > longest.length) longest = expected;
+      }
+    }
+    expect(longest).toBe('regarderons');
+    expect(longest.length).toBeLessThan(MAX_LENGTH);
   });
 });
