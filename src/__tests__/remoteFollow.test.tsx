@@ -244,6 +244,29 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     addProfile(mine);
   }
 
+  // Espace parent ouvert sur l'enfant suivi, avec le profil local disponible en
+  // 2e onglet. L'appairage au boot évite de rejouer le ParentGate (déjà couvert
+  // par multiProfile.test.tsx). Le snapshot distant est construit ici, une fois :
+  // trois rédactions du « Zoé, 30 séances » dériveraient en silence.
+  async function renderMixed() {
+    await seedMixed();
+    const entry = listWatched()[0];
+    const child = { ...createNewProfile('Zoé'), totalSessions: 30 };
+    await renderApp({
+      watchPairing: { entry, snapshot: { profile: child, updatedAt: new Date().toISOString() } },
+    });
+    return { entry, child };
+  }
+
+  async function clickTab(label: RegExp) {
+    const tab = Array.from(document.querySelectorAll('.parent-op-tabs .progress-tab')).find((t) =>
+      label.test(t.textContent ?? ''),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      fireEvent.click(tab);
+    });
+  }
+
   it('un suiveur peut se créer un profil après coup, et les deux coexistent', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
     // Départ : appareil de parent, aucun profil local, un enfant suivi.
@@ -286,15 +309,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
 
   it('sélecteur de source : profil local par défaut, puis l’enfant distant', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
-    await seedMixed();
-    const paired = listWatched()[0];
-
-    // On ouvre l'espace parent via l'appairage au boot, ce qui évite de rejouer
-    // le ParentGate (déjà couvert par multiProfile.test.tsx).
-    const child = { ...createNewProfile('Zoé'), totalSessions: 30 };
-    await renderApp({
-      watchPairing: { entry: paired, snapshot: { profile: child, updatedAt: new Date().toISOString() } },
-    });
+    await renderMixed();
 
     // Deux onglets de source : le profil local et l'enfant suivi.
     const labels = tabLabels();
@@ -305,14 +320,70 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     expect(sessionsShown()).toBe('30');
 
     // …et la bascule vers le profil local montre bien SES stats.
-    const localTab = Array.from(
-      document.querySelectorAll('.parent-op-tabs .progress-tab'),
-    ).find((t) => /Papa/.test(t.textContent ?? '')) as HTMLButtonElement;
-    await act(async () => {
-      fireEvent.click(localTab);
-    });
+    await clickTab(/Papa/);
     expect(sessionsShown()).toBe('4');
     // Sur le profil local, les actions locales réapparaissent.
     expect(findButton(/^Supprimer ce profil$/)).not.toBeNull();
+  });
+
+  // « J'ai coché joindre l'historique détaillé du profil mais je ne sais pas si
+  // ça va envoyer uniquement le mien ou aussi celui de Zoé que je suis à
+  // distance » (avis du 15/09/2026). C'était le sien — donc un avis qui parlait
+  // de l'enfant partait sans l'historique qui aurait permis de le reproduire.
+  // L'avis suit désormais l'onglet ouvert.
+  it('l’avis joint le profil AFFICHÉ, enfant suivi à distance compris', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await renderMixed();
+
+    const openFeedback = async () => {
+      await act(async () => {
+        fireEvent.click(findButton(/^Envoyer un avis$/)!);
+      });
+    };
+    // Crochet stable plutôt que le texte du libellé : recopier la copy ici la
+    // ferait dériver, et un `?? ''` rendrait l'assertion négative vacuante.
+    const attachLabel = () => document.querySelector('.feedback-checkbox')?.textContent ?? null;
+
+    // Ce qui part vraiment, pas seulement ce que le libellé annonce : le
+    // snapshot est reconnaissable à son nombre de séances (Zoé 30, Papa 4).
+    const sentSnapshot = async () => {
+      const mock = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock;
+      const call = [...mock.calls].reverse().find((c) => String(c[0]).includes('/feedback'));
+      expect(call, 'aucun POST de feedback intercepté').toBeDefined();
+      return JSON.parse(String((call![1] as RequestInit).body)).context;
+    };
+    const sendFeedback = async () => {
+      fireEvent.input(document.querySelector('textarea')!, { target: { value: 'coucou' } });
+      fireEvent.click(document.querySelector('.feedback-checkbox input')!);
+      await act(async () => {
+        fireEvent.click(findButton(/^Envoyer$/)!);
+      });
+      return sentSnapshot();
+    };
+
+    // Onglet de l'enfant suivi : c'est SON historique qui part.
+    await openFeedback();
+    expect(attachLabel()).toContain('Zoé');
+    expect(attachLabel()).not.toContain('Papa');
+    const remote = await sendFeedback();
+    expect(remote.profile_snapshot.totalSessions).toBe(30);
+    // Le user-agent décrit l'appareil du parent, l'historique celui de l'enfant :
+    // sans ce champ, l'avis se relirait sur le mauvais appareil.
+    expect(remote.profile_source).toBe('watched');
+    expect(remote.profile_fetched_at).toBeTruthy();
+    await act(async () => {
+      // Après l'envoi, la modale passe sur l'écran de remerciement.
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.modal-close-btn')!);
+    });
+
+    // Bascule sur le profil local : l'avis suit.
+    await clickTab(/Papa/);
+    await openFeedback();
+    expect(attachLabel()).toContain('Papa');
+    expect(attachLabel()).not.toContain('Zoé');
+    const local = await sendFeedback();
+    expect(local.profile_snapshot.totalSessions).toBe(4);
+    expect(local.profile_source).toBe('local');
+    expect(local.profile_fetched_at).toBeUndefined();
   });
 });

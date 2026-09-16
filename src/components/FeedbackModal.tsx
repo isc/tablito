@@ -5,13 +5,20 @@ import Modal from './Modal';
 import { useFeedbackModalStrings } from '../i18n/parent';
 
 interface FeedbackModalProps {
+  /** Le profil AFFICHÉ par l'espace parent — local, ou enfant suivi. */
   profile: UserProfile | null;
+  /**
+   * D'où vient ce profil. Depuis qu'un enfant suivi à distance peut être joint,
+   * l'appareil décrit par le user-agent n'est plus forcément celui qui a produit
+   * l'historique : le triage a besoin de le savoir.
+   */
+  source?: { kind: 'local' | 'watched'; fetchedAt?: string };
   onClose: () => void;
 }
 
 type Status = 'idle' | 'sending' | 'success' | 'error';
 
-export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) {
+export default function FeedbackModal({ profile, source, onClose }: FeedbackModalProps) {
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [includeProfile, setIncludeProfile] = useState(false);
@@ -28,7 +35,7 @@ export default function FeedbackModal({ profile, onClose }: FeedbackModalProps) 
       await submitFeedback({
         message: message.trim(),
         email: email.trim() || undefined,
-        context: buildContext(profile, includeProfile),
+        context: buildContext(profile, includeProfile, source),
       });
       setStatus('success');
     } catch (err) {

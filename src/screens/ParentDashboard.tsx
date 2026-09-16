@@ -647,7 +647,25 @@ export default function ParentDashboard({
       )}
 
       {showFeedback && (
-        <FeedbackModal profile={profile} onClose={() => setShowFeedback(false)} />
+        // Le profil JOINT est celui qu'on REGARDE, pas celui de l'appareil :
+        // un parent qui signale un souci depuis l'onglet de son enfant suivi à
+        // distance parle de l'enfant, et joindre son propre profil rendait
+        // l'avis indébuggable (vécu : « 12 divisions bloquées » impossible à
+        // reproduire faute du bon historique).
+        //
+        // `shown` et non `shown ?? profile` : pendant « Récupération… » il vaut
+        // null, et le repli joindrait le profil local sous un libellé qui nomme
+        // l'enfant distant. FeedbackModal masque simplement la case quand il
+        // n'a pas de profil — l'avis part sans historique, ce qui est vrai.
+        <FeedbackModal
+          profile={shown}
+          source={
+            watchedEntry
+              ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt }
+              : { kind: 'local' }
+          }
+          onClose={() => setShowFeedback(false)}
+        />
       )}
 
       <div className="parent-version" aria-label={t.appVersionLabel}>

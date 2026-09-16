@@ -613,7 +613,7 @@ const feedbackModalFr: FeedbackModalStrings = {
   emailPlaceholder: 'vous@exemple.com',
   attachHistory: (name) => `Joindre l'historique détaillé du profil de ${name}`,
   attachHistoryHint:
-    "Si vous signalez un bug précis, ça aide à reproduire. Inclut les questions posées et les réponses données — pas le prénom. Ce profil uniquement : ni les autres profils de cet appareil, ni les profils suivis à distance.",
+    "Si vous signalez un bug précis, ça aide à reproduire. Inclut les questions posées et les réponses données — pas le prénom. Uniquement le profil affiché ci-dessus, celui que vous êtes en train de regarder : pas les autres profils de cet appareil, pas les autres enfants suivis.",
   errorPrefix: (msg) => `Erreur : ${msg}`,
   sendFailed: 'Envoi impossible',
   cancel: 'Annuler',
@@ -632,7 +632,7 @@ const feedbackModalEn: FeedbackModalStrings = {
   emailPlaceholder: 'you@example.com',
   attachHistory: (name) => `Attach the detailed profile history for ${name}`,
   attachHistoryHint:
-    "If you're reporting a specific bug, this helps reproduce it. Includes the questions asked and the answers given — not the first name. This profile only: neither the other profiles on this device, nor the profiles you follow remotely.",
+    "If you're reporting a specific bug, this helps reproduce it. Includes the questions asked and the answers given — not the first name. Only the profile shown above, the one you are currently looking at: not the other profiles on this device, and not the other children you follow.",
   errorPrefix: (msg) => `Error: ${msg}`,
   sendFailed: "Couldn't send",
   cancel: 'Cancel',

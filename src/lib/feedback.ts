@@ -28,11 +28,21 @@ export interface FeedbackContext {
   // précis (« il a eu telle question alors qu'il ne maîtrise pas »).
   // Opt-in via la case à cocher du formulaire.
   profile_snapshot?: Omit<UserProfile, 'name'>;
+  // D'OÙ vient le profil décrit ci-dessus. Depuis que l'avis joint le profil
+  // AFFICHÉ, `user_agent`/`viewport` (l'appareil du parent) et les données de
+  // l'enfant peuvent venir de deux appareils différents — et l'instantané
+  // distant peut dater de plusieurs heures. Sans ces deux champs, un avis
+  // « il a eu telle question » se relit sur le mauvais appareil.
+  profile_source?: 'local' | 'watched';
+  // Fraîcheur de l'instantané distant (ISO), quand `profile_source` vaut
+  // 'watched' : l'écran l'affiche, le payload doit le dire aussi.
+  profile_fetched_at?: string;
 }
 
 export function buildContext(
   profile: UserProfile | null,
   includeFullProfile = false,
+  source?: { kind: 'local' | 'watched'; fetchedAt?: string },
 ): FeedbackContext {
   const ctx: FeedbackContext = {
     app_version: import.meta.env.VITE_APP_VERSION ?? 'dev',
@@ -60,6 +70,10 @@ export function buildContext(
     if (includeFullProfile) {
       const { name: _name, ...rest } = profile;
       ctx.profile_snapshot = rest;
+    }
+    if (source) {
+      ctx.profile_source = source.kind;
+      if (source.fetchedAt) ctx.profile_fetched_at = source.fetchedAt;
     }
   }
   return ctx;

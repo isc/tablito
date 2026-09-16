@@ -81,9 +81,9 @@ const fr: PrivacyStrings = {
       </strong>
       &nbsp;:
       l'historique de ce profil (boîtes, questions posées, réponses données,
-      séances). <strong>Ce profil-là uniquement</strong>&nbsp;: celui qui est
-      ouvert sur cet appareil, jamais les autres profils de l'appareil ni un
-      profil suivi à distance.
+      séances). <strong>Ce profil-là uniquement</strong>&nbsp;: celui que
+      l'espace parent affiche au moment de l'envoi — un enfant suivi à distance
+      si c'est son onglet qui est ouvert — jamais les autres.
     </>,
   ],
   feedbackOutro: (
@@ -238,8 +238,9 @@ const en: PrivacyStrings = {
       </strong>
       : that profile's history (boxes, questions asked, answers given,
       sessions).{' '}
-      <strong>That profile only</strong>: the one open on this device, never the
-      other profiles on the device nor a profile you follow remotely.
+      <strong>That profile only</strong>: the one the parent area is showing
+      when you send — a child you follow remotely if that is the open tab —
+      never the others.
     </>,
   ],
   feedbackOutro: (

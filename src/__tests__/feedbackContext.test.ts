@@ -2,13 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { buildContext } from '../lib/feedback';
 import { createNewProfile } from '../lib/storage';
 
-// Question d'un parent qui suit un enfant à distance : « joindre l'historique
-// détaillé du profil » envoie-t-il aussi le profil suivi ? Non — buildContext
-// ne connaît qu'UN profil, celui que l'espace parent lui passe (le profil local
-// en cours). Les profils suivis à distance ne vivent qu'en mémoire côté
-// affichage (lib/watch), et les autres profils locaux ne sont jamais lus ici.
-// Verrouillé par un test : la case à cocher promet explicitement « ce profil
-// uniquement » dans son libellé.
+// `buildContext` ne connaît qu'UN profil : celui que l'espace parent lui passe,
+// c'est-à-dire celui qu'il AFFICHE — profil local, ou enfant suivi à distance si
+// c'est son onglet qui est ouvert (cf. remoteFollow.test.tsx, qui verrouille ce
+// choix côté appelant). Jamais deux, jamais les autres profils de l'appareil :
+// c'est la promesse « ce profil uniquement » du libellé de la case.
 describe('buildContext — ce que joint la case « historique détaillé »', () => {
   it('joint un seul profil, celui passé en argument', () => {
     const profile = createNewProfile('Zoé');
