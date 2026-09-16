@@ -220,6 +220,34 @@ describe('réponse attendue et segmentation (§4.2, §4.5)', () => {
     expect(view.segment).toEqual(['sommes', '']);
   });
 
+  it('ne donne JAMAIS le radical au futur : il est l’infinitif, donc la réponse', () => {
+    // « Demain, je chanterai à la fête. » Le futur se fabrique sur l'infinitif
+    // entier : afficher « chanter » donnerait la règle même qu'on teste (avis
+    // parent du 15/09/2026). La segmentation, elle, reste — c'est elle qui
+    // porte l'attribution d'erreur et l'affichage en couleurs.
+    const view = resolveConjQuestion(conjFactDef('fut-je')!, 0);
+    expect(view.endingOnly).toBe(false);
+    expect(view.displayedStem).toBe('');
+    expect(view.expected).toBe('chanterai');
+    expect(view.segment).toEqual(['chanter', 'ai']);
+
+    // Les verbes en -re perdent leur e, et le futur du 1er groupe le garde :
+    // les deux se jouent maintenant sous les doigts de l'enfant.
+    const nous = resolveConjQuestion(conjFactDef('fut-nous')!, 0);
+    expect(nous.expected).toBe('mangerons');
+  });
+
+  it('garde le radical affiché aux temps où il ne trahit rien', () => {
+    // Présent et imparfait : le radical se déduit de l'infinitif déjà rappelé
+    // sous la question (chanter → chant), la connaissance testée est la seule
+    // terminaison — rien ne change.
+    for (const key of ['pres-g1-je', 'imp-je']) {
+      const view = resolveConjQuestion(conjFactDef(key)!, 0);
+      expect(view.endingOnly).toBe(true);
+      expect(view.displayedStem).toBe('chant');
+    }
+  });
+
   it('fait taper la forme entière pour un radical irrégulier, et la segmente', () => {
     const view = resolveConjQuestion(conjFactDef('fut-etre')!, 1);
     expect(view.expected).toBe('serons');

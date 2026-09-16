@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-09-16',
+    items: [
+      "Conjugaison, futur : l'enfant écrit désormais la forme entière. Jusqu'ici le radical était affiché devant le trait à compléter et il ne restait que la terminaison à taper — sauf qu'au futur, ce radical, c'est l'infinitif : « trouver » s'affichait, et « …ons » suffisait. Or « le futur se fabrique sur l'infinitif entier » est exactement ce que ce temps enseigne (trouverons, et non trouvrons) : la question donnait la moitié de la réponse, et justement celle qui coûte. Au futur, la ligne est donc vide comme pour les verbes irréguliers, et l'enfant écrit « nous trouverons » en entier — à la voix comme au clavier. Rien ne change au présent ni à l'imparfait, où le radical affiché ne révèle rien de plus que l'infinitif déjà rappelé sous la question. Merci au parent qui l'a remarqué.",
+    ],
+  },
+  {
     date: '2026-09-07',
     items: [
       "Espace parent : un coup d'œil suffit pour savoir où en est la journée. En haut de la vue d'ensemble, une phrase dit ce qui a été fait aujourd'hui et ce qui reste — « Aujourd'hui : maths faites », « Conjugaison pas encore » — suivie des quatorze derniers jours, une colonne par jour et une couleur par matière. Depuis que la conjugaison existe, une journée peut contenir deux séances, une seule ou aucune, et les compteurs cumulés (séances, série) ne le disaient pas : il fallait ouvrir l'historique et compter. Les jours antérieurs à l'ouverture de la conjugaison restent vides plutôt que barrés : ce ne sont pas des séances manquées.",
@@ -213,6 +219,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-09-16',
+    items: [
+      "Conjugation, future tense: the child now writes the whole form. Until now the stem was printed in front of the blank and only the ending had to be typed — except that in the future tense the stem is the infinitive itself: \"trouver\" was shown, and \"…ons\" was enough. Yet \"the future is built on the whole infinitive\" is precisely what this tense teaches (trouverons, not trouvrons): the question was handing over half the answer, and exactly the half that costs something. In the future tense the line is therefore left blank, as it already was for irregular verbs, and the child writes \"nous trouverons\" in full — by voice as well as on the keyboard. Nothing changes in the present or the imperfect, where the stem shown gives away nothing beyond the infinitive already recalled under the question. Thanks to the parent who spotted it.",
+    ],
+  },
   {
     date: '2026-09-07',
     items: [

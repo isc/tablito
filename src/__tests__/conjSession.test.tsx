@@ -90,6 +90,52 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
     expect(document.querySelector('.letterpad-display-prefix')).toBeNull();
   });
 
+  it('futur régulier : aucun radical donné non plus — l’infinitif EST la réponse', () => {
+    // « Demain, nous mangerons au restaurant. » Afficher « manger » donnerait
+    // la règle même que le futur teste (avis parent du 15/09/2026) : l'enfant
+    // écrit la forme entière, comme pour un irrégulier.
+    const onConjAnswer = vi.fn();
+    render(
+      <SessionScreen
+        questions={[conjItem('fut-nous', 0)]}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={onConjAnswer}
+      />,
+    );
+
+    // L'infinitif reste rappelé — sans lui, on ne saurait pas quel verbe
+    // conjuguer — mais il n'est plus pré-écrit dans la réponse.
+    expect(text()).toContain('(manger)');
+    expect(document.querySelector('.conj-form-stem')?.textContent).toBe('');
+    expect(document.querySelector('.letterpad-display-prefix')).toBeNull();
+
+    tapLetters('mangerons');
+    tapValidate();
+
+    const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
+    expect(judgement.verdict).toBe('correct');
+  });
+
+  it('futur régulier : la terminaison seule ne suffit plus', () => {
+    const onConjAnswer = vi.fn();
+    render(
+      <SessionScreen
+        questions={[conjItem('fut-nous', 0)]}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={onConjAnswer}
+      />,
+    );
+
+    tapLetters('ons');
+    tapValidate();
+
+    const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
+    expect(isConjAccepted(judgement.verdict)).toBe(false);
+    expect(document.querySelector('.feedback-message.incorrect')).not.toBeNull();
+  });
+
   it('la phrase porteuse est lue à voix haute, et réécoutable à la demande', async () => {
     const urls: string[] = [];
     const realFetch = globalThis.fetch;

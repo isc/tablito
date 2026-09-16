@@ -14,8 +14,8 @@ import { conjStrings as t } from '../i18n/conjugation';
 //
 // Différence de fond avec NumPad : la validation est EXPLICITE. Le pavé
 // numérique auto-valide à 2 chiffres parce que la longueur d'un produit est
-// bornée et prévisible ; ici la réponse fait de 1 (« a ») à 9 caractères
-// (« viendront »), on ne peut donc pas deviner qu'elle est finie.
+// bornée et prévisible ; ici la réponse fait de 1 (« a ») à 11 caractères
+// (« regarderons »), on ne peut donc pas deviner qu'elle est finie.
 
 // Tableau de chaînes (pas un spread de littéral) : é et ê doivent rester des
 // clés d'un caractère quelle que soit la forme Unicode du fichier source.
@@ -30,11 +30,12 @@ const KEYS = [
 const LETTERS = new Set(KEYS);
 
 /**
- * Garde-fou de saisie : « viendront » (9) est la plus longue forme attendue du
- * périmètre. 12 laisse de la marge pour une hésitation sans laisser l'enfant
- * remplir l'écran.
+ * Garde-fou de saisie : « regarderons » (11) est la plus longue forme attendue
+ * du périmètre — le futur régulier se tape en entier (§4.2), il a détrôné
+ * « viendront » (9). 14 laisse de la marge pour une hésitation sans laisser
+ * l'enfant remplir l'écran.
  */
-const MAX_LENGTH = 12;
+const MAX_LENGTH = 14;
 
 interface LetterKeyboardProps {
   onSubmit: (value: string) => void;

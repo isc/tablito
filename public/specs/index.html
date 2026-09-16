@@ -1188,17 +1188,21 @@ interface Badge {
   <h3 id="conj-question"><span class="num">15.5</span>La question type et la saisie</h3>
   <p>Une question est une <strong>phrase courte à compléter</strong>, avec un marqueur temporel franc (<em>hier, demain, en ce moment</em>), <strong>systématiquement lue à voix haute</strong> (TTS pré-généré, §3.6). Un seul item à l'écran, gros corps, interlignage généreux :</p>
   <blockquote class="note">
+    <p>🔊 « En ce moment, nous… <em>chanter</em> »</p>
+    <p>En ce moment, nous <code>chant</code>____ &nbsp;<em>(chanter)</em></p>
     <p>🔊 « Demain, nous… <em>chanter</em> »</p>
-    <p>Demain, nous <code>chant</code>____ &nbsp;<em>(chanter)</em></p>
+    <p>Demain, nous ________ &nbsp;<em>(chanter)</em></p>
   </blockquote>
   <p>La phrase s'affiche en <strong>trois lignes empilées et centrées</strong> : le contexte avant, le groupe verbal <strong>seul au milieu</strong> — pronom, radical et trait forment une unité insécable — puis le contexte après, en encre douce et corps réduit. Le verbe ne partage jamais sa ligne : c'est lui qu'on interroge, et une coupure entre le radical et son trait (constatée en test réel sur petit écran) casserait l'objet même de la question.</p>
   <p>Chaque fait dispose de <strong>2 à 3 phrases porteuses fixes</strong>. Des phrases stables réduisent la charge de lecture — elles deviennent familières au bout de quelques passages — et bornent le volume audio à pré-générer (environ 200 fichiers, contre 773 côté maths).</p>
 
   <h4>On ne tape que ce qui porte la connaissance testée</h4>
   <ul>
-    <li><strong>Verbe régulier</strong> : le radical est affiché, l'enfant tape la <strong>terminaison</strong> seule (2 à 5 lettres). Aucune friction motrice sur ce qui n'est pas testé.</li>
+    <li><strong>Verbe régulier, au présent et à l'imparfait</strong> : le radical est affiché, l'enfant tape la <strong>terminaison</strong> seule (2 à 5 lettres). Aucune friction motrice sur ce qui n'est pas testé — et le radical ne révèle rien, il se déduit de l'infinitif déjà rappelé sous la question (<em>chanter</em> → <code>chant</code>).</li>
+    <li><strong>Futur</strong> : la <strong>forme entière</strong> est tapée, radical compris. Le futur se fabrique sur l'<em>infinitif entier</em> — c'est la règle même du temps, et c'est donc elle qu'on teste : afficher <code>trouver</code> devant le trait donnerait la moitié de la réponse, celle qui coûte (<em>trouverons</em> et non <em>trouvrons</em>). Remarqué par un parent le 15/09/2026 ; la règle d'affichage du radical n'y avait pas résisté au changement de temps.</li>
     <li><strong>Forme irrégulière</strong> : la forme entière est tapée — elles sont courtes (<em>suis, vont, êtes, serons</em>) et c'est la forme elle-même qui constitue le fait.</li>
   </ul>
+  <p>La règle tient en une phrase : <strong>on n'affiche jamais un morceau de réponse qui est lui-même la connaissance testée</strong>. La segmentation radical / terminaison, elle, ne bouge pas — elle reste la lecture en couleurs de la forme aux introductions et aux corrections, et le support de l'attribution d'erreur (ci-dessous).</p>
   <p>La saisie se fait sur un <strong>mini-clavier alphabétique à grosses touches</strong> : 26 lettres + <code>é</code> et <code>ê</code> = 28 touches en <strong>4 rangées de 7, toutes de même largeur</strong>, é et ê rangés naturellement après le e. C'est le principal chantier d'interface neuf de la matière : le pavé numérique (§3.3) ne se transpose pas. La validation est <strong>explicite</strong> — contrairement aux nombres, la longueur de la réponse n'est pas prévisible, donc l'auto-validation à N caractères n'a pas de sens.</p>
   <blockquote class="note"><p><strong>Pourquoi pas l'AZERTY ?</strong> Essayé d'abord (« disposition scolaire familière »), abandonné après test en conditions réelles : à cet âge, la géographie AZERTY n'est pas connue — l'enfant cherche ses lettres visuellement, et c'est l'ordre alphabétique, su par cœur, qui donne une stratégie de recherche (« le s est vers la fin »). L'insertion de é/ê brisait de toute façon la disposition standard, au prix de rangées inégales et de touches de largeurs variables. Et l'argument du transfert vers le clavier réel est à mettre en balance avec l'usage grandissant de la voix (§15.10).</p></blockquote>
 
@@ -1220,7 +1224,7 @@ interface Badge {
   <ol>
     <li><strong>La phrase en contexte</strong>, affichée et lue à voix haute, forme complète visible.</li>
     <li><strong>La mécanique en couleurs</strong> : le pronom s'illumine, puis sa marque — <em>nous</em> → <code>chant</code>+<code>ons</code> — avec l'ancrage à la règle transversale ou à la dérivation (« l'imparfait se fabrique à partir de <em>nous</em> »). C'est l'équivalent exact de la grille de points et des stratégies de dérivation (§3.4, §3.4bis) : on ne demande jamais de mémoriser une forme qui n'a pas été expliquée.</li>
-    <li><strong>Copie différée</strong> — le geste <em>cover, copy, compare</em> (§15.2) : la forme s'affiche 4 s, se masque, l'enfant la tape. Une fois masquée, elle laisse <strong>exactement la question</strong> — pronom, radical affiché, trait à compléter (« nous chant____ ») : un écran vide ne dirait plus quelle personne est demandée.</li>
+    <li><strong>Copie différée</strong> — le geste <em>cover, copy, compare</em> (§15.2) : la forme s'affiche 4 s, se masque, l'enfant la tape. Une fois masquée, elle laisse <strong>exactement la question</strong> — pronom, radical affiché s'il y en a un, trait à compléter (« nous chant____ ») : un écran vide ne dirait plus quelle personne est demandée.</li>
     <li><strong>Première question</strong> immédiate, en contexte.</li>
     <li><strong>Re-test</strong> 2 à 3 questions plus tard dans la séance.</li>
   </ol>
@@ -1265,8 +1269,8 @@ interface Badge {
 
   <h4>Déroulé</h4>
   <ul>
-    <li><strong>Verbe régulier</strong> : l'enfant <em>dit la forme, puis épelle la terminaison</em> — « chantons : o, n, s ». Énoncer la forme d'abord ajoute le lien phonie-graphie que le clavier n'a pas. La consigne à l'écran le dit dans cet ordre.</li>
-    <li><strong>Forme irrégulière</strong> : elle épelle la forme entière — « sommes : s, o, m, m, e, s ».</li>
+    <li><strong>Verbe régulier au présent ou à l'imparfait</strong> : l'enfant <em>dit la forme, puis épelle la terminaison</em> — « chantons : o, n, s ». Énoncer la forme d'abord ajoute le lien phonie-graphie que le clavier n'a pas. La consigne à l'écran le dit dans cet ordre.</li>
+    <li><strong>Forme irrégulière, et tout le futur</strong> : elle épelle la forme entière — « sommes : s, o, m, m, e, s », « chanterons : c, h, a, n, t, e, r, o, n, s ». C'est ce qui est demandé au clavier (§15.5), donc ce qui est demandé à la voix : la surface d'entrée ne change jamais la question posée.</li>
     <li>La <strong>copie différée</strong> de l'introduction (§15.6, étape 3) s'épelle aussi bien qu'elle s'écrit : en mode vocal, l'enfant n'a jamais besoin du clavier pour avancer.</li>
     <li>Le <strong>test de placement</strong> (§15.7), lui, reste au clavier. Ses sondes sont le premier contact avec la matière : ce n'est pas le moment de faire dépendre la réassurance d'une reconnaissance vocale.</li>
   </ul>

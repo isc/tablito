@@ -65,8 +65,11 @@ export type ConjPerson = 'je' | 'tu' | 'il' | 'nous' | 'vous' | 'ils';
 
 /**
  * Nature d'un fait de conjugaison (spec §2.1, §3.3) :
- * - `ending`   : une TERMINAISON régulière (le radical est affiché, l'enfant ne
- *                tape que la terminaison) — « présent 1er groupe -ons » ;
+ * - `ending`   : une TERMINAISON régulière — « présent 1er groupe -ons ». Le
+ *                radical est affiché et l'enfant ne tape que la terminaison…
+ *                SAUF au futur, où le radical régulier est l'infinitif entier :
+ *                l'afficher donnerait la règle même qu'on teste, donc la forme
+ *                entière est tapée (cf. resolveConjQuestion) ;
  * - `irregular`: une FORME irrégulière entière, stockée telle quelle en mémoire
  *                (« vous faites ») — l'enfant tape la forme complète ;
  * - `stem`     : un RADICAL irrégulier (« ser- », « ét- ») porté par des

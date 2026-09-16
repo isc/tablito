@@ -13,7 +13,8 @@ import type { ConjFact, ConjFactKind, ConjPerson, ConjTense } from '../types';
 // FORMES stockées (les irréguliers fréquents). Les deux sont des faits Leitner,
 // mais ils ne se tapent pas pareil (§4.2) : terminaison seule quand le radical
 // est régulier et affiché, forme entière quand c'est la forme elle-même qui est
-// le fait.
+// le fait — ou, au futur, quand afficher le radical (l'infinitif) reviendrait à
+// donner la règle testée (cf. resolveConjQuestion).
 
 export const CONJ_PERSONS: readonly ConjPerson[] = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
 
@@ -671,7 +672,11 @@ export interface ConjQuestionView {
   form: string;
   /** Segmentation radical|terminaison de la forme complète (§2.3, §4.5). */
   segment: [string, string];
-  /** Vrai si seule la terminaison est à taper (radical affiché) — §4.2. */
+  /**
+   * Vrai si seule la terminaison est à taper (radical affiché) — §4.2. Faux
+   * pour les formes et radicaux irréguliers… et pour TOUT le futur régulier,
+   * dont le radical est l'infinitif déjà donné.
+   */
   endingOnly: boolean;
   /** Début de phrase, pronom compris : « Demain, nous ». */
   lead: string;
@@ -714,10 +719,18 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
 
   if (def.kind === 'ending') {
     const [stem, ending] = applyEuphony(regularStem(verb, def.tense), def.ending as string);
-    displayedStem = stem;
-    expected = ending;
     segment = [stem, ending];
-    endingOnly = true;
+    // Au FUTUR, le radical régulier EST l'infinitif (« trouver » + « ons ») :
+    // l'afficher donnerait la moitié de la réponse, et justement la moitié
+    // qu'on teste — « le futur se fabrique sur l'infinitif entier, e compris »
+    // est LE fait du temps (avis parent du 15/09/2026). L'enfant écrit donc la
+    // forme entière, comme pour un radical irrégulier. Aux autres temps le
+    // radical affiché ne trahit rien : il se déduit de l'infinitif déjà donné
+    // sous la question (chanter → chant), et la connaissance testée est bien
+    // la seule terminaison.
+    endingOnly = def.tense !== 'futur';
+    displayedStem = endingOnly ? stem : '';
+    expected = endingOnly ? ending : stem + ending;
   } else if (def.kind === 'stem') {
     const ending = conjEndings(def.tense)[person];
     const stem = def.stem as string;
