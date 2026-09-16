@@ -1,6 +1,6 @@
 import type { UserProfile, SessionItem } from '../types';
 import { remainderDividend } from '../types';
-import { isDue, pickBonusReviewFacts } from './leitner';
+import { isDue, pickBonusReviewFacts, prioritizeByBoxLevel } from './leitner';
 import { composeDivisionSession } from './divisionComposer';
 import { composeRemainderSession } from './remainderComposer';
 import { randomDisplayOrder } from './sessionComposer';
@@ -9,7 +9,7 @@ import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey, drawRemainder } from './remainderFacts';
 import { isRemainderUnlocked } from './badges';
 import { computeSimilarity } from './similarity';
-import { shuffle, interleaveGreedy } from './utils';
+import { interleaveGreedy } from './utils';
 
 // Cible haute d'une séance (cf. sessionComposer / specs §6).
 const TARGET_QUESTIONS = 15;
@@ -21,7 +21,23 @@ const MIN_QUESTIONS = 12;
 // dus au-delà sont repris la séance suivante — sans danger en boîte 5. Au
 // niveau 3, le régime de croisière (36 tables + 64 divisions revues tous les
 // 21 jours ≈ 5 dus/jour) tient sous ce plafond (specs §12.3).
-const MAX_MAINTENANCE = 6;
+export const MAX_MAINTENANCE = 6;
+
+// ⚠ Ce plafond ne suffit QUE si les slots vont aux bons faits — voir la
+// priorisation ci-dessous. Vécu en prod : un profil ouvre la division avec ses
+// 36 tables en boîte 4+ (condition du déblocage), puis 14 d'entre elles
+// repassent sous la maîtrise en trois mois, et comme une division n'est
+// introduite que si son parent est en boîte 4+, 12 divisions sur 64 restent
+// verrouillées derrière. Le budget n'était pas en cause : le tirage l'était.
+//
+// Tentation écartée, mesurée : relever le plafond quand la fondation s'effrite.
+// Ça DÉGRADE la fondation (9,4 faits sous la maîtrise contre 6,6) tout en
+// amputant le niveau actif de 3 questions par séance. La raison est contre-
+// intuitive et vaut d'être retenue : une fois les faits fragiles servis, les
+// slots en trop vont à des faits déjà maîtrisés, où une révision n'a aucun gain
+// possible (on est déjà en haut) mais 20 % de chances de faire retomber le fait
+// en boîte 1. Au-delà du fragile, réviser plus est un risque net.
+// Chiffres et protocole : specs §11.3.
 
 function multItem(fact: UserProfile['facts'][number], isBonusReview = false): SessionItem {
   return {
@@ -151,7 +167,12 @@ function composeDivisionDaily(profile: UserProfile, today: string): SessionItem[
 
   // Faits de tables dus aujourd'hui → révisions d'entretien (jamais des intros :
   // post-déblocage les tables sont toutes introduites et maîtrisées).
-  const maintenance: SessionItem[] = shuffle(
+  // Les plus fragiles d'abord, comme partout ailleurs (§6.1) : ce qui déborde
+  // du plafond doit être ce qui peut attendre. Au hasard — ce que faisait ce
+  // code — un fait en boîte 5, revu tous les 21 jours, prenait le slot d'un
+  // fait en boîte 1 qui revient chaque jour jusqu'à en obtenir un. C'était la
+  // seule sélection de faits dus du dépôt à ne pas prioriser.
+  const maintenance: SessionItem[] = prioritizeByBoxLevel(
     profile.facts.filter((f) => f.introduced && isDue(f, today)),
   )
     .slice(0, MAX_MAINTENANCE)
@@ -170,13 +191,18 @@ function composeRemainderDaily(profile: UserProfile, today: string): SessionItem
   const intros = remItems.filter((i) => i.isIntroduction);
   const reviews = remItems.filter((i) => !i.isIntroduction);
 
-  const dueMult = profile.facts
-    .filter((f) => f.introduced && isDue(f, today))
-    .map((fact) => multItem(fact));
-  const dueDiv = (profile.divisionFacts ?? [])
-    .filter((f) => f.introduced && isDue(f, today))
-    .map((fact) => divItem(fact));
-  const maintenance = shuffle([...dueMult, ...dueDiv]).slice(0, MAX_MAINTENANCE);
+  const divisionFacts = profile.divisionFacts ?? [];
+  const dueMult = profile.facts.filter((f) => f.introduced && isDue(f, today));
+  const dueDiv = divisionFacts.filter((f) => f.introduced && isDue(f, today));
+  // Au niveau 3, la fondation est double : tables ET divisions exactes. Les
+  // deux jeux sont priorisés ENSEMBLE, sinon les tables passeraient d'office
+  // devant des divisions plus fragiles (§6.1).
+  const maintenance = prioritizeByBoxLevel([
+    ...dueMult.map((f) => ({ box: f.box, item: multItem(f) })),
+    ...dueDiv.map((f) => ({ box: f.box, item: divItem(f) })),
+  ])
+    .slice(0, MAX_MAINTENANCE)
+    .map((x) => x.item);
 
   return assemble(profile, intros, reviews, maintenance);
 }
