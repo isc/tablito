@@ -129,9 +129,32 @@ function tailIntroThreshold(total: number): number {
   return Math.floor(total / 5);
 }
 
+// « N'empile pas du neuf sur du fragile » : on mesure la TAILLE de la pile
+// fragile, pas son existence.
+//
+// La règle historique était `introduced.every((f) => f.box >= 2)` — aucun fait
+// en boîte 1, sinon rien de neuf. Une faute renvoyant un fait en boîte 1 sans
+// condition (cf. processAnswer), ça revient à exiger une séance SANS LA MOINDRE
+// ERREUR pour avancer d'un cran. Or c'est un « pour tout » sur un ensemble qui
+// grossit : facile à 8 faits introduits, quasi impossible à 50. L'exigence se
+// durcissait donc à mesure que l'enfant progressait — exactement l'inverse de
+// l'intention.
+//
+// ⚠ Absolu, là où tailIntroThreshold (juste au-dessus) est proportionnel : les
+// deux ne mesurent pas la même chose. L'AVANCEMENT (« suis-je en fin de
+// parcours ? ») n'a de sens que rapporté au jeu de faits. La CAPACITÉ (« combien
+// de fragile l'enfant porte-t-il en même temps ? ») se compare au budget d'une
+// séance, qui ne dépend pas de la taille du jeu. L'invariant est d'ailleurs
+// MAX_FRAGILE ≈ 1,5 × le plafond de faits neufs par séance (2) : l'enfant peut
+// traîner une séance de neuf, pas trois. « 3 » n'est que la conséquence.
+//
+// Protocole de calibrage et chiffres (simulation sur les composeurs réels) :
+// specs §3.4bis. Ils n'y sont qu'une fois — ne pas les recopier ici.
+export const MAX_FRAGILE = 3;
+
 /**
  * Returns true if a new fact should be introduced.
- * Condition: all previously introduced facts are at box 2 or above.
+ * Condition: au plus MAX_FRAGILE faits déjà introduits sont en boîte 1.
  *
  * Agnostique au type de fait (multiplication ou division) : ne lit que
  * `introduced` et `box`. Réutilisé tel quel par le niveau 2 (specs §11.6).
@@ -139,8 +162,11 @@ function tailIntroThreshold(total: number): number {
 export function shouldIntroduceNew(facts: { introduced: boolean; box: BoxLevel }[]): boolean {
   const introduced = facts.filter((f) => f.introduced);
   if (introduced.length === 0) return true;
+  // Le filet de fin de parcours reste EN PLUS du plafond, malgré les
+  // apparences : un enfant durablement au-dessus du plafond resterait bloqué
+  // sans lui (chiffres en specs §3.4bis).
   if (facts.length - introduced.length <= tailIntroThreshold(facts.length)) return true;
-  return introduced.every((f) => f.box >= 2);
+  return introduced.filter((f) => f.box === 1).length <= MAX_FRAGILE;
 }
 
 // Seuil de « maîtrise » partagé : un fait est considéré maîtrisé dès la boîte 4

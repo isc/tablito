@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../App';
 import { getCompletedTables } from '../lib/badges';
+import { MASTERY_BOX } from '../lib/leitner';
 import { loadProfile } from '../lib/storage';
 import { BADGE_IDS } from '../types';
 // Préchauffe le chunk de ParentDashboard pour que le React.lazy() côté App.tsx
@@ -337,18 +338,28 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
       expect(seeded.facts.find((f) => f.a === 9 && f.b === 9)?.introduced).toBe(false);
 
       // -- Boucle quotidienne avec erreurs : ~14 % d'erreurs (1/7) --
-      // Garantit qu'au moins un fait est en boîte 1 régulièrement, ce qui
-      // exerce le chemin où shouldIntroduceNew se bloquerait sans
-      // l'exception « phase finale » pour 8×9 et 9×9.
+      // Garantit qu'un fait retombe en boîte 1 à chaque séance : c'est ce qui
+      // exerce le pacing d'introduction, et c'est l'enfant que l'app doit
+      // continuer à faire progresser malgré tout.
       const shouldErr = (i: number) => i % 7 === 6;
-      const MAX_DAYS = 365;
+      // Durée FIXE, sans sortie anticipée. Une boucle qui s'arrête au premier
+      // instant favorable mesure une fenêtre de chance, pas une convergence :
+      // l'injection d'erreurs ne s'arrêtant jamais, l'état instantané oscille
+      // en permanence. On joue donc deux mois et on regarde le régime.
+      //
+      // ⚠ Ce scénario ne verrouille PAS le plafond de faits fragiles : le
+      // placement introduit 34/36 faits, donc on est dans la zone de fin de
+      // parcours dès le jour 0 et c'est le filet qui répond, jamais le plafond.
+      // Vérifié : ce test passe à l'identique avec l'ancienne règle. Le plafond
+      // est verrouillé par `leitner.test.ts` et les tests de composeurs.
+      const DAYS = 60;
       let day = 0;
       let sessionsPlayed = 0;
+      // Meilleure boîte JAMAIS atteinte par chaque fait : c'est ce qui dit si
+      // l'enfant a appris, indépendamment de l'oscillation du jour J.
+      const bestEver = new Map<string, number>();
 
-      while (day < MAX_DAYS) {
-        const profile = loadProfile()!;
-        if (profile.facts.every((f) => f.box === 5)) break;
-
+      while (day < DAYS) {
         setDay(day);
         if (day > 0) {
           cleanup();
@@ -372,16 +383,31 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
 
         playSessionAndDismissRecap({ shouldErr });
         sessionsPlayed++;
+        for (const f of loadProfile()!.facts) {
+          const k = `${f.a}x${f.b}`;
+          bestEver.set(k, Math.max(bestEver.get(k) ?? 0, f.box));
+        }
         day++;
       }
 
       const final = loadProfile()!;
-      // Tous les faits doivent finir introduits — le bug 8×9/9×9 doit
-      // être empêché par l'exception « phase finale ».
-      expect(final.facts.every((f) => f.introduced)).toBe(true);
-      expect(final.facts.every((f) => f.box === 5)).toBe(true);
-      expect(day).toBeLessThan(MAX_DAYS);
       expect(sessionsPlayed).toBeGreaterThan(0);
+
+      // (a) Tous les faits finissent introduits — 8×9 et 9×9, que le placement
+      // ne peut pas inférer, doivent être rattrapés par le pacing.
+      expect(final.facts.every((f) => f.introduced)).toBe(true);
+
+      // (b) Tous ont ATTEINT la maîtrise à un moment. Le max-ever ne dépend
+      // d'aucune fenêtre de chance, contrairement à un instantané.
+      expect([...bestEver.values()].every((b) => b >= MASTERY_BOX)).toBe(true);
+
+      // (c) En régime permanent, la queue reste courte : à tout instant la
+      // grande majorité des faits est maîtrisée, seuls quelques-uns remontent
+      // après une faute. C'est la CONTREPARTIE du pacing — introduire plus vite
+      // fait consolider plus lentement — et c'est ici qu'elle se verrait si
+      // elle dérapait.
+      const enCours = final.facts.filter((f) => f.box < MASTERY_BOX).length;
+      expect(enCours).toBeLessThanOrEqual(6);
     },
   );
 

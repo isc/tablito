@@ -9,7 +9,7 @@ import {
   introRemainder,
 } from '../lib/remainderFacts';
 import { composeRemainderSession } from '../lib/remainderComposer';
-import { processAnswer, isDue } from '../lib/leitner';
+import { processAnswer, isDue, MAX_FRAGILE } from '../lib/leitner';
 import { getDivisionFactKey } from '../lib/divisionFacts';
 
 // Marque les divisions exactes données comme prêtes (boîte 4+, boîte 5 par
@@ -80,10 +80,10 @@ describe('composeRemainderSession — gating sur la maîtrise des divisions', ()
     }
   });
 
-  it("n'introduit pas de nouvelle zone si une zone introduite est en boîte 1 (pacing)", () => {
+  it("n'introduit pas de nouvelle zone si la pile fragile dépasse le plafond (pacing)", () => {
     const p = withMasteredDivisions([[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
     p.remainderFacts = p.remainderFacts!.map((f, i) =>
-      i === 0 ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
+      i <= MAX_FRAGILE ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
     );
     const session = composeRemainderSession(p, NOW);
     expect(session.filter((q) => q.isIntroduction)).toHaveLength(0);

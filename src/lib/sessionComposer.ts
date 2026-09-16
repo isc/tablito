@@ -76,8 +76,8 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
 
   // Intros choisies AVANT les révisions : sinon, avec ~33 faits introduits en
   // B2/B3 (15+ dus/jour), les révisions remplissent les MAX_QUESTIONS slots et
-  // affament l'intro des derniers faits — 8×9 et 9×9 jamais posés malgré le
-  // mode tail de shouldIntroduceNew.
+  // affament l'intro des derniers faits — 8×9 et 9×9 jamais posés bien que
+  // shouldIntroduceNew les autorise. Famine de BUDGET, indépendante du pacing.
   //
   // Similarité 48h (specs §1.2) : on espace les *introductions*, pas les
   // révisions actives — l'interférence joue à l'apprentissage. On s'appuie sur

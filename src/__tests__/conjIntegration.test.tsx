@@ -10,6 +10,7 @@ import '../screens/ProgressScreen';
 import '../screens/BadgesScreen';
 import { LangProvider } from '../i18n/LangProvider';
 import { applyLang } from '../i18n/lang';
+import { MAX_FRAGILE } from '../lib/leitner';
 import { createNewProfile, exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import { checkBadges, visibleBadgeDefinitions } from '../lib/badges';
 import { CONJ_TENSE_BADGE_ID, unlockedConjTenses } from '../lib/conjugationComposer';
@@ -54,6 +55,51 @@ function expectedOf(key: string, carrierIndex = 0): string {
   return resolveConjQuestion(requireConjFactDef(key), carrierIndex).expected;
 }
 
+/**
+ * Les faits que `conjReadyProfile` laisse en boîte 1 : un de plus que le
+ * plafond, pour que la séance n'ouvre aucun fait neuf (cf. plus bas). Dérivé de
+ * MAX_FRAGILE — sinon un recalibrage du plafond ferait échouer, en silence et
+ * dans un fichier qui ne parle pas de pacing, quatre assertions sans rapport.
+ */
+const CONJ_FRAGILES = ['pres-g1-nous', 'imp-il', 'pres-g1-je', 'pres-g1-tu'].slice(
+  0,
+  MAX_FRAGILE + 1,
+);
+
+const squash = (t: string) => t.replace(/\s+/g, '');
+
+/**
+ * Répond à la question affichée, quelle qu'elle soit : l'ordre des révisions
+ * bonus est tiré au sort (`interleaveGreedy`), donc le coder en dur rendrait le
+ * test dépendant d'un tirage. On identifie le fait par la phrase porteuse
+ * présente à l'écran, puis on tape SA réponse.
+ */
+function answerCurrentConj(): string {
+  const shown = squash(text());
+  for (const key of CONJ_FRAGILES) {
+    const def = requireConjFactDef(key);
+    for (let i = 0; i < def.carriers.length; i++) {
+      const view = resolveConjQuestion(def, i);
+      if (shown.includes(squash(view.lead))) {
+        tapLetters(view.expected);
+        return key;
+      }
+    }
+  }
+  throw new Error(`aucune question de conjugaison reconnue à l'écran`);
+}
+
+/** Joue la séance jusqu'au récap. Renvoie les faits posés, dans l'ordre. */
+function playConjSession(): string[] {
+  const asked: string[] = [];
+  // Borne de sécurité : une séance de conjugaison plafonne bien en dessous.
+  while (asked.length < 16 && !document.querySelector('.recap-screen')) {
+    asked.push(answerCurrentConj());
+    advance(2500);
+  }
+  return asked;
+}
+
 /** Profil dont la matière est déjà ouverte et le placement passé. */
 function conjReadyProfile(): UserProfile {
   const p = createNewProfile('Zoé');
@@ -66,19 +112,21 @@ function conjReadyProfile(): UserProfile {
   p.lastSessionDate = null;
   p.lastMathSessionDate = null;
   p.lastConjSessionDate = null;
-  // Deux faits introduits, tous deux en boîte 1 : `shouldIntroduceNew` refuse
-  // alors d'ouvrir un fait neuf, et la séance se réduit à la révision due
-  // + une révision bonus. Deux questions : de quoi jouer une séance entière
-  // dans un test sans en faire un marathon.
-  p.conjFacts = (p.conjFacts ?? []).map((f): ConjFact => {
-    if (f.key === 'pres-g1-nous') {
-      return { ...f, introduced: true, box: 1, lastSeen: '2026-01-01', nextDue: '2026-01-01' };
-    }
-    if (f.key === 'imp-il') {
-      return { ...f, introduced: true, box: 1, lastSeen: '2026-01-01', nextDue: '2099-12-31' };
-    }
-    return f;
-  });
+  // Assez de faits fragiles pour que `shouldIntroduceNew` refuse d'ouvrir un
+  // fait neuf (plafond de 3 faits en boîte 1) : la séance se réduit alors aux
+  // révisions — de quoi la jouer entière dans un test sans en faire un
+  // marathon. `pres-g1-nous` est la seule due, les autres remplissent le bonus.
+  p.conjFacts = (p.conjFacts ?? []).map((f): ConjFact =>
+    CONJ_FRAGILES.includes(f.key)
+      ? {
+          ...f,
+          introduced: true,
+          box: 1,
+          lastSeen: '2026-01-01',
+          nextDue: f.key === 'pres-g1-nous' ? '2026-01-01' : '2099-12-31',
+        }
+      : f,
+  );
   return p;
 }
 
@@ -343,12 +391,13 @@ describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => 
     expect(document.querySelector('.progress-grid--plain')).not.toBeNull();
     expect(document.querySelectorAll('.progress-grid-cell')).toHaveLength(64);
     expect(document.querySelectorAll('.progress-grid-header')).toHaveLength(0);
-    // Histogramme : les 63 faits sont répartis (61 non introduits + 2 en B1).
+    // Histogramme : les 63 faits sont répartis — les fragiles du fixture en
+    // boîte 1, tout le reste non introduit.
     const counts = Array.from(document.querySelectorAll('.parent-histogram-count')).map((n) =>
       Number(n.textContent),
     );
-    expect(counts[0]).toBe(61);
-    expect(counts[1]).toBe(2);
+    expect(counts[0]).toBe(63 - CONJ_FRAGILES.length);
+    expect(counts[1]).toBe(CONJ_FRAGILES.length);
   });
 
   it('les faits difficiles de la matière rejoignent la liste, fenêtre glissante comprise', () => {
@@ -432,11 +481,10 @@ describe('Séance de conjugaison : flamme partagée, matières indépendantes (s
     fireEvent.click(button(/Conjugaison/)!);
     await flush();
 
-    // Deux questions : la révision due, puis une révision bonus.
-    tapLetters(expectedOf('pres-g1-nous'));
-    advance(2500);
-    tapLetters(expectedOf('imp-il'));
-    advance(2500);
+    // La révision due, puis les révisions bonus, jusqu'au récap.
+    const asked = playConjSession();
+    expect(asked[0]).toBe('pres-g1-nous'); // la due passe avant les bonus
+    expect(asked.length).toBeGreaterThan(1);
 
     // Récap de la matière : message chaleureux, jauge en « formes verbales »,
     // aucun score ni compte d'erreurs (§5.3).

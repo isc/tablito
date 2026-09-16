@@ -116,8 +116,8 @@ function place(fact: ConjFact, box: BoxLevel, today: string): void {
  * sonde qui les démontre : une preuve INDIRECTE ne peut pas placer plus haut
  * que la preuve directe qui la porte (une sonde réussie en 25 s vaut boîte 1,
  * les faits qu'elle démontre aussi). Sans cette passe, les faits jamais testés
- * resteraient `introduced: false` : l'image mystère les cacherait et
- * `shouldIntroduceNew` se bloquerait au premier fait laissé en boîte 1.
+ * resteraient `introduced: false` et l'image mystère les cacherait alors que
+ * l'enfant les connaît.
  *
  * Comme au niveau maths, aucun `history` n'est ajouté (le placement est un
  * calibrage, pas une révision) et un fait testé-et-raté n'est jamais rattrapé

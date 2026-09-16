@@ -75,9 +75,9 @@ export function composeDivisionSession(
   );
 
   // Intros : faits non introduits dont le parent multiplicatif est prêt.
-  // Même pacing que la multiplication (specs §11.6, §3.4bis) : on n'introduit
-  // de nouveaux faits que si tous ceux déjà introduits sont en boîte ≥ 2 — sinon
-  // un enfant en difficulté accumulerait des faits en boîte 1.
+  // Même pacing que la multiplication : la règle vit dans shouldIntroduceNew
+  // (specs §11.6, §3.4bis). Ne pas la paraphraser ici — un recalibrage se
+  // ferait sinon par search-and-replace sur les quatre composeurs.
   const newFacts: DivisionFact[] = [];
   if (shouldIntroduceNew(divisionFacts)) {
     const eligible = divisionFacts

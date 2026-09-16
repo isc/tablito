@@ -64,9 +64,8 @@ function markDominated(
 //
 // Pass 2 : marque comme introduits (boîte 2 ou 3 selon la qualité de la
 // dominance) les faits non testés mais dominés par un test correct. Sans
-// cette passe, 2×2 et 2×3 (jamais testés) restent introduced=false, l'image
-// mystère les cache, et shouldIntroduceNew se bloque dès qu'un fait du
-// placement est en boîte 1.
+// cette passe, 2×2 et 2×3 (jamais testés) restent introduced=false et l'image
+// mystère les cache alors que l'enfant les connaît.
 export function seedFromPlacement(
   facts: MultiFact[],
   results: PlacementResult[],

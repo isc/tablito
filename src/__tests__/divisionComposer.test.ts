@@ -5,7 +5,7 @@ import { DIVISION_FAST_THRESHOLD_MS } from '../types';
 import { createNewProfile } from '../lib/storage';
 import { createInitialDivisionFacts, parentMultiplicationKey } from '../lib/divisionFacts';
 import { composeDivisionSession } from '../lib/divisionComposer';
-import { processAnswer, isDue } from '../lib/leitner';
+import { processAnswer, isDue, MAX_FRAGILE } from '../lib/leitner';
 import { getFactKey } from '../lib/facts';
 
 // Marque les paires multiplicatives données comme prêtes (boîte 4+, boîte 5 par
@@ -75,21 +75,22 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     }
   });
 
-  it('n\'introduit pas de nouveau fait si un fait introduit est en boîte 1 (pacing §11.6)', () => {
+  it("n'introduit pas de nouveau fait si la pile fragile dépasse le plafond (pacing §11.6)", () => {
     const p = withMastered([[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
-    // Un fait de division introduit mais retombé en boîte 1 → pas de nouvelle
-    // intro tant qu'il n'est pas remonté (même règle que la multiplication).
+    // Un fait de trop au-dessus du plafond → consolider avant d'empiler du
+    // neuf (même règle que la multiplication). Pile juste en dessous, l'intro
+    // continue : c'est le test suivant.
     p.divisionFacts = p.divisionFacts!.map((f, i) =>
-      i === 0 ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
+      i <= MAX_FRAGILE ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
     );
     const session = composeDivisionSession(p, NOW);
     expect(session.filter((q) => q.isIntroduction)).toHaveLength(0);
   });
 
-  it('reprend les intros une fois les faits introduits en boîte ≥ 2', () => {
+  it('continue d\'introduire tant que la pile fragile tient dans le plafond', () => {
     const p = withMastered([[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]);
     p.divisionFacts = p.divisionFacts!.map((f, i) =>
-      i === 0 ? { ...f, introduced: true, box: 2 as const, nextDue: '2026-12-31' } : f,
+      i < MAX_FRAGILE ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
     );
     const session = composeDivisionSession(p, NOW);
     expect(session.filter((q) => q.isIntroduction).length).toBeGreaterThan(0);
