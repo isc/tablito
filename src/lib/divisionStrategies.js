@@ -1,3 +1,3 @@
-import{getDivisionStrategyText as r}from"../i18n/strategies.js";function c(e){const{dividend:i,divisor:t,quotient:o}=e,n=r();return{title:n.title,intro:n.intro(i,t),divisor:t,dividend:i,quotient:o,conclusion:n.conclusion(i,t,o)}}export{c as getDivisionStrategy};
+import{getDivisionStrategyText as r}from"../i18n/strategies.js";function c(t){const{dividend:i,divisor:n,quotient:e}=t,o=r();return{title:o.title,intro:o.intro(i,n),divisor:n,dividend:i,quotient:e,conclusion:o.conclusion(i,n,e)}}function u(t,i){return i===t.dividend*t.divisor}export{c as getDivisionStrategy,u as isMultiplicationSlip};
 
 //# sourceMappingURL=divisionStrategies.js.map

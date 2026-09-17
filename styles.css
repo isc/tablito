@@ -5351,15 +5351,31 @@ input, select, textarea {
   cursor: not-allowed;
 }
 
-/* Niveau 3 — libellé de l'étape de saisie (« Combien de fois ? » puis
-   « Il reste combien ? », specs §12.5). */
-.session-rem-step {
+/* Consignes sous la formule : étape de saisie du niveau 3 (« Combien de
+   fois ? » puis « Il reste combien ? », specs §12.5) et encart de seconde
+   chance après une erreur de signe (specs §11.6). */
+.session-rem-step,
+.session-sign-slip {
   margin-top: 8px;
   font-family: var(--sans);
   font-size: 16px;
-  font-weight: 700;
   color: var(--ink-soft);
   text-align: center;
+}
+
+.session-rem-step {
+  font-weight: 700;
+}
+
+/* Seconde chance : le ÷ est mis en avant. */
+.formula-operator.is-flagged {
+  color: var(--coral);
+  font-weight: 700;
+}
+
+.session-sign-slip strong {
+  display: block;
+  color: var(--ink);
 }
 
 /* === Matière conjugaison (spec Verbito) ====================================
