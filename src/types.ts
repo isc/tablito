@@ -389,6 +389,9 @@ export interface SessionQuestionLog {
   // Véloce s'appuie sur le bon seuil dans une séance mixte. Optionnel (absent
   // des logs antérieurs).
   fast?: boolean;
+  // Division : l'enfant avait d'abord multiplié au lieu de diviser (27 pour
+  // 9 ÷ 3) et la réponse loggée est sa seconde chance (specs §11.6).
+  afterSignSlip?: boolean;
 }
 
 export interface SessionResult {

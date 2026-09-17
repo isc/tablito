@@ -40,3 +40,16 @@ export function getDivisionStrategy(fact: DivisionFact): DivisionStrategy {
     conclusion: text.conclusion(dividend, divisor, quotient),
   };
 }
+
+/**
+ * Erreur de signe (specs §11.6) : l'enfant a MULTIPLIÉ les deux nombres affichés
+ * au lieu de diviser — 27 pour 9 ÷ 3, 32 pour 8 ÷ 4. Ce n'est pas un fait
+ * oublié mais une lecture d'opération ratée, typique des séances qui
+ * entrelacent × et ÷ : le calcul est juste, c'est le signe qui a échappé.
+ *
+ * Sans ambiguïté possible avec la bonne réponse : diviseur ≥ 2 dans tout
+ * l'inventaire, donc dividende × diviseur > dividende ≥ quotient.
+ */
+export function isMultiplicationSlip(fact: DivisionFact, value: number): boolean {
+  return value === fact.dividend * fact.divisor;
+}

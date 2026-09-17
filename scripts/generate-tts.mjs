@@ -262,6 +262,7 @@ async function buildEntriesFr() {
     }
   }
   entries.push({ key: 'rem-rest', text: 'Et il reste combien ?' });
+  entries.push({ key: 'div-sign-slip', text: 'Attention au signe ! Ici, c\'est une division. Essaie encore.' });
   entries.push({
     key: 'strategy-rem',
     text: 'Cherche le multiple juste en dessous, sans dépasser. Ce qui manque pour y arriver, c\'est le reste.',
@@ -397,6 +398,7 @@ function buildEntriesEn() {
     }
   }
   entries.push({ key: 'rem-rest', text: "And what's left over?" });
+  entries.push({ key: 'div-sign-slip', text: 'Watch the sign! This one is a division. Try again.' });
   entries.push({
     key: 'strategy-rem',
     text: "Find the multiple just below, without going over. What's missing to get there is the remainder.",

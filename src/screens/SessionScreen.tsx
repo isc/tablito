@@ -56,6 +56,7 @@ import { useTTS } from '../hooks/useTTS';
 import { useInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { preflightMicPermission } from '../lib/micPreflight';
+import { isMultiplicationSlip } from '../lib/divisionStrategies';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useSessionStrings } from '../i18n/session';
 
@@ -91,19 +92,27 @@ const CONJ_COPY_REVEAL_MS = 4000;
  */
 const CONJ_COPY_MAX_ATTEMPTS = 3;
 
+/** Réponse à une question de maths (×, ÷ exacte ou ÷ avec reste). */
+export interface MathAnswer {
+  item: SessionItem;
+  correct: boolean;
+  timeMs: number;
+  answered: number | null;
+  inputMode: 'keypad' | 'voice';
+  // Niveau 3 uniquement : reste répondu (null si la question s'est arrêtée
+  // à un quotient faux). `answered` porte alors le quotient répondu.
+  answeredRemainder?: number | null;
+  // Juste ET sous le seuil de rapidité de son type : décide de l'étoile
+  // rayonnante ET de la montée de boîte — une seule source, la même étoile.
+  fast: boolean;
+  // Réponse donnée en seconde chance, après une erreur de signe (specs §11.6).
+  afterSignSlip: boolean;
+}
+
 interface SessionScreenProps {
   questions: AnySessionItem[];
   onComplete: (result: Omit<SessionResult, 'factsPromoted'>) => void;
-  onAnswer: (
-    item: SessionItem,
-    correct: boolean,
-    timeMs: number,
-    answered: number | null,
-    inputMode: 'keypad' | 'voice',
-    // Niveau 3 uniquement : reste répondu (null si la question s'est arrêtée
-    // à un quotient faux). `answered` porte alors le quotient répondu.
-    answeredRemainder?: number | null,
-  ) => void;
+  onAnswer: (answer: MathAnswer) => void;
   /**
    * Réponse à une question de conjugaison. Canal SÉPARÉ d'`onAnswer` (et non un
    * élargissement de sa signature) pour deux raisons : la réponse est une
@@ -221,6 +230,9 @@ export default function SessionScreen({
   // Niveau 3 — saisie en deux temps (specs §12.5) : quotient validé de la
   // question en cours, null tant qu'on est à l'étape 1 (« Combien de fois ? »).
   const [remQuotient, setRemQuotient] = useState<number | null>(null);
+  // Division : seconde chance en cours après une erreur de signe (27 pour
+  // 9 ÷ 3). Une seule par présentation de question (specs §11.6).
+  const [signSlip, setSignSlip] = useState(false);
   const [numpadDisabled, setNumpadDisabled] = useState(false);
   const submittingRef = useRef(false);
 
@@ -285,6 +297,7 @@ export default function SessionScreen({
         keys.add('rem-rest');
         keys.add('strategy-rem');
       }
+      if (item.kind === 'div') keys.add('div-sign-slip');
     }
     preload([...keys]);
     // Une seule fois à l'ouverture : les retrys réutilisent des clés déjà en cache.
@@ -309,6 +322,7 @@ export default function SessionScreen({
     }
     setNumpadDisabled(false);
     setRemQuotient(null);
+    setSignSlip(false);
     conjRecallMs.current = null;
   }
 
@@ -330,11 +344,11 @@ export default function SessionScreen({
   useEffect(() => {
     if (inputMode !== 'voice') return;
     if (showIntro) return;
-    if (remQuotient !== null) return;
+    if (remQuotient !== null || signSlip) return;
     if (!isSpeaking) {
       questionStartTime.current = startQuestion();
     }
-  }, [isSpeaking, inputMode, showIntro, currentIndex, remQuotient]);
+  }, [isSpeaking, inputMode, showIntro, currentIndex, remQuotient, signSlip]);
 
   // Étape 2 de l'intro conjugaison : le pronom s'illumine à l'arrivée, sa
   // marque une demi-seconde plus tard — l'accord se joue dans cet écart.
@@ -389,6 +403,17 @@ export default function SessionScreen({
         return;
       }
 
+      // Division, erreur de signe (9 ÷ 3 → 27) : l'enfant a multiplié au lieu
+      // de diviser. Pas de verdict ni de Leitner sur ce geste — on pointe le
+      // signe et on redemande, une fois (specs §11.6). Le chrono continue :
+      // le temps de la question inclut le détour.
+      if (currentItem.kind === 'div' && !signSlip && isMultiplicationSlip(currentItem.fact, value)) {
+        stopSpeech();
+        setSignSlip(true);
+        speak('div-sign-slip');
+        return;
+      }
+
       submittingRef.current = true;
       setNumpadDisabled(true);
       stopSpeech();
@@ -400,7 +425,9 @@ export default function SessionScreen({
       const correct = isRemainderStep
         ? value === currentItem.remainder
         : value === v.answer;
-      const fast = correct && timeMs < v.fastMs[inputMode];
+      // Seconde chance (specs §11.6) : juste, mais jamais rapide — ni étoile
+      // rayonnante ni montée de boîte.
+      const fast = correct && !signSlip && timeMs < v.fastMs[inputMode];
 
       answerTimesMs.current.push(timeMs);
       if (correct) correctCount.current++;
@@ -411,7 +438,16 @@ export default function SessionScreen({
       const answeredQuotient = isRemainderStep ? remQuotient : value;
       const answeredRemainder =
         currentItem.kind === 'rem' ? (isRemainderStep ? value : null) : undefined;
-      onAnswer(currentItem, correct, timeMs, answeredQuotient, inputMode, answeredRemainder);
+      onAnswer({
+        item: currentItem,
+        correct,
+        timeMs,
+        answered: answeredQuotient,
+        inputMode,
+        answeredRemainder,
+        fast,
+        afterSignSlip: signSlip,
+      });
 
       // Réintroduction après erreur, plafond de séance compris (cf.
       // MAX_SESSION_QUESTIONS) — même mécanique qu'en conjugaison.
@@ -440,7 +476,7 @@ export default function SessionScreen({
         }
       }
     },
-    [currentItem, currentIndex, remQuotient, onAnswer, playCorrect, playIncorrect, stopSpeech, speak, inputMode],
+    [currentItem, currentIndex, remQuotient, signSlip, onAnswer, playCorrect, playIncorrect, stopSpeech, speak, inputMode],
   );
 
   const handleFeedbackDismiss = useCallback(() => {
@@ -628,6 +664,10 @@ export default function SessionScreen({
   const conjItem = currentItem.kind === 'conj' ? currentItem : null;
   const v = mathItem ? view(mathItem) : null;
   const cv = conjItem ? conjView(conjItem) : null;
+  // Étape de saisie de la question en cours : chaque relance (reste du niveau
+  // 3, seconde chance après erreur de signe) repart d'une saisie vierge —
+  // NumPad re-keyé, VoiceInput re-tokené.
+  const inputStep = `${remQuotient === null ? 'main' : 'rest'}${signSlip ? '-slip' : ''}`;
   const introStrategy =
     showIntro && currentItem.kind === 'mult' && introStep === 'strategy'
       ? getStrategy(currentItem.fact.a, currentItem.fact.b)
@@ -938,7 +978,7 @@ export default function SessionScreen({
         <div className="session-question">
           <div className="formula-text session-question-text">
             {v.left}
-            <span className="formula-operator">{v.op}</span>
+            <span className={`formula-operator${signSlip ? ' is-flagged' : ''}`}>{v.op}</span>
             {v.right}
             <span className="formula-equals">=</span>
             {currentItem.kind === 'rem' && remQuotient !== null ? (
@@ -951,6 +991,12 @@ export default function SessionScreen({
               <span className="formula-placeholder">?</span>
             )}
           </div>
+          {currentItem.kind === 'div' && signSlip && (
+            <div className="session-sign-slip" role="status">
+              <strong>{t.signSlipTitle}</strong>
+              {t.signSlip(currentItem.fact.dividend, currentItem.fact.divisor)}
+            </div>
+          )}
           {currentItem.kind === 'rem' && (
             <div className="session-rem-step" aria-live="polite">
               {remQuotient === null ? t.howManyTimes : t.whatRemains}
@@ -962,7 +1008,7 @@ export default function SessionScreen({
                 onSubmit={handleAnswer}
                 disabled={numpadDisabled}
                 isSpeaking={isSpeaking}
-                questionToken={`${v.token}-${currentIndex}${remQuotient !== null ? '-rest' : ''}`}
+                questionToken={`${v.token}-${currentIndex}-${inputStep}`}
                 expectedValue={
                   currentItem.kind === 'rem' && remQuotient !== null
                     ? currentItem.remainder
@@ -972,7 +1018,7 @@ export default function SessionScreen({
             ) : (
               <>
                 <NumPad
-                  key={remQuotient === null ? 'main' : 'rest'}
+                  key={inputStep}
                   onSubmit={handleAnswer}
                   disabled={numpadDisabled}
                 />

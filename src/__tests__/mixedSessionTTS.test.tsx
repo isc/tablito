@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 import SessionScreen from '../screens/SessionScreen';
-import type { SessionItem, MultiFact, DivisionFact } from '../types';
+import type { SessionItem } from '../types';
+import { typeAnswer } from './helpers/dom';
+import { divItem as div, multItem as mult } from './helpers/mathItems';
 import { patchBufferSource } from './helpers/audio';
 
 // Régression : la lecture TTS de la question ne doit jamais être perdue parce
@@ -14,31 +16,6 @@ import { patchBufferSource } from './helpers/audio';
 // tour). On modélise une latence de premier décodage et un enfant qui répond
 // plus vite que cette latence, puis on vérifie que chaque question est bien lue.
 
-function mult(a: number, b: number): SessionItem {
-  const fact: MultiFact = {
-    a, b, product: a * b, box: 3, lastSeen: '', nextDue: '', history: [], introduced: true,
-  };
-  return { kind: 'mult', fact, displayA: a, displayB: b, isIntroduction: false, isRetry: false, isBonusReview: false };
-}
-function div(dividend: number, divisor: number): SessionItem {
-  const fact: DivisionFact = {
-    dividend, divisor, quotient: dividend / divisor, box: 3, lastSeen: '', nextDue: '', history: [], introduced: true,
-  };
-  return { kind: 'div', fact, isIntroduction: false, isRetry: false, isBonusReview: false };
-}
-
-function typeAnswer(value: number): void {
-  const digits = value.toString();
-  for (const d of digits) {
-    const btn = document.querySelector<HTMLButtonElement>(`.numpad-btn[aria-label="${d}"]`);
-    if (!btn) throw new Error(`NumPad ${d} introuvable`);
-    fireEvent.click(btn);
-  }
-  if (digits.length === 1) {
-    const ok = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'OK');
-    fireEvent.click(ok!);
-  }
-}
 function dismissFeedback(): void {
   const overlay = document.querySelector<HTMLElement>('[class*="feedback"]');
   if (overlay) fireEvent.click(overlay);

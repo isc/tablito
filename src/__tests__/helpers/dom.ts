@@ -56,3 +56,14 @@ export function tapLetters(letters: string): void {
   typeLetters(letters);
   tapValidate();
 }
+
+/** Tape un nombre sur le pavé numérique ; « OK » n'est nécessaire qu'à un chiffre. */
+export function typeAnswer(value: number): void {
+  const digits = value.toString();
+  for (const d of digits) {
+    const btn = document.querySelector<HTMLButtonElement>(`.numpad-btn[aria-label="${d}"]`);
+    if (!btn) throw new Error(`NumPad ${d} introuvable`);
+    fireEvent.click(btn);
+  }
+  if (digits.length === 1) fireEvent.click(document.querySelector<HTMLButtonElement>('.numpad-btn-ok')!);
+}

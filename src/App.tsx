@@ -12,11 +12,6 @@ import type {
   Badge,
   BoxLevel,
 } from './types';
-import {
-  FAST_THRESHOLD_MS,
-  DIVISION_FAST_THRESHOLD_MS,
-  REMAINDER_FAST_THRESHOLD_MS,
-} from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
 import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
@@ -76,7 +71,7 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import ProfileSelectScreen from './screens/ProfileSelectScreen';
 import RulesIntroScreen from './screens/RulesIntroScreen';
 import HomeScreen from './screens/HomeScreen';
-import SessionScreen from './screens/SessionScreen';
+import SessionScreen, { type MathAnswer } from './screens/SessionScreen';
 import RecapScreen from './screens/RecapScreen';
 // ProgressScreen est eager : c'est l'image mystère, la récompense tapée à la
 // fin de CHAQUE séance (depuis le Recap), donc de facto dans la boucle
@@ -601,21 +596,11 @@ export default function App({
   // divisionFacts) via le discriminant `kind`. Updater fonctionnel pour ne pas
   // lire un fait périmé lors des retries.
   const handleSessionItemAnswer = useCallback(
-    (
-      item: SessionItem,
-      correct: boolean,
-      timeMs: number,
-      answered: number | null,
-      inputMode: 'keypad' | 'voice',
-      answeredRemainder?: number | null,
-    ) => {
-      const fastMs = (
-        item.kind === 'rem'
-          ? REMAINDER_FAST_THRESHOLD_MS
-          : item.kind === 'div'
-            ? DIVISION_FAST_THRESHOLD_MS
-            : FAST_THRESHOLD_MS
-      )[inputMode];
+    ({ item, correct, timeMs, answered, inputMode, answeredRemainder, fast, afterSignSlip }: MathAnswer) => {
+      // Rapidité décidée par l'écran (seuil du type de question, seconde chance
+      // après erreur de signe) : on neutralise le seuil plutôt que de le
+      // recalculer ici — même mécanique que la conjugaison.
+      const fastMs = fast ? Number.POSITIVE_INFINITY : 0;
 
       sessionQuestionLogs.current.push({
         kind: item.kind,
@@ -627,7 +612,8 @@ export default function App({
         ...(item.kind === 'rem' ? { remainder: item.remainder, answeredRemainder } : {}),
         isBonusReview: item.isBonusReview,
         inputMode,
-        fast: correct && timeMs < fastMs,
+        fast,
+        ...(afterSignSlip ? { afterSignSlip } : {}),
       });
 
       if (correct) {

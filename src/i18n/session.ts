@@ -26,6 +26,10 @@ interface SessionStrings {
   whatRemains: string;
   // « reste » dans la formule affichée (« = 6, reste ? »).
   remainderWord: string;
+  // Seconde chance après une erreur de signe (specs §11.6) : « 9 × 3 = 27,
+  // mais ici c'est 9 ÷ 3 ».
+  signSlipTitle: string;
+  signSlip: (dividend: number, divisor: number) => string;
   useMic: string;
 }
 
@@ -44,6 +48,9 @@ const sessionFr: SessionStrings = {
   howManyTimes: 'Combien de fois ?',
   whatRemains: 'Il reste combien ?',
   remainderWord: 'reste',
+  signSlipTitle: 'Attention au signe\u00a0!',
+  signSlip: (dividend, divisor) =>
+    `${dividend} × ${divisor} = ${dividend * divisor}, mais ici c'est une division\u00a0: ${dividend} ÷ ${divisor}.`,
   useMic: 'Utiliser le micro',
 };
 
@@ -62,6 +69,9 @@ const sessionEn: SessionStrings = {
   howManyTimes: 'How many times?',
   whatRemains: "What's left over?",
   remainderWord: 'r',
+  signSlipTitle: 'Watch the sign!',
+  signSlip: (dividend, divisor) =>
+    `${dividend} × ${divisor} = ${dividend * divisor}, but this one is a division: ${dividend} ÷ ${divisor}.`,
   useMic: 'Use the mic',
 };
 
