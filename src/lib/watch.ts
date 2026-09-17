@@ -31,6 +31,7 @@ import type { UserProfile } from '../types';
 import { clearUrlHash } from './storage';
 import { packProfileWithKey, randomCode, randomKeyB64, unpackProfile } from './transfer';
 import { supabaseRpc } from './supabase';
+import { APP_VERSION } from './version';
 import {
   clearWatchCredentials,
   listWatched,
@@ -47,7 +48,10 @@ import {
 
 async function publish(creds: WatchCredentials, profile: UserProfile): Promise<boolean> {
   try {
-    const payload = await packProfileWithKey(profile, creds.key);
+    // Estampille posée ICI : c'est l'appareil de l'enfant, au moment où il
+    // publie, donc la seule mesure honnête du code qui vient de jouer la
+    // séance (cf. UserProfile.appVersion).
+    const payload = await packProfileWithKey({ ...profile, appVersion: APP_VERSION }, creds.key);
     const res = await supabaseRpc('publish_watch', { p_code: creds.code, p_payload: payload });
     return res?.ok ?? false;
   } catch {

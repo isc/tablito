@@ -1,6 +1,7 @@
 import type { UserProfile } from '../types';
 import { countMastered } from './leitner';
 import { supabaseEnv, supabaseHeaders } from './supabase';
+import { APP_VERSION } from './version';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -45,7 +46,7 @@ export function buildContext(
   source?: { kind: 'local' | 'watched'; fetchedAt?: string },
 ): FeedbackContext {
   const ctx: FeedbackContext = {
-    app_version: import.meta.env.VITE_APP_VERSION ?? 'dev',
+    app_version: APP_VERSION,
     user_agent: navigator.userAgent,
     locale: navigator.language,
     viewport: { w: window.innerWidth, h: window.innerHeight },
@@ -69,7 +70,11 @@ export function buildContext(
     }
     if (includeFullProfile) {
       const { name: _name, ...rest } = profile;
-      ctx.profile_snapshot = rest;
+      // Profil LOCAL : c'est cet appareil qui l'a produit, et il tourne
+      // maintenant — on estampe. Profil SUIVI : l'estampille vient du blob
+      // publié par l'appareil de l'enfant, on la laisse telle quelle.
+      ctx.profile_snapshot =
+        source?.kind === 'watched' ? rest : { ...rest, appVersion: APP_VERSION };
     }
     if (source) {
       ctx.profile_source = source.kind;

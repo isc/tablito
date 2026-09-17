@@ -10,6 +10,7 @@ import QrCanvas from '../components/QrCanvas';
 import { useGuideBase } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
 import { getActiveProfileId } from '../lib/storage';
+import { APP_VERSION } from '../lib/version';
 import { setPushPref } from '../lib/push';
 import { createTransfer, transferConfigured, TRANSFER_TTL_MINUTES } from '../lib/transfer';
 import {
@@ -669,7 +670,7 @@ export default function ParentDashboard({
       )}
 
       <div className="parent-version" aria-label={t.appVersionLabel}>
-        v{import.meta.env.VITE_APP_VERSION}
+        v{APP_VERSION}
       </div>
     </div>
   );

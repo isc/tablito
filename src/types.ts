@@ -142,6 +142,20 @@ export type MysteryTheme = (typeof MYSTERY_POOL)[number] | 'village';
 
 export interface UserProfile {
   name: string;
+  // Version de l'app qui a PRODUIT cet instantané. Purement diagnostique : rien
+  // ne la lit à l'exécution, et elle n'est JAMAIS stockée — elle est posée au
+  // moment où l'instantané quitte l'appareil (publication d'un suivi à
+  // distance, ou avis joignant le profil local), donc elle décrit toujours le
+  // code qui tournait à cet instant. L'estamper à l'écriture du profil aurait
+  // décrit le boot PRÉCÉDENT : juste après une mise à jour, elle aurait annoncé
+  // l'ancienne version — le contresens exact qu'elle doit éviter.
+  //
+  // Elle répond à la question qu'on ne pouvait pas trancher autrement :
+  // « l'enfant a-t-il déjà la version qui corrige ça ? » Vécu le 17/09/2026 :
+  // il a fallu reconstituer sa séance question par question pour établir
+  // qu'elle tournait encore sur l'ancien code, alors que l'appareil du parent
+  // qui envoyait l'avis, lui, était à jour.
+  appVersion?: string;
   startDate: string;
   facts: MultiFact[];
   totalSessions: number;

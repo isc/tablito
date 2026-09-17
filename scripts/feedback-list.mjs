@@ -46,12 +46,27 @@ for (const row of rows) {
   const stats = ctx.stats
     ? ` | ${ctx.stats.total_sessions} séances, ${ctx.stats.facts_mastered}/${ctx.stats.facts_total} maîtrisés`
     : '';
-  const snapshotTag = ctx.profile_snapshot ? ' [📎 profil joint]' : '';
+  // Version de l'app qui a PRODUIT l'instantané — pas celle qui l'envoie. Les
+  // deux diffèrent dès qu'un parent signale un souci depuis l'onglet d'un
+  // enfant suivi à distance, et c'est la première chose à regarder devant un
+  // « malgré les changements » : l'enfant a-t-il seulement la bonne version ?
+  const snapVersion = ctx.profile_snapshot?.appVersion;
+  // Le ⚠ ne vaut que pour un profil SUIVI : en local, producteur et expéditeur
+  // sont le même appareil, donc un écart ne signalerait rien.
+  const stale =
+    ctx.profile_source === 'watched' && snapVersion && snapVersion !== ctx.app_version;
+  const snapshotTag = ctx.profile_snapshot
+    ? ` [📎 profil joint${snapVersion ? ` v${snapVersion}${stale ? ' ⚠ ≠ envoi' : ''}` : ''}]`
+    : '';
   const shortId = row.id.slice(0, 8);
   const statusTag = showAll ? ` [${row.status}]` : '';
   console.log('---');
   console.log(`${shortId}${statusTag}${snapshotTag} [${date}] ${row.email ?? '(sans email)'}${stats}`);
-  console.log(`UA: ${ctx.user_agent ?? '?'} | ${ctx.viewport?.w ?? '?'}x${ctx.viewport?.h ?? '?'}`);
+  const src = ctx.profile_source === 'watched' ? ' | profil suivi à distance' : '';
+  console.log(
+    `UA: ${ctx.user_agent ?? '?'} | ${ctx.viewport?.w ?? '?'}x${ctx.viewport?.h ?? '?'}` +
+      ` | envoi v${ctx.app_version ?? '?'}${src}`,
+  );
   console.log('');
   console.log(row.message);
 }

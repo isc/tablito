@@ -384,7 +384,14 @@ export function createNewProfile(name: string): UserProfile {
  *
  * Pas seulement de la migration, donc — d'où le nom.
  */
+// Le champ `appVersion` n'est jamais écrit par le stockage (il est posé à la
+// publication / à l'envoi), mais il peut arriver d'une sauvegarde éditée à la
+// main ou d'un transfert : on le jette s'il n'est pas une chaîne, comme tout le
+// reste de la normalisation.
 function normalizeProfile(profile: UserProfile): UserProfile {
+  if ('appVersion' in profile && typeof profile.appVersion !== 'string') {
+    delete profile.appVersion;
+  }
   if (!Array.isArray(profile.sessionHistory)) {
     profile.sessionHistory = [];
   }
