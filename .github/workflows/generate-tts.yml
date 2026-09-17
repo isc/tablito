@@ -5,6 +5,10 @@ on:
 
 permissions:
   contents: write
+  # Déclenchement du déploiement quand des MP3 ont été commités (cf. dernière
+  # étape) : un push fait avec le GITHUB_TOKEN ne déclenche pas les workflows
+  # `on: push`, sinon les MP3 resteraient hors ligne jusqu'au prochain vrai push.
+  actions: write
 
 concurrency:
   group: generate-tts
@@ -33,6 +37,7 @@ jobs:
       # re-run ne régénère que les manquants, donc la progression n'est jamais
       # perdue entre deux exécutions.
       - name: Commit and push new MP3s
+        id: commit
         if: always()
         run: |
           git config user.name "github-actions[bot]"
@@ -43,4 +48,11 @@ jobs:
           else
             git commit -m "assets(tts): régénérer MP3 via workflow_dispatch"
             git push
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Deploy the new MP3s
+        if: always() && steps.commit.outputs.pushed == 'true'
+        run: gh workflow run deploy.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
