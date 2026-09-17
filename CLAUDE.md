@@ -145,4 +145,4 @@ Les voix sont pré-générées via `scripts/generate-tts.mjs` (Mistral Voxtral) 
   gh run watch  # suivre l'exécution
   git pull      # récupérer le commit assets(tts) créé par le workflow
   ```
-  Le workflow est défini dans `.github/workflows/generate-tts.yml` et déclenchable manuellement (`workflow_dispatch`).
+  Le workflow est défini dans `.github/workflows/generate-tts.yml` et déclenchable manuellement (`workflow_dispatch`). Il déclenche lui-même `deploy.yml` quand il a commité des MP3 : un push fait avec le `GITHUB_TOKEN` ne déclenche pas les workflows `on: push`, donc sans ça les nouveaux MP3 restaient hors ligne (matière muette) jusqu'au prochain vrai push.
