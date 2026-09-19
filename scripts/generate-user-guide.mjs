@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { importTs } from './import-ts.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -725,6 +726,67 @@ async function captureSessionScreens(page) {
   await page.waitForSelector('.feedback-overlay', { state: 'detached', timeout: 3000 });
 }
 
+// Conjugaison (fr-only) : un enfant déjà lancé dans la matière — placement
+// fait, les 63 faits introduits, quelques-uns dus aujourd'hui — pour tomber
+// directement sur une question au clavier de lettres, sans intro ni placement.
+async function captureConjScreens(page) {
+  const { createInitialConjFacts, conjFactDefs, resolveConjQuestion } =
+    await importTs('src/lib/conjugationFacts.ts');
+  const profile = buildSampleProfile();
+  profile.hasDoneConjPlacement = true;
+  profile.hasSeenConjIntro = true;
+  profile.conjFacts = createInitialConjFacts().map((f, i) => ({
+    ...f,
+    introduced: true,
+    box: i % 3 === 0 ? 2 : 3,
+    lastSeen: SEED_YESTERDAY,
+    nextDue: i % 9 === 0 ? SEED_TODAY : '2026-04-20',
+    history: [{ date: SEED_YESTERDAY, correct: true, responseTimeMs: 4000 }],
+  }));
+  await seedProfile(page, profile);
+  await gotoHome(page);
+  await page.waitForSelector('.home-subjects');
+  await page.locator('.home-subjects .home-subject-btn').nth(1).click();
+  await page.waitForSelector('.conj-question .letterpad-display');
+
+  // La réponse attendue n'est pas dans le DOM : on retrouve la question
+  // affichée dans l'inventaire (même geste que answerCurrentConj dans
+  // src/__tests__/conjIntegration.test.tsx), infinitif compris.
+  const squash = (t) => t.replace(/\s+/g, '');
+  const shown = await page.evaluate(() => ({
+    sentence: document.querySelector('.conj-question .conj-sentence').innerText,
+    verb: document.querySelector('.conj-question .conj-intro-infinitive').textContent.replace(/[()]/g, '').trim(),
+  }));
+  const findExpected = () => {
+    for (const def of conjFactDefs()) {
+      for (let i = 0; i < def.carriers.length; i++) {
+        const view = resolveConjQuestion(def, i);
+        const sentence = squash(shown.sentence);
+        if (view.verb === shown.verb && sentence.startsWith(squash(view.lead)) && sentence.endsWith(squash(view.tail))) {
+          return view.expected;
+        }
+      }
+    }
+    throw new Error(`conj: question introuvable dans l'inventaire ${JSON.stringify(shown)}`);
+  };
+  const expected = findExpected();
+
+  // Frappe au clavier de l'écran (pas au clavier physique) : la capture montre
+  // les touches en action.
+  const tap = async (letters) => {
+    for (const ch of letters) await page.click(`.letterpad-btn:text-is("${ch}")`);
+  };
+  // Réponse à moitié tapée : montre le clavier de lettres en action.
+  const half = Math.ceil(expected.length / 2);
+  await tap(expected.slice(0, half));
+  await shot(page, '24-conj-question');
+
+  await tap(expected.slice(half));
+  await page.click('.letterpad-btn-ok');
+  await page.waitForSelector('.conj-feedback.correct', { timeout: 3000 });
+  await shot(page, '25-conj-feedback-correct');
+}
+
 async function captureVoiceInput(page) {
   // Stubbe l'API Web Speech (absente en headless Chromium) pour que
   // `isSpeechRecognitionSupported()` renvoie true. start() déclenche onstart
@@ -1129,6 +1191,23 @@ const SECTIONS_FR = [
       { file: '22-remainder-question', caption: 'La réponse en deux temps : le quotient validé s\'installe dans la formule, puis « Il reste combien ? ».' },
       { file: '23-remainder-progress', caption: 'Une troisième image mystère, dédiée à la division avec reste.' },
       { file: '13c-parent-dashboard-remainder', caption: 'Le tableau de bord parent gagne un troisième onglet « Avec reste » (répartition par boîte et grille Leitner).' },
+    ],
+  },
+  {
+    id: 'conjugaison',
+    title: 'La conjugaison',
+    description: `À côté des maths, l'accueil propose une seconde tuile pour
+      réviser les conjugaisons du CE2 : présent, imparfait et futur du 1er
+      groupe et des verbes être, avoir, aller, faire, dire, venir, voir. Même
+      méthode que les tables : un court test de placement au départ, des
+      séances de quelques minutes, chaque phrase lue à voix haute, et une image
+      mystère dédiée. L'enfant complète une phrase sur un clavier de lettres
+      (ou en épelant à voix haute) ; la correction sépare le radical de la
+      terminaison, pour que la règle se voie. Les deux matières ont chacune
+      leur séance du jour, mais partagent la même série.`,
+    shots: [
+      { file: '24-conj-question', caption: 'Une phrase à compléter, au clavier de lettres. L\'infinitif est rappelé sous la question.' },
+      { file: '25-conj-feedback-correct', caption: 'Bonne réponse : la forme s\'affiche, radical et terminaison en deux couleurs.' },
     ],
   },
   {
@@ -1881,6 +1960,8 @@ async function generateForLang(browser, lang) {
   await captureDivisionScreens(page);
   await captureRemainderScreens(page);
   await captureMultiProfileScreens(page);
+  // Matière fr-only : invisible en anglais, rien à capturer.
+  if (lang === 'fr') await captureConjScreens(page);
   // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
   // the input mode to 'voice' via addInitScript, both of which would
   // pollute any subsequent capture (especially captureRecap which drives

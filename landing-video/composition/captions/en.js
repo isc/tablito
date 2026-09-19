@@ -9,6 +9,11 @@ export default {
   's2.title': 'Right answer, <span class="accent">gold star.</span>',
   's2.body': 'We celebrate every win, never the misses.',
 
+  // Language-specific scene, see build.sh.
+  'sc.chip': 'For parents',
+  'sc.title': 'Progress <span class="accent">at a glance.</span>',
+  'sc.body': 'Sessions, streak and the facts to work on.',
+
   's3.chip': 'Mystery picture',
   's3.title': 'Each table mastered <span class="accent">reveals the picture.</span>',
   's3.body': 'A visual goal that keeps them going.',

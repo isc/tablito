@@ -158,7 +158,7 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="17.4" style="position: relative; width: 1080px; height: 1920px; overflow: hidden">
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="20.8" style="position: relative; width: 1080px; height: 1920px; overflow: hidden">
       <div class="bg"></div>
 
       <!-- Scene 1 — La séance du jour -->
@@ -181,8 +181,18 @@
         <div class="phone" id="s2-phone"><div class="phone__screen"><img src="assets/s2.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 3 — L'image mystère qui se dévoile — plan signature -->
-      <div class="scene clip" id="s3" data-start="6.8" data-duration="3.6" data-track-index="3">
+      <!-- Scene 3 (« sc ») — propre à chaque langue, cf. build.sh -->
+      <div class="scene clip" id="sc" data-start="6.8" data-duration="3.6" data-track-index="6">
+        <div class="copy" id="sc-copy">
+          <span class="chip" data-cap="sc.chip">Nouveau</span>
+          <h1 data-cap="sc.title">Et aussi <span class="accent">la conjugaison.</span></h1>
+          <p data-cap="sc.body">Présent, imparfait, futur : même méthode.</p>
+        </div>
+        <div class="phone" id="sc-phone"><div class="phone__screen"><img src="assets/sc.png" alt=""></div></div>
+      </div>
+
+      <!-- Scene 4 — L'image mystère qui se dévoile — plan signature -->
+      <div class="scene clip" id="s3" data-start="10.2" data-duration="3.6" data-track-index="3">
         <div class="copy" id="s3-copy">
           <span class="chip" data-cap="s3.chip">Image mystère</span>
           <h1 data-cap="s3.title">Chaque table maîtrisée <span class="accent">dévoile l’image.</span></h1>
@@ -191,8 +201,8 @@
         <div class="phone" id="s3-phone"><div class="phone__screen"><img src="assets/s3.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 4 — Progrès sans notes ni classement -->
-      <div class="scene clip" id="s4" data-start="10.2" data-duration="3.6" data-track-index="4">
+      <!-- Scene 5 — Progrès sans notes ni classement -->
+      <div class="scene clip" id="s4" data-start="13.6" data-duration="3.6" data-track-index="4">
         <div class="copy" id="s4-copy">
           <span class="chip" data-cap="s4.chip">Sans notes ni classement</span>
           <h1 data-cap="s4.title">Le progrès, <span class="accent">pas la performance.</span></h1>
@@ -201,8 +211,8 @@
         <div class="phone" id="s4-phone"><div class="phone__screen"><img src="assets/s4.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 5 — Lockup Piou + Tablito -->
-      <div class="brand clip" id="s5" data-start="13.6" data-duration="3.8" data-track-index="5">
+      <!-- Scene 6 — Lockup Piou + Tablito -->
+      <div class="brand clip" id="s5" data-start="17" data-duration="3.8" data-track-index="5">
         <div class="brand__lockup" id="s5-lockup">
           <div class="mascot" role="img" aria-label="Piou">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -244,13 +254,11 @@
     <script>
       const tl = gsap.timeline({ paused: true });
 
-      // Quatre scènes contenu : même chorégraphie entrée / drift / sortie.
-      const SCENES = [
-        { id: "s1", t: 0.0 },
-        { id: "s2", t: 3.4 },
-        { id: "s3", t: 6.8 },
-        { id: "s4", t: 10.2 },
-      ];
+      // Cinq scènes contenu : même chorégraphie entrée / drift / sortie.
+      // Les instants de départ sont lus sur les data-start des clips (source
+      // unique : ils pilotent déjà la visibilité de chaque scène).
+      const startOf = (id) => Number(document.getElementById(id).dataset.start);
+      const SCENES = ["s1", "s2", "sc", "s3", "s4"].map((id) => ({ id, t: startOf(id) }));
       SCENES.forEach((sc) => {
         const first = sc.id === "s1";
         // Crossfade d'entrée (sauf 1re scène, déjà visible au t=0).
@@ -268,7 +276,7 @@
       });
 
       // Scène marque.
-      const b = 13.6;
+      const b = startOf("s5");
       tl.fromTo("#s5", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, b + 0.05);
       tl.from("#s5-lockup", { y: 48, opacity: 0, duration: 0.8, ease: "power3.out" }, b + 0.25);
       tl.from("#s5-tag", { y: 42, opacity: 0, duration: 0.7, ease: "power3.out" }, b + 0.5);

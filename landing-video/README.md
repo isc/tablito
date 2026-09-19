@@ -18,7 +18,7 @@ intermediate screenshots and renders are **gitignored** (derived, regenerable).
 ```
 landing-video/
   composition/
-    index.html          the HyperFrames composition (5 scenes + GSAP timeline)
+    index.html          the HyperFrames composition (6 scenes + GSAP timeline)
     design.md           brand/design system (Tablito tokens, Piou, motion)
     captions/{fr,en}.js  the on-screen copy per language (keys = data-cap)
     caps.active.js       re-exports the language being rendered (committed = fr)
@@ -50,8 +50,9 @@ bash build.sh fr            # → ../public/video/hero.fr.mp4 + poster
 bash build.sh en            # → ../public/video/hero.en.mp4 + poster
 ```
 
-`build.sh` copies the four scene screenshots (`05-home`,
-`08-session-feedback-correct`, `10-progress`, `11-badges`), points
+`build.sh` copies the five scene screenshots (`05-home`,
+`08-session-feedback-correct`, `10-progress`, `11-badges`, plus the
+language-specific one: `24-conj-question` in fr, `13-parent-dashboard` in en), points
 `caps.active.js` at the language, renders, and encodes. It restores
 `caps.active.js` to `fr` at the end.
 
@@ -61,7 +62,7 @@ Commit the updated `../public/video/hero.{fr,en}.mp4` and
 ## Editing the video
 
 - Preview live: `cd composition && npm run dev` (Studio at http://localhost:3002),
-  or check a frame grid with `npx hyperframes@0.6.95 snapshot --at 1.8,5.2,8.6,12,15.6`.
+  or check a frame grid with `npx hyperframes@0.6.95 snapshot --at 1.8,5.2,8.6,12,15.4,19`.
 - `npm run check` (lint + validate + inspect). The composition lints with 0
   errors; the residual warnings are benign (dynamic GSAP selectors the static
   linter can't resolve + a Studio drag-edit note — both expected for a
@@ -73,6 +74,7 @@ Commit the updated `../public/video/hero.{fr,en}.mp4` and
 
 ## Scenes
 
-1. La séance du jour (home) · 2. Bonne réponse → étoile dorée · 3. L'image
-mystère qui se dévoile (signature) · 4. Progrès sans notes ni classement
-(badges) · 5. Lockup Piou + Tablito + tagline + `tablito.app`.
+1. La séance du jour (home) · 2. Bonne réponse → étoile dorée · 3. Propre à la
+langue (`sc`) : la conjugaison en fr, l'espace parent en en (la conjugaison est
+fr-only) · 4. L'image mystère qui se dévoile (signature) · 5. Progrès sans notes
+ni classement (badges) · 6. Lockup Piou + Tablito + tagline + `tablito.app`.

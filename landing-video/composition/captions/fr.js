@@ -9,6 +9,11 @@ export default {
   's2.title': 'Bonne réponse, <span class="accent">étoile dorée.</span>',
   's2.body': 'On célèbre chaque réussite, jamais l’échec.',
 
+  // Scène propre à la langue, cf. build.sh.
+  'sc.chip': 'Nouveau',
+  'sc.title': 'Et aussi <span class="accent">la conjugaison.</span>',
+  'sc.body': 'Présent, imparfait, futur : même méthode.',
+
   's3.chip': 'Image mystère',
   's3.title': 'Chaque table maîtrisée <span class="accent">dévoile l’image.</span>',
   's3.body': 'Un objectif visuel qui donne envie de continuer.',

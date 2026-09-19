@@ -23,12 +23,19 @@ else
 fi
 [ -d "$SHOTS" ] || { echo "Missing $SHOTS — run: GUIDE_LANGS=$LANG_CODE npm run user-guide (from repo root)" >&2; exit 1; }
 
-# 1. Source the four scene screenshots from the guide capture.
+# 1. Source the scene screenshots from the guide capture. Scene `sc` is
+#    language-specific: conjugation in fr, the parent area in en (conjugation
+#    is a French-only subject).
 echo "[$LANG_CODE] assets ← $SHOTS"
 cp "$SHOTS/05-home.png"                     composition/assets/s1.png
 cp "$SHOTS/08-session-feedback-correct.png" composition/assets/s2.png
 cp "$SHOTS/10-progress.png"                  composition/assets/s3.png
 cp "$SHOTS/11-badges.png"                    composition/assets/s4.png
+if [ "$LANG_CODE" = "fr" ]; then
+  cp "$SHOTS/24-conj-question.png"           composition/assets/sc.png
+else
+  cp "$SHOTS/13-parent-dashboard.png"        composition/assets/sc.png
+fi
 
 # 2. Point the composition's captions at this language.
 printf "// Réécrit par build.sh pour le rendu en cours. Committé sur fr par défaut.\nexport { default as CAPS } from './captions/%s.js';\n" "$LANG_CODE" > composition/caps.active.js
