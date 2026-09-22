@@ -12,7 +12,7 @@ import { memo, useMemo, useState, type ReactNode } from 'react';
 import type { FactKind, UserProfile } from '../types';
 import { isConjVisible, isDivisionUnlocked, isRemainderUnlocked, activeLevel } from '../lib/badges';
 import { countMastered } from '../lib/leitner';
-import { getHardestFacts } from '../lib/hardestFacts';
+import { getHardestFacts, sessionsOfSubject } from '../lib/hardestFacts';
 import { remainderZoneBounds } from '../lib/remainderFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
@@ -132,23 +132,22 @@ function ParentStats({ profile }: { profile: UserProfile }) {
     return { boxCounts: counts, maxBoxCount: Math.max(...counts, 1) };
   }, [activeView.facts]);
 
-  // Liste UNIFIÉE × + ÷ — indépendante du sélecteur (mélange les deux opérations
-  // pour montrer où l'enfant bute en ce moment, cf. lib/hardestFacts).
-  const hardFacts = useMemo(
-    () => getHardestFacts(profile, HARD_FACTS_WINDOW, 5, conjVisible),
-    [profile, conjVisible],
-  );
-
   // Séances de la matière sélectionnée — l'onglet pilote aussi l'évolution et
   // l'historique, pas seulement les grilles. Maths vs conjugaison est la bonne
   // granularité : rappeler 7 × 8 et écrire une forme verbale ne se mesurent pas
   // au même mètre, alors qu'à l'intérieur des maths une séance est mixte par
   // construction (entretien des tables mêlé au niveau actif). D'où la dépendance
   // sur ce booléen et non sur `activeKind` : basculer × ↔ ÷ ne refiltre rien.
-  const conjSubject = activeKind === 'conj';
+  const subject = activeKind === 'conj' ? 'conj' : 'math';
   const subjectSessions = useMemo(
-    () => profile.sessionHistory.filter((s) => (s.kind === 'conj') === conjSubject),
-    [profile.sessionHistory, conjSubject],
+    () => sessionsOfSubject(profile.sessionHistory, subject),
+    [profile.sessionHistory, subject],
+  );
+  // Faits les plus difficiles de la même matière — × / ÷ / reste restent
+  // mélangés à l'intérieur des maths, comme les séances elles-mêmes.
+  const hardFacts = useMemo(
+    () => getHardestFacts(profile, HARD_FACTS_WINDOW, 5, subject),
+    [profile, subject],
   );
   // Deux séances de la même matière peuvent tomber le même jour : la date ne
   // suffit pas à identifier une ligne, le rang dans la liste si.
@@ -184,7 +183,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
   // que la conjugaison n'est pas ouverte — tout est de maths.
   const subjectNote = conjVisible ? (
     <p className="parent-section-subtitle">
-      {conjSubject ? t.conjSessionsOnly : t.mathSessionsOnly}
+      {subject === 'conj' ? t.conjSessionsOnly : t.mathSessionsOnly}
     </p>
   ) : null;
 
@@ -355,6 +354,7 @@ function ParentStats({ profile }: { profile: UserProfile }) {
           <p className="parent-section-subtitle">
             {t.hardestFactsSubtitle(HARD_FACTS_WINDOW)}
           </p>
+          {subjectNote}
           <div className="parent-hard-facts">
             {hardFacts.map((f) => (
               <div key={`${f.kind}-${f.key}`} className="parent-hard-fact">

@@ -400,10 +400,11 @@ describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => 
     expect(counts[1]).toBe(CONJ_FRAGILES.length);
   });
 
-  it('les faits difficiles de la matière rejoignent la liste, fenêtre glissante comprise', () => {
+  it('les faits difficiles de la matière apparaissent sous son onglet', () => {
     const p = conjReadyProfile();
     p.sessionHistory = [
       {
+        kind: 'conj',
         date: TODAY,
         questionsCount: 2,
         correctCount: 1,
@@ -426,7 +427,14 @@ describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => 
       },
     ];
     renderStats(p);
+    // Sous l'onglet maths, les verbes ne s'invitent plus dans la liste.
+    expect(text()).not.toContain('nous mangeons');
 
+    fireEvent.click(
+      Array.from(document.querySelectorAll<HTMLButtonElement>('.progress-tab')).find(
+        (b) => b.textContent === 'Conjugaison',
+      )!,
+    );
     expect(text()).toContain('Faits les plus difficiles');
     expect(text()).toContain('nous mangeons');
   });

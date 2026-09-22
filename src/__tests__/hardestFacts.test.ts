@@ -164,3 +164,43 @@ describe('getHardestFacts — comptage depuis les logs de séance', () => {
     expect(hard[0]).toMatchObject({ kind: 'mult', a: 7, b: 8, errorCount: 1 });
   });
 });
+
+describe('getHardestFacts — une matière à la fois', () => {
+  // Comme les graphes de l'espace parent : les erreurs de conjugaison n'ont
+  // pas à évincer celles des tables, ni l'inverse.
+  function mixedProfile(): UserProfile {
+    const profile = makeProfile();
+    introduce(profile, 7, 8);
+    profile.conjFacts = [
+      { key: 'pres-g1-nous', box: 1, introduced: true, history: [] } as never,
+    ];
+    profile.sessionHistory = [
+      { ...makeSession('2026-07-20', [{ a: 7, b: 8, correct: false }]), kind: 'mult' },
+      {
+        ...makeSession('2026-07-20', [
+          { kind: 'conj', factKey: 'pres-g1-nous', a: undefined, b: undefined, correct: false },
+        ]),
+        kind: 'conj',
+      },
+    ];
+    return profile;
+  }
+
+  it('ne garde que les maths par défaut', () => {
+    const hard = getHardestFacts(mixedProfile(), 10, 5);
+    expect(hard.map((f) => f.kind)).toEqual(['mult']);
+  });
+
+  it('ne garde que la conjugaison quand on la demande', () => {
+    const hard = getHardestFacts(mixedProfile(), 10, 5, 'conj');
+    expect(hard.map((f) => f.kind)).toEqual(['conj']);
+  });
+
+  it('la fenêtre compte les séances de la matière, pas toutes', () => {
+    // Une séance de maths avec erreur, suivie de séances de conjugaison :
+    // l'erreur de maths reste dans la fenêtre de 1 séance de maths.
+    const profile = mixedProfile();
+    const hard = getHardestFacts(profile, 1, 5);
+    expect(hard).toHaveLength(1);
+  });
+});
