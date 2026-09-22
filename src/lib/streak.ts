@@ -1,7 +1,7 @@
 import type { UserProfile } from '../types';
 import { addDays, daysBetween } from './utils';
 
-// Gel de série : 1 gagné tous les 7 jours d'affilée, plafonné à 2 en réserve
+// Gel de série : 1 gagné tous les 7 jours JOUÉS d'affilée, plafonné à 2 en réserve
 // (pour borner le feature et éviter qu'un enfant régulier accumule
 // indéfiniment une protection invisible). Un gel couvre 1 jour d'absence, et
 // les gels se consomment un par jour manqué (modèle Duolingo) : 2 gels en
@@ -112,6 +112,7 @@ export function isStreakProtectedByFreeze(profile: UserProfile, today: string): 
 }
 
 export interface StreakUpdate extends Omit<StreakSettlement, 'missedDays' | 'changed'> {
+  freezeProgress: number;
   freezeJustUsed: boolean;
   freezeJustEarned: boolean;
 }
@@ -122,8 +123,13 @@ export interface StreakUpdate extends Omit<StreakSettlement, 'missedDays' | 'cha
 //
 // Règles :
 //   - même jour (diff=0) : aucun changement (séance bonus, pas de double comptage)
-//   - +1 jour : série++ ; si la nouvelle série atteint un multiple de 7, +1 gel (cap 2)
-//   - jours manqués couverts par autant de gels : série++ (comme si pas de trou).
+//   - +1 jour : série++ et compteur de gel++ ; à 7 jours joués d'affilée, +1 gel
+//     (cap 2) et le compteur repart à 0
+//   - jours manqués couverts par autant de gels : série++ (comme si pas de trou),
+//     mais le compteur de gel repart de ce jour — un jour sauvé par un gel ne
+//     rapproche pas du gel suivant. Sinon la série franchissait un palier de 7
+//     grâce au trou et le récap annonçait « gel utilisé » ET « gel gagné »
+//     (feedback du 21/09/2026).
 //     Les gels ont déjà été débités par `settleStreak` au jour manqué — le
 //     règlement est refait ici pour couvrir l'app laissée ouverte à travers
 //     minuit, où aucun chargement n'a eu lieu entre-temps.
@@ -141,6 +147,7 @@ export function applyStreakUpdate(profile: UserProfile, today: string): StreakUp
       currentStreak,
       streakFreezes,
       freezeSettledDate: settled.freezeSettledDate,
+      freezeProgress: freezeProgressOf(profile),
       freezeJustUsed: false,
       freezeJustEarned: false,
     };
@@ -151,11 +158,17 @@ export function applyStreakUpdate(profile: UserProfile, today: string): StreakUp
   const freezeJustUsed = settled.missedDays >= 1 && currentStreak > 0;
 
   // `currentStreak === 0` = série cassée (jamais jouée, ou règlement à sec).
-  currentStreak = currentStreak > 0 ? currentStreak + 1 : 1;
+  const streakAlive = currentStreak > 0;
+  currentStreak = streakAlive ? currentStreak + 1 : 1;
 
-  if (currentStreak % STREAK_FREEZE_INTERVAL === 0 && streakFreezes < STREAK_FREEZE_MAX) {
-    streakFreezes += 1;
-    freezeJustEarned = true;
+  // Série cassée ou sauvée par un gel : le décompte repart d'aujourd'hui.
+  let freezeProgress = (streakAlive && !freezeJustUsed ? freezeProgressOf(profile) : 0) + 1;
+  if (freezeProgress >= STREAK_FREEZE_INTERVAL) {
+    freezeProgress = 0;
+    if (streakFreezes < STREAK_FREEZE_MAX) {
+      streakFreezes += 1;
+      freezeJustEarned = true;
+    }
   }
 
   // La séance d'aujourd'hui solde l'ardoise : plus aucun jour manqué en attente.
@@ -163,7 +176,14 @@ export function applyStreakUpdate(profile: UserProfile, today: string): StreakUp
     currentStreak,
     streakFreezes,
     freezeSettledDate: null,
+    freezeProgress,
     freezeJustUsed,
     freezeJustEarned,
   };
+}
+
+// Profils antérieurs au compteur : la série n'avait jamais été sauvée par un
+// gel sans que ça compte, donc `currentStreak % 7` redonne l'ancien décompte.
+function freezeProgressOf(profile: UserProfile): number {
+  return profile.freezeProgress ?? profile.currentStreak % STREAK_FREEZE_INTERVAL;
 }

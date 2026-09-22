@@ -138,6 +138,26 @@ function isDisposableScreen(screen: Screen): boolean {
   return screen === 'home' || screen === 'welcome' || screen === 'profiles';
 }
 
+// Où mènent le bouton retour de l'UI et le geste « retour » du système
+// (Android) — une seule table pour que les deux ne divergent jamais. null = on laisse faire le navigateur (sortie de
+// l'app) — écrans racine, et séance/récap où un retour involontaire ferait
+// perdre du travail.
+function backTarget(screen: Screen, hasProfile: boolean): Screen | null {
+  switch (screen) {
+    case 'progress':
+    case 'badges':
+    case 'rules':
+      return 'home';
+    case 'parent':
+      return hasProfile ? 'home' : null;
+    case 'privacy':
+    case 'changelog':
+      return 'parent';
+    default:
+      return null;
+  }
+}
+
 // Retour au premier plan après une longue absence : sur une tablette
 // familiale, l'enfant qui reprend l'app n'est souvent pas celui qui l'a
 // laissée — et la PWA reste en mémoire des heures, donc le « Qui joue ? » du
@@ -345,6 +365,34 @@ export default function App({
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
+
+  // Geste retour Android : sans entrée d'historique, il ferme la PWA même
+  // depuis l'espace parent. Tant qu'un écran a une cible de retour, une entrée
+  // factice est empilée ; le popstate qui la consomme ramène à la cible, et
+  // `backPops` force le ré-empilement si la cible a elle-même un retour
+  // (changelog → parent → accueil). Quitter l'écran par l'UI retire l'entrée.
+  const back = backTarget(screen, profile !== null);
+  const backRef = useRef(back);
+  backRef.current = back;
+  const [backPops, setBackPops] = useState(0);
+  const goBack = useCallback(() => {
+    if (backRef.current) setScreen(backRef.current);
+  }, []);
+  const hasBack = back !== null;
+  useEffect(() => {
+    if (!hasBack) return;
+    window.history.pushState({ tablitoBack: true }, '');
+    const onPop = () => {
+      goBack();
+      setBackPops((n) => n + 1);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // Entrée encore là = sortie par l'UI, pas par le geste : la dépiler.
+      if (window.history.state?.tablitoBack) window.history.back();
+    };
+  }, [hasBack, backPops, goBack]);
 
   // Welcome: create new profile with optional placement test results.
   // addProfile persiste tout de suite sous un NOUVEL id (qui devient actif) :
@@ -861,6 +909,7 @@ export default function App({
         lastSessionDate: today,
         ...(isConj ? { lastConjSessionDate: today } : { lastMathSessionDate: today }),
         streakFreezes: streakUpdate.streakFreezes,
+        freezeProgress: streakUpdate.freezeProgress,
         sessionHistory,
       };
 
@@ -1131,18 +1180,18 @@ export default function App({
       )}
 
       {screen === 'progress' && profile && (
-        <ProgressScreen profile={profile} onBack={() => setScreen('home')} initialView={progressView} />
+        <ProgressScreen profile={profile} onBack={goBack} initialView={progressView} />
       )}
 
       {screen === 'badges' && profile && (
         <BadgesScreen
           profile={profile}
-          onBack={() => setScreen('home')}
+          onBack={goBack}
         />
       )}
 
       {screen === 'rules' && (
-        <RulesScreen onBack={() => setScreen('home')} showRule11={rule11Unlocked} />
+        <RulesScreen onBack={goBack} showRule11={rule11Unlocked} />
       )}
 
       {/* `watchPairing` compte, y compris quand il vaut 'error' : un parent sans
@@ -1155,7 +1204,7 @@ export default function App({
           initialWatch={watchPairing && watchPairing !== 'error' ? watchPairing : null}
           openOnWatched={recapRequested}
           // Sans profil local, l'espace parent EST l'app : nulle part où revenir.
-          onBack={profile ? () => setScreen('home') : undefined}
+          onBack={back ? goBack : undefined}
           onExport={handleExport}
           onImport={handleImport}
           onAddProfile={handleAddProfile}
@@ -1166,11 +1215,11 @@ export default function App({
       )}
 
       {screen === 'privacy' && (
-        <PrivacyScreen onBack={() => setScreen('parent')} />
+        <PrivacyScreen onBack={goBack} />
       )}
 
       {screen === 'changelog' && (
-        <ChangelogScreen onBack={() => setScreen('parent')} />
+        <ChangelogScreen onBack={goBack} />
       )}
       </Suspense>
     </div>

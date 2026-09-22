@@ -73,7 +73,10 @@ const fr: Strings = {
   freezeUsedSubtitle: (streak) =>
     `Tu n'as pas joué hier, mais ta série de ${streak} ${streak > 1 ? 'jours' : 'jour'} continue.`,
   freezeEarnedTitle: 'Tu as gagné un gel de série !',
-  freezeEarnedSubtitle: 'Il te protégera la prochaine fois que tu manqueras un jour.',
+  // Rappelle le palier : un gel se gagne en jouant, jamais grâce à un jour
+  // protégé par un gel (feedback du 21/09/2026, cf. lib/streak).
+  freezeEarnedSubtitle:
+    'Tu as joué 7 jours de suite ! Il te protégera la prochaine fois que tu manqueras un jour.',
   imageChangedTeaser: 'Ton image a changé !',
   imageChangedCta: 'Viens la voir →',
   progressEyebrow: 'Tu connais',
@@ -116,7 +119,7 @@ const en: Strings = {
   freezeUsedSubtitle: (streak) =>
     `You didn't play yesterday, but your ${streak}-day streak keeps going.`,
   freezeEarnedTitle: 'You earned a streak freeze!',
-  freezeEarnedSubtitle: 'It will protect you next time you miss a day.',
+  freezeEarnedSubtitle: 'You played 7 days in a row! It will protect you next time you miss a day.',
   imageChangedTeaser: 'Your picture changed!',
   imageChangedCta: 'Come see it →',
   progressEyebrow: 'You know',

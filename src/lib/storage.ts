@@ -490,6 +490,16 @@ function normalizeProfile(profile: UserProfile): UserProfile {
   if (typeof profile.freezeSettledDate !== 'string') {
     profile.freezeSettledDate = null;
   }
+  // Même prudence pour le compteur du prochain gel : hors 0..6, on le retire
+  // et `applyStreakUpdate` retombe sur `currentStreak % 7`.
+  if (
+    profile.freezeProgress !== undefined &&
+    !(Number.isInteger(profile.freezeProgress) &&
+      profile.freezeProgress >= 0 &&
+      profile.freezeProgress < STREAK_FREEZE_INTERVAL)
+  ) {
+    delete profile.freezeProgress;
+  }
   // Règle les jours d'absence écoulés dès le chargement, quel que soit le
   // chemin (démarrage, bascule d'enfant, import) : les gels sont débités au
   // jour manqué, pas à la séance suivante. Sans ça, le premier rendu affiche

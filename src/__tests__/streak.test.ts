@@ -288,14 +288,38 @@ describe('applyStreakUpdate', () => {
     expect(r.streakFreezes).toBe(0);
   });
 
-  it('peut consommer un gel ET en gagner un dans le même tour (cas limite)', () => {
-    // série à 6, +2 jours, gel disponible : consomme → série passe à 7 → multiple de 7 → +1 gel
+  it('un jour sauvé par un gel ne rapproche pas du gel suivant', () => {
+    // Série à 6, 1 jour manqué couvert : la série passe à 7 mais le gel
+    // utilisé n'est pas aussitôt regagné (feedback du 21/09/2026) — le
+    // décompte repart d'aujourd'hui.
     const profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 6, streakFreezes: 1 });
     const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.currentStreak).toBe(7);
-    expect(r.streakFreezes).toBe(1);
+    expect(r.streakFreezes).toBe(0);
     expect(r.freezeJustUsed).toBe(true);
+    expect(r.freezeJustEarned).toBe(false);
+    expect(r.freezeProgress).toBe(1);
+  });
+
+  it('regagne un gel après 7 jours joués depuis le trou', () => {
+    let profile = makeProfile({ lastSessionDate: '2026-04-28', currentStreak: 6, streakFreezes: 1 });
+    const earned: string[] = [];
+    // Jours joués : 30/04 (trou couvert) puis 01/05 → 06/05.
+    const days = ['2026-04-30', '2026-05-01', '2026-05-02', '2026-05-03', '2026-05-04', '2026-05-05', '2026-05-06'];
+    for (const today of days) {
+      const r = applyStreakUpdate(profile, today);
+      if (r.freezeJustEarned) earned.push(today);
+      profile = { ...profile, ...r, lastSessionDate: today };
+    }
+    expect(earned).toEqual(['2026-05-06']);
+    expect(profile.currentStreak).toBe(13);
+  });
+
+  it('profil antérieur au compteur : repli sur la série modulo 7', () => {
+    const profile = makeProfile({ lastSessionDate: '2026-04-29', currentStreak: 13, streakFreezes: 0 });
+    const r = applyStreakUpdate(profile, '2026-04-30');
     expect(r.freezeJustEarned).toBe(true);
+    expect(r.freezeProgress).toBe(0);
   });
 
   it(`STREAK_FREEZE_INTERVAL vaut 7 (vérifie le contrat documenté)`, () => {

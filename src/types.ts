@@ -169,6 +169,10 @@ export interface UserProfile {
   // qu'aucun jour n'a été manqué depuis la dernière séance. Sert uniquement à
   // empêcher `settleStreak` de débiter deux fois le même jour manqué.
   freezeSettledDate?: string | null;
+  // Jours JOUÉS d'affilée comptés vers le prochain gel (0..6). Un jour protégé
+  // par un gel remet le compteur à zéro. Absent sur les profils antérieurs :
+  // repli sur `currentStreak % 7` (cf. applyStreakUpdate).
+  freezeProgress?: number;
   badges: Badge[];
   sessionHistory: SessionResult[];
   hasSeenRulesIntro: boolean;

@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-09-22',
+    items: [
+      "Gels de série\u00a0: un jour sauvé par un gel ne compte plus pour gagner le suivant. Jusqu'ici, la série continuait à travers le jour manqué et pouvait franchir un palier de 7 grâce à lui — le récap annonçait alors dans la même séance «\u00a0ton gel a sauvé ta série\u00a0» et «\u00a0tu as gagné un gel\u00a0». Désormais, après un gel utilisé, il faut rejouer 7 jours d'affilée pour en gagner un nouveau. La série elle-même n'est pas touchée.",
+    ],
+  },
+  {
     date: '2026-09-16',
     items: [
       "Conjugaison, futur : l'enfant écrit désormais la forme entière. Jusqu'ici le radical était affiché devant le trait à compléter et il ne restait que la terminaison à taper — sauf qu'au futur, ce radical, c'est l'infinitif : « trouver » s'affichait, et « …ons » suffisait. Or « le futur se fabrique sur l'infinitif entier » est exactement ce que ce temps enseigne (trouverons, et non trouvrons) : la question donnait la moitié de la réponse, et justement celle qui coûte. Au futur, la ligne est donc vide comme pour les verbes irréguliers, et l'enfant écrit « nous trouverons » en entier — à la voix comme au clavier. Rien ne change au présent ni à l'imparfait, où le radical affiché ne révèle rien de plus que l'infinitif déjà rappelé sous la question. Merci au parent qui l'a remarqué.",
@@ -222,6 +228,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-09-22',
+    items: [
+      "Streak freezes: a day saved by a freeze no longer counts toward earning the next one. Until now the streak carried on through the missed day and could reach a 7-day milestone thanks to it — the recap would then say, in the same session, \"your freeze saved your streak\" and \"you earned a freeze\". Now, after a freeze is used, your child needs 7 days in a row of practice again to earn a new one. The streak itself is unaffected.",
+    ],
+  },
   {
     date: '2026-09-16',
     items: [
