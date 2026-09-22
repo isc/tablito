@@ -453,6 +453,14 @@ const DISABLE_ANIMATIONS_CSS = `
 `;
 
 async function gotoHome(page) {
+  // Quitter un écran secondaire par son bouton retour dépile l'entrée
+  // d'historique du geste retour Android (cf. App.tsx) via un history.back()
+  // asynchrone : un goto lancé pendant cette traversée est avorté
+  // (ERR_ABORTED). On la laisse finir — borné, car on peut aussi arriver ici
+  // depuis un écran qui garde légitimement son entrée.
+  await page
+    .waitForFunction(() => !history.state?.tablitoBack, null, { timeout: 2000 })
+    .catch(() => {});
   await page.goto(BASE_URL, { waitUntil: 'load' });
   await page.addStyleTag({ content: DISABLE_ANIMATIONS_CSS });
 }
