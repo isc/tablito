@@ -18,11 +18,15 @@ interface MascotProps {
 // un rendu identique sur tous les navigateurs et pour animer les parties
 // (corps, ailes, yeux) indépendamment.
 //
-// ⚠ Le SVG ci-dessous est dupliqué à deux autres endroits : index.html
-// (#static-landing, pour que la landing reste 100 % HTML sans charger Preact)
-// et landing-video/composition/index.html (scène de marque de la vidéo hero,
-// rendue hors de l'app). Si tu modifies Piou (ajout d'une partie,
-// repositionnement), mets à jour les trois copies. Aucun outil ne détecte le drift.
+// ⚠ Le SVG ci-dessous est dupliqué à la main à cinq autres endroits :
+// - index.html (#static-landing, pour que la landing reste 100 % HTML sans
+//   charger Preact) ;
+// - landing-video/composition/index.html (scène de marque de la vidéo hero) ;
+// - public/icons/icon.svg (icône d'app, source des PNG et des splash) ;
+// - public/favicon.svg (version simplifiée, sans pattes ni houppette) ;
+// - scripts/generate-og-image.mjs (image de partage).
+// Si tu modifies Piou (forme, partie, couleur), mets à jour toutes les copies
+// et régénère les PNG. Aucun outil ne détecte le drift.
 const MASCOT_NAME = 'Piou';
 
 export default function Mascot({ mood }: MascotProps) {
@@ -66,7 +70,7 @@ export default function Mascot({ mood }: MascotProps) {
           />
           {/* ventre */}
           <ellipse cx="50" cy="75" rx="18" ry="11.5" className="mascot-fill-belly" />
-          {/* yeux ouverts — masqués en celebrate au profit des yeux « ^^ » */}
+          {/* yeux ouverts — masqués en celebrate/giggle au profit des yeux « ^^ » */}
           <g className="mascot-eyes-open">
             <g className="mascot-eye mascot-eye-left">
               <circle cx="41" cy="57" r="4.3" className="mascot-eye-iris" />

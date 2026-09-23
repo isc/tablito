@@ -24,9 +24,9 @@ const out = join(root, 'public', 'og-image.png');
 
 const fontUrl = (file) => pathToFileURL(join(fontsDir, file)).href;
 
-// Mascotte Piou. ⚠ TROISIÈME copie du SVG (les deux autres : la landing dans
-// index.html et src/components/Mascot.tsx). Celle-ci inline en plus les couleurs
-// qui vivent dans Mascot.css (#F4B63C, #FCDF84, #E07A24, #D9751F, #E8623D…) — donc un
+// Mascotte Piou. ⚠ Copie à la main du SVG de src/components/Mascot.tsx (qui
+// liste toutes les copies). Celle-ci inline en plus les couleurs qui vivent
+// dans Mascot.css (#F4B63C, #FCDF84, #E07A24, #D9751F, #E8623D…) — donc un
 // changement de géométrie OU de palette doit être répercuté ici à la main, sans
 // outil pour détecter la dérive. Régénérer l'image après toute modif.
 const mascot = `

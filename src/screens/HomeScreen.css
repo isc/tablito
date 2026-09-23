@@ -195,17 +195,21 @@
      un pendule s'arrête bien à chaque extrémité.
    Un seul keyframe mêlant les deux faisait s'arrêter la descente à chaque
    extrémité du balancement, d'où une chute saccadée. */
+.home-mascot-empty.is-falling {
+  --feather-fall: 3.2s;   /* durée commune chute + balancement ; la dérive au sol démarre après */
+}
+
 .home-mascot-empty.is-falling .feather-svg {
   overflow: visible;
   animation:
-    featherFall 3.2s cubic-bezier(0.33, 0.1, 0.45, 1) both,
-    featherDrift 4.2s ease-in-out 3.2s infinite;
+    featherFall var(--feather-fall) cubic-bezier(0.33, 0.1, 0.45, 1) both,
+    featherDrift 4.2s ease-in-out var(--feather-fall) infinite;
 }
 
 .home-mascot-empty.is-falling .feather-g {
   transform-box: fill-box;
   transform-origin: 50% -60%;
-  animation: featherSway 3.2s ease-in-out both;
+  animation: featherSway var(--feather-fall) ease-in-out both;
 }
 
 @keyframes featherFall {

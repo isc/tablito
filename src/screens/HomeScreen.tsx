@@ -89,25 +89,24 @@ function buildStreakLabel(
 // s'envoler (fou rire, saut, fête, puis envol). Les chatouilles doivent
 // s'enchaîner : une pause de plus de TICKLE_WINDOW_MS réarme le compteur.
 // Il laisse une plume qui tombe en virevoltant et revient en volant au bout
-// de 15 min. État au niveau module pour survivre aux unmounts de HomeScreen
-// pendant la navigation, mais pas persisté : un reload de l'app réarme
-// l'easter egg.
+// de 15 min. Seule l'absence vit au niveau module, pour survivre aux unmounts
+// de HomeScreen pendant la navigation (pas persistée : un reload de l'app
+// réarme l'easter egg). Le compteur de chatouilles, lui, ne vaut que 3 s :
+// une ref du composant suffit.
 const TICKLE_MOODS: MascotMood[] = ['giggle', 'happy', 'celebrate', 'flyaway'];
 const HIDDEN_DURATION_MS = 15 * 60 * 1000;
 const FLYAWAY_ANIMATION_MS = 900;
 const FLYIN_ANIMATION_MS = 1100;
 const MOOD_RESET_MS = 1500;
 const TICKLE_WINDOW_MS = 3000;
-let easterTickleCount = 0;
-let easterLastTickleAt = 0;
 let easterHiddenUntil = 0;
 
-// Piou est-il revenu pendant que la home n'était pas montée ? Il fait alors
-// son entrée en volant au prochain affichage de la home.
+// Piou est-il de retour ? Si oui, clôt l'absence et renvoie vrai : il fait
+// alors son entrée en volant. Appelé à l'échéance du timer si la home est
+// affichée, sinon au prochain montage de la home.
 function consumeEasterReturn(): boolean {
   if (easterHiddenUntil === 0 || easterHiddenUntil > Date.now()) return false;
   easterHiddenUntil = 0;
-  easterTickleCount = 0;
   return true;
 }
 
@@ -228,6 +227,8 @@ export default function HomeScreen({
   // posée au sol.
   const [featherFalling, setFeatherFalling] = useState(false);
   const tickleTimerRef = useRef<number | null>(null);
+  const tickleCountRef = useRef(0);
+  const lastTickleAtRef = useRef(0);
   const isHidden = hiddenUntil > 0;
 
   useEffect(() => {
@@ -239,10 +240,8 @@ export default function HomeScreen({
   useEffect(() => {
     if (hiddenUntil === 0) return;
     const t = window.setTimeout(() => {
-      easterHiddenUntil = 0;
-      easterTickleCount = 0;
+      consumeEasterReturn();
       setHiddenUntil(0);
-      setFeatherFalling(false);
       setMascotMood('flyin');
     }, hiddenUntil - Date.now());
     return () => clearTimeout(t);
@@ -257,10 +256,10 @@ export default function HomeScreen({
   function handleMascotTickle() {
     if (isHidden || mascotMood === 'flyaway' || mascotMood === 'flyin') return;
     const now = Date.now();
-    if (now - easterLastTickleAt > TICKLE_WINDOW_MS) easterTickleCount = 0;
-    easterLastTickleAt = now;
-    easterTickleCount += 1;
-    const next = TICKLE_MOODS[Math.min(easterTickleCount - 1, TICKLE_MOODS.length - 1)];
+    if (now - lastTickleAtRef.current > TICKLE_WINDOW_MS) tickleCountRef.current = 0;
+    lastTickleAtRef.current = now;
+    tickleCountRef.current += 1;
+    const next = TICKLE_MOODS[Math.min(tickleCountRef.current, TICKLE_MOODS.length) - 1];
     if (tickleTimerRef.current) clearTimeout(tickleTimerRef.current);
     setMascotMood(next);
     if (next === 'flyaway') {

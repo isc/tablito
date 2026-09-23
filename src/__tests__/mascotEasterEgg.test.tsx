@@ -2,12 +2,13 @@ import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createNewProfile } from '../lib/storage';
+import { advance } from './helpers/dom';
 
 // ---------------------------------------------------------------------------
 // Easter egg de la home : 4 chatouilles d'affilée sur Piou → fou rire, saut,
 // fête, envol. Il laisse une plume et revient en volant 15 min plus tard.
-// L'état vit au niveau module de HomeScreen : chaque test ré-importe le module
-// (vi.resetModules) pour repartir d'un compteur vierge.
+// L'absence de Piou vit au niveau module de HomeScreen : chaque test
+// ré-importe le module (vi.resetModules) pour repartir d'un état vierge.
 // ---------------------------------------------------------------------------
 
 const noop = () => {};
@@ -66,15 +67,11 @@ describe('easter egg : chatouiller Piou', () => {
     for (let i = 0; i < 4; i++) {
       act(() => tickle());
       moods.push(mascotMood());
-      act(() => {
-        vi.advanceTimersByTime(300);
-      });
+      advance(300);
     }
     expect(moods).toEqual(['giggle', 'happy', 'celebrate', 'flyaway']);
 
-    act(() => {
-      vi.advanceTimersByTime(900);
-    });
+    advance(900);
     expect(document.querySelector('.home-mascot-tickle')).toBeNull();
     const empty = document.querySelector('.home-mascot-empty');
     expect(empty?.classList.contains('is-falling')).toBe(true);
@@ -88,9 +85,7 @@ describe('easter egg : chatouiller Piou', () => {
     expect(mascotMood()).toBe('celebrate');
 
     // Pause trop longue : on repart du fou rire au lieu de s'envoler.
-    act(() => {
-      vi.advanceTimersByTime(3500);
-    });
+    advance(3500);
     act(() => tickle());
     expect(mascotMood()).toBe('giggle');
   });
@@ -98,24 +93,18 @@ describe('easter egg : chatouiller Piou', () => {
   it('revient en volant au bout de 15 min, puis se pose', async () => {
     await renderHome();
     for (let i = 0; i < 4; i++) act(() => tickle());
-    act(() => {
-      vi.advanceTimersByTime(900);
-    });
+    advance(900);
     expect(mascotMood()).toBeNull();
 
-    act(() => {
-      vi.advanceTimersByTime(15 * 60 * 1000);
-    });
+    advance(15 * 60 * 1000);
     expect(mascotMood()).toBe('flyin');
     // Pas de chatouille pendant l'atterrissage.
     act(() => tickle());
     expect(mascotMood()).toBe('flyin');
 
-    act(() => {
-      vi.advanceTimersByTime(1100);
-    });
+    advance(1100);
     expect(mascotMood()).toBe('idle');
-    // Compteur remis à zéro : la chatouille suivante repart du fou rire.
+    // 15 min sans chatouille : la suivante repart du fou rire.
     act(() => tickle());
     expect(mascotMood()).toBe('giggle');
   });
@@ -123,9 +112,7 @@ describe('easter egg : chatouiller Piou', () => {
   it("revient en volant si la home n'était pas affichée à son retour", async () => {
     const { unmount, HomeScreen, props } = await renderHome();
     for (let i = 0; i < 4; i++) act(() => tickle());
-    act(() => {
-      vi.advanceTimersByTime(900);
-    });
+    advance(900);
     unmount();
 
     // Au retour sur la home pendant l'absence, la plume est déjà au sol.

@@ -67,7 +67,8 @@
   transform-box: fill-box;
 }
 
-/* Yeux « ^^ » : uniquement en celebrate, à la place des yeux ouverts. */
+/* Yeux « ^^ » : à la place des yeux ouverts dans les humeurs de joie
+   débordante (celebrate, et giggle pour l'easter egg de la home). */
 .mascot-eyes-closed {
   display: none;
   fill: none;
@@ -76,11 +77,11 @@
   stroke-linecap: round;
 }
 
-.mascot.celebrate .mascot-eyes-open {
+.mascot:is(.celebrate, .giggle) .mascot-eyes-open {
   display: none;
 }
 
-.mascot.celebrate .mascot-eyes-closed {
+.mascot:is(.celebrate, .giggle) .mascot-eyes-closed {
   display: inline;
 }
 
@@ -182,10 +183,14 @@
    hors champ) le temps que le parent retire le mascot du DOM. */
 .mascot.flyaway {
   animation: mascotFlyAway 0.9s ease-in forwards;
+}
+
+/* En vol (départ comme retour) : pas de tap, corps figé, ailes à fond. */
+.mascot:is(.flyaway, .flyin) {
   pointer-events: none;
 }
 
-.mascot.flyaway .mascot-body {
+.mascot:is(.flyaway, .flyin) .mascot-body {
   animation: none;
 }
 
@@ -201,14 +206,6 @@
 
 /* Giggle : fou rire sous les chatouilles (easter egg de la home). Yeux
    « ^^ », corps qui se tortille, houppette qui frétille, ailes qui battent. */
-.mascot.giggle .mascot-eyes-open {
-  display: none;
-}
-
-.mascot.giggle .mascot-eyes-closed {
-  display: inline;
-}
-
 .mascot.giggle .mascot-body {
   animation:
     mascotBreathe 3.4s ease-in-out infinite,
@@ -240,11 +237,6 @@
    par l'autre côté) et se pose avec un petit rebond. */
 .mascot.flyin {
   animation: mascotFlyIn 1.1s ease-out both;
-  pointer-events: none;
-}
-
-.mascot.flyin .mascot-body {
-  animation: none;
 }
 
 .mascot.flyin .mascot-wing {
