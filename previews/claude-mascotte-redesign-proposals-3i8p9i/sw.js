@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260923062601"
+const CACHE = 'tablito-' + "20260923063313"
 const BASE = "/previews/claude-mascotte-redesign-proposals-3i8p9i/"
 const ASSETS = [
   "/previews/claude-mascotte-redesign-proposals-3i8p9i/favicon.svg",
@@ -194,8 +194,8 @@ const ASSETS = [
 
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
-const LAZY_GROUPS = {"audio":["/previews/claude-mascotte-redesign-proposals-3i8p9i/audio/"],"media":["/previews/claude-mascotte-redesign-proposals-3i8p9i/mystery/","/previews/claude-mascotte-redesign-proposals-3i8p9i/splash/","/previews/claude-mascotte-redesign-proposals-3i8p9i/video/","/previews/claude-mascotte-redesign-proposals-3i8p9i/vendor/qr-scanner/","/previews/claude-mascotte-redesign-proposals-3i8p9i/img/hero-poster"],"phonetic":["/previews/claude-mascotte-redesign-proposals-3i8p9i/phonetic/"],"qrgen":["/previews/claude-mascotte-redesign-proposals-3i8p9i/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"9722d24e1026","media":"d9a5555e4406","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_GROUPS = {"audio":["/previews/claude-mascotte-redesign-proposals-3i8p9i/audio/"],"media":["/previews/claude-mascotte-redesign-proposals-3i8p9i/mystery/"],"splash":["/previews/claude-mascotte-redesign-proposals-3i8p9i/splash/"],"landing":["/previews/claude-mascotte-redesign-proposals-3i8p9i/video/","/previews/claude-mascotte-redesign-proposals-3i8p9i/img/hero-poster"],"qrscan":["/previews/claude-mascotte-redesign-proposals-3i8p9i/vendor/qr-scanner/"],"phonetic":["/previews/claude-mascotte-redesign-proposals-3i8p9i/phonetic/"],"qrgen":["/previews/claude-mascotte-redesign-proposals-3i8p9i/vendor/lean-qr/"]}
+const LAZY_VERSIONS = {"audio":"9722d24e1026","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"07a4fc632aa3","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
