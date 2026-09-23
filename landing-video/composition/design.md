@@ -13,7 +13,7 @@ The opposite of a hype reel: this sells *douceur*, not performance.
 - Text: `#1E1A2E` (`--ink`)
 - Text muted: `#6B6678` (ink at ~60%)
 - Accent (primary): `#4F46BA` (`--indigo`)
-- Mascot Piou (accents, sparkles): body `#F0B43A`, belly/highlight `#FBD96C`
+- Mascot Piou (accents, sparkles): body `#F4B63C`, belly/highlight `#FCDF84`
 
 ## Typography
 

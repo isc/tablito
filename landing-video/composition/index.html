@@ -146,15 +146,14 @@
       }
 
       /* Piou — SVG inline (dupliqué de src/components/Mascot.tsx, couleurs app). */
-      .mascot-feet path { stroke: #1e1a2e; stroke-width: 3; fill: none; stroke-linecap: round; }
-      .mascot-fill-body { fill: #f0b43a; stroke: #1e1a2e; stroke-width: 2.5; }
-      .mascot-fill-belly { fill: #fbd96c; }
+      .mascot-feet path { stroke: #d9751f; stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .mascot-fill-body, .mascot-tuft { fill: #f4b63c; stroke: #1e1a2e; stroke-width: 2.5; stroke-linejoin: round; }
+      .mascot-fill-belly { fill: #fcdf84; }
       .mascot-eye-iris { fill: #1e1a2e; }
       .mascot-eye-shine { fill: #fff; }
-      .mascot-beak { fill: #f0843a; stroke: none; }
-      .mascot-cheek { fill: #fbe4da; }
-      .mascot-wing { fill: #fbd96c; stroke: #1e1a2e; stroke-width: 2; }
-      .mascot-tuft { fill: none; stroke: #1e1a2e; stroke-width: 2.5; stroke-linecap: round; }
+      .mascot-beak { fill: #e07a24; stroke: #1e1a2e; stroke-width: 2; stroke-linejoin: round; }
+      .mascot-cheek { fill: #e8623d; opacity: 0.42; }
+      .mascot-wing { fill: #fcdf84; stroke: #1e1a2e; stroke-width: 2.5; stroke-linejoin: round; }
     </style>
   </head>
   <body>
@@ -217,20 +216,24 @@
           <div class="mascot" role="img" aria-label="Piou">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
               <g class="mascot-feet">
-                <path d="M40 68 L 40 94 M 36 94 L 44 94" />
-                <path d="M60 68 L 60 94 M 56 94 L 64 94" />
+                <path d="M42 68 L 42 94 M 42 94 L 37 97 M 42 94 L 47 97" />
+                <path d="M58 68 L 58 94 M 58 94 L 53 97 M 58 94 L 63 97" />
               </g>
-              <ellipse cx="50" cy="60" rx="28" ry="28" class="mascot-fill-body" />
-              <path d="M32 60 Q 50 82 68 60" class="mascot-fill-belly" />
-              <circle cx="43" cy="54" r="3" class="mascot-eye-iris" />
-              <circle cx="44" cy="53" r="0.9" class="mascot-eye-shine" />
-              <circle cx="57" cy="54" r="3" class="mascot-eye-iris" />
-              <circle cx="58" cy="53" r="0.9" class="mascot-eye-shine" />
-              <path d="M46 63 L 54 63 L 50 68 Z" class="mascot-beak" />
-              <circle cx="38" cy="62" r="2.5" class="mascot-cheek" />
-              <circle cx="62" cy="62" r="2.5" class="mascot-cheek" />
-              <path d="M30 58 Q 26 70 36 74 Q 40 68 38 60 Z" class="mascot-wing" />
-              <path d="M48 34 L 50 28 L 52 34" class="mascot-tuft" />
+              <path d="M50 31 C 45 25 46 18 51 17 C 50 22 52 27 50 31 Z" class="mascot-tuft" />
+              <path d="M50 31 C 53 24 58 22 62 24 C 58 25 54 28 50 31 Z" class="mascot-tuft" />
+              <path d="M50 30 C 70 30 80 48 80 64 C 80 80 67 90 50 90 C 33 90 20 80 20 64 C 20 48 30 30 50 30 Z" class="mascot-fill-body" />
+              <ellipse cx="50" cy="75" rx="18" ry="11.5" class="mascot-fill-belly" />
+              <circle cx="41" cy="57" r="4.3" class="mascot-eye-iris" />
+              <circle cx="42.5" cy="55.4" r="1.5" class="mascot-eye-shine" />
+              <circle cx="39.8" cy="58.8" r="0.6" class="mascot-eye-shine" />
+              <circle cx="59" cy="57" r="4.3" class="mascot-eye-iris" />
+              <circle cx="60.5" cy="55.4" r="1.5" class="mascot-eye-shine" />
+              <circle cx="57.8" cy="58.8" r="0.6" class="mascot-eye-shine" />
+              <path d="M45.5 63.5 Q 50 61.5 54.5 63.5 Q 50 69.5 45.5 63.5 Z" class="mascot-beak" />
+              <ellipse cx="33.5" cy="65" rx="4" ry="2.4" class="mascot-cheek" />
+              <ellipse cx="66.5" cy="65" rx="4" ry="2.4" class="mascot-cheek" />
+              <path d="M22 60 Q 11 68 18 79 Q 25 77 27 66 Z" class="mascot-wing mascot-wing-left" />
+              <path d="M78 60 Q 89 68 82 79 Q 75 77 73 66 Z" class="mascot-wing mascot-wing-right" />
             </svg>
           </div>
           <span class="wordmark">Tablito</span>

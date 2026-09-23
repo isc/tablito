@@ -10,18 +10,21 @@
 // groupe : régénérer les MP3 n'invalide pas les images mystère, et inversement.
 export const LAZY_GROUPS = {
   audio: ['/audio/'],
-  media: [
-    '/mystery/',
-    '/splash/',
-    '/video/', // démo de la landing : la PWA installée saute la landing (skip-static-landing)
-    // ⚠ Le scanner de QR (~58 Ko, utilisé au plus une fois par appareil) a le
-    // même profil que le générateur du groupe `qrgen`, mais le sortir d'ici
-    // changerait le hash de `media` : ~22 Mo re-téléchargés par tout le monde
-    // pour déplacer 58 Ko. À déplacer le jour où `media` change pour une autre
-    // raison — pas avant.
-    '/vendor/qr-scanner/',
-    '/img/hero-poster', // idem : poster de la démo, hors shell de l'app
-  ],
+  // Images mystère seules (~13 Mo) : le groupe le plus lourd ne change que
+  // quand les images changent. Tout ce qui y cohabitait autrefois (splash,
+  // démo de la landing, scanner de QR) en a été sorti le jour où le redesign
+  // de Piou a régénéré les splash : chaque mise à jour de ces petits fichiers
+  // faisait re-télécharger toutes les images mystère.
+  media: ['/mystery/'],
+  // Splash screens iOS : régénérés avec l'icône (scripts/generate-splash.mjs).
+  splash: ['/splash/'],
+  // Démo de la landing (vidéo hero + poster), re-rendue à chaque évolution de
+  // l'app. La PWA installée saute la landing (skip-static-landing).
+  landing: ['/video/', '/img/hero-poster'],
+  // Scanner de QR du transfert de profil (~58 Ko, utilisé au plus une fois par
+  // appareil). Même profil que le générateur (`qrgen`), mais pas le même
+  // paquet : chacun bouge à son propre bump.
+  qrscan: ['/vendor/qr-scanner/'],
   // Dictionnaire de prononciation du mode vocal épelé (specs §15.10) : demandé
   // seulement quand ce mode optionnel est actif, donc jamais précaché. Groupe à
   // part et non `media` : son cycle de vie est le sien (il ne change qu'avec
@@ -30,7 +33,7 @@ export const LAZY_GROUPS = {
   phonetic: ['/phonetic/'],
   // Générateur de QR du transfert de profil, importé dynamiquement par QrCanvas
   // (jamais lu au 1er render). Cycle de vie propre : il ne bouge qu'au bump de
-  // lean-qr. Ne contient pas le scanner, cf. la note dans `media`.
+  // lean-qr. Ne contient pas le scanner, cf. `qrscan`.
   qrgen: ['/vendor/lean-qr/'],
 }
 

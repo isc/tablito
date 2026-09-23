@@ -1,3 +1,8 @@
+// Plume laissée par Piou quand il s'envole (easter egg de la home). Mêmes
+// jaunes que le corps et le ventre de Piou (cf. Mascot.css), en dégradé du
+// calamus vers la pointe. Deux encoches dans le vexille, comme sur une vraie
+// plume, et des barbes suggérées par des traits clairs plutôt que par des
+// hachures à l'encre.
 export default function Feather() {
   return (
     <svg
@@ -6,32 +11,43 @@ export default function Feather() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
+      <defs>
+        <linearGradient id="feather-grad" x1="0" y1="1" x2="0.15" y2="0">
+          <stop offset="0" stopColor="#F4B63C" />
+          <stop offset="1" stopColor="#FCDF84" />
+        </linearGradient>
+      </defs>
       <g className="feather-g">
+        {/* duvet à la base du vexille */}
         <path
-          d="M58 78 Q 70 60 64 42 Q 56 28 44 30 Q 36 44 40 60 Q 44 72 52 78 Z"
-          fill="#F0B43A"
+          d="M49.6 81 Q 45 79.5 42 82.5 M 49.4 84 Q 45.5 84 43.5 87.5 M 50 80.5 Q 54.5 80 56.5 83.5"
+          stroke="#F4B63C"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* vexille */}
+        <path
+          d="M50 78 C 42 72 37 60 38 48 L 42.5 46 L 39 42 C 40 28 49 16 58 10 C 63 20 64 32 61.5 40 L 58 43 L 61.5 46.5 C 60 60 56 71 50 78 Z"
+          fill="url(#feather-grad)"
           stroke="var(--ink)"
-          strokeWidth="1.4"
+          strokeWidth="1.3"
           strokeLinejoin="round"
         />
+        {/* barbes */}
         <path
-          d="M52 36 L 56 74"
-          stroke="var(--ink)"
-          strokeWidth="1.1"
+          d="M51 70 Q 46 66.5 42.5 63 M 52.4 58 Q 47.5 55 43 51.5 M 55.8 30 Q 50.5 26 47.5 21.5 M 51.6 66 Q 55 62.5 57.5 58.5 M 53.8 50 Q 57 48.5 59.5 49.5 M 55.3 36 Q 59 32.5 61 28"
+          stroke="#FFF6D6"
+          strokeWidth="1"
           strokeLinecap="round"
           fill="none"
+          opacity="0.9"
         />
+        {/* rachis + calamus */}
         <path
-          d="M53 44 L 47 42 M 54 50 L 46 48 M 55 56 L 45 54 M 55 62 L 46 60 M 55 68 L 48 67"
-          stroke="var(--ink)"
-          strokeWidth="0.7"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d="M53 44 L 60 42 M 54 50 L 62 48 M 55 56 L 64 54 M 55 62 L 63 60 M 55 68 L 61 67"
-          stroke="var(--ink)"
-          strokeWidth="0.7"
+          d="M48.5 91 C 51 70 54 40 58 11"
+          stroke="#C98A1E"
+          strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
         />

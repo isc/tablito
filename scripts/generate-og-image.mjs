@@ -24,28 +24,32 @@ const out = join(root, 'public', 'og-image.png');
 
 const fontUrl = (file) => pathToFileURL(join(fontsDir, file)).href;
 
-// Mascotte Piou. ⚠ TROISIÈME copie du SVG (les deux autres : la landing dans
-// index.html et src/components/Mascot.tsx). Celle-ci inline en plus les couleurs
-// qui vivent dans Mascot.css (#F0B43A, #FBD96C, #D9751F, #E8623D…) — donc un
+// Mascotte Piou. ⚠ Copie à la main du SVG de src/components/Mascot.tsx (qui
+// liste toutes les copies). Celle-ci inline en plus les couleurs qui vivent
+// dans Mascot.css (#F4B63C, #FCDF84, #E07A24, #D9751F, #E8623D…) — donc un
 // changement de géométrie OU de palette doit être répercuté ici à la main, sans
 // outil pour détecter la dérive. Régénérer l'image après toute modif.
 const mascot = `
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="300" height="300">
-  <g fill="none" stroke="#1E1A2E" stroke-width="1.6" stroke-linecap="round">
-    <path d="M40 68 L 40 94 M 36 94 L 44 94" />
-    <path d="M60 68 L 60 94 M 56 94 L 64 94" />
+  <g fill="none" stroke="#D9751F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M42 68 L 42 94 M 42 94 L 37 97 M 42 94 L 47 97" />
+    <path d="M58 68 L 58 94 M 58 94 L 53 97 M 58 94 L 63 97" />
   </g>
-  <ellipse cx="50" cy="60" rx="28" ry="28" fill="#F0B43A" stroke="#1E1A2E" stroke-width="1.6" />
-  <path d="M32 60 Q 50 82 68 60" fill="#FBD96C" />
-  <circle cx="43" cy="54" r="3" fill="#1E1A2E" />
-  <circle cx="44" cy="53" r="0.9" fill="#fff" />
-  <circle cx="57" cy="54" r="3" fill="#1E1A2E" />
-  <circle cx="58" cy="53" r="0.9" fill="#fff" />
-  <path d="M46 63 L 54 63 L 50 68 Z" fill="#D9751F" stroke="#1E1A2E" stroke-width="1.3" stroke-linejoin="round" />
-  <circle cx="38" cy="62" r="2.5" fill="#E8623D" opacity="0.35" />
-  <circle cx="62" cy="62" r="2.5" fill="#E8623D" opacity="0.35" />
-  <path d="M30 58 Q 26 70 36 74 Q 40 68 38 60 Z" fill="#FBD96C" stroke="#1E1A2E" stroke-width="1.6" />
-  <path d="M48 34 L 50 28 L 52 34" fill="none" stroke="#1E1A2E" stroke-width="1.6" stroke-linecap="round" />
+  <path d="M50 31 C 45 25 46 18 51 17 C 50 22 52 27 50 31 Z" fill="#F4B63C" stroke="#1E1A2E" stroke-width="1.6" stroke-linejoin="round" />
+  <path d="M50 31 C 53 24 58 22 62 24 C 58 25 54 28 50 31 Z" fill="#F4B63C" stroke="#1E1A2E" stroke-width="1.6" stroke-linejoin="round" />
+  <path d="M50 30 C 70 30 80 48 80 64 C 80 80 67 90 50 90 C 33 90 20 80 20 64 C 20 48 30 30 50 30 Z" fill="#F4B63C" stroke="#1E1A2E" stroke-width="1.6" stroke-linejoin="round" />
+  <ellipse cx="50" cy="75" rx="18" ry="11.5" fill="#FCDF84" />
+  <circle cx="41" cy="57" r="4.3" fill="#1E1A2E" />
+  <circle cx="59" cy="57" r="4.3" fill="#1E1A2E" />
+  <circle cx="42.5" cy="55.4" r="1.5" fill="#fff" />
+  <circle cx="39.8" cy="58.8" r="0.6" fill="#fff" />
+  <circle cx="60.5" cy="55.4" r="1.5" fill="#fff" />
+  <circle cx="57.8" cy="58.8" r="0.6" fill="#fff" />
+  <path d="M45.5 63.5 Q 50 61.5 54.5 63.5 Q 50 69.5 45.5 63.5 Z" fill="#E07A24" stroke="#1E1A2E" stroke-width="1.3" stroke-linejoin="round" />
+  <ellipse cx="33.5" cy="65" rx="4" ry="2.4" fill="#E8623D" opacity="0.42" />
+  <ellipse cx="66.5" cy="65" rx="4" ry="2.4" fill="#E8623D" opacity="0.42" />
+  <path d="M22 60 Q 11 68 18 79 Q 25 77 27 66 Z" fill="#FCDF84" stroke="#1E1A2E" stroke-width="1.6" stroke-linejoin="round" />
+  <path d="M78 60 Q 89 68 82 79 Q 75 77 73 66 Z" fill="#FCDF84" stroke="#1E1A2E" stroke-width="1.6" stroke-linejoin="round" />
 </svg>`;
 
 const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
