@@ -1,7 +1,16 @@
 import { useMascotStrings } from '../i18n/progress';
 
+// giggle / flyin ne servent qu'à l'easter egg de la home (chatouilles).
+export type MascotMood =
+  | 'idle'
+  | 'happy'
+  | 'celebrate'
+  | 'giggle'
+  | 'flyaway'
+  | 'flyin';
+
 interface MascotProps {
-  mood: 'happy' | 'idle' | 'celebrate' | 'flyaway';
+  mood: MascotMood;
 }
 
 // Piou — mascotte stable : stage unique, taille unique. Seule l'humeur

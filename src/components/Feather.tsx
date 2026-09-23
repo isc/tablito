@@ -9,7 +9,7 @@ export default function Feather() {
       <g className="feather-g">
         <path
           d="M58 78 Q 70 60 64 42 Q 56 28 44 30 Q 36 44 40 60 Q 44 72 52 78 Z"
-          fill="#F0B43A"
+          fill="#F4B63C"
           stroke="var(--ink)"
           strokeWidth="1.4"
           strokeLinejoin="round"

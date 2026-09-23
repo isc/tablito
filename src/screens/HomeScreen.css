@@ -185,8 +185,33 @@
   50%      { transform: rotate(26deg) translateY(-2px); }
 }
 
+/* Plume qui tombe du ciel juste après l'envol de Piou (easter egg). Elle se
+   balance de gauche à droite en descendant, comme une vraie plume. Anime le
+   groupe interne (translate/rotate) pour ne pas écraser featherDrift, posé
+   sur le <svg>. */
+.home-mascot-empty.is-falling .feather-svg {
+  overflow: visible;
+}
+
+.home-mascot-empty.is-falling .feather-g {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: featherFall 2.6s ease-in-out both;
+}
+
+@keyframes featherFall {
+  0%   { translate: -8px -150px; rotate: -30deg; opacity: 0; }
+  10%  { opacity: 1; }
+  30%  { translate: 14px -105px; rotate: 22deg; }
+  52%  { translate: -12px -62px; rotate: -18deg; }
+  74%  { translate: 8px -24px; rotate: 12deg; }
+  90%  { translate: -3px -4px; rotate: -4deg; }
+  100% { translate: 0 0; rotate: 0deg; opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .feather-svg {
+  .feather-svg,
+  .home-mascot-empty.is-falling .feather-g {
     animation: none;
   }
 }
