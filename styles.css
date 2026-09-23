@@ -1473,30 +1473,41 @@
 
 /* ---- Palette ---- */
 
-.mascot-feet path,
-.mascot-tuft {
-  stroke: var(--ink);
-  stroke-width: 1.6;
+.mascot-feet path {
+  stroke: #D9751F;
+  stroke-width: 2.4;
   stroke-linecap: round;
+  stroke-linejoin: round;
   fill: none;
 }
 
-.mascot-fill-body {
-  fill: #F0B43A;       /* chick body */
+.mascot-fill-body,
+.mascot-tuft {
+  fill: #F4B63C;       /* chick body */
   stroke: var(--ink);
   stroke-width: 1.6;
+  stroke-linejoin: round;
 }
 
 .mascot-fill-belly {
-  fill: #FBD96C;       /* belly highlight */
+  fill: #FCDF84;       /* belly highlight */
 }
 
 .mascot-wing {
-  fill: #FBD96C;
+  fill: #FCDF84;
   stroke: var(--ink);
   stroke-width: 1.6;
-  transform-origin: 30px 58px;  /* épaule — rotation autour de ce point */
+  stroke-linejoin: round;
   transform-box: fill-box;
+  /* épaule — rotation autour du bord collé au corps. L'aile droite est le
+     miroir de la gauche : même keyframes, sens inversé par --wing-dir. */
+  --wing-dir: 1;
+  transform-origin: top right;
+}
+
+.mascot-wing-right {
+  --wing-dir: -1;
+  transform-origin: top left;
 }
 
 .mascot-eye-iris {
@@ -1512,8 +1523,26 @@
   transform-box: fill-box;
 }
 
+/* Yeux « ^^ » : à la place des yeux ouverts dans les humeurs de joie
+   débordante (celebrate, et giggle pour l'easter egg de la home). */
+.mascot-eyes-closed {
+  display: none;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.mascot:is(.celebrate, .giggle) .mascot-eyes-open {
+  display: none;
+}
+
+.mascot:is(.celebrate, .giggle) .mascot-eyes-closed {
+  display: inline;
+}
+
 .mascot-beak {
-  fill: #D9751F;
+  fill: #E07A24;
   stroke: var(--ink);
   stroke-width: 1.3;
   stroke-linejoin: round;
@@ -1521,7 +1550,7 @@
 
 .mascot-cheek {
   fill: var(--coral);
-  opacity: 0.35;
+  opacity: 0.42;
 }
 
 /* ---- Animations ----
@@ -1562,7 +1591,7 @@
 
 @keyframes mascotWingIdle {
   0%, 100% { transform: rotate(0deg); }
-  50%      { transform: rotate(-4deg); }
+  50%      { transform: rotate(calc(-4deg * var(--wing-dir))); }
 }
 
 /* ---- Humeurs ---- */
@@ -1585,7 +1614,7 @@
 
 @keyframes mascotWingFlap {
   0%, 100% { transform: rotate(0deg); }
-  50%      { transform: rotate(-18deg); }
+  50%      { transform: rotate(calc(-18deg * var(--wing-dir))); }
 }
 
 /* Celebrate : rebond plus ample + léger tangage, en boucle. */
@@ -1610,10 +1639,14 @@
    hors champ) le temps que le parent retire le mascot du DOM. */
 .mascot.flyaway {
   animation: mascotFlyAway 0.9s ease-in forwards;
+}
+
+/* En vol (départ comme retour) : pas de tap, corps figé, ailes à fond. */
+.mascot:is(.flyaway, .flyin) {
   pointer-events: none;
 }
 
-.mascot.flyaway .mascot-body {
+.mascot:is(.flyaway, .flyin) .mascot-body {
   animation: none;
 }
 
@@ -1625,6 +1658,53 @@
   0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
   15%  { transform: translate(0, -12px) rotate(-4deg); opacity: 1; }
   100% { transform: translate(60vw, -110vh) rotate(18deg); opacity: 0; }
+}
+
+/* Giggle : fou rire sous les chatouilles (easter egg de la home). Yeux
+   « ^^ », corps qui se tortille, houppette qui frétille, ailes qui battent. */
+.mascot.giggle .mascot-body {
+  animation:
+    mascotBreathe 3.4s ease-in-out infinite,
+    mascotGiggle 0.16s ease-in-out 6;
+}
+
+.mascot.giggle .mascot-wing {
+  animation: mascotWingFlap 0.16s ease-in-out 6;
+}
+
+.mascot.giggle .mascot-tuft {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: mascotTuftShake 0.12s ease-in-out 8;
+}
+
+@keyframes mascotGiggle {
+  0%, 100% { rotate: 0deg; }
+  25%      { rotate: -5deg; }
+  75%      { rotate: 5deg; }
+}
+
+@keyframes mascotTuftShake {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-14deg); }
+}
+
+/* Flyin : retour de Piou après l'envol, en miroir du flyaway (il revient
+   par l'autre côté) et se pose avec un petit rebond. */
+.mascot.flyin {
+  animation: mascotFlyIn 1.1s ease-out both;
+}
+
+.mascot.flyin .mascot-wing {
+  animation: mascotWingFlap 0.12s ease-in-out 7;
+}
+
+@keyframes mascotFlyIn {
+  0%   { transform: translate(-60vw, -110vh) rotate(-18deg); opacity: 0; }
+  20%  { opacity: 1; }
+  75%  { transform: translate(0, -14px) rotate(4deg); opacity: 1; }
+  88%  { transform: translate(0, 3px) rotate(0deg) scale(1.04, 0.95); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1, 1); opacity: 1; }
 }
 
 /* ===== components/Medallion.css ===== */
@@ -3175,8 +3255,52 @@ input, select, textarea {
   50%      { transform: rotate(26deg) translateY(-2px); }
 }
 
+/* Plume qui tombe du ciel juste après l'envol de Piou (easter egg). Deux
+   mouvements indépendants, sur deux éléments, pour rester fluides :
+   - la descente (propriété `translate` du <svg>, en espace écran, qui se
+     compose avec le `transform` de featherDrift) : une seule courbe
+     continue qui ralentit à l'approche du sol ;
+   - le balancement (groupe interne) : un pendule accroché au-dessus de la
+     plume, d'amplitude décroissante. L'ease-in-out par segment y est voulu :
+     un pendule s'arrête bien à chaque extrémité.
+   Un seul keyframe mêlant les deux faisait s'arrêter la descente à chaque
+   extrémité du balancement, d'où une chute saccadée. */
+.home-mascot-empty.is-falling {
+  --feather-fall: 3.2s;   /* durée commune chute + balancement ; la dérive au sol démarre après */
+}
+
+.home-mascot-empty.is-falling .feather-svg {
+  overflow: visible;
+  animation:
+    featherFall var(--feather-fall) cubic-bezier(0.33, 0.1, 0.45, 1) both,
+    featherDrift 4.2s ease-in-out var(--feather-fall) infinite;
+}
+
+.home-mascot-empty.is-falling .feather-g {
+  transform-box: fill-box;
+  transform-origin: 50% -60%;
+  animation: featherSway var(--feather-fall) ease-in-out both;
+}
+
+@keyframes featherFall {
+  0%   { translate: 0 -190px; opacity: 0; }
+  12%  { opacity: 1; }
+  100% { translate: 0 0; opacity: 1; }
+}
+
+@keyframes featherSway {
+  0%   { rotate: -20deg; }
+  24%  { rotate: 17deg; }
+  47%  { rotate: -12deg; }
+  69%  { rotate: 7deg; }
+  87%  { rotate: -3deg; }
+  100% { rotate: 0deg; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .feather-svg {
+  .feather-svg,
+  .home-mascot-empty.is-falling .feather-svg,
+  .home-mascot-empty.is-falling .feather-g {
     animation: none;
   }
 }
