@@ -1,3 +1,0 @@
-import{jsx as g,jsxs as u}from"preact/jsx-runtime";import{useLang as t,SUPPORTED_LANGS as s}from"../i18n/lang.js";import{useLanguageStrings as o}from"../i18n/language.js";const i={fr:"Fran\xE7ais",en:"English"};function r(){const{lang:n,setLang:l}=t(),e=o();return u("div",{className:"language-toggle",children:[g("span",{className:"language-toggle-label",children:e.label}),g("div",{className:"language-toggle-options",role:"group","aria-label":e.label,children:s.map(a=>g("button",{type:"button",className:`language-toggle-option${a===n?" is-active":""}`,"aria-pressed":a===n,onClick:()=>l(a),children:i[a]},a))})]})}export{r as default};
-
-//# sourceMappingURL=LanguageToggle.js.map

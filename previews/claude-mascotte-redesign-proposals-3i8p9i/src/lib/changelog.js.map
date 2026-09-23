@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["lib/changelog.ts"],
-  "sourcesContent": ["import { pickStrings } from '../i18n/lang';\nimport { changelogData } from '../i18n/changelog';\n\nexport interface ChangelogEntry {\n  date: string; // ISO YYYY-MM-DD\n  items: string[];\n}\n\n// Le contenu (traduit) vit dans i18n/changelog.ts ; ici on ne garde que la\n// forme (ChangelogEntry) et l'acc\u00E8s language-aware. Ordre ant\u00E9chronologique\n// (plus r\u00E9cent en haut). Les entr\u00E9es sont \u00E9crites pour un parent qui consulte\n// la page de temps en temps : on regroupe par jour de publication, on ne\n// mentionne pas les d\u00E9tails techniques (refactos, CI, lint), seulement ce qui\n// change l'exp\u00E9rience visible c\u00F4t\u00E9 enfant ou parent. Garder court et concret.\nexport function getChangelog(): ChangelogEntry[] {\n  return pickStrings(changelogData);\n}\n"],
-  "mappings": "AAAA,OAAS,eAAAA,MAAmB,eAC5B,OAAS,iBAAAC,MAAqB,oBAavB,SAASC,GAAiC,CAC/C,OAAOF,EAAYC,CAAa,CAClC",
-  "names": ["pickStrings", "changelogData", "getChangelog"]
-}
