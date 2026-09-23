@@ -140,11 +140,17 @@ const fr: BadgeI18n = {
     description: 'Toutes les divisions avec reste en boîte 5',
     conditionText: 'Place toutes les divisions avec reste dans la boîte 5 (le top niveau !).',
   },
-  conjTense: (tense) => ({
-    name: `Le ${TENSE_NAMES.fr[tense]}, c’est fait !`,
-    description: `Maîtriser tout le ${TENSE_NAMES.fr[tense]}`,
-    conditionText: `Place toutes les formes du ${TENSE_NAMES.fr[tense]} dans la boîte 4 ou 5.`,
-  }),
+  conjTense: (tense) => {
+    const name = TENSE_NAMES.fr[tense];
+    // Élision devant voyelle : « l’imparfait », « de l’imparfait ».
+    const vowel = /^[aeiouyéèê]/i.test(name);
+    const le = vowel ? `l’${name}` : `le ${name}`;
+    return {
+      name: `${le.charAt(0).toUpperCase()}${le.slice(1)}, c’est fait !`,
+      description: `Maîtriser tout ${le}`,
+      conditionText: `Place toutes les formes ${vowel ? `de l’${name}` : `du ${name}`} dans la boîte 4 ou 5.`,
+    };
+  },
   conjVerb: (verb) => ({
     name: `Le verbe « ${verb} »`,
     description: `Maîtriser le verbe ${verb}`,

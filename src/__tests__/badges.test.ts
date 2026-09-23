@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { checkBadges, getBadgeDetail, isRule11Unlocked } from '../lib/badges';
+import { badgeI18n } from '../i18n/badges';
 import { createInitialFacts } from '../lib/facts';
 import { importProfile } from '../lib/storage';
 import type { UserProfile } from '../types';
@@ -231,5 +232,18 @@ describe('intégration : profil legacy déjà au top niveau débloque ×11', () 
     const tableBadges = loaded.badges.filter((b) => b.id.startsWith(BADGE_IDS.TABLE_PREFIX));
     expect(tableBadges.length).toBe(8);
     expect(isRule11Unlocked(loaded)).toBe(true);
+  });
+});
+
+describe('badges de temps de conjugaison : élision', () => {
+  it('élide devant voyelle (« l’imparfait ») et pas devant consonne', () => {
+    const t = badgeI18n.fr.conjTense;
+    expect(t('imparfait')).toEqual({
+      name: 'L’imparfait, c’est fait !',
+      description: 'Maîtriser tout l’imparfait',
+      conditionText: 'Place toutes les formes de l’imparfait dans la boîte 4 ou 5.',
+    });
+    expect(t('futur').name).toBe('Le futur, c’est fait !');
+    expect(t('present').conditionText).toBe('Place toutes les formes du présent dans la boîte 4 ou 5.');
   });
 });
