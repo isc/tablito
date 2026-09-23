@@ -1655,6 +1655,66 @@
   100% { transform: translate(60vw, -110vh) rotate(18deg); opacity: 0; }
 }
 
+/* Giggle : fou rire sous les chatouilles (easter egg de la home). Yeux
+   « ^^ », corps qui se tortille, houppette qui frétille, ailes qui battent. */
+.mascot.giggle .mascot-eyes-open {
+  display: none;
+}
+
+.mascot.giggle .mascot-eyes-closed {
+  display: inline;
+}
+
+.mascot.giggle .mascot-body {
+  animation:
+    mascotBreathe 3.4s ease-in-out infinite,
+    mascotGiggle 0.16s ease-in-out 6;
+}
+
+.mascot.giggle .mascot-wing {
+  animation: mascotWingFlap 0.16s ease-in-out 6;
+}
+
+.mascot.giggle .mascot-tuft {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: mascotTuftShake 0.12s ease-in-out 8;
+}
+
+@keyframes mascotGiggle {
+  0%, 100% { rotate: 0deg; }
+  25%      { rotate: -5deg; }
+  75%      { rotate: 5deg; }
+}
+
+@keyframes mascotTuftShake {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-14deg); }
+}
+
+/* Flyin : retour de Piou après l'envol, en miroir du flyaway (il revient
+   par l'autre côté) et se pose avec un petit rebond. */
+.mascot.flyin {
+  animation: mascotFlyIn 1.1s ease-out both;
+  pointer-events: none;
+}
+
+.mascot.flyin .mascot-body {
+  animation: none;
+}
+
+.mascot.flyin .mascot-wing {
+  animation: mascotWingFlap 0.12s ease-in-out 7;
+}
+
+@keyframes mascotFlyIn {
+  0%   { transform: translate(-60vw, -110vh) rotate(-18deg); opacity: 0; }
+  20%  { opacity: 1; }
+  75%  { transform: translate(0, -14px) rotate(4deg); opacity: 1; }
+  88%  { transform: translate(0, 3px) rotate(0deg) scale(1.04, 0.95); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1, 1); opacity: 1; }
+}
+
 /* ===== components/Medallion.css ===== */
 /* Disque de badge, partagé par les trois surfaces qui l'affichent : la grille
    (.badge-medallion), la modale de détail (.badge-detail-medallion) et le
@@ -3203,8 +3263,33 @@ input, select, textarea {
   50%      { transform: rotate(26deg) translateY(-2px); }
 }
 
+/* Plume qui tombe du ciel juste après l'envol de Piou (easter egg). Elle se
+   balance de gauche à droite en descendant, comme une vraie plume. Anime le
+   groupe interne (translate/rotate) pour ne pas écraser featherDrift, posé
+   sur le <svg>. */
+.home-mascot-empty.is-falling .feather-svg {
+  overflow: visible;
+}
+
+.home-mascot-empty.is-falling .feather-g {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: featherFall 2.6s ease-in-out both;
+}
+
+@keyframes featherFall {
+  0%   { translate: -8px -150px; rotate: -30deg; opacity: 0; }
+  10%  { opacity: 1; }
+  30%  { translate: 14px -105px; rotate: 22deg; }
+  52%  { translate: -12px -62px; rotate: -18deg; }
+  74%  { translate: 8px -24px; rotate: 12deg; }
+  90%  { translate: -3px -4px; rotate: -4deg; }
+  100% { translate: 0 0; rotate: 0deg; opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .feather-svg {
+  .feather-svg,
+  .home-mascot-empty.is-falling .feather-g {
     animation: none;
   }
 }
