@@ -3263,32 +3263,47 @@ input, select, textarea {
   50%      { transform: rotate(26deg) translateY(-2px); }
 }
 
-/* Plume qui tombe du ciel juste après l'envol de Piou (easter egg). Elle se
-   balance de gauche à droite en descendant, comme une vraie plume. Anime le
-   groupe interne (translate/rotate) pour ne pas écraser featherDrift, posé
-   sur le <svg>. */
+/* Plume qui tombe du ciel juste après l'envol de Piou (easter egg). Deux
+   mouvements indépendants, sur deux éléments, pour rester fluides :
+   - la descente (propriété `translate` du <svg>, en espace écran, qui se
+     compose avec le `transform` de featherDrift) : une seule courbe
+     continue qui ralentit à l'approche du sol ;
+   - le balancement (groupe interne) : un pendule accroché au-dessus de la
+     plume, d'amplitude décroissante. L'ease-in-out par segment y est voulu :
+     un pendule s'arrête bien à chaque extrémité.
+   Un seul keyframe mêlant les deux faisait s'arrêter la descente à chaque
+   extrémité du balancement, d'où une chute saccadée. */
 .home-mascot-empty.is-falling .feather-svg {
   overflow: visible;
+  animation:
+    featherFall 3.2s cubic-bezier(0.33, 0.1, 0.45, 1) both,
+    featherDrift 4.2s ease-in-out 3.2s infinite;
 }
 
 .home-mascot-empty.is-falling .feather-g {
   transform-box: fill-box;
-  transform-origin: center;
-  animation: featherFall 2.6s ease-in-out both;
+  transform-origin: 50% -60%;
+  animation: featherSway 3.2s ease-in-out both;
 }
 
 @keyframes featherFall {
-  0%   { translate: -8px -150px; rotate: -30deg; opacity: 0; }
-  10%  { opacity: 1; }
-  30%  { translate: 14px -105px; rotate: 22deg; }
-  52%  { translate: -12px -62px; rotate: -18deg; }
-  74%  { translate: 8px -24px; rotate: 12deg; }
-  90%  { translate: -3px -4px; rotate: -4deg; }
-  100% { translate: 0 0; rotate: 0deg; opacity: 1; }
+  0%   { translate: 0 -190px; opacity: 0; }
+  12%  { opacity: 1; }
+  100% { translate: 0 0; opacity: 1; }
+}
+
+@keyframes featherSway {
+  0%   { rotate: -20deg; }
+  24%  { rotate: 17deg; }
+  47%  { rotate: -12deg; }
+  69%  { rotate: 7deg; }
+  87%  { rotate: -3deg; }
+  100% { rotate: 0deg; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .feather-svg,
+  .home-mascot-empty.is-falling .feather-svg,
   .home-mascot-empty.is-falling .feather-g {
     animation: none;
   }
