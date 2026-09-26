@@ -570,10 +570,7 @@ async function captureBadgesScreen(page) {
 
 // Opens the parent area and shoots its overview (`hubShot`) and/or the Maths
 // page its subject card opens (`mathShot`), then goes back home.
-async function captureParentDashboard(
-  page,
-  { hubShot, mathShot } = { hubShot: '13-parent-dashboard' },
-) {
+async function captureParentDashboard(page, { hubShot, mathShot }) {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
   await page.waitForSelector('.parent-gate-modal');

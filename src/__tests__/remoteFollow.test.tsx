@@ -62,7 +62,7 @@ function findButton(label: RegExp): HTMLButtonElement | null {
 }
 
 function tabLabels(): string[] {
-  return Array.from(document.querySelectorAll('.parent-op-tabs .progress-tab')).map((t) =>
+  return Array.from(document.querySelectorAll('.parent-source-tabs .progress-tab')).map((t) =>
     (t.textContent ?? '').trim(),
   );
 }
@@ -247,7 +247,7 @@ describe('lien profond #recap (clic sur la notification hebdomadaire)', () => {
     // la progression de l'enfant, l'ouvrir sur « Papa » obligerait à taper
     // l'onglet à chaque fois.
     expect(document.querySelector('.parent-title')?.textContent).toContain('Zoé');
-    const active = document.querySelector('.parent-op-tabs .progress-tab.active');
+    const active = document.querySelector('.parent-source-tabs .progress-tab.active');
     expect((active?.textContent ?? '')).toContain('Zoé');
   });
 });
@@ -281,7 +281,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
   }
 
   async function clickTab(label: RegExp) {
-    const tab = Array.from(document.querySelectorAll('.parent-op-tabs .progress-tab')).find((t) =>
+    const tab = Array.from(document.querySelectorAll('.parent-source-tabs .progress-tab')).find((t) =>
       label.test(t.textContent ?? ''),
     ) as HTMLButtonElement;
     await act(async () => {

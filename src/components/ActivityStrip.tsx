@@ -1,7 +1,7 @@
 // Bandeau d'activité de l'espace parent : l'état du jour en une phrase, puis
-// les 14 derniers jours en colonnes. Répond à la question que ni les cartes
-// cumulatives (« Séances », « Série ») ni le sélecteur d'opération ne
-// posaient — « a-t-il travaillé aujourd'hui, et sur quoi ? ».
+// les 14 derniers jours en colonnes. Répond à la question que les compteurs
+// cumulés (« Séances », « Série ») ne posent pas — « a-t-il travaillé
+// aujourd'hui, et sur quoi ? ».
 //
 // Une colonne = un jour, un segment = une matière (maths en haut, conjugaison
 // en dessous). Comme une matière ne peut être faite qu'une fois par jour, un
@@ -29,7 +29,7 @@ export default function ActivityStrip({ profile, today, conjVisible, children }:
   const days = useMemo(() => buildActivityDays(profile, today), [profile, today]);
   // Initiales des jours calculées avec la fenêtre, pas au rendu : chaque appel
   // à `toLocaleDateString` avec des options construit un `Intl.DateTimeFormat`,
-  // et le bandeau se re-rend à chaque clic d'onglet d'opération au-dessus.
+  // et le bandeau se re-rend avec l'accueil de l'espace parent.
   const labels = useMemo(
     () => days.map((d) => t.formatWeekdayNarrow(new Date(`${d.date}T00:00:00`))),
     [days, t],
@@ -71,7 +71,7 @@ export default function ActivityStrip({ profile, today, conjVisible, children }:
   const sub = subtitle();
 
   return (
-    <div className="parent-stat-card parent-activity">
+    <div className="parent-card parent-activity">
       <div className="parent-activity-heading">{t.activityHeading(todayState())}</div>
       {sub && <div className="parent-section-subtitle parent-activity-sub">{sub}</div>}
       <div className="parent-activity-strip" role="img" aria-label={t.activityAlt(days.length)}>

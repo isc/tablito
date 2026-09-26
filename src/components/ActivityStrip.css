@@ -1,13 +1,7 @@
 /* Bandeau d'activité de l'espace parent (cf. ActivityStrip.tsx). Le châssis de
-   carte et la typo du sous-titre viennent de `.parent-stat-card` et
-   `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
+   carte et la typo du sous-titre viennent de `.parent-card` (ParentOverview.css)
+   et `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
    éléments : on ne redéclare ici que ce qui diffère. */
-
-/* Carte autonome en tête de l'accueil ; les compteurs cumulés en ferment le
-   bas (cf. ParentOverview). */
-.parent-activity {
-  padding-bottom: 12px;
-}
 
 .parent-activity-heading {
   font-family: var(--serif);

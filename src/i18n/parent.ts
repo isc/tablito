@@ -55,7 +55,6 @@ interface ParentDashboardStrings {
   // Entrées `en` présentes pour que la table reste totale, jamais rendues — la
   // matière est masquée quand la langue d'interface est l'anglais.
   conjugations: string;
-  conjTenses: string;
   verbForms: string;
   // Niveau actif de la carte Maths (les niveaux passés y sont des pastilles).
   currentMult: string;
@@ -203,7 +202,6 @@ const parentDashboardFr: ParentDashboardStrings = {
   subjects: 'Matières',
   math: 'Maths',
   conjugations: 'Conjugaison',
-  conjTenses: 'Présent, imparfait, futur',
   verbForms: 'Formes verbales',
   currentMult: 'En cours\u00a0: les multiplications',
   currentDiv: 'En cours\u00a0: les divisions',
@@ -356,7 +354,6 @@ const parentDashboardEn: ParentDashboardStrings = {
   subjects: 'Subjects',
   math: 'Math',
   conjugations: 'Conjugation',
-  conjTenses: 'Present, imperfect, future',
   verbForms: 'Verb forms',
   currentMult: 'Working on: multiplication',
   currentDiv: 'Working on: division',

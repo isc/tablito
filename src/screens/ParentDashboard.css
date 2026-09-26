@@ -40,7 +40,8 @@
   gap: 0;
 }
 
-.parent-eyebrow {
+.parent-eyebrow,
+.parent-overline {
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 800;
@@ -101,15 +102,7 @@
   background: var(--line);
 }
 
-/* Carte du jour (ActivityStrip) et ses compteurs cumulés (cf. ParentOverview). */
-.parent-stat-card {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 14px;
-  padding: 12px 14px;
-  text-align: left;
-}
-
+/* Compteurs cumulés au pied de la carte du jour (cf. ParentOverview). */
 .parent-stat-label {
   font-family: var(--sans);
   font-size: 10px;
@@ -121,31 +114,28 @@
 
 .parent-stat-value {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--ink);
-  margin-top: 2px;
   letter-spacing: -0.5px;
   line-height: 1.1;
 }
 
 /* Sélecteur de source (profil de cet appareil / enfants suivis à distance),
    sous l'en-tête de l'accueil. Mêmes pastilles que « Mes images ». */
-.parent-op-tabs {
+.parent-source-tabs {
   margin-top: 16px;
   padding-bottom: 2px;
 }
 
-.parent-op-tabs + .parent-section {
+.parent-source-tabs + .parent-section {
   margin-top: 10px;
 }
 
-/* Evolution chart */
+/* Courbe d'évolution, dans sa carte de la page de matière : pas de second
+   cadre autour d'elle. */
 .parent-evolution-chart {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-  padding: 12px 8px 4px;
+  padding: 10px 0 0;
   overflow: hidden;
 }
 

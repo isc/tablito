@@ -3,15 +3,10 @@
    elle-même vient d'ActivityStrip, qui porte les compteurs cumulés à sa base. */
 
 /* Sur-titre de section : « Matières », « À retravailler », « Réglages et
-   infos ». Moins appuyé qu'un titre de carte, il annonce un groupe. */
+   infos ». Moins appuyé qu'un titre de carte, il annonce un groupe. Même typo
+   que le sur-titre de l'en-tête (cf. `.parent-eyebrow`). */
 .parent-overline {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 800;
   line-height: 14px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--ink-muted);
   margin-bottom: 10px;
 }
 
@@ -56,11 +51,6 @@
   border-left: 1px solid var(--line-soft);
 }
 
-.parent-kpi .parent-stat-value {
-  font-size: 22px;
-  margin-top: 0;
-}
-
 .parent-kpi--streak .parent-stat-value {
   color: var(--coral);
 }
@@ -69,7 +59,8 @@
   color: var(--sage);
 }
 
-/* === Cartes de matière : la carte entière est le bouton qui ouvre la page === */
+/* === Cartes de matière : la carte entière est le bouton qui ouvre la page.
+   Fond, bordure et rayon viennent de `.parent-card`. === */
 
 .parent-subject-cards {
   display: flex;
@@ -82,9 +73,6 @@
   flex-direction: column;
   width: 100%;
   padding: 14px 16px 16px;
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 16px;
   color: var(--ink);
   font-family: var(--sans);
   text-align: left;
@@ -148,9 +136,12 @@
   color: var(--ink-muted);
 }
 
+/* Le chevron de retour, retourné. */
 .parent-subject-chevron {
+  display: inline-flex;
   flex-shrink: 0;
   color: var(--ink-muted);
+  transform: scaleX(-1);
 }
 
 /* Niveaux passés : une pastille chacun, cochée tant qu'il reste maîtrisé. */

@@ -1,0 +1,45 @@
+/* Contrôle segmenté de l'espace parent (cf. ParentSegmented.tsx). */
+
+.parent-segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--cream-deep);
+}
+
+/* Largeur à la mesure du libellé, et non en parts égales : « Multiplications »
+   se coupait en deux sur un écran de 360 px, alors que « Divisions » avait de
+   la place à revendre. Les trois tiennent ainsi sur une ligne dès 320 px. */
+.parent-segmented-option {
+  flex: 1 1 auto;
+  min-height: 38px;
+  padding: 0 8px;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.parent-segmented-option.is-active {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(30, 26, 46, 0.14);
+}
+
+/* Variante compacte, à côté d'un titre de carte. */
+.parent-segmented--pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.parent-segmented--pill .parent-segmented-option {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+}

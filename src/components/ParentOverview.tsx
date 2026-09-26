@@ -11,37 +11,34 @@
 // l'appareil (sauvegarde, suivi, notifications, profils) reste dans
 // ParentDashboard.
 
-import { memo, useMemo } from 'react';
-import type { UserProfile } from '../types';
-import { activeLevel, isConjVisible, unlockedMathLevels } from '../lib/badges';
-import { countMastered } from '../lib/leitner';
-import { getHardestFacts, type Subject } from '../lib/hardestFacts';
+import { memo, useMemo, type ReactNode } from 'react';
+import type { BoxLevel, UserProfile } from '../types';
+import { isConjVisible, unlockedMathLevels, type MathLevel } from '../lib/badges';
+import { CONJ_TENSES } from '../lib/conjugationFacts';
+import { countMastered, factsOf, masteryBuckets } from '../lib/leitner';
+import { getHardestFactsAcross, HARD_FACTS_WINDOW, type Subject } from '../lib/hardestFacts';
 import { getActiveStreak } from '../lib/streak';
 import { todayISO } from '../lib/utils';
 import { useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
+import { TENSE_NAMES } from '../i18n/tense';
 import ActivityStrip from './ActivityStrip';
+import BackChevron from './BackChevron';
 import MasteryBar from './ParentMastery';
 import HardFactList from './ParentHardFacts';
 
-// Même fenêtre que la liste de la page de matière : « difficile en ce moment »,
-// pas « difficile un jour ».
-const HARD_FACTS_WINDOW = 10;
 const OVERVIEW_HARD_FACTS = 3;
 
-type MathLevel = 'mult' | 'div' | 'rem';
+// Sous-titre de la carte Conjugaison, tiré des noms de temps partagés
+// (i18n/tense) : « Présent, imparfait, futur ». Matière fr-only.
+const CONJ_TENSES_LABEL = (() => {
+  const names = CONJ_TENSES.map((tense) => TENSE_NAMES.fr[tense]).join(', ');
+  return names.charAt(0).toUpperCase() + names.slice(1);
+})();
 
 interface ParentOverviewProps {
   profile: UserProfile;
   onOpenSubject: (subject: Subject) => void;
-}
-
-function Chevron() {
-  return (
-    <svg className="parent-subject-chevron" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 function Check() {
@@ -52,9 +49,49 @@ function Check() {
   );
 }
 
-// Mémoïsé pour la même raison qu'avant la découpe : `profile` est une référence
-// stable, alors que ParentDashboard se re-rend à chaque frappe dans ses zones
-// de texte (import, lien de suivi) et à chaque « Copié ✓ ».
+interface SubjectCardProps {
+  subject: Subject;
+  icon: string;
+  title: string;
+  sub: string;
+  // Ligne chiffrée : le niveau en cours (maths) ou la matière entière.
+  rowName: string;
+  facts: Array<{ box: BoxLevel; introduced: boolean }>;
+  onOpen: () => void;
+  children?: ReactNode;
+}
+
+// Une carte de matière : la carte entière est le bouton qui ouvre sa page.
+function SubjectCard({ subject, icon, title, sub, rowName, facts, onOpen, children }: SubjectCardProps) {
+  const buckets = masteryBuckets(facts);
+  return (
+    <button type="button" className={`parent-card parent-subject-card parent-subject-card--${subject}`} onClick={onOpen}>
+      <span className="parent-subject-head">
+        <span className={`parent-subject-icon parent-subject-icon--${subject}`} aria-hidden="true">
+          {icon}
+        </span>
+        <span className="parent-subject-titles">
+          <span className="parent-subject-title">{title}</span>
+          <span className="parent-subject-sub">{sub}</span>
+        </span>
+        <span className="parent-subject-chevron" aria-hidden="true">
+          <BackChevron />
+        </span>
+      </span>
+      {children}
+      <span className="parent-level-row">
+        <span className="parent-level-name">{rowName}</span>
+        <span className="parent-level-count">
+          {buckets.mastered} / {facts.length}
+        </span>
+      </span>
+      <MasteryBar buckets={buckets} total={facts.length} />
+    </button>
+  );
+}
+
+// Mémoïsé : `profile` et `onOpenSubject` sont des références stables, alors que
+// ParentDashboard se re-rend à chaque frappe dans l'import et à chaque « Copié ✓ ».
 function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
   const t = useParentDashboardStrings();
   const { lang } = useLang();
@@ -62,16 +99,12 @@ function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
 
   // Conjugaison : visible dès qu'elle a été ouverte, jamais en anglais (spec
   // Verbito §9, matière fr-only).
-  const conjVisible = useMemo(() => isConjVisible(profile, lang), [profile, lang]);
-  const levels = useMemo(() => unlockedMathLevels(profile), [profile]);
-  const current = activeLevel(profile);
+  const conjVisible = isConjVisible(profile, lang);
+  // Le niveau en cours est le dernier débloqué ; les précédents sont passés.
+  const levels = unlockedMathLevels(profile);
+  const current = levels[levels.length - 1];
+  const past = levels.slice(0, -1);
 
-  const factsOf = (level: MathLevel) =>
-    level === 'mult'
-      ? profile.facts
-      : level === 'div'
-        ? profile.divisionFacts ?? []
-        : profile.remainderFacts ?? [];
   const levelName: Record<MathLevel, string> = {
     mult: t.multiplications,
     div: t.divisions,
@@ -82,22 +115,19 @@ function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
     div: t.currentDiv,
     rem: t.currentRem,
   };
-  const currentFacts = factsOf(current);
-  const conjFacts = profile.conjFacts ?? [];
 
   // Trois points toutes matières confondues, triés comme la liste de chaque
-  // page (erreurs décroissantes, puis boîte la plus basse). Chaque matière est
-  // lue sur SA fenêtre de séances : une journée de conjugaison ne doit pas
-  // chasser les erreurs de maths de la veille.
-  const hardFacts = useMemo(() => {
-    const math = getHardestFacts(profile, HARD_FACTS_WINDOW, OVERVIEW_HARD_FACTS, 'math');
-    const conj = conjVisible
-      ? getHardestFacts(profile, HARD_FACTS_WINDOW, OVERVIEW_HARD_FACTS, 'conj')
-      : [];
-    return [...math, ...conj]
-      .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
-      .slice(0, OVERVIEW_HARD_FACTS);
-  }, [profile, conjVisible]);
+  // page de matière.
+  const hardFacts = useMemo(
+    () =>
+      getHardestFactsAcross(
+        profile,
+        conjVisible ? ['math', 'conj'] : ['math'],
+        HARD_FACTS_WINDOW,
+        OVERVIEW_HARD_FACTS,
+      ),
+    [profile, conjVisible],
+  );
 
   return (
     <>
@@ -126,74 +156,45 @@ function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
       <div className="parent-section">
         <h2 className="parent-overline">{t.subjects}</h2>
         <div className="parent-subject-cards">
-          <button
-            type="button"
-            className="parent-subject-card parent-subject-card--math"
-            onClick={() => onOpenSubject('math')}
+          <SubjectCard
+            subject="math"
+            icon="×÷"
+            title={t.math}
+            sub={currentLabel[current]}
+            rowName={levelName[current]}
+            facts={factsOf(profile, current)}
+            onOpen={() => onOpenSubject('math')}
           >
-            <span className="parent-subject-head">
-              <span className="parent-subject-icon parent-subject-icon--math" aria-hidden="true">
-                ×÷
-              </span>
-              <span className="parent-subject-titles">
-                <span className="parent-subject-title">{t.math}</span>
-                <span className="parent-subject-sub">{currentLabel[current]}</span>
-              </span>
-              <Chevron />
-            </span>
             {/* Niveaux passés : une pastille chacun. Cochée tant que tout y
                 reste maîtrisé ; sinon le compte, pour qu'un fait retombé en
                 révision ne passe pas inaperçu. */}
-            {levels.length > 1 && (
+            {past.length > 0 && (
               <span className="parent-level-pills">
-                {levels
-                  .filter((level) => level !== current)
-                  .map((level) => {
-                    const facts = factsOf(level);
-                    const mastered = countMastered(facts);
-                    const done = mastered === facts.length;
-                    return (
-                      <span key={level} className={`parent-level-pill${done ? ' is-done' : ''}`}>
-                        {done && <Check />}
-                        {done ? levelName[level] : `${levelName[level]} ${mastered}/${facts.length}`}
-                      </span>
-                    );
-                  })}
+                {past.map((level) => {
+                  const facts = factsOf(profile, level);
+                  const mastered = countMastered(facts);
+                  const done = mastered === facts.length;
+                  return (
+                    <span key={level} className={`parent-level-pill${done ? ' is-done' : ''}`}>
+                      {done && <Check />}
+                      {done ? levelName[level] : `${levelName[level]} ${mastered}/${facts.length}`}
+                    </span>
+                  );
+                })}
               </span>
             )}
-            <span className="parent-level-row">
-              <span className="parent-level-name">{levelName[current]}</span>
-              <span className="parent-level-count">
-                {countMastered(currentFacts)} / {currentFacts.length}
-              </span>
-            </span>
-            <MasteryBar facts={currentFacts} />
-          </button>
+          </SubjectCard>
 
           {conjVisible && (
-            <button
-              type="button"
-              className="parent-subject-card parent-subject-card--conj"
-              onClick={() => onOpenSubject('conj')}
-            >
-              <span className="parent-subject-head">
-                <span className="parent-subject-icon parent-subject-icon--conj" aria-hidden="true">
-                  {t.conjSymbol}
-                </span>
-                <span className="parent-subject-titles">
-                  <span className="parent-subject-title">{t.conjugations}</span>
-                  <span className="parent-subject-sub">{t.conjTenses}</span>
-                </span>
-                <Chevron />
-              </span>
-              <span className="parent-level-row">
-                <span className="parent-level-name">{t.verbForms}</span>
-                <span className="parent-level-count">
-                  {countMastered(conjFacts)} / {conjFacts.length}
-                </span>
-              </span>
-              <MasteryBar facts={conjFacts} />
-            </button>
+            <SubjectCard
+              subject="conj"
+              icon={t.conjSymbol}
+              title={t.conjugations}
+              sub={CONJ_TENSES_LABEL}
+              rowName={t.verbForms}
+              facts={factsOf(profile, 'conj')}
+              onOpen={() => onOpenSubject('conj')}
+            />
           )}
         </div>
       </div>

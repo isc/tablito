@@ -1,4 +1,4 @@
-import type { BoxLevel, Attempt } from '../types';
+import type { BoxLevel, Attempt, FactKind, UserProfile } from '../types';
 import { BOX_INTERVALS, FAST_THRESHOLD_MS } from '../types';
 import { addDays, shuffle } from './utils';
 
@@ -179,11 +179,31 @@ export function countMastered(facts: { box: BoxLevel }[]): number {
 }
 
 /**
+ * Inventaire Leitner d'un niveau de maths ou de la conjugaison, tel que le
+ * profil le stocke — vide pour une matière jamais ouverte.
+ */
+export function factsOf(
+  profile: UserProfile,
+  kind: FactKind,
+): Array<{ box: BoxLevel; introduced: boolean }> {
+  switch (kind) {
+    case 'mult':
+      return profile.facts;
+    case 'div':
+      return profile.divisionFacts ?? [];
+    case 'rem':
+      return profile.remainderFacts ?? [];
+    case 'conj':
+      return profile.conjFacts ?? [];
+  }
+}
+
+/**
  * Répartition d'un inventaire en quatre paliers lisibles par un parent, à la
  * place des boîtes B1 à B5 (que la grille détaillée continue de montrer).
- * `mastered` suit exactement countMastered, pour que la barre et le compteur
- * « 23 / 64 » ne se contredisent jamais ; les trois autres paliers se
- * partagent le reste, donc la somme vaut toujours `facts.length`.
+ * `mastered` compte comme countMastered, que lisent les autres écrans ; les
+ * trois autres paliers se partagent le reste, donc la somme vaut toujours
+ * `facts.length`.
  */
 export interface MasteryBuckets {
   mastered: number;

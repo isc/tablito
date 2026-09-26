@@ -1,47 +1,10 @@
 /* Page de matière de l'espace parent (cf. ParentSubjectDetail.tsx). Cartes et
-   sur-titres : cf. ParentOverview.css. */
+   sur-titres : cf. ParentOverview.css ; sélecteurs : ParentSegmented.css. */
 
-/* Sélecteur de niveau : un contrôle segmenté sur une seule ligne, quel que
-   soit le nombre de niveaux débloqués — là où les pastilles de l'ancien écran
-   passaient sur deux lignes dès la quatrième. */
-.parent-segmented {
-  display: flex;
-  padding: 3px;
-  border-radius: 12px;
-  background: var(--cream-deep);
-}
-
-/* Largeur à la mesure du libellé, et non en parts égales : « Multiplications »
-   se coupait en deux sur un écran de 360 px, alors que « Divisions » avait de
-   la place à revendre. Les trois tiennent ainsi sur une ligne dès 320 px. */
-.parent-segmented-option {
-  flex: 1 1 auto;
-  min-height: 38px;
-  padding: 0 8px;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--ink-soft);
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.parent-segmented-option.is-active {
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 1px 3px rgba(30, 26, 46, 0.14);
-}
-
-/* Titres de carte. Sélecteur à deux classes pour passer devant la règle
-   générique `.parent-section h3` (marge basse de 10 px). */
+/* Titres de carte : la typo vient de `.parent-section h3` ; deux classes pour
+   passer devant sa marge basse de 10 px. */
 .parent-section .parent-card-title {
-  font-family: var(--serif);
-  font-size: 17px;
-  font-weight: 600;
   line-height: 1.3;
-  letter-spacing: -0.2px;
-  color: var(--ink);
   margin-bottom: 0;
 }
 
@@ -111,41 +74,6 @@
   height: 12px;
   border-radius: 6px;
   margin-top: 14px;
-}
-
-/* === Évolution : une seule courbe, à bascule réussite / rapidité === */
-
-.parent-toggle {
-  display: inline-flex;
-  flex-shrink: 0;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--cream-deep);
-}
-
-.parent-toggle-option {
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-soft);
-  font-family: var(--sans);
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-.parent-toggle-option.is-active {
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 1px 2px rgba(30, 26, 46, 0.14);
-}
-
-/* La courbe vit dans la carte : pas de second cadre autour d'elle. */
-.parent-evolution .parent-evolution-chart {
-  padding: 10px 0 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
 }
 
 /* « Tout afficher » au pied de l'historique. */

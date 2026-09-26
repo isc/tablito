@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import ParentOverview from '../components/ParentOverview';
 import ParentSubjectDetail from '../components/ParentSubjectDetail';
 import { createInitialConjFacts } from '../lib/conjugationFacts';
+import type { Subject } from '../lib/hardestFacts';
 import { createNewProfile } from '../lib/storage';
 import { requireButton, text } from './helpers/dom';
 import { BADGE_IDS, type BoxLevel, type SessionQuestionLog, type UserProfile } from '../types';
@@ -37,8 +38,22 @@ function pills(): string[] {
   );
 }
 
-function miss(a: number, b: number): SessionQuestionLog {
-  return { kind: 'mult', a, b, correct: false, responseTimeMs: 4000, answeredWith: null, isBonusReview: false, inputMode: 'keypad' };
+// Une réponse ratée : une multiplication par défaut (`a`, `b`), ou un fait de
+// conjugaison (`kind: 'conj'`, `factKey`).
+function miss(over: Partial<SessionQuestionLog>): SessionQuestionLog {
+  return {
+    kind: 'mult',
+    correct: false,
+    responseTimeMs: 4000,
+    answeredWith: null,
+    isBonusReview: false,
+    inputMode: 'keypad',
+    ...over,
+  };
+}
+
+function renderOverview(p: UserProfile, onOpenSubject: (subject: Subject) => void = () => {}) {
+  render(<ParentOverview profile={p} onOpenSubject={onOpenSubject} />);
 }
 
 afterEach(cleanup);
@@ -48,7 +63,7 @@ describe("accueil de l'espace parent", () => {
     const p = createNewProfile('Zoé');
     p.totalSessions = 42;
     p.longestStreak = 12;
-    render(<ParentOverview profile={p} onOpenSubject={() => {}} />);
+    renderOverview(p);
 
     const kpis = Array.from(document.querySelectorAll('.parent-activity .parent-kpi')).map((el) => [
       el.querySelector('.parent-stat-label')?.textContent,
@@ -64,7 +79,7 @@ describe("accueil de l'espace parent", () => {
   it('au niveau 1, la carte Maths montre les multiplications, sans pastille', () => {
     const p = createNewProfile('Zoé');
     const open = vi.fn();
-    render(<ParentOverview profile={p} onOpenSubject={open} />);
+    renderOverview(p, open);
 
     const card = document.querySelector<HTMLButtonElement>('.parent-subject-card--math')!;
     expect(card.querySelector('.parent-subject-sub')?.textContent).toBe('En cours : les multiplications');
@@ -79,7 +94,7 @@ describe("accueil de l'espace parent", () => {
 
   it('au niveau 3, coche les niveaux passés et détaille le niveau en cours', () => {
     const p = level3Profile();
-    render(<ParentOverview profile={p} onOpenSubject={() => {}} />);
+    renderOverview(p);
 
     const card = document.querySelector('.parent-subject-card--math')!;
     expect(card.querySelector('.parent-subject-sub')?.textContent).toBe(
@@ -95,7 +110,7 @@ describe("accueil de l'espace parent", () => {
   it("décoche un niveau passé dès qu'un fait y retombe", () => {
     const p = level3Profile();
     p.facts = p.facts.map((f) => (f.a === 7 && f.b === 8 ? { ...f, box: 2 } : f));
-    render(<ParentOverview profile={p} onOpenSubject={() => {}} />);
+    renderOverview(p);
 
     expect(pills()).toEqual([`Multiplications ${p.facts.length - 1}/${p.facts.length}`, '✓ Divisions']);
   });
@@ -114,23 +129,20 @@ describe("accueil de l'espace parent", () => {
     });
     const base = { questionsCount: 10, correctCount: 5, averageTimeMs: 3000, newFactsIntroduced: 0, factsPromoted: 0 };
     p.sessionHistory = [
-      { ...base, kind: 'mult', date: '2026-09-01', questions: [miss(7, 8), miss(7, 8), miss(7, 8), miss(6, 7), miss(4, 9)] },
+      {
+        ...base,
+        kind: 'mult',
+        date: '2026-09-01',
+        questions: [[7, 8], [7, 8], [7, 8], [6, 7], [4, 9]].map(([a, b]) => miss({ a, b })),
+      },
       {
         ...base,
         kind: 'conj',
         date: '2026-09-01',
-        questions: [1, 2].map(() => ({
-          kind: 'conj' as const,
-          factKey: 'pres-g1-nous',
-          correct: false,
-          responseTimeMs: 4000,
-          answeredWith: null,
-          isBonusReview: false,
-          inputMode: 'keypad' as const,
-        })),
+        questions: [1, 2].map(() => miss({ kind: 'conj', factKey: 'pres-g1-nous' })),
       },
     ];
-    render(<ParentOverview profile={p} onOpenSubject={() => {}} />);
+    renderOverview(p);
 
     const names = Array.from(document.querySelectorAll('.parent-hard-fact-name')).map((el) => el.textContent);
     // Erreurs décroissantes, puis la boîte la plus basse : 4 × 9 (boîte 1)

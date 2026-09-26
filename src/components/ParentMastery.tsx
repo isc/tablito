@@ -1,13 +1,13 @@
 // Barre de maîtrise de l'espace parent : quatre paliers lisibles par un parent
 // (maîtrisées, en bonne voie, à consolider, pas encore vues) au lieu des boîtes
 // B1 à B5, que la grille Leitner de la page de matière continue de montrer.
+// L'appelant calcule la répartition (masteryBuckets) : il en affiche aussi le
+// compte des maîtrisées.
 //
 // Rendue en <span> et non en <div> : sur l'accueil, elle vit à l'intérieur de
 // la carte-bouton d'une matière, où seul du contenu « phrasing » est valide.
 
-import { useMemo } from 'react';
-import type { BoxLevel } from '../types';
-import { masteryBuckets, type MasteryBuckets } from '../lib/leitner';
+import type { MasteryBuckets } from '../lib/leitner';
 import { useParentDashboardStrings } from '../i18n/parent';
 
 type Bucket = keyof MasteryBuckets;
@@ -17,15 +17,14 @@ type Bucket = keyof MasteryBuckets;
 const BUCKETS: Bucket[] = ['mastered', 'onTrack', 'fragile', 'unseen'];
 
 interface MasteryBarProps {
-  facts: { box: BoxLevel; introduced: boolean }[];
+  buckets: MasteryBuckets;
+  total: number;
   // Légende chiffrée sous la barre (page de matière) ; l'accueil s'en passe.
   legend?: boolean;
 }
 
-export default function MasteryBar({ facts, legend = false }: MasteryBarProps) {
+export default function MasteryBar({ buckets, total, legend = false }: MasteryBarProps) {
   const t = useParentDashboardStrings();
-  const buckets = useMemo(() => masteryBuckets(facts), [facts]);
-  const total = Math.max(facts.length, 1);
   const labels: Record<Bucket, string> = {
     mastered: t.bucketMastered,
     onTrack: t.bucketOnTrack,
@@ -35,16 +34,12 @@ export default function MasteryBar({ facts, legend = false }: MasteryBarProps) {
 
   return (
     <>
-      <span
-        className="parent-mastery-bar"
-        role="img"
-        aria-label={t.masteryBarLabel(buckets.mastered, facts.length)}
-      >
+      <span className="parent-mastery-bar" role="img" aria-label={t.masteryBarLabel(buckets.mastered, total)}>
         {BUCKETS.filter((b) => b !== 'unseen').map((b) => (
           <span
             key={b}
             className={`parent-mastery-seg parent-mastery-seg--${b}`}
-            style={{ width: `${(buckets[b] / total) * 100}%` }}
+            style={{ width: `${(buckets[b] / Math.max(total, 1)) * 100}%` }}
           />
         ))}
       </span>

@@ -6,6 +6,7 @@ import type {
   RemainderFact,
   ConjFact,
   ConjTense,
+  FactKind,
 } from '../types';
 import { BADGE_IDS } from '../types';
 import { CONJ_TENSE_BADGE_ID, allConjMastered, conjVerbBadgeId } from './conjugationComposer';
@@ -116,28 +117,29 @@ export function isConjVisible(profile: UserProfile, lang: Lang = getLang()): boo
   return isConjAvailable(lang) && hasOpenedConj(profile);
 }
 
-/**
- * Niveau d'apprentissage ACTIF du profil — l'activité de la séance du jour et
- * l'onglet ouvert par défaut sur les écrans à sélecteur. Source unique de la
- * règle de précédence entre niveaux (specs §11.3, §12.3).
- */
-export function activeLevel(profile: UserProfile): 'mult' | 'div' | 'rem' {
-  if (isRemainderUnlocked(profile)) return 'rem';
-  if (isDivisionUnlocked(profile)) return 'div';
-  return 'mult';
-}
+/** Les trois niveaux de la matière maths (la conjugaison est une matière à part). */
+export type MathLevel = Exclude<FactKind, 'conj'>;
 
 /**
  * Niveaux de maths débloqués, dans l'ordre de progression : ceux qu'un écran
- * peut montrer, jamais un niveau verrouillé (specs §11.3). Même règle que
- * activeLevel, dont le résultat est toujours le dernier de cette liste.
+ * peut montrer, jamais un niveau verrouillé (specs §11.3). Source unique de la
+ * règle de précédence entre niveaux (specs §11.3, §12.3).
  */
-export function unlockedMathLevels(profile: UserProfile): Array<'mult' | 'div' | 'rem'> {
+export function unlockedMathLevels(profile: UserProfile): MathLevel[] {
   return [
     'mult',
     ...(isDivisionUnlocked(profile) ? (['div'] as const) : []),
     ...(isRemainderUnlocked(profile) ? (['rem'] as const) : []),
   ];
+}
+
+/**
+ * Niveau d'apprentissage ACTIF du profil — le dernier débloqué : l'activité de
+ * la séance du jour et l'onglet ouvert par défaut sur les écrans à sélecteur.
+ */
+export function activeLevel(profile: UserProfile): MathLevel {
+  const levels = unlockedMathLevels(profile);
+  return levels[levels.length - 1];
 }
 
 function makeBadge(def: BadgeDefinition, now: string): Badge {

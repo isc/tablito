@@ -28,10 +28,8 @@ function session(over: Partial<SessionResult>): SessionResult {
   };
 }
 
-// Conjugaison ouverte et un historique donné.
 function profileWith(sessions: SessionResult[]): UserProfile {
   const profile = createNewProfile('Zoé');
-  profile.hasSeenConjIntro = true;
   profile.sessionHistory = sessions;
   return profile;
 }

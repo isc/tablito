@@ -17,37 +17,31 @@ interface HardFactListProps {
 export default function HardFactList({ facts, showBox = false }: HardFactListProps) {
   const t = useParentDashboardStrings();
 
-  const kindLabel = (f: HardFact) =>
-    f.kind === 'conj'
-      ? t.factConjugation
-      : f.kind === 'rem'
-        ? t.factRemainder
-        : f.kind === 'div'
-          ? t.factDivision
-          : t.factMultiplication;
-  const symbol = (f: HardFact) =>
-    f.kind === 'conj'
-      ? t.conjSymbol
-      : f.kind === 'rem'
-        ? t.remSymbol
-        : f.kind === 'div'
-          ? t.divSymbol
-          : t.multSymbol;
-  const label = (f: HardFact) =>
-    f.kind === 'conj'
-      ? f.label
-      : f.kind === 'rem'
-        ? t.formatRemFact(...remainderZoneBounds(f), f.divisor)
-        : f.kind === 'div'
-          ? t.formatDivFact(f.dividend, f.divisor, f.quotient)
-          : t.formatMultFact(f.a, f.b, f.product);
+  const marker: Record<HardFact['kind'], { name: string; symbol: string }> = {
+    mult: { name: t.factMultiplication, symbol: t.multSymbol },
+    div: { name: t.factDivision, symbol: t.divSymbol },
+    rem: { name: t.factRemainder, symbol: t.remSymbol },
+    conj: { name: t.factConjugation, symbol: t.conjSymbol },
+  };
+  const label = (f: HardFact): string => {
+    switch (f.kind) {
+      case 'mult':
+        return t.formatMultFact(f.a, f.b, f.product);
+      case 'div':
+        return t.formatDivFact(f.dividend, f.divisor, f.quotient);
+      case 'rem':
+        return t.formatRemFact(...remainderZoneBounds(f), f.divisor);
+      case 'conj':
+        return f.label;
+    }
+  };
 
   return (
     <ul className="parent-hard-facts">
       {facts.map((f) => (
         <li key={`${f.kind}-${f.key}`} className="parent-hard-fact">
-          <span className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`} aria-label={kindLabel(f)}>
-            {symbol(f)}
+          <span className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`} aria-label={marker[f.kind].name}>
+            {marker[f.kind].symbol}
           </span>
           <span className="parent-hard-fact-name">{label(f)}</span>
           <span className="parent-hard-fact-errors">
