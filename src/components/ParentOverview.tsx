@@ -1,9 +1,10 @@
-// Accueil de l'espace parent, partie progression : la journée, une carte par
-// matière qui ouvre sa page, et les points à retravailler toutes matières
-// confondues. Le détail (grille, courbes, historique) vit sur la page de la
-// matière (ParentSubjectDetail) : l'accueil garde la même taille quel que soit
-// le nombre de niveaux débloqués, là où l'ancien écran unique empilait un
-// onglet de plus par niveau.
+// Accueil de l'espace parent, partie progression : la journée, le point de la
+// semaine, une carte par matière qui ouvre sa page, et les points à retravailler
+// toutes matières confondues, avec une idée pour aider à la maison. Le détail
+// (grille, courbes, historique) vit sur la page de la matière
+// (ParentSubjectDetail) : l'accueil garde la même taille quel que soit le
+// nombre de niveaux débloqués, là où l'ancien écran unique empilait un onglet
+// de plus par niveau.
 //
 // Comme la page de matière, rendu à l'identique sur un profil LOCAL ou SUIVI À
 // DISTANCE (instantané déchiffré, cf. lib/watch) : le parent voit la même
@@ -26,6 +27,8 @@ import ActivityStrip from './ActivityStrip';
 import { ForwardChevron } from './BackChevron';
 import MasteryBar from './ParentMastery';
 import HardFactList from './ParentHardFacts';
+import ParentHomeIdea from './ParentHomeIdea';
+import ParentWeekCard from './ParentWeekCard';
 
 const OVERVIEW_HARD_FACTS = 3;
 
@@ -151,6 +154,12 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
         </ActivityStrip>
       </div>
 
+      {/* Rien à résumer tant que l'enfant n'a fait aucune séance : la journée
+          le dit déjà. */}
+      {profile.sessionHistory.length > 0 && (
+        <ParentWeekCard profile={profile} today={today} conjVisible={conjVisible} />
+      )}
+
       <div className="parent-section">
         <h2 className="parent-overline">{t.subjects}</h2>
         <div className="parent-subject-cards">
@@ -206,6 +215,7 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
           <p className="parent-section-subtitle parent-note">
             {t.hardestFactsSubtitle(HARD_FACTS_WINDOW)}
           </p>
+          <ParentHomeIdea fact={hardFacts[0]} />
         </div>
       )}
     </>

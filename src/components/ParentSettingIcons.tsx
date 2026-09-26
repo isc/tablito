@@ -1,5 +1,6 @@
-// Icônes des lignes de réglages de l'espace parent : un trait, la couleur du
-// texte, 20 px. Décoratives — le titre de la ligne porte le sens.
+// Icônes de l'espace parent (lignes de réglages, point de la semaine) : un
+// trait, la couleur du texte, 20 px. Décoratives — le texte à côté porte le
+// sens.
 
 import type { ReactNode } from 'react';
 
@@ -92,6 +93,45 @@ export function PlusIcon() {
   return (
     <Icon>
       <path d="M10 4.5v11M4.5 10h11" />
+    </Icon>
+  );
+}
+
+// === Point de la semaine ===
+
+export function TargetIcon() {
+  return (
+    <Icon>
+      <circle cx="10" cy="10" r="7" />
+      <circle cx="10" cy="10" r="3.4" />
+      <circle cx="10" cy="10" r="0.4" />
+    </Icon>
+  );
+}
+
+export function TimerIcon() {
+  return (
+    <Icon>
+      <circle cx="10" cy="11" r="6.3" />
+      <path d="M10 11V7.8M8 2.5h4M15 5.3l1.2-1.2" />
+    </Icon>
+  );
+}
+
+export function GrowthIcon() {
+  return (
+    <Icon>
+      <path d="M3 15l4.5-4.5 3 3L17 7" />
+      <path d="M12.5 7H17v4.5" />
+    </Icon>
+  );
+}
+
+export function BulbIcon() {
+  return (
+    <Icon>
+      <path d="M7.2 13.2A5.2 5.2 0 1112.8 13.2c-.5.4-.8 1-.8 1.6v.4H8v-.4c0-.6-.3-1.2-.8-1.6z" />
+      <path d="M8.3 17.5h3.4" />
     </Icon>
   );
 }

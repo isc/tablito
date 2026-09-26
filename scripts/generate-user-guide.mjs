@@ -584,7 +584,7 @@ async function shootSubpage(page, opener, pageSelector, name) {
   await page.waitForSelector(pageSelector, { state: 'detached' });
 }
 
-async function captureParentDashboard(page, { hubShot, settingsShot, mathShot, profilesShot }) {
+async function captureParentDashboard(page, { hubShot, weekShot, settingsShot, mathShot, profilesShot }) {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
   await page.waitForSelector('.parent-gate-modal');
@@ -598,6 +598,13 @@ async function captureParentDashboard(page, { hubShot, settingsShot, mathShot, p
   await page.click('.parent-gate-submit');
   await page.waitForSelector('.parent-dashboard');
   if (hubShot) await shot(page, hubShot);
+  if (weekShot) {
+    // body is the scroll container: bring the week's summary to the top.
+    await page
+      .locator('.parent-week-rows')
+      .evaluate((el) => el.closest('.parent-section').scrollIntoView({ block: 'start' }));
+    await shot(page, weekShot);
+  }
   if (settingsShot) {
     // body is the scroll container: bring the settings to the top of the viewport.
     await page.locator('.parent-settings-start').evaluate((el) => el.scrollIntoView({ block: 'start' }));
@@ -1033,8 +1040,9 @@ async function captureMultiProfileScreens(page) {
   await page.waitForSelector('.home-switch-btn');
   await shot(page, '20-home-multi');
 
-  // Les enfants de l'appareil, dans la page « Profils et sauvegarde ».
-  await captureParentDashboard(page, { profilesShot: '20b-parent-profiles' });
+  // Le sélecteur d'enfant en haut de l'espace parent, puis les enfants de
+  // l'appareil dans la page « Profils et sauvegarde ».
+  await captureParentDashboard(page, { hubShot: '20c-parent-children', profilesShot: '20b-parent-profiles' });
 }
 
 // --- HTML guide generator ---------------------------------------------------
@@ -1290,11 +1298,16 @@ const SECTIONS_FR = [
       et 9) pour confirmer qu'un adulte est derrière l'écran. L'accueil de
       l'espace parent répond d'abord à la question du jour — la séance
       est-elle faite ? — avec les 14 derniers jours, le nombre de séances et
-      les séries. Suit une carte par matière : le niveau en cours et sa barre
-      de maîtrise (maîtrisées, en bonne voie, à consolider, pas encore vues),
-      les niveaux déjà passés cochés tant qu'ils restent maîtrisés. Puis les
-      trois faits sur lesquels l'enfant bute le plus en ce moment, toutes
-      matières confondues. Une carte ouvre la page de sa matière : maîtrise
+      les séries. Vient ensuite le point de la semaine, en phrases : les jours
+      pratiqués, la réussite et la rapidité, les faits qui ont progressé,
+      chacun comparé à la semaine d'avant quand la comparaison est juste
+      (pas à travers un changement de niveau, par exemple). Suit une carte par
+      matière : le niveau en cours et sa barre de maîtrise (maîtrisées, en
+      bonne voie, à consolider, pas encore vues), les niveaux déjà passés
+      cochés tant qu'ils restent maîtrisés. Puis les trois faits sur lesquels
+      l'enfant bute le plus en ce moment, toutes matières confondues, avec une
+      idée pour l'aider à la maison — souvent l'astuce que la séance lui
+      enseigne déjà. Une carte ouvre la page de sa matière : maîtrise
       et grille Leitner par niveau, évolution de la réussite ou de la
       rapidité, faits à retravailler et historique des séances. En bas de
       l'accueil, les réglages, une ligne chacun : le suivi à distance
@@ -1306,7 +1319,8 @@ const SECTIONS_FR = [
       confidentialité). Chaque ligne ouvre sa page, sauf le rappel et la
       langue, qui se règlent sur place.`,
     shots: [
-      { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent : la journée, puis une carte par matière.' },
+      { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent commence par la journée.' },
+      { file: '13e-parent-week', caption: 'Le point de la semaine, en phrases, puis une carte par matière.' },
       { file: '13a-parent-math', caption: 'La page Maths : maîtrise du niveau et grille Leitner, puis les séances.' },
       { file: '13d-parent-settings', caption: 'Les réglages, en bas de l\'accueil : une ligne par réglage.' },
     ],
@@ -1321,12 +1335,15 @@ const SECTIONS_FR = [
       de choix du joueur. Dès deux profils, l'app demande « Qui joue ? » à l'ouverture,
       et un bouton dédié en haut de l'accueil permet de changer de joueur à
       tout moment. Avec un seul profil, rien ne change : pas d'écran ni de
-      bouton en plus. La même page de l'espace parent sauvegarde le profil
-      actif (changer d'appareil, exporter ou importer une sauvegarde) et le
-      supprime, après confirmation.`,
+      bouton en plus. Dans l'espace parent, un sélecteur en haut de l'accueil
+      montre la progression de chaque enfant de l'appareil, et de ceux suivis
+      à distance, sans changer de joueur. La page « Profils et sauvegarde »
+      sauvegarde le profil actif (changer d'appareil, exporter ou importer une
+      sauvegarde) et le supprime, après confirmation.`,
     shots: [
       { file: '19-profile-select', caption: '« Qui joue ? » — l\'écran de choix affiché à l\'ouverture dès deux profils.' },
       { file: '20-home-multi', caption: 'Le bouton « changer de joueur » apparaît en haut de l\'accueil, à côté de l\'engrenage.' },
+      { file: '20c-parent-children', caption: 'Dans l\'espace parent, une pastille par enfant : on regarde la progression de chacun sans changer de joueur.' },
       { file: '20b-parent-profiles', caption: 'La page « Profils et sauvegarde » de l\'espace parent : les enfants de l\'appareil, puis la sauvegarde du profil actif.' },
     ],
   },
@@ -1557,11 +1574,15 @@ const SECTIONS_EN = [
       multiplication (one operand between 11 and 19, the other between 3 and 9)
       to confirm an adult is behind the screen. The parent area's overview
       first answers the question of the day — has today's session been done?
-      — with the last 14 days, the number of sessions and the streaks. Then
-      comes one card per subject: the current level and its mastery bar
-      (mastered, on track, still shaky, not seen yet), with the levels already
-      completed checked off as long as they stay mastered. Then the three facts
-      the child is struggling with most right now, across subjects. A card
+      — with the last 14 days, the number of sessions and the streaks. Next
+      comes the week at a glance, in sentences: days practised, accuracy and
+      speed, facts that moved up, each compared with the week before when the
+      comparison is fair (not across a level change, for instance). Then comes
+      one card per subject: the current level and its mastery bar (mastered,
+      on track, still shaky, not seen yet), with the levels already completed
+      checked off as long as they stay mastered. Then the three facts the
+      child is struggling with most right now, across subjects, with an idea
+      to help at home — often the very trick the session teaches. A card
       opens its subject's page: mastery and Leitner grid per level, the
       accuracy or speed trend, the facts that need practice and the session
       history. At the bottom of the overview are the settings, one row each:
@@ -1572,7 +1593,8 @@ const SECTIONS_EN = [
       help (guide, feedback, what's new, privacy). Each row opens its own
       page, except the reminder and the language, which are set right there.`,
     shots: [
-      { file: '13-parent-dashboard', caption: 'The parent area overview: the day first, then one card per subject.' },
+      { file: '13-parent-dashboard', caption: 'The parent area overview starts with the day.' },
+      { file: '13e-parent-week', caption: 'The week at a glance, in sentences, then one card per subject.' },
       { file: '13a-parent-math', caption: 'The Math page: level mastery and Leitner grid, then the sessions.' },
       { file: '13d-parent-settings', caption: 'The settings, at the bottom of the overview: one row per setting.' },
     ],
@@ -1586,12 +1608,16 @@ const SECTIONS_EN = [
       and backup” page) or straight from the player-selection screen. With two or more profiles,
       the app asks “Who's playing?” on launch, and a dedicated button at the
       top of the home screen lets you switch player at any time. With a single
-      profile, nothing changes: no extra screen or button. The same page of
-      the parent area backs up the active profile (move to another device,
-      export or import a backup) and deletes it, after confirmation.`,
+      profile, nothing changes: no extra screen or button. In the parent area,
+      a selector at the top of the overview shows each child's progress,
+      whether on this device or followed remotely, without switching player.
+      The “Profiles and backup” page backs up the active profile (move to
+      another device, export or import a backup) and deletes it, after
+      confirmation.`,
     shots: [
       { file: '19-profile-select', caption: '“Who\'s playing?” — the selection screen shown on launch with two or more profiles.' },
       { file: '20-home-multi', caption: 'The “switch player” button appears at the top of the home screen, next to the gear.' },
+      { file: '20c-parent-children', caption: 'In the parent area, one chip per child: see each one\'s progress without switching player.' },
       { file: '20b-parent-profiles', caption: 'The “Profiles and backup” page of the parent area: the children on this device, then the active profile\'s backup.' },
     ],
   },
@@ -2020,6 +2046,7 @@ async function generateForLang(browser, lang) {
   await captureNavScreen(page, NAV_SCREENS[1]); // Rules
   await captureParentDashboard(page, {
     hubShot: '13-parent-dashboard',
+    weekShot: '13e-parent-week',
     settingsShot: '13d-parent-settings',
     mathShot: '13a-parent-math',
   });

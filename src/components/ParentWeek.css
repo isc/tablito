@@ -1,0 +1,95 @@
+/* Point de la semaine (ParentWeekCard) et idée pour aider à la maison
+   (ParentHomeIdea), sur l'accueil de l'espace parent. */
+
+.parent-week-rows {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.parent-week-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.parent-week-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+.parent-week-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Centre une rangée d'une seule ligne sur son icône. */
+  min-height: 34px;
+  justify-content: center;
+}
+
+.parent-week-main {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.parent-week-sub {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink-muted);
+}
+
+/* Seul un progrès est coloré : un recul reste dans le ton neutre, pour ne pas
+   transformer une semaine moins bonne en alerte. */
+.parent-week-sub.is-better {
+  color: var(--sage-ink);
+}
+
+.parent-idea {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--honey-soft);
+}
+
+.parent-idea-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--honey-ink);
+}
+
+.parent-idea-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--sans);
+}
+
+.parent-idea-heading {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--honey-ink);
+}
+
+.parent-idea-body {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}

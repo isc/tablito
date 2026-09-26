@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useMemo, useState, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
+import ParentChildPicker from '../components/ParentChildPicker';
 import ParentHelpPage from '../components/ParentHelpPage';
 import ParentOverview from '../components/ParentOverview';
 import ParentProfilesPage from '../components/ParentProfilesPage';
@@ -11,6 +12,7 @@ import { useParentDashboardStrings } from '../i18n/parent';
 import type { Subject } from '../lib/hardestFacts';
 import { APP_VERSION } from '../lib/version';
 import { setPushPref } from '../lib/push';
+import { getActiveProfileId, listProfiles, loadProfileById } from '../lib/storage';
 import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
 import { listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 
@@ -63,6 +65,11 @@ interface ParentDashboardProps {
 // fetchWatched : instantané, partage révoqué, échec).
 type RemoteState = 'loading' | WatchFetchResult;
 
+// Enfant affiché, en clé stable : un profil de cet appareil (`local:<id>`) ou
+// un enfant suivi à distance (`watch:<code>`).
+const LOCAL = 'local:';
+const WATCH = 'watch:';
+
 export default function ParentDashboard({
   profile,
   onBack,
@@ -77,26 +84,41 @@ export default function ParentDashboard({
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
 
-  // === Sources : profil local + profils suivis à distance ===
+  // === Enfants : ceux de cet appareil, et ceux suivis à distance ===
   const [watched, setWatched] = useState<WatchedProfile[]>(listWatched);
-  // Source choisie : null = la progression stockée ICI, sinon le code d'un
-  // suivi. Une chaîne (et non un objet) parce que c'est l'identité stable dont
-  // dépend la relecture : re-cliquer l'onglet courant repose la même valeur,
-  // React court-circuite le render, et aucune relecture n'est relancée.
-  const [chosenCode, setChosenCode] = useState<string | null>(() => {
+  // Relus à chaque rendu (l'index est minuscule) : une suppression de profil
+  // laisse l'espace parent monté, sa liste doit suivre.
+  const localProfiles = listProfiles();
+  const activeId = getActiveProfileId();
+  // Enfant choisi (clé LOCAL/WATCH) ; null = celui par défaut. Une chaîne et
+  // non un objet, parce que c'est l'identité stable dont dépend la relecture :
+  // re-choisir l'enfant courant repose la même valeur, React court-circuite le
+  // render, et aucune relecture n'est relancée.
+  const [chosen, setChosen] = useState<string | null>(() => {
     // Appairage au boot : on ouvre directement sur l'enfant qu'on vient de
     // scanner, c'est la raison même de l'ouverture de l'app.
-    if (initialWatch) return initialWatch.entry.code;
+    if (initialWatch) return WATCH + initialWatch.entry.code;
     // Arrivée par la notification de recap : c'est la progression SUIVIE que le
-    // parent vient consulter, pas la sienne — même s'il a un profil local ici,
-    // auquel cas la source par défaut serait ce profil et il faudrait encore
-    // taper l'onglet de l'enfant.
-    return openOnWatched ? listWatched()[0]?.code ?? null : null;
+    // parent vient consulter, pas celle de l'appareil — sans quoi il faudrait
+    // encore choisir l'enfant.
+    const first = listWatched()[0];
+    return openOnWatched && first ? WATCH + first.code : null;
   });
-  // Source affichée : le choix, tant qu'il existe encore — sinon (suivi arrêté,
-  // profil local supprimé) le profil local, ou à défaut le premier enfant suivi.
-  const chosenExists = chosenCode ? watched.some((w) => w.code === chosenCode) : profile !== null;
-  const selectedCode = chosenExists ? chosenCode : profile ? null : watched[0]?.code ?? null;
+  // Enfant affiché : le choix, tant qu'il existe encore — sinon (suivi arrêté,
+  // profil supprimé) le profil actif de l'appareil, ou à défaut le premier
+  // enfant suivi.
+  const keys = [...localProfiles.map((p) => LOCAL + p.id), ...watched.map((w) => WATCH + w.code)];
+  const fallback = profile && activeId ? LOCAL + activeId : watched[0] ? WATCH + watched[0].code : null;
+  const selected = chosen !== null && keys.includes(chosen) ? chosen : fallback;
+  const selectedCode = selected?.startsWith(WATCH) ? selected.slice(WATCH.length) : null;
+  const selectedLocalId = selected?.startsWith(LOCAL) ? selected.slice(LOCAL.length) : null;
+  // Un autre enfant de l'appareil que le profil actif : lu depuis le stockage,
+  // une fois par choix (il ne pratique pas pendant que le parent regarde). Le
+  // profil actif, lui, vient de la prop, à jour après une restauration.
+  const otherLocal = useMemo(
+    () => (selectedLocalId && selectedLocalId !== activeId ? loadProfileById(selectedLocalId) : null),
+    [selectedLocalId, activeId],
+  );
 
   // L'instantané distant, ÉTIQUETÉ du code auquel il appartient : c'est ce qui
   // répond à « ai-je déjà les données de la source affichée ? » sans état de
@@ -148,13 +170,24 @@ export default function ParentDashboard({
   const remoteState: RemoteState | null =
     watchedEntry && remote?.code === watchedEntry.code ? remote.state : null;
   const remoteSnapshot = typeof remoteState === 'object' ? remoteState : null;
-  // Profil réellement rendu : le local, ou l'instantané de l'enfant suivi.
-  const shown = watchedEntry ? remoteSnapshot?.profile ?? null : profile;
+  // Profil réellement rendu : un enfant de l'appareil, ou l'instantané de
+  // l'enfant suivi.
+  const shown = watchedEntry
+    ? remoteSnapshot?.profile ?? null
+    : selectedLocalId === activeId
+      ? profile
+      : otherLocal;
   const shownName = shown?.name ?? watchedEntry?.name ?? '';
 
-  const sources: Array<{ code: string | null; label: string }> = [
-    ...(profile ? [{ code: null, label: profile.name }] : []),
-    ...watched.map((w) => ({ code: w.code as string | null, label: t.remoteSourceTab(w.name) })),
+  const pickable = [
+    ...localProfiles.map((p) => ({
+      key: LOCAL + p.id,
+      // Le nom du profil actif vient de la prop : l'index n'est réécrit qu'à la
+      // sauvegarde qui suit une restauration.
+      name: p.id === activeId && profile ? profile.name : p.name,
+      remote: false,
+    })),
+    ...watched.map((w) => ({ key: WATCH + w.code, name: w.name, remote: true })),
   ];
 
   // Appairage réussi depuis la page du suivi à distance (cf. ParentWatchPairing).
@@ -164,7 +197,7 @@ export default function ParentDashboard({
     // servi évite que l'effet relance une relecture inutile juste après.
     inFlightRef.current = paired.entry.code;
     setRemote({ code: paired.entry.code, state: paired.snapshot });
-    setChosenCode(paired.entry.code);
+    setChosen(WATCH + paired.entry.code);
     // Retour à l'accueil, sur l'enfant qu'on vient d'appairer : c'est lui qu'on
     // voulait voir.
     onOpenPage(null);
@@ -192,7 +225,7 @@ export default function ParentDashboard({
           eyebrow={shownName}
           title={page === 'conj' ? t.conjugations : t.math}
         />
-        <ParentSubjectDetail key={selectedCode ?? 'local'} profile={shown} subject={page} />
+        <ParentSubjectDetail key={selected ?? 'none'} profile={shown} subject={page} />
       </div>
     );
   }
@@ -251,21 +284,10 @@ export default function ParentDashboard({
     <div className="parent-dashboard">
       <Header onBack={onBack} backLabel={t.back} eyebrow={t.parentArea} title={shownName} />
 
-      {/* Sélecteur de source — n'apparaît que s'il y a vraiment un choix à
-          faire. Mêmes pastilles que les onglets de « Mes images ». */}
-      {sources.length > 1 && (
-        <div className="progress-tabs parent-source-tabs" role="tablist" aria-label={t.sourceLabel}>
-          {sources.map((item) => (
-            <button
-              key={item.code ?? 'local'}
-              type="button"
-              className={`progress-tab ${item.code === selectedCode ? 'active' : ''}`}
-              onClick={() => setChosenCode(item.code)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+      {/* Un seul sélecteur pour tous les enfants, ceux de l'appareil comme
+          ceux suivis à distance — seulement s'il y a vraiment un choix. */}
+      {pickable.length > 1 && (
+        <ParentChildPicker items={pickable} selected={selected} onSelect={setChosen} />
       )}
 
       {/* Fraîcheur du suivi : sans elle, un appareil enfant éteint depuis une

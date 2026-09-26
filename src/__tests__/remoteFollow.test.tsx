@@ -63,7 +63,7 @@ function findButton(label: RegExp): HTMLButtonElement | null {
 }
 
 function tabLabels(): string[] {
-  return Array.from(document.querySelectorAll('.parent-source-tabs .progress-tab')).map((t) =>
+  return Array.from(document.querySelectorAll('.parent-children .parent-child')).map((t) =>
     (t.textContent ?? '').trim(),
   );
 }
@@ -254,7 +254,7 @@ describe('lien profond #recap (clic sur la notification hebdomadaire)', () => {
     // la progression de l'enfant, l'ouvrir sur « Papa » obligerait à taper
     // l'onglet à chaque fois.
     expect(document.querySelector('.parent-title')?.textContent).toContain('Zoé');
-    const active = document.querySelector('.parent-source-tabs .progress-tab.active');
+    const active = document.querySelector('.parent-child.is-active');
     expect((active?.textContent ?? '')).toContain('Zoé');
   });
 });
@@ -288,7 +288,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
   }
 
   async function clickTab(label: RegExp) {
-    const tab = Array.from(document.querySelectorAll('.parent-source-tabs .progress-tab')).find((t) =>
+    const tab = Array.from(document.querySelectorAll('.parent-children .parent-child')).find((t) =>
       label.test(t.textContent ?? ''),
     ) as HTMLButtonElement;
     await act(async () => {
@@ -472,7 +472,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     await act(async () => {
       fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
     });
-    expect(document.querySelector('.parent-source-tabs .progress-tab.active')?.textContent).toContain('Papa');
+    expect(document.querySelector('.parent-child.is-active')?.textContent).toContain('Papa');
     expect(sessionsShown()).toBe('4');
   });
 

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/preact';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ParentOverview from '../components/ParentOverview';
 import ParentSubjectDetail from '../components/ParentSubjectDetail';
@@ -7,7 +7,7 @@ import { createInitialConjFacts } from '../lib/conjugationFacts';
 import type { Subject } from '../lib/hardestFacts';
 import { createNewProfile } from '../lib/storage';
 import { requireButton, text } from './helpers/dom';
-import { BADGE_IDS, type BoxLevel, type SessionQuestionLog, type UserProfile } from '../types';
+import { BADGE_IDS, type BoxLevel, type SessionQuestionLog, type SessionResult, type UserProfile } from '../types';
 
 // ---------------------------------------------------------------------------
 // Accueil de l'espace parent et page Maths : trois niveaux de maths sans
@@ -148,6 +148,67 @@ describe("accueil de l'espace parent", () => {
     // Erreurs décroissantes, puis la boîte la plus basse : 4 × 9 (boîte 1)
     // passe devant 6 × 7 (boîte 3), qui ne tient plus dans les trois.
     expect(names).toEqual(['7 × 8 = 56', 'nous mangeons', '4 × 9 = 36']);
+    // L'idée pour aider porte sur le premier : l'astuce que la séance enseigne.
+    expect(document.querySelector('.parent-idea-body')?.textContent).toBe(
+      'Rappelez-lui l’astuce vue dans Tablito\u00a0: «\u00a0× 7, c’est × 5 plus × 2.\u00a0» Par exemple\u00a0: 8 × 7 = 8 × 5 + 8 × 2 = 40 + 16 = 56.',
+    );
+  });
+});
+
+describe('point de la semaine', () => {
+  // Cette semaine : du 14 au 20 septembre ; la semaine d'avant : du 7 au 13.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-20T12:00:00Z'));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const session = (date: string, over: Partial<SessionResult> = {}): SessionResult => ({
+    date,
+    kind: 'mult',
+    questionsCount: 10,
+    correctCount: 8,
+    averageTimeMs: 3000,
+    newFactsIntroduced: 0,
+    factsPromoted: 0,
+    ...over,
+  });
+
+  const rows = () =>
+    Array.from(document.querySelectorAll('.parent-week-row')).map((el) =>
+      Array.from(el.querySelectorAll('.parent-week-main, .parent-week-sub')).map((part) => part.textContent),
+    );
+
+  it('dit la semaine en phrases, comparée à la semaine d’avant', () => {
+    const p = createNewProfile('Zoé');
+    p.startDate = '2026-06-01';
+    p.sessionHistory = [
+      session('2026-09-08', { correctCount: 7, averageTimeMs: 3100 }),
+      session('2026-09-15', { correctCount: 9, averageTimeMs: 2600, factsPromoted: 5, newFactsIntroduced: 2 }),
+      session('2026-09-18', { correctCount: 9, averageTimeMs: 2600, factsPromoted: 4 }),
+    ];
+    renderOverview(p);
+
+    expect(rows()).toEqual([
+      ['2 jours sur 7', '1 de plus que la semaine d’avant.'],
+      ['90\u00a0% de bonnes réponses en maths', '20 points de mieux que la semaine d’avant.'],
+      ['2,6\u00a0s par calcul', 'Plus rapide de 0,5\u00a0s que la semaine d’avant.'],
+      ['9 faits ont gagné une boîte', 'Et 2 nouveaux ont été découverts.'],
+    ]);
+  });
+
+  it('une semaine sans séance le dit, sans chiffres', () => {
+    const p = createNewProfile('Zoé');
+    p.sessionHistory = [session('2026-09-02')];
+    renderOverview(p);
+    expect(rows()).toEqual([['Aucune séance ces 7 derniers jours']]);
+  });
+
+  it("n'apparaît pas avant la première séance", () => {
+    renderOverview(createNewProfile('Zoé'));
+    expect(document.querySelector('.parent-week-rows')).toBeNull();
   });
 });
 
