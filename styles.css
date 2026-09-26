@@ -55,14 +55,9 @@
 
 /* ===== components/ActivityStrip.css ===== */
 /* Bandeau d'activité de l'espace parent (cf. ActivityStrip.tsx). Le châssis de
-   carte et la typo du sous-titre viennent de `.parent-stat-card` et
-   `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
+   carte et la typo du sous-titre viennent de `.parent-card` (ParentOverview.css)
+   et `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
    éléments : on ne redéclare ici que ce qui diffère. */
-
-.parent-activity {
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-}
 
 .parent-activity-heading {
   font-family: var(--serif);
@@ -2235,6 +2230,415 @@
   transform: translateY(1px);
 }
 
+/* ===== components/ParentMastery.css ===== */
+/* Barre de maîtrise de l'espace parent (cf. ParentMastery.tsx) : du plus
+   solide au plus fragile, le fond de la barre valant « pas encore vues ». Les
+   couleurs sont celles de l'échelle Leitner, pour que la barre et la grille de
+   la page de matière parlent la même langue. */
+
+.parent-mastery-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--box0);
+}
+
+.parent-mastery-seg {
+  display: block;
+  height: 100%;
+}
+
+.parent-mastery-seg--mastered {
+  background: var(--box5);
+}
+
+.parent-mastery-seg--onTrack {
+  background: var(--box3);
+}
+
+.parent-mastery-seg--fragile {
+  background: var(--box2);
+}
+
+.parent-mastery-seg--unseen {
+  background: var(--box0);
+}
+
+.parent-mastery-legend {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+
+.parent-mastery-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.parent-mastery-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Le palier vide a la couleur du fond de carte ou presque : un liseré le rend
+   repérable dans la légende. */
+.parent-mastery-swatch.parent-mastery-seg--unseen {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--box0) 70%, var(--ink-muted));
+}
+
+.parent-mastery-legend-count {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* ===== components/ParentOverview.css ===== */
+/* Accueil de l'espace parent (cf. ParentOverview.tsx) et briques partagées
+   avec la page de matière : sur-titres de section et cartes. La carte du jour
+   elle-même vient d'ActivityStrip, qui porte les compteurs cumulés à sa base. */
+
+/* Sur-titre de section : « Matières », « À retravailler », « Réglages et
+   infos ». Moins appuyé qu'un titre de carte, il annonce un groupe. Même typo
+   que le sur-titre de l'en-tête (cf. `.parent-eyebrow`). */
+.parent-overline {
+  line-height: 14px;
+  margin-bottom: 10px;
+}
+
+.parent-card {
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* Carte-liste : les lignes vont d'un bord à l'autre du contenu, séparées par
+   un filet, sans marge basse superflue sous la dernière. */
+.parent-card--list {
+  padding: 4px 16px;
+}
+
+/* Premier bloc de réglages : le sur-titre les sépare de la progression. */
+.parent-settings-start {
+  margin-top: 28px;
+}
+
+.parent-settings-start .parent-overline {
+  margin-bottom: 0;
+}
+
+/* === Compteurs cumulés, au pied de la carte du jour === */
+
+.parent-kpis {
+  display: flex;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.parent-kpi {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.parent-kpi + .parent-kpi {
+  border-left: 1px solid var(--line-soft);
+}
+
+.parent-kpi--streak .parent-stat-value {
+  color: var(--coral);
+}
+
+.parent-kpi--best .parent-stat-value {
+  color: var(--sage);
+}
+
+/* === Cartes de matière : la carte entière est le bouton qui ouvre la page.
+   Fond, bordure et rayon viennent de `.parent-card`. === */
+
+.parent-subject-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.parent-subject-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 14px 16px 16px;
+  color: var(--ink);
+  font-family: var(--sans);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.parent-subject-card:active {
+  transform: translateY(1px);
+  background: var(--cream-deep);
+}
+
+.parent-subject-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.parent-subject-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.parent-subject-icon--math {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+.parent-subject-icon--conj {
+  background: var(--sage-soft);
+  color: var(--sage-ink);
+}
+
+.parent-subject-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.parent-subject-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+}
+
+.parent-subject-sub {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink-muted);
+}
+
+/* Le chevron de retour, retourné. */
+.parent-subject-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  transform: scaleX(-1);
+}
+
+/* Niveaux passés : une pastille chacun, cochée tant qu'il reste maîtrisé. */
+.parent-level-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.parent-level-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--cream-deep);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.parent-level-pill.is-done {
+  padding-left: 8px;
+  background: var(--sage-soft);
+  color: var(--sage-ink);
+}
+
+/* Niveau en cours (ou la matière entière pour la conjugaison), avec sa barre. */
+.parent-level-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.parent-level-count {
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Fenêtre de la liste « À retravailler », sous la carte. */
+.parent-overview-note {
+  margin: 8px 0 0;
+}
+
+/* ===== components/ParentSegmented.css ===== */
+/* Contrôle segmenté de l'espace parent (cf. ParentSegmented.tsx). */
+
+.parent-segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--cream-deep);
+}
+
+/* Largeur à la mesure du libellé, et non en parts égales : « Multiplications »
+   se coupait en deux sur un écran de 360 px, alors que « Divisions » avait de
+   la place à revendre. Les trois tiennent ainsi sur une ligne dès 320 px. */
+.parent-segmented-option {
+  flex: 1 1 auto;
+  min-height: 38px;
+  padding: 0 8px;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.parent-segmented-option.is-active {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(30, 26, 46, 0.14);
+}
+
+/* Variante compacte, à côté d'un titre de carte. */
+.parent-segmented--pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.parent-segmented--pill .parent-segmented-option {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+}
+
+/* ===== components/ParentSubjectDetail.css ===== */
+/* Page de matière de l'espace parent (cf. ParentSubjectDetail.tsx). Cartes et
+   sur-titres : cf. ParentOverview.css ; sélecteurs : ParentSegmented.css. */
+
+/* Titres de carte : la typo vient de `.parent-section h3` ; deux classes pour
+   passer devant sa marge basse de 10 px. */
+.parent-section .parent-card-title {
+  line-height: 1.3;
+  margin-bottom: 0;
+}
+
+.parent-card > .parent-card-title {
+  margin-bottom: 6px;
+}
+
+.parent-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
+}
+
+.parent-card--list .parent-card-head {
+  padding: 12px 0 6px;
+}
+
+.parent-card-aside {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.parent-card-caption {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+/* === Maîtrise du niveau affiché === */
+
+.parent-mastery-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.parent-mastery-number {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  color: var(--indigo);
+}
+
+.parent-mastery-total {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.parent-mastery-label {
+  margin-top: 2px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.parent-mastery .parent-mastery-bar {
+  height: 12px;
+  border-radius: 6px;
+  margin-top: 14px;
+}
+
+/* « Tout afficher » au pied de l'historique. */
+.parent-card-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  border-top: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--indigo);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 800;
+}
+
 /* ===== components/ProgressGrid.css ===== */
 .progress-grid-container {
   padding: 16px;
@@ -2759,6 +3163,7 @@
 
   --sage: #3F9B7A;
   --sage-soft: #D9EDE2;
+  --sage-ink: #276A51;
 
   --sky: #3E7EB6;
   --sky-soft: #DDE9F4;
@@ -3533,7 +3938,8 @@ input, select, textarea {
   gap: 0;
 }
 
-.parent-eyebrow {
+.parent-eyebrow,
+.parent-overline {
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 800;
@@ -3594,35 +4000,7 @@ input, select, textarea {
   background: var(--line);
 }
 
-/* Stats grid: 2×2 sur mobile, 4 colonnes si possible */
-.parent-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-/* Division débloquée : la « Vue d'ensemble » ne garde que les 3 stats
-   transverses (séances, série actuelle, meilleure série) → une seule rangée
-   de 3 plutôt qu'une carte orpheline en 2 colonnes. */
-.parent-stats-grid--three {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-/* Carte de maîtrise de l'opération sélectionnée, sous le sélecteur. Réutilise
-   .parent-stat-card pour l'habillage (cf. markup) : hors grille elle occupe
-   toute la largeur (stat phare), et la valeur reprend l'indigo « maîtrise ». */
-.parent-mastery-card .parent-stat-value {
-  color: var(--indigo);
-}
-
-.parent-stat-card {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 14px;
-  padding: 12px 14px;
-  text-align: left;
-}
-
+/* Compteurs cumulés au pied de la carte du jour (cf. ParentOverview). */
 .parent-stat-label {
   font-family: var(--sans);
   font-size: 10px;
@@ -3634,89 +4012,28 @@ input, select, textarea {
 
 .parent-stat-value {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--ink);
-  margin-top: 2px;
   letter-spacing: -0.5px;
   line-height: 1.1;
 }
 
-.parent-stats-grid .parent-stat-card:nth-child(2) .parent-stat-value {
-  color: var(--coral);
-}
-
-.parent-stats-grid .parent-stat-card:nth-child(3) .parent-stat-value {
-  color: var(--sage);
-}
-
-.parent-stats-grid .parent-stat-card:nth-child(4) .parent-stat-value {
-  color: var(--indigo);
-}
-
-/* Sélecteur d'opération de l'espace parent : il gouverne les sections
-   « Répartition » et « Grille Leitner » qui le suivent, PAS la « Vue
-   d'ensemble » au-dessus (qui agrège mult + div). On l'écarte nettement
-   de la carte du dessus et on le rapproche de la section qu'il contrôle
-   pour que le regroupement visuel soit sans ambiguïté. */
-.parent-op-tabs {
-  margin-top: 28px;
+/* Sélecteur de source (profil de cet appareil / enfants suivis à distance),
+   sous l'en-tête de l'accueil. Mêmes pastilles que « Mes images ». */
+.parent-source-tabs {
+  margin-top: 16px;
   padding-bottom: 2px;
 }
 
-.parent-op-tabs + .parent-section {
+.parent-source-tabs + .parent-section {
   margin-top: 10px;
 }
 
-/* Box histogram */
-.parent-histogram {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  align-items: end;
-  height: 130px;
-  padding: 8px 14px 0;
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-}
-
-.parent-histogram-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  gap: 4px;
-}
-
-.parent-histogram-count {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--ink);
-}
-
-.parent-histogram-fill {
-  width: 100%;
-  border-radius: 4px 4px 0 0;
-  transition: height 0.5s ease;
-  min-height: 4px;
-}
-
-.parent-histogram-label {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--ink-muted);
-}
-
-/* Evolution chart */
+/* Courbe d'évolution, dans sa carte de la page de matière : pas de second
+   cadre autour d'elle. */
 .parent-evolution-chart {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-  padding: 12px 8px 4px;
+  padding: 10px 0 0;
   overflow: hidden;
 }
 
@@ -3726,22 +4043,22 @@ input, select, textarea {
   display: block;
 }
 
-/* Hard facts */
+/* « À retravailler » : des lignes dans une carte (cf. ParentHardFacts). */
 .parent-hard-facts {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  list-style: none;
 }
 
 .parent-hard-fact {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--paper);
-  border-radius: 14px;
-  border: 1.5px solid var(--line);
-  gap: 10px;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.parent-hard-fact:first-child {
+  border-top: 0;
 }
 
 .parent-hard-fact-name {
@@ -3759,23 +4076,22 @@ input, select, textarea {
   font-weight: 700;
 }
 
-/* Session history */
+/* Historique des séances : des lignes dans une carte (page de matière). */
 .parent-session-history {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  list-style: none;
 }
 
 .parent-session-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--paper);
-  border-radius: 12px;
-  border: 1.5px solid var(--line);
+  min-height: 44px;
+  border-top: 1px solid var(--line-soft);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 13.5px;
+}
+
+.parent-session-row:first-child {
+  border-top: 0;
 }
 
 .parent-session-date {
@@ -3795,8 +4111,9 @@ input, select, textarea {
 .parent-session-time {
   font-weight: 600;
   color: var(--ink-soft);
-  min-width: 40px;
+  min-width: 48px;
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Action buttons */

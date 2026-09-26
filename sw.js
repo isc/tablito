@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260923182853"
+const CACHE = 'tablito-' + "20260926113107"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
@@ -82,7 +82,12 @@ const ASSETS = [
   "/src/components/NotificationSettings.js",
   "/src/components/NumPad.js",
   "/src/components/ParentGate.js",
-  "/src/components/ParentStats.js",
+  "/src/components/ParentHardFacts.js",
+  "/src/components/ParentMastery.js",
+  "/src/components/ParentOverview.js",
+  "/src/components/ParentSegmented.js",
+  "/src/components/ParentSubjectDetail.js",
+  "/src/components/ParentWatchPairing.js",
   "/src/components/ProgressGrid.js",
   "/src/components/PushToggle.js",
   "/src/components/QrCanvas.js",
