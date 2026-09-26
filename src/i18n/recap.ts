@@ -1,10 +1,4 @@
-import { useStrings, type Lang } from './lang';
-
-// Joint une liste de nombres avec le « et »/« and » de la langue.
-function joinList(nums: number[], conj: string): string {
-  if (nums.length <= 1) return nums.join('');
-  return nums.slice(0, -1).join(', ') + ` ${conj} ` + nums[nums.length - 1];
-}
+import { formatList, useStrings, type Lang } from './lang';
 
 interface Strings {
   title: string;
@@ -59,13 +53,13 @@ const fr: Strings = {
   milestoneRemSubtitle:
     "Tu as révélé toute l'image des divisions avec reste — les 64 cases sont en boîte 5. Le sommet de la division. Bravo !",
   tableCompleteDivTitle: (tables) =>
-    `Tu as maîtrisé les divisions par ${joinList(tables, 'et')} !`,
+    `Tu as maîtrisé les divisions par ${formatList(tables, 'fr')} !`,
   tableCompleteMultTitle: (tables) =>
     tables.length === 1
       ? `Tu as maîtrisé la table de ${tables[0]} !`
-      : `Tu as maîtrisé les tables de ${joinList(tables, 'et')} !`,
+      : `Tu as maîtrisé les tables de ${formatList(tables, 'fr')} !`,
   tableCompleteRemTitle: (tables) =>
-    `Tu as maîtrisé les divisions avec reste par ${joinList(tables, 'et')} !`,
+    `Tu as maîtrisé les divisions avec reste par ${formatList(tables, 'fr')} !`,
   tableCompleteDivSubtitle: 'Toutes ces divisions sont en boîte 5.',
   tableCompleteMultSubtitle: 'Toutes les multiplications sont en boîte 5.',
   tableCompleteRemSubtitle: 'Toutes ces divisions avec reste sont en boîte 5.',
@@ -105,13 +99,13 @@ const en: Strings = {
   milestoneRemSubtitle:
     "You've revealed the whole remainders picture — all 64 squares are in box 5. The summit of division. Well done!",
   tableCompleteDivTitle: (tables) =>
-    `You've mastered dividing by ${joinList(tables, 'and')}!`,
+    `You've mastered dividing by ${formatList(tables, 'en')}!`,
   tableCompleteMultTitle: (tables) =>
     tables.length === 1
       ? `You've mastered the ${tables[0]} times table!`
-      : `You've mastered the ${joinList(tables, 'and')} times tables!`,
+      : `You've mastered the ${formatList(tables, 'en')} times tables!`,
   tableCompleteRemTitle: (tables) =>
-    `You've mastered dividing by ${joinList(tables, 'and')} with remainders!`,
+    `You've mastered dividing by ${formatList(tables, 'en')} with remainders!`,
   tableCompleteDivSubtitle: 'All of these divisions are in box 5.',
   tableCompleteMultSubtitle: 'Every multiplication is in box 5.',
   tableCompleteRemSubtitle: 'All of these divisions with remainder are in box 5.',

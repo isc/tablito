@@ -574,6 +574,16 @@ async function captureBadgesScreen(page) {
 // the settings list at the bottom of it (`settingsShot`), the Maths page its
 // subject card opens (`mathShot`), the "Profiles and backup" page
 // (`profilesShot`) — then goes back home.
+// Ouvre une page de l'espace parent, la capture, puis revient à son accueil
+// (dont le propre bouton retour ramène ensuite à l'accueil de l'enfant).
+async function shootSubpage(page, opener, pageSelector, name) {
+  await page.click(opener);
+  await page.waitForSelector(pageSelector);
+  await shot(page, name);
+  await page.click('.parent-back-btn');
+  await page.waitForSelector(pageSelector, { state: 'detached' });
+}
+
 async function captureParentDashboard(page, { hubShot, settingsShot, mathShot, profilesShot }) {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
@@ -594,20 +604,11 @@ async function captureParentDashboard(page, { hubShot, settingsShot, mathShot, p
     await shot(page, settingsShot);
   }
   if (mathShot) {
-    await page.click('.parent-subject-card--math');
-    await page.waitForSelector('.parent-dashboard--subject');
-    await shot(page, mathShot);
-    // The subject page's back button returns to the overview, whose own back
-    // button then returns home.
-    await page.click('.parent-back-btn');
-    await page.waitForSelector('.parent-dashboard--subject', { state: 'detached' });
+    await shootSubpage(page, '.parent-subject-card--math', '.parent-dashboard--subject', mathShot);
   }
   if (profilesShot) {
-    await page.click(`.parent-setting-btn:has-text("${tx('profilesPage')}")`);
-    await page.waitForSelector('.parent-dashboard--settings');
-    await shot(page, profilesShot);
-    await page.click('.parent-back-btn');
-    await page.waitForSelector('.parent-dashboard--settings', { state: 'detached' });
+    const opener = `.parent-setting-btn:has-text("${tx('profilesPage')}")`;
+    await shootSubpage(page, opener, '.parent-dashboard--settings', profilesShot);
   }
   await page.click('.parent-back-btn');
   await page.waitForSelector('.home-screen');

@@ -8,7 +8,7 @@ import { getActiveProfileId, importProfile, listProfiles, loadProfileById } from
 import { createTransfer, transferConfigured, TRANSFER_TTL_MINUTES } from '../lib/transfer';
 import { useParentDashboardStrings } from '../i18n/parent';
 import ParentQrPanel, { type QrPanelState } from './ParentQrPanel';
-import { SettingRow } from './ParentSettingRow';
+import { SettingList, SettingRow } from './ParentSettingRow';
 import { PlusIcon } from './ParentSettingIcons';
 
 interface ParentProfilesPageProps {
@@ -18,9 +18,8 @@ interface ParentProfilesPageProps {
   onAddProfile: () => void;
   onDeleteProfile: () => void;
   onExport: () => void;
-  // Remplace la progression du profil actif ; null si le JSON n'est pas une
-  // sauvegarde lisible.
-  onImport: (json: string) => UserProfile | null;
+  // Remplace la progression du profil actif par la sauvegarde choisie.
+  onRestore: (backup: UserProfile) => void;
 }
 
 export default function ParentProfilesPage({
@@ -28,21 +27,18 @@ export default function ParentProfilesPage({
   onAddProfile,
   onDeleteProfile,
   onExport,
-  onImport,
+  onRestore,
 }: ParentProfilesPageProps) {
   const t = useParentDashboardStrings();
-  const activeId = getActiveProfileId();
-  // Les autres enfants, lus une fois ; le profil actif vient de la prop, à jour
-  // après un import.
-  const children = useMemo(
-    () =>
-      listProfiles().map((p) => ({
-        id: p.id,
-        name: p.name,
-        sessions: loadProfileById(p.id)?.totalSessions ?? 0,
-      })),
-    [],
-  );
+  // Les enfants de l'appareil, lus une fois. Le profil actif n'est pas relu : il
+  // vient de la prop, à jour après une restauration.
+  const children = useMemo(() => {
+    const activeId = getActiveProfileId();
+    return listProfiles().map((p) => {
+      const active = p.id === activeId;
+      return { id: p.id, name: p.name, active, sessions: active ? 0 : loadProfileById(p.id)?.totalSessions ?? 0 };
+    });
+  }, []);
 
   // Transfert vers un nouvel appareil : second appui sur la ligne, le QR se
   // replie (le code déposé expirera tout seul).
@@ -75,55 +71,48 @@ export default function ParentProfilesPage({
       t.importConfirm(profile.name, backup.name, t.sessionsCount(backup.totalSessions)),
     );
     if (!confirmed) return;
-    const imported = onImport(json);
-    setImportStatus(
-      imported ? { ok: true, text: t.importDone(imported.name) } : { ok: false, text: t.importInvalid },
-    );
+    onRestore(backup);
+    setImportStatus({ ok: true, text: t.importDone(backup.name) });
   };
 
   return (
     <>
       <div className="parent-section">
         <h2 className="parent-overline">{t.profilesHeading}</h2>
-        <div className="parent-card parent-card--list">
-          <ul className="parent-settings">
-            {children.map((child) => {
-              const active = child.id === activeId;
-              const name = active ? profile.name : child.name;
-              const sessions = t.sessionsCount(active ? profile.totalSessions : child.sessions);
-              return (
-                <SettingRow
-                  key={child.id}
-                  icon={name.charAt(0).toUpperCase()}
-                  title={name}
-                  sub={active ? `${t.profileActive} · ${sessions}` : sessions}
-                />
-              );
-            })}
-            <SettingRow icon={<PlusIcon />} title={t.addChild} onClick={onAddProfile} />
-          </ul>
-        </div>
+        <SettingList>
+          {children.map((child) => {
+            const name = child.active ? profile.name : child.name;
+            const sessions = t.sessionsCount(child.active ? profile.totalSessions : child.sessions);
+            return (
+              <SettingRow
+                key={child.id}
+                avatar={name}
+                title={name}
+                sub={child.active ? `${t.profileActive} · ${sessions}` : sessions}
+              />
+            );
+          })}
+          <SettingRow icon={<PlusIcon />} title={t.addChild} onClick={onAddProfile} />
+        </SettingList>
       </div>
 
       <div className="parent-section">
         <h2 className="parent-overline">{t.backupHeading(profile.name)}</h2>
-        <div className="parent-card parent-card--list">
-          <ul className="parent-settings">
-            {transferConfigured() && (
-              <SettingRow
-                title={t.transferRowTitle}
-                sub={t.transferRowSubtitle(TRANSFER_TTL_MINUTES)}
-                onClick={() => void handleTransfer()}
-              />
-            )}
-            <SettingRow title={t.exportRowTitle} sub={t.exportRowSubtitle} onClick={onExport} />
+        <SettingList>
+          {transferConfigured() && (
             <SettingRow
-              title={t.importRowTitle}
-              sub={t.importRowSubtitle(profile.name)}
-              onClick={() => fileRef.current?.click()}
+              title={t.transferRowTitle}
+              sub={t.transferRowSubtitle(TRANSFER_TTL_MINUTES)}
+              onClick={() => void handleTransfer()}
             />
-          </ul>
-        </div>
+          )}
+          <SettingRow title={t.exportRowTitle} sub={t.exportRowSubtitle} onClick={onExport} />
+          <SettingRow
+            title={t.importRowTitle}
+            sub={t.importRowSubtitle(profile.name)}
+            onClick={() => fileRef.current?.click()}
+          />
+        </SettingList>
         <input
           ref={fileRef}
           type="file"
@@ -154,9 +143,11 @@ export default function ParentProfilesPage({
 
       <div className="parent-section parent-danger">
         <p className="parent-section-subtitle">{t.deleteProfileHint}</p>
-        <button className="parent-action-btn parent-action-btn--danger" onClick={onDeleteProfile}>
-          {t.deleteProfile(profile.name)}
-        </button>
+        <div className="parent-actions">
+          <button className="parent-action-btn parent-action-btn--danger" onClick={onDeleteProfile}>
+            {t.deleteProfile(profile.name)}
+          </button>
+        </div>
       </div>
     </>
   );

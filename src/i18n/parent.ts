@@ -1,8 +1,9 @@
-import { localeFor, useStrings, type Lang } from './lang';
+import { formatList, localeFor, useStrings, type Lang } from './lang';
 import { remainderZoneTitleStrings } from './progress';
 
-// Strings de l'espace parent : ParentDashboard, ParentGate, NotificationSettings
-// et FeedbackModal. Même pattern que voice.ts — un dico `fr` source, un `en`
+// Strings de l'espace parent : ParentDashboard et ses pages, lignes de
+// notification et FeedbackModal (le portail d'entrée a les siennes, chargées au
+// démarrage : cf. parentGate.ts). Même pattern que voice.ts — un dico `fr` source, un `en`
 // contraint à la même forme via une interface explicite (pour typer les
 // fonctions d'interpolation), et un hook `useXStrings()` par composant.
 
@@ -23,12 +24,6 @@ function timeAgo(iso: string, lang: Lang): string | null {
 // langue en même temps que la règle du pluriel.
 function daysAgoLabel(daysAgo: number, lang: Lang): string {
   return new Intl.RelativeTimeFormat(localeFor(lang), { numeric: 'auto' }).format(-daysAgo, 'day');
-}
-
-// « Léa et Tom », « Léa, Tom et Zoé » — la conjonction et sa virgule selon la
-// langue.
-function joinNames(names: string[], lang: Lang): string {
-  return new Intl.ListFormat(localeFor(lang), { type: 'conjunction' }).format(names);
 }
 
 // === ParentDashboard ===
@@ -302,12 +297,12 @@ const parentDashboardFr: ParentDashboardStrings = {
     if (shared.length > 0) {
       parts.push(
         shared.length > 1
-          ? `Progressions de ${joinNames(shared, 'fr')} partagées`
+          ? `Progressions de ${formatList(shared, 'fr')} partagées`
           : `Progression de ${shared[0]} partagée`,
       );
     }
     if (following.length > 0) {
-      parts.push(`${parts.length > 0 ? 'vous suivez' : 'Vous suivez'} ${joinNames(following, 'fr')}`);
+      parts.push(`${parts.length > 0 ? 'vous suivez' : 'Vous suivez'} ${formatList(following, 'fr')}`);
     }
     return parts.length > 0 ? parts.join(' · ') : 'Partager ou suivre une progression';
   },
@@ -340,7 +335,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchStopFollowing: 'Ne plus suivre',
   cancel: 'Annuler',
   profilesTitle: 'Profils et sauvegarde',
-  profilesRowSubtitle: (names) => `${joinNames(names, 'fr')} · sauvegarde`,
+  profilesRowSubtitle: (names) => `${formatList(names, 'fr')} · sauvegarde`,
   profilesHeading: 'Enfants sur cet appareil',
   profileActive: 'Profil actif',
   sessionsCount: (count) => `${count} séance${count > 1 ? 's' : ''}`,
@@ -484,9 +479,9 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchTitle: 'Remote follow',
   watchRowSummary: (shared, following) => {
     const parts: string[] = [];
-    if (shared.length > 0) parts.push(`Sharing ${joinNames(shared, 'en')}'s progress`);
+    if (shared.length > 0) parts.push(`Sharing ${formatList(shared, 'en')}'s progress`);
     if (following.length > 0) {
-      parts.push(`${parts.length > 0 ? 'following' : 'Following'} ${joinNames(following, 'en')}`);
+      parts.push(`${parts.length > 0 ? 'following' : 'Following'} ${formatList(following, 'en')}`);
     }
     return parts.length > 0 ? parts.join(' · ') : 'Share or follow progress';
   },
@@ -518,7 +513,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchStopFollowing: 'Stop following',
   cancel: 'Cancel',
   profilesTitle: 'Profiles and backup',
-  profilesRowSubtitle: (names) => `${joinNames(names, 'en')} · backup`,
+  profilesRowSubtitle: (names) => `${formatList(names, 'en')} · backup`,
   profilesHeading: 'Children on this device',
   profileActive: 'Active profile',
   sessionsCount: (count) => `${count} session${count === 1 ? '' : 's'}`,
@@ -580,83 +575,10 @@ export function useParentDashboardStrings(): ParentDashboardStrings {
   return useStrings(parentDashboardStrings);
 }
 
-// === ParentGate ===
+// === Lignes de notification (cf. PushPrefRow) ===
 
-interface ParentGateStrings {
-  title: string;
-  subtitle: string;
-  resultLabel: string;
-  wrongAttempt: string;
-  cancel: string;
-  validate: string;
-}
-
-const parentGateFr: ParentGateStrings = {
-  title: 'Espace parent',
-  subtitle: 'Une petite multiplication pour confirmer que vous êtes un adulte.',
-  resultLabel: 'Résultat',
-  wrongAttempt: 'Pas tout à fait. Essayez avec cette nouvelle question.',
-  cancel: 'Annuler',
-  validate: 'Valider',
-};
-
-const parentGateEn: ParentGateStrings = {
-  title: 'Parent area',
-  subtitle: "A quick multiplication to confirm you're an adult.",
-  resultLabel: 'Result',
-  wrongAttempt: 'Not quite. Try this new question.',
-  cancel: 'Cancel',
-  validate: 'Confirm',
-};
-
-export const parentGateStrings = { fr: parentGateFr, en: parentGateEn };
-
-export function useParentGateStrings(): ParentGateStrings {
-  return useStrings(parentGateStrings);
-}
-
-// === NotificationSettings ===
-
-interface NotificationSettingsStrings {
-  dailyReminder: string;
-  iosInstallSubtitle: string;
-  reminderSubtitle: string;
-  blocked: string;
-  unavailable: string;
-}
-
-const notificationSettingsFr: NotificationSettingsStrings = {
-  dailyReminder: 'Rappel quotidien',
-  iosInstallSubtitle:
-    "Pour recevoir un petit rappel chaque jour à 18h, installe d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → « Sur l'écran d'accueil »).",
-  reminderSubtitle: 'Chaque jour à 18 h, sauf si la séance est déjà faite',
-  blocked:
-    'Notifications bloquées. Autorise-les dans les réglages de ton navigateur, puis réessaie.',
-  unavailable: "Impossible d'activer le rappel pour le moment. Réessaie plus tard.",
-};
-
-const notificationSettingsEn: NotificationSettingsStrings = {
-  dailyReminder: 'Daily reminder',
-  iosInstallSubtitle:
-    'To get a little reminder every day at 6pm, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
-  reminderSubtitle: 'Every day at 6pm, unless the session is already done',
-  blocked:
-    'Notifications are blocked. Allow them in your browser settings, then try again.',
-  unavailable: "Can't turn on the reminder right now. Please try again later.",
-};
-
-export const notificationSettingsStrings = {
-  fr: notificationSettingsFr,
-  en: notificationSettingsEn,
-};
-
-export function useNotificationSettingsStrings(): NotificationSettingsStrings {
-  return useStrings(notificationSettingsStrings);
-}
-
-// === WeeklyRecapSettings (recap hebdomadaire du suivi à distance) ===
-
-interface WeeklyRecapStrings {
+// Même forme pour les deux lignes, qui ne diffèrent que par leur préférence.
+export interface PushPrefStrings {
   title: string;
   subtitle: string;
   iosInstallSubtitle: string;
@@ -664,31 +586,49 @@ interface WeeklyRecapStrings {
   unavailable: string;
 }
 
-const weeklyRecapFr: WeeklyRecapStrings = {
-  title: 'Recap du dimanche',
-  subtitle: 'Le point de la semaine, chaque dimanche soir',
-  iosInstallSubtitle:
-    "Pour recevoir le recap hebdomadaire, installez d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → «\u00a0Sur l'écran d'accueil\u00a0»).",
-  blocked:
-    'Notifications bloquées. Autorisez-les dans les réglages de votre navigateur, puis réessayez.',
-  unavailable: "Impossible d'activer le recap pour le moment. Réessayez plus tard.",
+// Rappel quotidien : pour l'ENFANT, sur l'appareil où il pratique.
+export const dailyReminderStrings: Record<Lang, PushPrefStrings> = {
+  fr: {
+    title: 'Rappel quotidien',
+    subtitle: 'Chaque jour à 18 h, sauf si la séance est déjà faite',
+    iosInstallSubtitle:
+      "Pour recevoir un petit rappel chaque jour à 18h, installe d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → « Sur l'écran d'accueil »).",
+    blocked:
+      'Notifications bloquées. Autorise-les dans les réglages de ton navigateur, puis réessaie.',
+    unavailable: "Impossible d'activer le rappel pour le moment. Réessaie plus tard.",
+  },
+  en: {
+    title: 'Daily reminder',
+    subtitle: 'Every day at 6pm, unless the session is already done',
+    iosInstallSubtitle:
+      'To get a little reminder every day at 6pm, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
+    blocked:
+      'Notifications are blocked. Allow them in your browser settings, then try again.',
+    unavailable: "Can't turn on the reminder right now. Please try again later.",
+  },
 };
 
-const weeklyRecapEn: WeeklyRecapStrings = {
-  title: 'Sunday recap',
-  subtitle: 'A look back at the week, every Sunday evening',
-  iosInstallSubtitle:
-    'To get the weekly recap, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
-  blocked:
-    'Notifications are blocked. Allow them in your browser settings, then try again.',
-  unavailable: "Can't turn on the recap right now. Please try again later.",
+// Recap du dimanche : pour le PARENT qui suit un enfant à distance.
+export const weeklyRecapStrings: Record<Lang, PushPrefStrings> = {
+  fr: {
+    title: 'Recap du dimanche',
+    subtitle: 'Le point de la semaine, chaque dimanche soir',
+    iosInstallSubtitle:
+      "Pour recevoir le recap hebdomadaire, installez d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → «\u00a0Sur l'écran d'accueil\u00a0»).",
+    blocked:
+      'Notifications bloquées. Autorisez-les dans les réglages de votre navigateur, puis réessayez.',
+    unavailable: "Impossible d'activer le recap pour le moment. Réessayez plus tard.",
+  },
+  en: {
+    title: 'Sunday recap',
+    subtitle: 'A look back at the week, every Sunday evening',
+    iosInstallSubtitle:
+      'To get the weekly recap, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
+    blocked:
+      'Notifications are blocked. Allow them in your browser settings, then try again.',
+    unavailable: "Can't turn on the recap right now. Please try again later.",
+  },
 };
-
-export const weeklyRecapStrings = { fr: weeklyRecapFr, en: weeklyRecapEn };
-
-export function useWeeklyRecapStrings(): WeeklyRecapStrings {
-  return useStrings(weeklyRecapStrings);
-}
 
 // === FeedbackModal ===
 

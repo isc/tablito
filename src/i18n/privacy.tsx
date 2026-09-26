@@ -135,8 +135,8 @@ const fr: PrivacyStrings = {
   transferTitle: 'Ce qui est envoyé lors d’un transfert vers un autre appareil',
   transferBody: (
     <>
-      Le bouton <strong>«&nbsp;Transférer&nbsp;»</strong> (espace parent,
-      section Sauvegarde) dépose le profil, <strong>chiffré sur l'appareil</strong>{' '}
+      Le bouton <strong>«&nbsp;Changer d'appareil&nbsp;»</strong> (espace
+      parent, page Profils et sauvegarde) dépose le profil, <strong>chiffré sur l'appareil</strong>{' '}
       avant l'envoi, sur la même base Supabase, le temps que le nouvel appareil
       le récupère. La clé de déchiffrement vit uniquement dans le QR code / le
       lien : elle n'est jamais transmise au serveur, qui ne peut donc pas lire
@@ -290,8 +290,8 @@ const en: PrivacyStrings = {
   transferTitle: 'What is sent when transferring to another device',
   transferBody: (
     <>
-      The <strong>"Transfer"</strong> button (parent area, Backup section)
-      uploads the profile, <strong>encrypted on the device</strong> before
+      The <strong>"Move to another device"</strong> button (parent area,
+      Profiles and backup page) uploads the profile, <strong>encrypted on the device</strong> before
       sending, to the same Supabase database, just long enough for the new
       device to pick it up. The decryption key only lives in the QR code /
       link: it is never sent to the server, which therefore cannot read the

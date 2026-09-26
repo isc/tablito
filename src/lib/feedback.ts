@@ -40,10 +40,16 @@ export interface FeedbackContext {
   profile_fetched_at?: string;
 }
 
+/** D'où vient le profil joint à l'avis : cet appareil, ou un enfant suivi. */
+export interface FeedbackSource {
+  kind: 'local' | 'watched';
+  fetchedAt?: string;
+}
+
 export function buildContext(
   profile: UserProfile | null,
   includeFullProfile = false,
-  source?: { kind: 'local' | 'watched'; fetchedAt?: string },
+  source?: FeedbackSource,
 ): FeedbackContext {
   const ctx: FeedbackContext = {
     app_version: APP_VERSION,

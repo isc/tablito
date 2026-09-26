@@ -1,10 +1,56 @@
 import { act, fireEvent } from '@testing-library/preact';
 import { vi } from 'vitest';
 
-// Gestes DOM partagés par les tests d'écran de la matière conjugaison (et
-// utilisables ailleurs) : taper sur le mini-clavier, avancer les timers,
-// retrouver un bouton. Sous `helpers/` et sans suffixe `.test`, donc jamais
+// Gestes DOM partagés par les tests d'écran : taper sur les claviers, avancer
+// les timers, laisser se régler les promesses, retrouver un bouton, ouvrir
+// l'espace parent. Sous `helpers/` et sans suffixe `.test`, donc jamais
 // collecté par vitest — même convention que `helpers/watchServer.ts`.
+
+/**
+ * Laisse se régler les promesses en attente (chunk lazy compris), dans un
+ * `act`. Microtâches seulement : sûr sous timers factices.
+ */
+export async function flushMicrotasks(rounds = 10): Promise<void> {
+  for (let i = 0; i < rounds; i++) {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  }
+}
+
+/**
+ * Laisse passer des macrotâches : lecture de fichier, chiffrement et fetch ne
+ * se règlent pas en une microtâche. Timers réels seulement.
+ */
+export async function flushMacrotasks(rounds = 10): Promise<void> {
+  for (let i = 0; i < rounds; i++) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
+}
+
+/**
+ * De l'accueil de l'enfant à l'espace parent : son bouton, la multiplication
+ * aléatoire du portail, puis le chunk lazy (à préchauffer par un import du
+ * module dans le test).
+ */
+export async function openParentDashboard(): Promise<void> {
+  fireEvent.click(document.querySelector<HTMLButtonElement>('.home-parent-btn')!);
+  const operands = Array.from(document.querySelectorAll('.parent-gate-question span'))
+    .map((s) => parseInt(s.textContent ?? '', 10))
+    .filter((n) => Number.isFinite(n));
+  if (operands.length < 2) throw new Error('Portail parent non affiché');
+  const input = document.querySelector<HTMLInputElement>('.parent-gate-input')!;
+  fireEvent.change(input, { target: { value: String(operands[0] * operands[1]) } });
+  fireEvent.click(requireButton(/^Valider$/));
+  await flushMicrotasks();
+}
+
+/** Titre de la page de réglage de l'espace parent affichée, s'il y en a une. */
+export function settingsPageTitle(): string | null | undefined {
+  return document.querySelector('.parent-dashboard--settings .parent-title')?.textContent;
+}
 
 /** Tout le texte rendu, pour les assertions « l'écran dit … ». */
 export function text(): string {

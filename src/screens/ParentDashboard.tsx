@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
-import FeedbackModal from '../components/FeedbackModal';
 import ParentHelpPage from '../components/ParentHelpPage';
 import ParentOverview from '../components/ParentOverview';
 import ParentProfilesPage from '../components/ParentProfilesPage';
@@ -15,12 +14,18 @@ import { setPushPref } from '../lib/push';
 import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
 import { listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 
+// Pages d'information d'« Aide et infos », rarement ouvertes : chargées à la
+// demande, comme l'espace parent lui-même.
+const PrivacyScreen = lazy(() => import('./PrivacyScreen'));
+const ChangelogScreen = lazy(() => import('./ChangelogScreen'));
+
 /** Réglage qui a sa propre page, ouverte depuis la liste de l'accueil. */
 type SettingsPage = 'watch' | 'profiles' | 'help';
 
 /** Page ouverte dans l'espace parent, par-dessus son accueil : celle d'une
- *  matière ou d'un réglage. La navigation (retour, geste système) vit dans App. */
-export type ParentPage = Subject | SettingsPage;
+ *  matière, d'un réglage, ou une page d'information de l'aide. La navigation
+ *  (retour, geste système) vit dans App. */
+export type ParentPage = Subject | SettingsPage | 'privacy' | 'changelog';
 
 interface ParentDashboardProps {
   // Profil local actif. NULL sur un appareil qui ne fait que suivre un enfant à
@@ -33,14 +38,12 @@ interface ParentDashboardProps {
   // revenir, l'espace parent EST l'app.
   onBack?: () => void;
   onExport: () => void;
-  // Restaure une sauvegarde sur le profil actif ; null si elle est illisible.
-  onImport: (json: string) => UserProfile | null;
+  // Remplace la progression du profil actif par une sauvegarde déjà lue.
+  onRestore: (backup: UserProfile) => void;
   // Multi-profils : lance l'onboarding Welcome pour un nouvel enfant.
   onAddProfile: () => void;
   // Supprime le profil actif (avec confirmation côté App).
   onDeleteProfile: () => void;
-  onShowPrivacy: () => void;
-  onShowChangelog: () => void;
   // Suivi appairé au boot depuis un `#watch=` : déjà déchiffré par main.tsx, on
   // l'affiche sans second aller-retour réseau.
   initialWatch?: WatchPairing | null;
@@ -53,7 +56,7 @@ interface ParentDashboardProps {
   // ce composant — et ce qu'il tient (source affichée, instantané distant déjà
   // relu) — reste monté.
   page: ParentPage | null;
-  onOpenPage: (page: ParentPage) => void;
+  onOpenPage: (page: ParentPage | null) => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -64,37 +67,36 @@ export default function ParentDashboard({
   profile,
   onBack,
   onExport,
-  onImport,
+  onRestore,
   onAddProfile,
   onDeleteProfile,
-  onShowPrivacy,
-  onShowChangelog,
   initialWatch = null,
   openOnWatched = false,
   page,
   onOpenPage,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
-  const [showFeedback, setShowFeedback] = useState(false);
 
   // === Sources : profil local + profils suivis à distance ===
   const [watched, setWatched] = useState<WatchedProfile[]>(listWatched);
-  // Source affichée : null = la progression stockée ICI, sinon le code d'un
+  // Source choisie : null = la progression stockée ICI, sinon le code d'un
   // suivi. Une chaîne (et non un objet) parce que c'est l'identité stable dont
   // dépend la relecture : re-cliquer l'onglet courant repose la même valeur,
   // React court-circuite le render, et aucune relecture n'est relancée.
-  const [selectedCode, setSelectedCode] = useState<string | null>(() => {
+  const [chosenCode, setChosenCode] = useState<string | null>(() => {
     // Appairage au boot : on ouvre directement sur l'enfant qu'on vient de
     // scanner, c'est la raison même de l'ouverture de l'app.
     if (initialWatch) return initialWatch.entry.code;
-    const firstWatched = listWatched()[0]?.code ?? null;
     // Arrivée par la notification de recap : c'est la progression SUIVIE que le
     // parent vient consulter, pas la sienne — même s'il a un profil local ici,
     // auquel cas la source par défaut serait ce profil et il faudrait encore
     // taper l'onglet de l'enfant.
-    if (openOnWatched && firstWatched) return firstWatched;
-    return profile ? null : firstWatched;
+    return openOnWatched ? listWatched()[0]?.code ?? null : null;
   });
+  // Source affichée : le choix, tant qu'il existe encore — sinon (suivi arrêté,
+  // profil local supprimé) le profil local, ou à défaut le premier enfant suivi.
+  const chosenExists = chosenCode ? watched.some((w) => w.code === chosenCode) : profile !== null;
+  const selectedCode = chosenExists ? chosenCode : profile ? null : watched[0]?.code ?? null;
 
   // L'instantané distant, ÉTIQUETÉ du code auquel il appartient : c'est ce qui
   // répond à « ai-je déjà les données de la source affichée ? » sans état de
@@ -162,10 +164,10 @@ export default function ParentDashboard({
     // servi évite que l'effet relance une relecture inutile juste après.
     inFlightRef.current = paired.entry.code;
     setRemote({ code: paired.entry.code, state: paired.snapshot });
-    setSelectedCode(paired.entry.code);
+    setChosenCode(paired.entry.code);
     // Retour à l'accueil, sur l'enfant qu'on vient d'appairer : c'est lui qu'on
     // voulait voir.
-    onBack?.();
+    onOpenPage(null);
   };
 
   const handleStopWatching = (code: string) => {
@@ -176,9 +178,6 @@ export default function ParentDashboard({
     // parent à une notification hebdomadaire qu'il ne pourrait plus éteindre
     // depuis l'app.
     if (list.length === 0) void setPushPref('weekly', false);
-    // Le suivi affiché disparaît : on retombe sur le profil local, ou à défaut
-    // sur un autre enfant suivi.
-    if (selectedCode === code) setSelectedCode(profile ? null : list[0]?.code ?? null);
   };
 
   // Page d'une matière, sur le profil affiché. Une page ne s'ouvre que depuis
@@ -195,6 +194,19 @@ export default function ParentDashboard({
         />
         <ParentSubjectDetail key={selectedCode ?? 'local'} profile={shown} subject={page} />
       </div>
+    );
+  }
+
+  // Pages d'information, plein écran avec leur propre en-tête. Toujours un
+  // retour (vers « Aide et infos ») : cf. backTarget dans App. Leur frontière
+  // de chargement est ici et non celle d'App : sous Preact, un chargement
+  // suspendu recrée tout ce que sa frontière enveloppe, et l'espace parent y
+  // perdrait sa source affichée.
+  if ((page === 'privacy' || page === 'changelog') && onBack) {
+    return (
+      <Suspense fallback={null}>
+        {page === 'privacy' ? <PrivacyScreen onBack={onBack} /> : <ChangelogScreen onBack={onBack} />}
+      </Suspense>
     );
   }
 
@@ -218,35 +230,17 @@ export default function ParentDashboard({
             onAddProfile={onAddProfile}
             onDeleteProfile={onDeleteProfile}
             onExport={onExport}
-            onImport={onImport}
+            onRestore={onRestore}
           />
         )}
         {page === 'help' && (
           <ParentHelpPage
-            onFeedback={() => setShowFeedback(true)}
-            onShowChangelog={onShowChangelog}
-            onShowPrivacy={onShowPrivacy}
-          />
-        )}
-        {showFeedback && (
-          // Le profil JOINT est celui qu'on REGARDE sur l'accueil, pas celui de
-          // l'appareil : un parent qui signale un souci depuis l'onglet de son
-          // enfant suivi à distance parle de l'enfant, et joindre son propre
-          // profil rendait l'avis indébuggable (vécu : « 12 divisions bloquées »
-          // impossible à reproduire faute du bon historique).
-          //
-          // `shown` et non `shown ?? profile` : pendant « Récupération… » il vaut
-          // null, et le repli joindrait le profil local sous un libellé qui nomme
-          // l'enfant distant. FeedbackModal masque simplement la case quand il
-          // n'a pas de profil — l'avis part sans historique, ce qui est vrai.
-          <FeedbackModal
-            profile={shown}
-            source={
-              watchedEntry
-                ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt }
-                : { kind: 'local' }
+            feedbackProfile={shown}
+            feedbackSource={
+              watchedEntry ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt } : { kind: 'local' }
             }
-            onClose={() => setShowFeedback(false)}
+            onShowChangelog={() => onOpenPage('changelog')}
+            onShowPrivacy={() => onOpenPage('privacy')}
           />
         )}
       </div>
@@ -266,7 +260,7 @@ export default function ParentDashboard({
               key={item.code ?? 'local'}
               type="button"
               className={`progress-tab ${item.code === selectedCode ? 'active' : ''}`}
-              onClick={() => setSelectedCode(item.code)}
+              onClick={() => setChosenCode(item.code)}
             >
               {item.label}
             </button>
@@ -332,17 +326,19 @@ export default function ParentDashboard({
       {/* Au-delà : ce qu'on règle, par opposition à ce qu'on consulte. */}
       <div className="parent-section parent-settings-start">
         <h2 className="parent-overline">{t.settings}</h2>
-        <ParentSettingsList watched={watched} onOpenPage={onOpenPage} />
+        <ParentSettingsList hasLocalProfile={profile !== null} watched={watched} onOpenPage={onOpenPage} />
       </div>
 
       {/* Appareil qui ne fait que suivre : la porte de sortie vers un profil
           local, à la place de la ligne « Profils et sauvegarde ». */}
       {!profile && (
         <div className="parent-section">
-          <button className="parent-action-btn parent-create-profile" onClick={onAddProfile}>
-            {t.createLocalProfile}
-          </button>
-          <p className="parent-section-subtitle parent-create-profile-note">{t.profilesSubtitleWatcher}</p>
+          <div className="parent-actions">
+            <button className="parent-action-btn" onClick={onAddProfile}>
+              {t.createLocalProfile}
+            </button>
+          </div>
+          <p className="parent-section-subtitle parent-note">{t.profilesSubtitleWatcher}</p>
         </div>
       )}
 

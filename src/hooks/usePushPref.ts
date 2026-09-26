@@ -9,13 +9,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getPushPrefs, peekPushPrefs, setPushPref, type PushPrefs } from '../lib/push';
+import type { PushPrefStrings } from '../i18n/parent';
 
-interface PushPrefStrings {
-  blocked: string;
-  unavailable: string;
-}
-
-export function usePushPref(key: keyof PushPrefs, t: PushPrefStrings) {
+export function usePushPref(key: keyof PushPrefs, t: Pick<PushPrefStrings, 'blocked' | 'unavailable'>) {
   // Dernier état connu en attendant la relecture : pas d'interrupteur qui
   // s'éteint puis se rallume à chaque retour sur l'écran.
   const [enabled, setEnabled] = useState(() => peekPushPrefs()?.[key] ?? false);

@@ -1,4 +1,4 @@
-import { act, cleanup, createEvent, fireEvent, render } from '@testing-library/preact';
+import { cleanup, createEvent, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../App';
@@ -6,7 +6,14 @@ import { LangProvider } from '../i18n/LangProvider';
 import { applyLang } from '../i18n/lang';
 import { addProfile, createNewProfile, exportProfile, loadProfile, setActiveProfile } from '../lib/storage';
 import { loadWatchCredentials } from '../lib/watchStore';
-import { findButton, requireButton, text } from './helpers/dom';
+import {
+  findButton,
+  flushMacrotasks,
+  openParentDashboard,
+  requireButton,
+  settingsPageTitle,
+  text,
+} from './helpers/dom';
 import { mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
 // Préchauffe le chunk lazy de l'espace parent pour que le React.lazy() d'App
 // se résolve dans le test.
@@ -17,16 +24,6 @@ import '../screens/ParentDashboard';
 // ligne ouvre sa page. Ils concernent l'APPAREIL (ses enfants, ses partages,
 // ses suivis) et non le profil affiché.
 // ---------------------------------------------------------------------------
-
-// Macrotâches, pas seulement microtâches : lecture de fichier, chiffrement et
-// fetch du partage ne se règlent pas en une microtâche.
-async function flush(rounds = 10): Promise<void> {
-  for (let i = 0; i < rounds; i++) {
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-  }
-}
 
 // Deux enfants sur l'appareil, Léa active.
 function seedChildren(): { leaId: string; tomId: string } {
@@ -41,22 +38,13 @@ function seedChildren(): { leaId: string; tomId: string } {
 // Du démarrage (« Qui joue ? ») à l'accueil de l'espace parent.
 async function openParentArea(): Promise<void> {
   fireEvent.click(requireButton(/Léa/));
-  fireEvent.click(document.querySelector<HTMLButtonElement>('.home-parent-btn')!);
-  const operands = Array.from(document.querySelectorAll('.parent-gate-question span'))
-    .map((s) => parseInt(s.textContent ?? '', 10))
-    .filter((n) => Number.isFinite(n));
-  const input = document.querySelector<HTMLInputElement>('.parent-gate-input')!;
-  fireEvent.change(input, { target: { value: String(operands[0] * operands[1]) } });
-  fireEvent.click(requireButton(/^Valider$/));
-  await flush();
+  await openParentDashboard();
 }
 
 async function openPage(row: RegExp): Promise<void> {
   fireEvent.click(requireButton(row));
-  await flush(2);
+  await flushMacrotasks(2);
 }
-
-const pageTitle = () => document.querySelector('.parent-dashboard--settings .parent-title')?.textContent;
 
 // Le nom et le sous-titre d'une ligne de réglage.
 function row(title: string): string | null {
@@ -93,10 +81,10 @@ describe("réglages de l'espace parent", () => {
     expect(row('Aide et infos')).not.toBeNull();
 
     await openPage(/^Profils et sauvegarde/);
-    expect(pageTitle()).toBe('Profils et sauvegarde');
+    expect(settingsPageTitle()).toBe('Profils et sauvegarde');
     fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
     await openPage(/^Aide et infos/);
-    expect(pageTitle()).toBe('Aide et infos');
+    expect(settingsPageTitle()).toBe('Aide et infos');
     expect(findButton(/^Nouveautés$/)).not.toBeNull();
     expect(findButton(/^Confidentialité$/)).not.toBeNull();
   });
@@ -135,7 +123,7 @@ describe('import d’une sauvegarde par fichier', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     chooseFile(backup);
-    await flush();
+    await flushMacrotasks();
 
     // La confirmation dit ce qu'on s'apprête à remplacer, et par quoi.
     expect(confirmSpy).toHaveBeenCalledWith(
@@ -150,7 +138,7 @@ describe('import d’une sauvegarde par fichier', () => {
     const confirmSpy = vi.spyOn(window, 'confirm');
 
     chooseFile('{ "pas": "une sauvegarde" }');
-    await flush();
+    await flushMacrotasks();
 
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(loadProfile()!.totalSessions).toBe(17);
@@ -162,7 +150,7 @@ describe('import d’une sauvegarde par fichier', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 
     chooseFile(exportProfile({ ...createNewProfile('Léa'), totalSessions: 42 }));
-    await flush();
+    await flushMacrotasks();
 
     expect(loadProfile()!.totalSessions).toBe(17);
     expect(text()).not.toContain('Sauvegarde importée');
@@ -183,7 +171,7 @@ describe('suivi à distance : un partage par enfant de l’appareil', () => {
     expect(card('Tom').textContent).toContain('Progression non partagée');
 
     fireEvent.click(requireButton(/^Partager la progression de Tom$/));
-    await flush(20);
+    await flushMacrotasks(20);
 
     // Le partage est posé sous l'id de Tom, et celui de Léa reste fermé.
     const tomCreds = loadWatchCredentials(ids.tomId);
@@ -193,7 +181,7 @@ describe('suivi à distance : un partage par enfant de l’appareil', () => {
     expect(card('Tom').textContent).toContain('Progression partagée');
 
     fireEvent.click(card('Tom').querySelector<HTMLButtonElement>('.parent-watch-remove')!);
-    await flush();
+    await flushMacrotasks();
     expect(loadWatchCredentials(ids.tomId)).toBeNull();
     expect(rows.has(tomCreds!.code)).toBe(false);
     expect(card('Tom').textContent).toContain('Progression non partagée');
@@ -210,7 +198,7 @@ describe('langue', () => {
     await openParentArea();
 
     fireEvent.click(requireButton(/^English$/));
-    await flush(2);
+    await flushMacrotasks(2);
     expect(row('Help and info')).not.toBeNull();
     expect(document.querySelector('.parent-settings-start .parent-overline')?.textContent).toBe(
       'Settings and info',

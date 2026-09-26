@@ -14,7 +14,9 @@ import {
 } from '../lib/watchStore';
 import { useParentDashboardStrings } from '../i18n/parent';
 import ParentQrPanel, { type QrPanelState } from './ParentQrPanel';
+import { SettingList, SettingRow } from './ParentSettingRow';
 import ParentWatchPairing from './ParentWatchPairing';
+import ProfileAvatar from './ProfileAvatar';
 
 interface ParentWatchPageProps {
   watched: WatchedProfile[];
@@ -84,9 +86,7 @@ export default function ParentWatchPage({ watched, onPaired, onStopWatching }: P
               return (
                 <div key={id} className="parent-card parent-share-card">
                   <div className="parent-share-head">
-                    <span className="parent-avatar" aria-hidden="true">
-                      {name.charAt(0).toUpperCase()}
-                    </span>
+                    <ProfileAvatar name={name} className="parent-avatar" />
                     <span className="parent-share-titles">
                       <span className="parent-share-name">{name}</span>
                       <span className={`parent-share-status${shared ? ' is-on' : ''}`}>
@@ -123,18 +123,20 @@ export default function ParentWatchPage({ watched, onPaired, onStopWatching }: P
         <h2 className="parent-overline">{t.watchFollow}</h2>
         <p className="parent-section-subtitle">{t.watchFollowSubtitle}</p>
         {watched.length > 0 && (
-          <div className="parent-card parent-card--list">
-            <ul className="parent-watch-list">
-              {watched.map((w) => (
-                <li key={w.code} className="parent-watch-row">
-                  <span className="parent-watch-name">{w.name}</span>
+          <SettingList>
+            {watched.map((w) => (
+              <SettingRow
+                key={w.code}
+                avatar={w.name}
+                title={w.name}
+                trailing={
                   <button className="parent-watch-remove" onClick={() => onStopWatching(w.code)}>
                     {t.watchStopFollowing}
                   </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+                }
+              />
+            ))}
+          </SettingList>
         )}
         <ParentWatchPairing onPaired={onPaired} />
       </div>

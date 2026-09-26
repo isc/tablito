@@ -2,8 +2,8 @@
 // l'appareil de l'enfant, ou coller son lien.
 //
 // Composant à part pour que la caméra vive exactement aussi longtemps que
-// l'élément vidéo où elle filme : quitter l'écran qui le montre, par n'importe
-// quel chemin (bouton, geste retour, page de matière), la coupe avec lui.
+// l'élément vidéo où elle filme : quitter la page qui le montre, par n'importe
+// quel chemin (bouton, geste retour), la coupe avec lui.
 
 import { useEffect, useRef, useState } from 'react';
 import { addWatched, type WatchPairing } from '../lib/watch';

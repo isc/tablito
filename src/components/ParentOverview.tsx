@@ -11,7 +11,7 @@
 // l'appareil (sauvegarde, suivi, notifications, profils) reste dans
 // ParentDashboard.
 
-import { memo, useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { BoxLevel, UserProfile } from '../types';
 import { isConjVisible, unlockedMathLevels, type MathLevel } from '../lib/badges';
 import { CONJ_TENSES } from '../lib/conjugationFacts';
@@ -23,7 +23,7 @@ import { useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
 import { TENSE_NAMES } from '../i18n/tense';
 import ActivityStrip from './ActivityStrip';
-import BackChevron from './BackChevron';
+import { ForwardChevron } from './BackChevron';
 import MasteryBar from './ParentMastery';
 import HardFactList from './ParentHardFacts';
 
@@ -75,7 +75,7 @@ function SubjectCard({ subject, icon, title, sub, rowName, facts, onOpen, childr
           <span className="parent-subject-sub">{sub}</span>
         </span>
         <span className="parent-subject-chevron" aria-hidden="true">
-          <BackChevron />
+          <ForwardChevron />
         </span>
       </span>
       {children}
@@ -90,9 +90,7 @@ function SubjectCard({ subject, icon, title, sub, rowName, facts, onOpen, childr
   );
 }
 
-// Mémoïsé : `profile` et `onOpenSubject` sont des références stables, alors que
-// ParentDashboard se re-rend à chaque frappe dans l'import et à chaque « Copié ✓ ».
-function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
+export default function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
   const t = useParentDashboardStrings();
   const { lang } = useLang();
   const today = todayISO();
@@ -205,7 +203,7 @@ function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
           <div className="parent-card parent-card--list">
             <HardFactList facts={hardFacts} />
           </div>
-          <p className="parent-section-subtitle parent-overview-note">
+          <p className="parent-section-subtitle parent-note">
             {t.hardestFactsSubtitle(HARD_FACTS_WINDOW)}
           </p>
         </div>
@@ -213,5 +211,3 @@ function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
     </>
   );
 }
-
-export default memo(ParentOverview);

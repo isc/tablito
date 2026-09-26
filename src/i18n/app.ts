@@ -14,7 +14,7 @@ const fr: Strings = {
   confirmDeleteProfile: (name) =>
     `Supprimer le profil de ${name} ?\n\nLe prénom, les séances, les badges et la série seront effacés de cet appareil. Cette action est irréversible.`,
   transferFailed:
-    "Le transfert n'a pas abouti : le lien a peut-être expiré ou déjà servi. Relancez-en un depuis l'ancien appareil (Espace parent → Transférer).",
+    "Le transfert n'a pas abouti : le lien a peut-être expiré ou déjà servi. Relancez-en un depuis l'ancien appareil (Espace parent → Profils et sauvegarde → Changer d'appareil).",
   transferImported: 'La progression est bien arrivée sur cet appareil ✓',
   dismiss: 'Fermer',
 };
@@ -23,7 +23,7 @@ const en: Strings = {
   confirmDeleteProfile: (name) =>
     `Delete ${name}'s profile?\n\nThe name, sessions, badges and streak will be erased from this device. This action cannot be undone.`,
   transferFailed:
-    "The transfer didn't go through: the link may have expired or already been used. Start a new one from the old device (Parent area → Transfer).",
+    "The transfer didn't go through: the link may have expired or already been used. Start a new one from the old device (Parent area → Profiles and backup → Move to another device).",
   transferImported: 'The progress has arrived on this device ✓',
   dismiss: 'Close',
 };

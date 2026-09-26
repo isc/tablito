@@ -44,7 +44,6 @@
   opacity: 0.6;
 }
 
-/* Icône, ou initiale d'un enfant dans la page des profils. */
 .parent-setting-icon {
   width: 34px;
   height: 34px;
@@ -55,6 +54,12 @@
   justify-content: center;
   background: var(--cream-deep);
   color: var(--ink-soft);
+}
+
+/* Pastille d'un enfant (cf. ProfileAvatar), à la place de l'icône. */
+.parent-setting-avatar {
+  border-radius: 50%;
+  color: #fff;
   font-family: var(--serif);
   font-size: 16px;
   font-weight: 700;
@@ -87,18 +92,44 @@
   color: var(--ink-muted);
 }
 
-/* Le chevron de retour, retourné. */
-.parent-setting-chevron {
-  transform: scaleX(-1);
+/* Interrupteur d'une notification, au bout de sa ligne (cf. SwitchRow). */
+.notif-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  flex-shrink: 0;
+  transition: background 0.2s ease;
 }
 
-.parent-setting-btn--danger .parent-setting-title {
-  color: var(--coral);
+.notif-switch--on {
+  background: var(--sage);
 }
 
-/* Erreur d'un interrupteur, alignée sur le texte de sa ligne. */
-.parent-setting .notif-message {
+.notif-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.notif-switch--on .notif-switch-knob {
+  transform: translateX(18px);
+}
+
+/* Erreur de la dernière bascule, alignée sur le texte de sa ligne. */
+.notif-message {
   margin: 0 0 10px 46px;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--coral);
 }
 
 /* === Accueil === */
@@ -113,14 +144,6 @@
   font-size: 14px;
   line-height: 1.45;
   color: var(--ink-soft);
-}
-
-.parent-create-profile {
-  width: 100%;
-}
-
-.parent-create-profile-note {
-  margin: 10px 0 0;
 }
 
 /* === Pages de réglages === */
@@ -158,8 +181,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--indigo-soft);
-  color: var(--indigo);
+  color: #fff;
   font-family: var(--serif);
   font-size: 17px;
   font-weight: 700;
@@ -212,8 +234,4 @@
 
 .parent-danger {
   margin-top: 28px;
-}
-
-.parent-danger .parent-action-btn {
-  width: 100%;
 }
