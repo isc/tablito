@@ -29,9 +29,8 @@ function daysAgoLabel(daysAgo: number, lang: Lang): string {
 
 interface ParentDashboardStrings {
   back: string;
+  backToOverview: string;
   parentArea: string;
-  profileSuffix: (name: string) => string;
-  overview: string;
   // Bandeau d'activité : une phrase qui dit l'état du jour, puis 14 colonnes.
   // Le titre est composé (« Aujourd'hui : … ») pour que la partie variable
   // reste une phrase entière traduisible, pas un assemblage de mots.
@@ -45,50 +44,70 @@ interface ParentDashboardStrings {
   activityConjPending: string;
   activityLastSession: (daysAgo: number) => string;
   activityNoSessionEver: string;
-  activityMath: string;
   activityAlt: (days: number) => string;
   sessions: string;
   currentStreak: string;
   bestStreak: string;
-  masteredFacts: string;
-  operation: string;
+  // Accueil : une carte par matière, qui ouvre sa page.
+  subjects: string;
+  math: string;
+  // Matière conjugaison (spec Verbito §8) : carte et page miroir des maths.
+  // Entrées `en` présentes pour que la table reste totale, jamais rendues — la
+  // matière est masquée quand la langue d'interface est l'anglais.
+  conjugations: string;
+  conjTenses: string;
+  verbForms: string;
+  // Niveau actif de la carte Maths (les niveaux passés y sont des pastilles).
+  currentMult: string;
+  currentDiv: string;
+  currentRem: string;
+  // Page Maths : sélecteur des niveaux débloqués (jamais un niveau verrouillé,
+  // specs §11.3).
+  level: string;
   multiplications: string;
   divisions: string;
   remainders: string;
-  // Matière conjugaison (spec Verbito §8) : section miroir de l'espace parent.
-  // Entrée `en` présente pour que la table reste totale, jamais rendue — la
-  // matière est masquée quand la langue d'interface est l'anglais.
-  conjugations: string;
+  // Nom complet du niveau 3, là où « Avec reste » seul ne se comprendrait pas
+  // (ligne du niveau en cours sur la carte Maths de l'accueil).
+  remaindersLong: string;
   divisionsMastered: string;
   multiplicationsMastered: string;
   remaindersMastered: string;
   conjugationsMastered: string;
-  boxDistribution: string;
+  // Quatre paliers lisibles à la place des boîtes B1 à B5 (cf. masteryBuckets).
+  bucketMastered: string;
+  bucketOnTrack: string;
+  bucketFragile: string;
+  bucketUnseen: string;
+  masteryBarLabel: (mastered: number, total: number) => string;
   learnMoreLeitner: string;
-  boxDistributionSubtitle: (op: string) => string;
   leitnerGrid: string;
   leitnerGridSubtitle: (op: string) => string;
   opDivision: string;
   opMultiplication: string;
   opRemainder: string;
-  opDivisionsPlural: string;
-  opMultiplicationsPlural: string;
-  opRemaindersPlural: string;
   opConjugation: string;
-  opConjugationsPlural: string;
   factDivision: string;
   factMultiplication: string;
   factRemainder: string;
   factConjugation: string;
-  correctAnswerRate: string;
-  averageResponseTime: string;
-  mathSessionsOnly: string;
-  conjSessionsOnly: string;
-  hardestFacts: string;
+  // Tout ce qui se lit par séance vit sous un seul titre de matière, au lieu
+  // d'un « Séances de maths uniquement » répété sous chaque section.
+  mathSessions: string;
+  conjSessions: string;
+  mathSessionsMixed: string;
+  evolution: string;
+  accuracy: string;
+  speed: string;
+  evolutionCaption: (count: number, average: string) => string;
+  toPractise: string;
   hardestFactsSubtitle: (window: number) => string;
   errors: (count: number) => string;
   boxLabel: (box: number) => string;
   sessionHistory: string;
+  showAllSessions: (count: number) => string;
+  // Séparateur entre la progression et les réglages de l'accueil.
+  settings: string;
   backup: string;
   export: string;
   import: string;
@@ -146,7 +165,9 @@ interface ParentDashboardStrings {
   confirmImport: string;
   appVersionLabel: string;
   shareText: string;
-  // formats de date / opérande
+  // formats de date / durée / pourcentage / opérande
+  formatSeconds: (seconds: number) => string;
+  formatPercent: (percent: number) => string;
   formatShortDate: (date: Date) => string;
   // Initiale du jour de la semaine sous les colonnes du bandeau d'activité.
   formatWeekdayNarrow: (date: Date) => string;
@@ -163,9 +184,8 @@ interface ParentDashboardStrings {
 
 const parentDashboardFr: ParentDashboardStrings = {
   back: 'Retour',
+  backToOverview: "Retour à l'accueil de l'espace parent",
   parentArea: 'Espace parent',
-  profileSuffix: (name) => `${name}\u00a0· profil`,
-  overview: "Vue d'ensemble",
   activityHeading: (state) => `Aujourd'hui\u00a0: ${state}`,
   activityNothingYet: 'pas encore de séance',
   activitySessionDone: 'séance faite',
@@ -176,49 +196,58 @@ const parentDashboardFr: ParentDashboardStrings = {
   activityConjPending: 'Conjugaison pas encore.',
   activityLastSession: (daysAgo) => `Dernière séance ${daysAgoLabel(daysAgo, 'fr')}.`,
   activityNoSessionEver: 'Aucune séance pour le moment.',
-  activityMath: 'Maths',
   activityAlt: (days) => `Activité des ${days} derniers jours`,
   sessions: 'Séances',
   currentStreak: 'Série actuelle',
   bestStreak: 'Meilleure série',
-  masteredFacts: 'Faits maîtrisés',
-  operation: 'Opération',
+  subjects: 'Matières',
+  math: 'Maths',
+  conjugations: 'Conjugaison',
+  conjTenses: 'Présent, imparfait, futur',
+  verbForms: 'Formes verbales',
+  currentMult: 'En cours\u00a0: les multiplications',
+  currentDiv: 'En cours\u00a0: les divisions',
+  currentRem: 'En cours\u00a0: la division avec reste',
+  level: 'Niveau',
   multiplications: 'Multiplications',
   divisions: 'Divisions',
   remainders: 'Avec reste',
-  conjugations: 'Conjugaison',
+  remaindersLong: 'Divisions avec reste',
   divisionsMastered: 'Divisions maîtrisées',
   multiplicationsMastered: 'Multiplications maîtrisées',
   remaindersMastered: 'Divisions avec reste maîtrisées',
   conjugationsMastered: 'Formes verbales maîtrisées',
-  boxDistribution: 'Répartition par boîte',
+  bucketMastered: 'Maîtrisées',
+  bucketOnTrack: 'En bonne voie',
+  bucketFragile: 'À consolider',
+  bucketUnseen: 'Pas encore vues',
+  masteryBarLabel: (mastered, total) => `${mastered} maîtrisées sur ${total}`,
   learnMoreLeitner: 'En savoir plus sur le système de Leitner',
-  boxDistributionSubtitle: (op) =>
-    `Combien de ${op} dans chaque boîte de révision (B1 = à réviser souvent, B5 = bien ancrées).`,
   leitnerGrid: 'Grille Leitner',
   leitnerGridSubtitle: (op) =>
     `Une case par ${op}, colorée selon sa boîte. Le rouge signale les faits récents ou en difficulté, le vert ceux bien ancrés.`,
   opDivision: 'division',
   opMultiplication: 'multiplication',
   opRemainder: 'division avec reste',
-  opDivisionsPlural: 'divisions',
-  opMultiplicationsPlural: 'multiplications',
-  opRemaindersPlural: 'divisions avec reste',
   opConjugation: 'forme verbale',
-  opConjugationsPlural: 'formes verbales',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
   factRemainder: 'Division avec reste',
   factConjugation: 'Conjugaison',
-  correctAnswerRate: 'Taux de bonnes réponses',
-  averageResponseTime: 'Temps de réponse moyen',
-  mathSessionsOnly: 'Séances de maths uniquement.',
-  conjSessionsOnly: 'Séances de conjugaison uniquement.',
-  hardestFacts: 'Faits les plus difficiles',
+  mathSessions: 'Séances de maths',
+  conjSessions: 'Séances de conjugaison',
+  mathSessionsMixed: 'Chaque séance mélange les niveaux débloqués.',
+  evolution: 'Évolution',
+  accuracy: 'Réussite',
+  speed: 'Rapidité',
+  evolutionCaption: (count, average) => `${count} dernières séances · moyenne ${average}`,
+  toPractise: 'À retravailler',
   hardestFactsSubtitle: (window) => `Sur les ${window} dernières séances.`,
   errors: (count) => `${count} erreur${count > 1 ? 's' : ''}`,
   boxLabel: (box) => `Boîte ${box}`,
   sessionHistory: 'Historique des séances',
+  showAllSessions: (count) => `Tout afficher (${count})`,
+  settings: 'Réglages et infos',
   backup: 'Sauvegarde',
   export: 'Exporter',
   import: 'Importer',
@@ -287,6 +316,9 @@ const parentDashboardFr: ParentDashboardStrings = {
   confirmImport: "Confirmer l'import",
   appVersionLabel: "Version de l'app",
   shareText: 'Tablito — pour apprendre les tables de multiplication.',
+  formatSeconds: (seconds) =>
+    `${seconds.toLocaleString(localeFor('fr'), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}\u00a0s`,
+  formatPercent: (percent) => `${percent}\u00a0%`,
   formatShortDate: (date) =>
     date.toLocaleDateString(localeFor('fr'), { day: 'numeric', month: 'short' }),
   formatWeekdayNarrow: (date) =>
@@ -305,9 +337,8 @@ const parentDashboardFr: ParentDashboardStrings = {
 
 const parentDashboardEn: ParentDashboardStrings = {
   back: 'Back',
+  backToOverview: 'Back to the parent area overview',
   parentArea: 'Parent area',
-  profileSuffix: (name) => `${name}\u00a0· profile`,
-  overview: 'Overview',
   activityHeading: (state) => `Today: ${state}`,
   activityNothingYet: 'no session yet',
   activitySessionDone: 'session done',
@@ -318,50 +349,58 @@ const parentDashboardEn: ParentDashboardStrings = {
   activityConjPending: 'Conjugation not done yet.',
   activityLastSession: (daysAgo) => `Last session ${daysAgoLabel(daysAgo, 'en')}.`,
   activityNoSessionEver: 'No session yet.',
-  activityMath: 'Math',
   activityAlt: (days) => `Activity over the last ${days} days`,
   sessions: 'Sessions',
   currentStreak: 'Current streak',
   bestStreak: 'Best streak',
-  masteredFacts: 'Mastered facts',
-  operation: 'Operation',
+  subjects: 'Subjects',
+  math: 'Math',
+  conjugations: 'Conjugation',
+  conjTenses: 'Present, imperfect, future',
+  verbForms: 'Verb forms',
+  currentMult: 'Working on: multiplication',
+  currentDiv: 'Working on: division',
+  currentRem: 'Working on: division with remainders',
+  level: 'Level',
   multiplications: 'Multiplication',
   divisions: 'Division',
   remainders: 'Remainders',
-  conjugations: 'Conjugation',
+  remaindersLong: 'Division with remainders',
   divisionsMastered: 'Division facts mastered',
   multiplicationsMastered: 'Multiplication facts mastered',
   remaindersMastered: 'Remainder facts mastered',
   conjugationsMastered: 'Verb forms mastered',
-  boxDistribution: 'Distribution by box',
+  bucketMastered: 'Mastered',
+  bucketOnTrack: 'On track',
+  bucketFragile: 'Still shaky',
+  bucketUnseen: 'Not seen yet',
+  masteryBarLabel: (mastered, total) => `${mastered} of ${total} mastered`,
   learnMoreLeitner: 'Learn more about the Leitner system',
-  boxDistributionSubtitle: (op) =>
-    `How many ${op} facts are in each review box (B1 = review often, B5 = well learned).`,
   leitnerGrid: 'Leitner grid',
   leitnerGridSubtitle: (op) =>
     `One cell per ${op} fact, colored by its box. Red flags recent or tricky facts, green the well-learned ones.`,
   opDivision: 'division',
   opMultiplication: 'multiplication',
   opRemainder: 'division-with-remainder',
-  // En anglais « X facts » prend le singulier ; même mot que la grille Leitner.
-  opDivisionsPlural: 'division',
-  opMultiplicationsPlural: 'multiplication',
-  opRemaindersPlural: 'division-with-remainder',
   opConjugation: 'verb form',
-  opConjugationsPlural: 'verb form',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
   factRemainder: 'Division with remainder',
   factConjugation: 'Conjugation',
-  correctAnswerRate: 'Correct answer rate',
-  averageResponseTime: 'Average response time',
-  mathSessionsOnly: 'Math sessions only.',
-  conjSessionsOnly: 'Conjugation sessions only.',
-  hardestFacts: 'Hardest facts',
+  mathSessions: 'Math sessions',
+  conjSessions: 'Conjugation sessions',
+  mathSessionsMixed: 'Each session mixes the unlocked levels.',
+  evolution: 'Trend',
+  accuracy: 'Accuracy',
+  speed: 'Speed',
+  evolutionCaption: (count, average) => `Last ${count} sessions · average ${average}`,
+  toPractise: 'Needs practice',
   hardestFactsSubtitle: (window) => `Over the last ${window} sessions.`,
   errors: (count) => `${count} error${count > 1 ? 's' : ''}`,
   boxLabel: (box) => `Box ${box}`,
   sessionHistory: 'Session history',
+  showAllSessions: (count) => `Show all (${count})`,
+  settings: 'Settings and info',
   backup: 'Backup',
   export: 'Export',
   import: 'Import',
@@ -429,6 +468,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   confirmImport: 'Confirm import',
   appVersionLabel: 'App version',
   shareText: 'Tablito — to learn the multiplication tables.',
+  formatSeconds: (seconds) => `${seconds.toFixed(1)}s`,
+  formatPercent: (percent) => `${percent}%`,
   formatShortDate: (date) =>
     date.toLocaleDateString(localeFor('en'), { day: 'numeric', month: 'short' }),
   formatWeekdayNarrow: (date) =>

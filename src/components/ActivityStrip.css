@@ -3,9 +3,10 @@
    `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
    éléments : on ne redéclare ici que ce qui diffère. */
 
+/* Carte autonome en tête de l'accueil ; les compteurs cumulés en ferment le
+   bas (cf. ParentOverview). */
 .parent-activity {
-  padding-bottom: 10px;
-  margin-bottom: 10px;
+  padding-bottom: 12px;
 }
 
 .parent-activity-heading {

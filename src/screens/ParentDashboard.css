@@ -101,27 +101,7 @@
   background: var(--line);
 }
 
-/* Stats grid: 2×2 sur mobile, 4 colonnes si possible */
-.parent-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-/* Division débloquée : la « Vue d'ensemble » ne garde que les 3 stats
-   transverses (séances, série actuelle, meilleure série) → une seule rangée
-   de 3 plutôt qu'une carte orpheline en 2 colonnes. */
-.parent-stats-grid--three {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-/* Carte de maîtrise de l'opération sélectionnée, sous le sélecteur. Réutilise
-   .parent-stat-card pour l'habillage (cf. markup) : hors grille elle occupe
-   toute la largeur (stat phare), et la valeur reprend l'indigo « maîtrise ». */
-.parent-mastery-card .parent-stat-value {
-  color: var(--indigo);
-}
-
+/* Carte du jour (ActivityStrip) et ses compteurs cumulés (cf. ParentOverview). */
 .parent-stat-card {
   background: var(--paper);
   border: 1.5px solid var(--line);
@@ -149,73 +129,15 @@
   line-height: 1.1;
 }
 
-.parent-stats-grid .parent-stat-card:nth-child(2) .parent-stat-value {
-  color: var(--coral);
-}
-
-.parent-stats-grid .parent-stat-card:nth-child(3) .parent-stat-value {
-  color: var(--sage);
-}
-
-.parent-stats-grid .parent-stat-card:nth-child(4) .parent-stat-value {
-  color: var(--indigo);
-}
-
-/* Sélecteur d'opération de l'espace parent : il gouverne les sections
-   « Répartition » et « Grille Leitner » qui le suivent, PAS la « Vue
-   d'ensemble » au-dessus (qui agrège mult + div). On l'écarte nettement
-   de la carte du dessus et on le rapproche de la section qu'il contrôle
-   pour que le regroupement visuel soit sans ambiguïté. */
+/* Sélecteur de source (profil de cet appareil / enfants suivis à distance),
+   sous l'en-tête de l'accueil. Mêmes pastilles que « Mes images ». */
 .parent-op-tabs {
-  margin-top: 28px;
+  margin-top: 16px;
   padding-bottom: 2px;
 }
 
 .parent-op-tabs + .parent-section {
   margin-top: 10px;
-}
-
-/* Box histogram */
-.parent-histogram {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  align-items: end;
-  height: 130px;
-  padding: 8px 14px 0;
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-}
-
-.parent-histogram-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  gap: 4px;
-}
-
-.parent-histogram-count {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--ink);
-}
-
-.parent-histogram-fill {
-  width: 100%;
-  border-radius: 4px 4px 0 0;
-  transition: height 0.5s ease;
-  min-height: 4px;
-}
-
-.parent-histogram-label {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--ink-muted);
 }
 
 /* Evolution chart */
@@ -233,22 +155,22 @@
   display: block;
 }
 
-/* Hard facts */
+/* « À retravailler » : des lignes dans une carte (cf. ParentHardFacts). */
 .parent-hard-facts {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  list-style: none;
 }
 
 .parent-hard-fact {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--paper);
-  border-radius: 14px;
-  border: 1.5px solid var(--line);
-  gap: 10px;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.parent-hard-fact:first-child {
+  border-top: 0;
 }
 
 .parent-hard-fact-name {
@@ -266,23 +188,22 @@
   font-weight: 700;
 }
 
-/* Session history */
+/* Historique des séances : des lignes dans une carte (page de matière). */
 .parent-session-history {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  list-style: none;
 }
 
 .parent-session-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--paper);
-  border-radius: 12px;
-  border: 1.5px solid var(--line);
+  min-height: 44px;
+  border-top: 1px solid var(--line-soft);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 13.5px;
+}
+
+.parent-session-row:first-child {
+  border-top: 0;
 }
 
 .parent-session-date {
@@ -302,8 +223,9 @@
 .parent-session-time {
   font-weight: 600;
   color: var(--ink-soft);
-  min-width: 40px;
+  min-width: 48px;
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Action buttons */

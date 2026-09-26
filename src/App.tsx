@@ -55,6 +55,7 @@ import { preflightMicPermission } from './lib/micPreflight';
 import { syncLastSession } from './lib/push';
 import { listWatched } from './lib/watchStore';
 import type { WatchPairing } from './lib/watch';
+import type { Subject } from './lib/hardestFacts';
 import { isVoiceMode } from './hooks/useInputMode';
 import { useLang } from './i18n/lang';
 import { useAppStrings } from './i18n/app';
@@ -199,6 +200,12 @@ export default function App({
     // veut, pas l'accueil de l'enfant.
     watchPairing || recapRequested ? 'parent' : initialScreen(profile, listProfiles().length),
   );
+  // Page de matière ouverte dans l'espace parent (null = son accueil). Un
+  // sous-état de l'écran 'parent' plutôt qu'un écran à part : ParentDashboard
+  // reste monté, avec la source affichée et l'instantané distant déjà relu.
+  // Tenu ici parce que le geste retour du système passe par App (cf. plus bas).
+  const [parentSubject, setParentSubject] = useState<Subject | null>(null);
+  const shownParentSubject = screen === 'parent' ? parentSubject : null;
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
   // du Welcome « ajout d'un enfant ». Lu à chaque render : l'index est
   // minuscule et ne change que via des flows qui re-rendent déjà App.
@@ -312,10 +319,13 @@ export default function App({
   // body en `overflow: auto`, c'est body qui scroll (pas window), donc
   // window.scrollTo n'a aucun effet — vérifié au Playwright. On garde aussi
   // documentElement par sécurité au cas où le contexte change.
+  //
+  // Même traitement à l'ouverture et à la fermeture d'une page de matière de
+  // l'espace parent, qui change tout le contenu sans changer d'écran.
   useLayoutEffect(() => {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
-  }, [screen]);
+  }, [screen, shownParentSubject]);
 
   // Signale au pwa-register si on est dans un écran "safe" pour appliquer
   // une mise à jour SW (= reload) — cf. isDisposableScreen. `welcome` est
@@ -371,14 +381,25 @@ export default function App({
   // factice est empilée ; le popstate qui la consomme ramène à la cible, et
   // `backPops` force le ré-empilement si la cible a elle-même un retour
   // (changelog → parent → accueil). Quitter l'écran par l'UI retire l'entrée.
+  //
+  // Une page de matière de l'espace parent a toujours un retour — vers
+  // l'accueil de l'espace parent — y compris sur l'appareil d'un parent qui ne
+  // fait que suivre, où cet accueil n'en a pas : sans entrée, le geste
+  // fermerait l'app depuis la page de matière.
   const back = backTarget(screen, profile !== null);
   const backRef = useRef(back);
   backRef.current = back;
+  const inParentSubjectRef = useRef(false);
+  inParentSubjectRef.current = shownParentSubject !== null;
   const [backPops, setBackPops] = useState(0);
   const goBack = useCallback(() => {
+    if (inParentSubjectRef.current) {
+      setParentSubject(null);
+      return;
+    }
     if (backRef.current) setScreen(backRef.current);
   }, []);
-  const hasBack = back !== null;
+  const hasBack = back !== null || shownParentSubject !== null;
   useEffect(() => {
     if (!hasBack) return;
     window.history.pushState({ tablitoBack: true }, '');
@@ -1142,7 +1163,12 @@ export default function App({
           }}
           onShowBadges={() => setScreen('badges')}
           onShowRules={handleShowRules}
-          onShowParent={() => setScreen('parent')}
+          onShowParent={() => {
+            // Toujours sur l'accueil de l'espace parent, jamais sur la page de
+            // matière d'une visite précédente.
+            setParentSubject(null);
+            setScreen('parent');
+          }}
           onSwitchProfile={profileCount > 1 ? () => setScreen('profiles') : undefined}
         />
       )}
@@ -1211,6 +1237,9 @@ export default function App({
           onDeleteProfile={handleDeleteProfile}
           onShowPrivacy={() => setScreen('privacy')}
           onShowChangelog={() => setScreen('changelog')}
+          subject={shownParentSubject}
+          onOpenSubject={setParentSubject}
+          onCloseSubject={() => setParentSubject(null)}
         />
       )}
 

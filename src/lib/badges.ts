@@ -127,6 +127,19 @@ export function activeLevel(profile: UserProfile): 'mult' | 'div' | 'rem' {
   return 'mult';
 }
 
+/**
+ * Niveaux de maths débloqués, dans l'ordre de progression : ceux qu'un écran
+ * peut montrer, jamais un niveau verrouillé (specs §11.3). Même règle que
+ * activeLevel, dont le résultat est toujours le dernier de cette liste.
+ */
+export function unlockedMathLevels(profile: UserProfile): Array<'mult' | 'div' | 'rem'> {
+  return [
+    'mult',
+    ...(isDivisionUnlocked(profile) ? (['div'] as const) : []),
+    ...(isRemainderUnlocked(profile) ? (['rem'] as const) : []),
+  ];
+}
+
 function makeBadge(def: BadgeDefinition, now: string): Badge {
   // On ne persiste que ce qui est lu : `id` (clé de progression), `earnedDate`
   // et `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par

@@ -5,10 +5,13 @@ import FeedbackModal from '../components/FeedbackModal';
 import NotificationSettings from '../components/NotificationSettings';
 import WeeklyRecapSettings from '../components/WeeklyRecapSettings';
 import LanguageToggle from '../components/LanguageToggle';
-import ParentStats from '../components/ParentStats';
+import ParentOverview from '../components/ParentOverview';
+import ParentSubjectDetail from '../components/ParentSubjectDetail';
 import QrCanvas from '../components/QrCanvas';
-import { useGuideBase } from '../i18n/lang';
+import { useGuideBase, useLang } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
+import { isConjVisible } from '../lib/badges';
+import type { Subject } from '../lib/hardestFacts';
 import { getActiveProfileId } from '../lib/storage';
 import { APP_VERSION } from '../lib/version';
 import { setPushPref } from '../lib/push';
@@ -55,6 +58,14 @@ interface ParentDashboardProps {
   // Vrai quand l'espace parent est ouvert par la notification de recap
   // hebdomadaire : change la source affichée par défaut.
   openOnWatched?: boolean;
+  // Page de matière ouverte (null = accueil de l'espace parent). L'état vit
+  // dans App et non ici : c'est App qui gère le geste retour du système, qui
+  // doit ramener d'une page de matière à l'accueil au lieu de quitter l'espace
+  // parent. L'écran reste le même pour App, donc ce composant — et ce qu'il
+  // tient (source affichée, instantané distant déjà relu) — reste monté.
+  subject?: Subject | null;
+  onOpenSubject?: (subject: Subject) => void;
+  onCloseSubject?: () => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -79,9 +90,13 @@ export default function ParentDashboard({
   onShowChangelog,
   initialWatch = null,
   openOnWatched = false,
+  subject = null,
+  onOpenSubject,
+  onCloseSubject,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
   const guideBase = useGuideBase();
+  const { lang } = useLang();
 
   const [showImport, setShowImport] = useState(false);
   const [importJson, setImportJson] = useState('');
@@ -308,6 +323,33 @@ export default function ParentDashboard({
   // elles parleraient d'un appareil qu'on n'a pas en main.
   const localSelected = selectedCode === null && profile !== null;
 
+  // Ouvrir une matière depuis l'accueil. Une caméra de scan encore ouverte en
+  // bas de l'accueil n'a plus d'élément vidéo où filmer une fois la page
+  // quittée : on la referme d'abord.
+  const openSubject = (next: Subject) => {
+    if (pair === 'scanning') setPair('idle');
+    onOpenSubject?.(next);
+  };
+
+  // Page d'une matière. Faute de profil affiché (relecture distante en cours)
+  // ou de matière visible (conjugaison en anglais), on reste sur l'accueil.
+  if (subject && shown && (subject === 'math' || isConjVisible(shown, lang))) {
+    return (
+      <div className="parent-dashboard parent-dashboard--subject">
+        <div className="parent-header">
+          <button className="parent-back-btn" onClick={onCloseSubject} aria-label={t.backToOverview}>
+            <BackChevron />
+          </button>
+          <div className="parent-header-titles">
+            <div className="parent-eyebrow">{shownName}</div>
+            <div className="parent-title">{subject === 'conj' ? t.conjugations : t.math}</div>
+          </div>
+        </div>
+        <ParentSubjectDetail profile={shown} subject={subject} />
+      </div>
+    );
+  }
+
   return (
     <div className="parent-dashboard">
       <div className="parent-header">
@@ -318,7 +360,7 @@ export default function ParentDashboard({
         )}
         <div className="parent-header-titles">
           <div className="parent-eyebrow">{t.parentArea}</div>
-          <div className="parent-title">{t.profileSuffix(shownName)}</div>
+          <div className="parent-title">{shownName}</div>
         </div>
       </div>
 
@@ -372,7 +414,7 @@ export default function ParentDashboard({
       )}
 
       {shown ? (
-        <ParentStats profile={shown} />
+        <ParentOverview profile={shown} onOpenSubject={openSubject} />
       ) : (
         <div className="parent-section">
           <p className="parent-section-subtitle">
@@ -380,6 +422,11 @@ export default function ParentDashboard({
           </p>
         </div>
       )}
+
+      {/* Au-delà : ce qu'on règle, par opposition à ce qu'on consulte. */}
+      <div className="parent-section parent-settings-start">
+        <h2 className="parent-overline">{t.settings}</h2>
+      </div>
 
       {/* Actions de sauvegarde — propres à la progression stockée ici. */}
       {localSelected && (

@@ -67,13 +67,13 @@ function tabLabels(): string[] {
   );
 }
 
-// Nombre affiché sous le libellé « Séances » de la vue d'ensemble.
+// Nombre affiché sous le libellé « Séances » de l'accueil de l'espace parent.
 function sessionsShown(): string {
-  const cards = Array.from(document.querySelectorAll('.parent-stat-card'));
-  const card = cards.find((c) =>
+  const kpis = Array.from(document.querySelectorAll('.parent-kpi'));
+  const kpi = kpis.find((c) =>
     /Séances/.test(c.querySelector('.parent-stat-label')?.textContent ?? ''),
   );
-  return card?.querySelector('.parent-stat-value')?.textContent ?? '';
+  return kpi?.querySelector('.parent-stat-value')?.textContent ?? '';
 }
 
 beforeEach(() => {
@@ -112,6 +112,28 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
     expect(document.querySelector('.welcome-screen')).toBeNull();
     expect(sessionsShown()).toBe('9');
     // Rien où revenir : pas de chevron de retour.
+    expect(document.querySelector('.parent-back-btn')).toBeNull();
+  });
+
+  it('le geste retour ramène d’une page de matière à l’accueil, sans fermer l’app', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await seedWatcherOnly();
+
+    await renderApp();
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-subject-card--math')!);
+    });
+
+    // L'accueil n'a pas de retour sur cet appareil, la page de matière si :
+    // sans entrée d'historique, le geste y fermerait l'app.
+    expect(document.querySelector('.parent-dashboard--subject')).not.toBeNull();
+    expect(document.querySelector('.parent-back-btn')).not.toBeNull();
+    expect(window.history.state?.tablitoBack).toBe(true);
+
+    await act(async () => window.history.back());
+    await flush();
+    expect(document.querySelector('.parent-dashboard--subject')).toBeNull();
+    expect(sessionsShown()).toBe('9');
     expect(document.querySelector('.parent-back-btn')).toBeNull();
   });
 

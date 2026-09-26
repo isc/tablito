@@ -36,6 +36,12 @@ async function openParentDashboard(): Promise<void> {
 
 const onHome = () => document.querySelector('.home-parent-btn') !== null;
 const onParent = () => document.querySelector('.parent-back-btn') !== null;
+// Page d'une matière de l'espace parent (elle a aussi son `.parent-back-btn`).
+const onSubject = () => document.querySelector('.parent-dashboard--subject') !== null;
+
+function openMathPage(): void {
+  fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-subject-card--math')!);
+}
 
 describe('geste retour du système', () => {
   beforeEach(() => {
@@ -81,5 +87,36 @@ describe('geste retour du système', () => {
     fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
     await waitFor(() => expect(window.history.state?.tablitoBack).toBeFalsy());
     expect(onHome()).toBe(true);
+  });
+
+  it("remonte d'une page de matière à l'accueil de l'espace parent, puis à l'accueil", async () => {
+    render(<App />);
+    await openParentDashboard();
+    openMathPage();
+    expect(onSubject()).toBe(true);
+
+    await act(async () => window.history.back());
+    await waitFor(() => expect(onSubject()).toBe(false));
+    expect(onParent()).toBe(true);
+    await waitFor(() => expect(window.history.state?.tablitoBack).toBe(true));
+
+    await act(async () => window.history.back());
+    await waitFor(() => expect(onHome()).toBe(true));
+  });
+
+  it("le retour de l'UI depuis une page de matière garde l'entrée de l'espace parent", async () => {
+    render(<App />);
+    await openParentDashboard();
+    openMathPage();
+
+    fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
+    await flush();
+    expect(onSubject()).toBe(false);
+    expect(onParent()).toBe(true);
+    // L'accueil de l'espace parent a toujours son retour : l'entrée reste.
+    expect(window.history.state?.tablitoBack).toBe(true);
+
+    await act(async () => window.history.back());
+    await waitFor(() => expect(onHome()).toBe(true));
   });
 });

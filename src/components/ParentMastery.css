@@ -1,0 +1,69 @@
+/* Barre de maîtrise de l'espace parent (cf. ParentMastery.tsx) : du plus
+   solide au plus fragile, le fond de la barre valant « pas encore vues ». Les
+   couleurs sont celles de l'échelle Leitner, pour que la barre et la grille de
+   la page de matière parlent la même langue. */
+
+.parent-mastery-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--box0);
+}
+
+.parent-mastery-seg {
+  display: block;
+  height: 100%;
+}
+
+.parent-mastery-seg--mastered {
+  background: var(--box5);
+}
+
+.parent-mastery-seg--onTrack {
+  background: var(--box3);
+}
+
+.parent-mastery-seg--fragile {
+  background: var(--box2);
+}
+
+.parent-mastery-seg--unseen {
+  background: var(--box0);
+}
+
+.parent-mastery-legend {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+
+.parent-mastery-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.parent-mastery-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Le palier vide a la couleur du fond de carte ou presque : un liseré le rend
+   repérable dans la légende. */
+.parent-mastery-swatch.parent-mastery-seg--unseen {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--box0) 70%, var(--ink-muted));
+}
+
+.parent-mastery-legend-count {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--ink);
+}

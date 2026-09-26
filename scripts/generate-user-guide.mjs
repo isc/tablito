@@ -288,7 +288,7 @@ function buildUnlockedDivisionProfile() {
 // passe de checkBadges : les badges « Divisions par N » demanderaient une
 // seconde passe puisqu'ils sont gatés sur les badges de table persistés).
 // Sert à capturer l'intro de zone, la saisie en deux temps, la 3e image
-// mystère et le dashboard à trois onglets.
+// mystère et la page Maths de l'espace parent à trois niveaux.
 function buildUnlockedRemainderProfile() {
   const profile = buildUnlockedDivisionProfile();
   const future = '2026-05-03';
@@ -568,7 +568,12 @@ async function captureBadgesScreen(page) {
   await page.waitForSelector('.home-screen');
 }
 
-async function captureParentDashboard(page, shotName = '13-parent-dashboard') {
+// Opens the parent area and shoots its overview (`hubShot`) and/or the Maths
+// page its subject card opens (`mathShot`), then goes back home.
+async function captureParentDashboard(
+  page,
+  { hubShot, mathShot } = { hubShot: '13-parent-dashboard' },
+) {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
   await page.waitForSelector('.parent-gate-modal');
@@ -581,7 +586,16 @@ async function captureParentDashboard(page, shotName = '13-parent-dashboard') {
   await page.fill('.parent-gate-input', String(a * b));
   await page.click('.parent-gate-submit');
   await page.waitForSelector('.parent-dashboard');
-  await shot(page, shotName);
+  if (hubShot) await shot(page, hubShot);
+  if (mathShot) {
+    await page.click('.parent-subject-card--math');
+    await page.waitForSelector('.parent-dashboard--subject');
+    await shot(page, mathShot);
+    // The subject page's back button returns to the overview, whose own back
+    // button then returns home.
+    await page.click('.parent-back-btn');
+    await page.waitForSelector('.parent-dashboard--subject', { state: 'detached' });
+  }
   await page.click('.parent-back-btn');
   await page.waitForSelector('.home-screen');
 }
@@ -905,10 +919,9 @@ async function captureDivisionScreens(page) {
   // divisions), et la tuile « Mon image » est devenue « Mes images ».
   await shot(page, '15-division-home');
 
-  // Espace parent — version division débloquée : carte « Divisions maîtrisées »,
-  // sélecteur ×/÷ pour Répartition + Grille Leitner, liste unifiée des faits
-  // les plus difficiles (mult + div mélangés, marqueur par opération).
-  await captureParentDashboard(page, '13b-parent-dashboard-division');
+  // Espace parent — version division débloquée : la carte Maths de l'accueil
+  // passe aux divisions, les multiplications maîtrisées y restent cochées.
+  await captureParentDashboard(page, { hubShot: '13b-parent-dashboard-division' });
 
   // Image mystère dédiée à la division : tuile « Mes images » puis onglet
   // « Divisions » de l'écran progression.
@@ -945,9 +958,9 @@ async function captureRemainderScreens(page) {
   await gotoHome(page);
   await page.waitForSelector('.home-screen');
 
-  // Espace parent — version niveau 3 : troisième onglet « Avec reste » sur le
-  // sélecteur d'opération, carte de maîtrise dédiée.
-  await captureParentDashboard(page, '13c-parent-dashboard-remainder');
+  // Espace parent — version niveau 3 : la page Maths s'ouvre sur « Avec
+  // reste », troisième position de son sélecteur de niveau.
+  await captureParentDashboard(page, { mathShot: '13c-parent-dashboard-remainder' });
 
   // Image mystère du niveau 3 : « Mes images » → onglet « Avec reste ».
   await page.click(`.home-nav-btn:has-text("${tx('myPictures')}")`);
@@ -1171,7 +1184,7 @@ const SECTIONS_FR = [
       multiplication.`,
     shots: [
       { file: '15-division-home', caption: 'Une fois les tables maîtrisées, « Mon image » devient « Mes images » (multiplications + divisions).' },
-      { file: '13b-parent-dashboard-division', caption: 'Tableau de bord parent une fois la division débloquée : carte « Divisions maîtrisées », sélecteur ×/÷ sur l\'histogramme et la grille, liste unifiée des faits les plus difficiles avec marqueur par opération.' },
+      { file: '13b-parent-dashboard-division', caption: 'Dans l\'espace parent, la carte Maths passe aux divisions ; les multiplications, maîtrisées, y restent cochées.' },
       { file: '16-division-intro', caption: 'Introduction d\'une division : « pense à la multiplication ».' },
       { file: '17-division-question', caption: 'Question de division au pavé numérique.' },
       { file: '18-division-progress', caption: 'Une image mystère dédiée à la division, distincte de celle des tables.' },
@@ -1198,7 +1211,7 @@ const SECTIONS_FR = [
       { file: '21-remainder-intro', caption: 'Introduction d\'une division avec reste : les rangées pleines, et les points qui « ne rentrent pas » — le reste.' },
       { file: '22-remainder-question', caption: 'La réponse en deux temps : le quotient validé s\'installe dans la formule, puis « Il reste combien ? ».' },
       { file: '23-remainder-progress', caption: 'Une troisième image mystère, dédiée à la division avec reste.' },
-      { file: '13c-parent-dashboard-remainder', caption: 'Le tableau de bord parent gagne un troisième onglet « Avec reste » (répartition par boîte et grille Leitner).' },
+      { file: '13c-parent-dashboard-remainder', caption: 'La page Maths de l\'espace parent s\'ouvre sur le niveau en cours : « Avec reste » rejoint le sélecteur de niveau (maîtrise et grille Leitner).' },
     ],
   },
   {
@@ -1257,16 +1270,23 @@ const SECTIONS_FR = [
     title: 'Espace parent',
     description: `Accessible depuis l'accueil via l'engrenage, après une
       petite multiplication (un opérande entre 11 et 19, l'autre entre 3
-      et 9) pour confirmer qu'un adulte est derrière l'écran. On y retrouve :
-      les statistiques générales, un
-      histogramme des boîtes Leitner, l'évolution du taux de réussite,
-      les faits les plus difficiles,
-      les temps de réponse moyens par table, l'historique des 10 dernières
-      séances, les actions export / import du profil (JSON), et la gestion
-      des profils — ajouter un enfant ou supprimer le profil affiché (voir
-      « Plusieurs enfants » ci-dessous).`,
+      et 9) pour confirmer qu'un adulte est derrière l'écran. L'accueil de
+      l'espace parent répond d'abord à la question du jour — la séance
+      est-elle faite ? — avec les 14 derniers jours, le nombre de séances et
+      les séries. Suit une carte par matière : le niveau en cours et sa barre
+      de maîtrise (maîtrisées, en bonne voie, à consolider, pas encore vues),
+      les niveaux déjà passés cochés tant qu'ils restent maîtrisés. Puis les
+      trois faits sur lesquels l'enfant bute le plus en ce moment, toutes
+      matières confondues. Une carte ouvre la page de sa matière : maîtrise
+      et grille Leitner par niveau, évolution de la réussite ou de la
+      rapidité, faits à retravailler et historique des séances. En bas de
+      l'accueil, les réglages : sauvegarde (export / import du profil,
+      transfert), suivi à distance, rappels, et gestion des profils — ajouter
+      un enfant ou supprimer le profil affiché (voir « Plusieurs enfants »
+      ci-dessous).`,
     shots: [
-      { file: '13-parent-dashboard', caption: 'Tableau de bord parent complet.' },
+      { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent : la journée, puis une carte par matière.' },
+      { file: '13a-parent-math', caption: 'La page Maths : maîtrise du niveau et grille Leitner, puis les séances.' },
     ],
   },
   {
@@ -1447,7 +1467,7 @@ const SECTIONS_EN = [
       exactly like multiplication.`,
     shots: [
       { file: '15-division-home', caption: 'Once the tables are mastered, “My picture” becomes “My pictures” (multiplications + divisions).' },
-      { file: '13b-parent-dashboard-division', caption: 'Parent dashboard once division is unlocked: a “Divisions mastered” card, a ×/÷ selector on the histogram and the grid, and a unified list of the hardest facts with a per-operation marker.' },
+      { file: '13b-parent-dashboard-division', caption: 'In the parent area, the Math card moves on to division; multiplication, mastered, stays checked off.' },
       { file: '16-division-intro', caption: 'Introducing a division: “think of the multiplication”.' },
       { file: '17-division-question', caption: 'Division question on the keypad.' },
       { file: '18-division-progress', caption: 'A mystery picture dedicated to division, distinct from the tables one.' },
@@ -1473,7 +1493,7 @@ const SECTIONS_EN = [
       { file: '21-remainder-intro', caption: 'Introducing a division with remainder: the full rows, and the dots that "don\'t fit" — the remainder.' },
       { file: '22-remainder-question', caption: 'Answering in two steps: the validated quotient settles into the formula, then "What\'s left over?".' },
       { file: '23-remainder-progress', caption: 'A third mystery picture, dedicated to division with remainders.' },
-      { file: '13c-parent-dashboard-remainder', caption: 'The parent dashboard gains a third "Remainders" tab (box distribution and Leitner grid).' },
+      { file: '13c-parent-dashboard-remainder', caption: 'The parent area\'s Math page opens on the current level: "Remainders" joins the level selector (mastery and Leitner grid).' },
     ],
   },
   {
@@ -1512,14 +1532,22 @@ const SECTIONS_EN = [
     title: 'Parent area',
     description: `Reachable from the home screen via the gear, after a small
       multiplication (one operand between 11 and 19, the other between 3 and 9)
-      to confirm an adult is behind the screen. You'll find: general
-      statistics, a histogram of the Leitner boxes, the success-rate trend,
-      the hardest facts, average response times per table, the history of the
-      last 10 sessions, the profile export / import actions (JSON), and profile
+      to confirm an adult is behind the screen. The parent area's overview
+      first answers the question of the day — has today's session been done?
+      — with the last 14 days, the number of sessions and the streaks. Then
+      comes one card per subject: the current level and its mastery bar
+      (mastered, on track, still shaky, not seen yet), with the levels already
+      completed checked off as long as they stay mastered. Then the three facts
+      the child is struggling with most right now, across subjects. A card
+      opens its subject's page: mastery and Leitner grid per level, the
+      accuracy or speed trend, the facts that need practice and the session
+      history. At the bottom of the overview are the settings: backup (profile
+      export / import, transfer), remote follow-up, reminders, and profile
       management — adding a child or deleting the displayed profile (see
       “Several children” below).`,
     shots: [
-      { file: '13-parent-dashboard', caption: 'The full parent dashboard.' },
+      { file: '13-parent-dashboard', caption: 'The parent area overview: the day first, then one card per subject.' },
+      { file: '13a-parent-math', caption: 'The Math page: level mastery and Leitner grid, then the sessions.' },
     ],
   },
   {
@@ -1962,7 +1990,10 @@ async function generateForLang(browser, lang) {
   await captureNavScreen(page, NAV_SCREENS[0]); // My picture
   await captureBadgesScreen(page);
   await captureNavScreen(page, NAV_SCREENS[1]); // Rules
-  await captureParentDashboard(page);
+  await captureParentDashboard(page, {
+    hubShot: '13-parent-dashboard',
+    mathShot: '13a-parent-math',
+  });
   await captureSessionScreens(page);
   await captureRecap(page);
   await captureDivisionScreens(page);
