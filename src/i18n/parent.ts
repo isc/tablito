@@ -116,9 +116,9 @@ interface ParentDashboardStrings {
   transferHint: (minutes: number) => string;
   transferCopyLink: string;
   transferQrAlt: string;
-  // Sélecteur de source (profil local / profils suivis à distance)
-  sourceLabel: string;
-  remoteSourceTab: (name: string) => string;
+  // Sélecteur d'enfant : ceux de l'appareil et ceux suivis à distance.
+  childPickerLabel: string;
+  remoteTag: string;
   remoteLoading: string;
   remoteError: string;
   remoteRevoked: (name: string) => string;
@@ -278,8 +278,8 @@ const parentDashboardFr: ParentDashboardStrings = {
     `Scannez ce QR code avec l'appareil photo du nouvel appareil : Tablito s'y ouvrira avec la progression. Valable ${minutes} minutes, une seule fois.`,
   transferCopyLink: 'Ou copier le lien',
   transferQrAlt: 'QR code de transfert vers un autre appareil',
-  sourceLabel: 'Profil affiché',
-  remoteSourceTab: (name) => `${name}\u00a0· à distance`,
+  childPickerLabel: 'Enfant affiché',
+  remoteTag: 'à distance',
   remoteLoading: 'Récupération de la progression…',
   remoteError:
     'Impossible de récupérer la progression pour le moment. Vérifiez la connexion internet, ou réessayez plus tard.',
@@ -463,8 +463,8 @@ const parentDashboardEn: ParentDashboardStrings = {
     `Scan this QR code with the new device's camera: Tablito will open there with the progress. Valid for ${minutes} minutes, one use only.`,
   transferCopyLink: 'Or copy the link',
   transferQrAlt: 'QR code to transfer to another device',
-  sourceLabel: 'Profile shown',
-  remoteSourceTab: (name) => `${name}\u00a0· remote`,
+  childPickerLabel: 'Child shown',
+  remoteTag: 'remote',
   remoteLoading: 'Fetching progress…',
   remoteError:
     'Cannot fetch the progress right now. Check the internet connection, or try again later.',

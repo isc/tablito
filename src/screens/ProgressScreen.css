@@ -79,10 +79,6 @@
      intérieures : les rendre au libellé, qui sinon se casse en deux lignes
      dans sa colonne sur un écran de 320 px. */
   padding-inline: 12px;
-  /* Filet pour le sélecteur d'appareils de l'espace parent, qui partage ces
-     classes avec des prénoms de longueur inconnue : un mot plus large que sa
-     colonne se casse au lieu de pousser la grille sous le bord de l'écran. */
-  overflow-wrap: anywhere;
 }
 
 .progress-tab.active {

@@ -1,0 +1,31 @@
+/* Point de la semaine (ParentWeekCard) : des lignes de réglage (cf.
+   ParentSettings.css) en liste serrée, sans bouton, l'icône aux couleurs de la
+   progression. */
+
+.parent-week-rows {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.parent-week-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.parent-week-icon {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+/* Centre une rangée d'une seule ligne sur son icône. */
+.parent-week-text {
+  min-height: 34px;
+  justify-content: center;
+}
+
+.parent-week-row .is-better {
+  color: var(--sage-ink);
+}

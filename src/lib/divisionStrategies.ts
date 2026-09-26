@@ -28,7 +28,9 @@ export interface DivisionStrategy {
  * formes côte à côte : la division ET l'équation à facteur manquant
  * « divisor × ☐ = dividend » — celle que le composant met en avant.
  */
-export function getDivisionStrategy(fact: DivisionFact): DivisionStrategy {
+export function getDivisionStrategy(
+  fact: Pick<DivisionFact, 'dividend' | 'divisor' | 'quotient'>,
+): DivisionStrategy {
   const { dividend, divisor, quotient } = fact;
   const text = getDivisionStrategyText();
   return {

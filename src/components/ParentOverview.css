@@ -182,3 +182,40 @@
   color: var(--ink);
   white-space: nowrap;
 }
+
+/* Idée pour aider à la maison (ParentHomeIdea), sous « À retravailler ». */
+.parent-idea {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--honey-soft);
+}
+
+.parent-idea-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--honey-ink);
+}
+
+.parent-idea-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--sans);
+}
+
+.parent-idea-heading {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--honey-ink);
+}
+
+.parent-idea-body {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}

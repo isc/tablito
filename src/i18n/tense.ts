@@ -19,3 +19,12 @@ export const TENSE_NAMES: Record<Lang, Record<ConjTense, string>> = {
   // (les badges de conjugaison sont masqués quand l'interface est en anglais).
   en: { present: 'present', imparfait: 'imperfect', futur: 'future' },
 };
+
+// Le nom d'un temps en français avec son article, élidé devant voyelle et
+// contracté avec la préposition : « le futur » / « l’imparfait », « au futur » /
+// « à l’imparfait », « du futur » / « de l’imparfait ».
+export function tenseFr(tense: ConjTense, preposition: '' | 'à' | 'de' = ''): string {
+  const name = TENSE_NAMES.fr[tense];
+  if (/^[aeiouyéèê]/i.test(name)) return `${preposition ? `${preposition} ` : ''}l’${name}`;
+  return `${{ '': 'le', à: 'au', de: 'du' }[preposition]} ${name}`;
+}
