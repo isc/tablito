@@ -1,4 +1,5 @@
 import type { SessionResult, UserProfile } from '../types';
+import { sessionsOfSubject, type Subject } from './hardestFacts';
 import { addDays } from './utils';
 
 // « Le point de la semaine » de l'espace parent : ce que l'enfant a fait ces 7
@@ -9,28 +10,40 @@ import { addDays } from './utils';
 // calendrier : le mercredi, « 2 jours sur 3 » ne dirait rien. Le dimanche soir,
 // quand part le recap hebdomadaire, les deux se confondent de toute façon.
 
-export const WEEK_DAYS = 7;
+const WEEK_DAYS = 7;
+
+// Écarts négligeables : sous 1 jour, 3 points de réussite ou 0,2 s par calcul,
+// la semaine est « comme la semaine d'avant ».
+const SAME_DAYS = 1;
+const SAME_ACCURACY = 3;
+const SAME_SECONDS = 0.2;
+
+export type Trend = 'better' | 'same' | 'worse';
+
+/** Écart avec la semaine d'avant, et son sens. */
+export interface Versus {
+  delta: number;
+  trend: Trend;
+}
 
 export interface SubjectWeek {
-  sessions: number;
   /** Bonnes réponses, en pourcentage entier. */
   accuracy: number;
-  /** Écart avec la semaine d'avant, en points ; null sans comparaison juste. */
-  accuracyDelta: number | null;
+  /** null sans comparaison juste. */
+  accuracyVs: Versus | null;
 }
 
 export interface MathWeek extends SubjectWeek {
   /** Temps moyen par calcul, en secondes, au dixième. */
   seconds: number;
-  /** Écart avec la semaine d'avant (négatif : plus rapide) ; null sans comparaison juste. */
-  secondsDelta: number | null;
+  secondsVs: Versus | null;
 }
 
 export interface WeekSummary {
   /** Jours avec au moins une séance, sur les 7. */
   days: number;
-  /** Écart avec la semaine d'avant ; null si l'enfant n'avait pas encore commencé. */
-  daysDelta: number | null;
+  /** null si l'enfant n'avait pas encore commencé la semaine d'avant. */
+  daysVs: Versus | null;
   math: MathWeek | null;
   conj: SubjectWeek | null;
   /** Faits montés d'une boîte pendant la semaine. */
@@ -39,9 +52,22 @@ export interface WeekSummary {
   discovered: number;
 }
 
-// Totaux d'un lot de séances. Le temps moyen de chaque séance est repondéré par
-// son nombre de questions : une séance courte ne pèse pas autant qu'une longue.
-function totals(sessions: SessionResult[]) {
+// Un écart sous `same` ne change rien ; au-delà, son signe dit si c'est un
+// progrès — à l'envers pour un temps, où moins est mieux.
+function versus(delta: number, same: number, lowerIsBetter = false): Versus {
+  const gain = lowerIsBetter ? -delta : delta;
+  return { delta, trend: Math.abs(delta) < same ? 'same' : gain > 0 ? 'better' : 'worse' };
+}
+
+interface Totals {
+  questions: number;
+  correct: number;
+  timeMs: number;
+}
+
+// Le temps moyen de chaque séance est repondéré par son nombre de questions :
+// une séance courte ne pèse pas autant qu'une longue.
+function totals(sessions: SessionResult[]): Totals {
   let questions = 0;
   let correct = 0;
   let timeMs = 0;
@@ -53,79 +79,70 @@ function totals(sessions: SessionResult[]) {
   return { questions, correct, timeMs };
 }
 
-const percent = ({ questions, correct }: ReturnType<typeof totals>) =>
-  Math.round((correct / questions) * 100);
+const percent = (t: Totals) => Math.round((t.correct / t.questions) * 100);
 const tenths = (n: number) => Math.round(n * 10) / 10;
-const seconds = ({ questions, timeMs }: ReturnType<typeof totals>) => tenths(timeMs / questions / 1000);
+const seconds = (t: Totals) => tenths(t.timeMs / t.questions / 1000);
 
-// `compare` : la semaine d'avant a des séances comparables à celles-ci.
-function subjectWeek(current: SessionResult[], previous: SessionResult[], compare: boolean): SubjectWeek | null {
-  const now = totals(current);
-  if (now.questions === 0) return null;
-  return {
-    sessions: current.length,
-    accuracy: percent(now),
-    // Écart entre les valeurs AFFICHÉES : « 83 % » et « 6 points de mieux »
-    // doivent se lire ensemble, sans reste d'arrondi.
-    accuracyDelta: compare ? percent(now) - percent(totals(previous)) : null,
-  };
+// `before` : la semaine d'avant, quand la comparaison est juste. Les écarts
+// portent sur les valeurs AFFICHÉES : « 83 % » et « 6 points de mieux »
+// doivent se lire ensemble, sans reste d'arrondi.
+function subjectWeek(now: Totals, before: Totals | null): SubjectWeek {
+  const accuracy = percent(now);
+  return { accuracy, accuracyVs: before && versus(accuracy - percent(before), SAME_ACCURACY) };
 }
 
 /**
- * Le point des 7 derniers jours (`today` compris), comparé aux 7 d'avant.
- * `withConj` : la conjugaison est visible (cf. isConjVisible) ; masquée, elle ne
- * compte nulle part, comme dans le bandeau d'activité.
+ * Le point des 7 derniers jours (`today` compris), comparé aux 7 d'avant, sur
+ * les matières visibles (cf. getHardestFactsAcross) ; null tant qu'aucune
+ * séance de ces matières n'existe.
  */
-export function weekSummary(profile: UserProfile, today: string, withConj: boolean): WeekSummary {
+export function weekSummary(profile: UserProfile, today: string, subjects: Subject[]): WeekSummary | null {
+  const bySubject = (subject: Subject) =>
+    subjects.includes(subject) ? sessionsOfSubject(profile.sessionHistory, subject) : [];
+  const math = bySubject('math');
+  const conj = bySubject('conj');
+  if (math.length + conj.length === 0) return null;
+
   const start = addDays(today, -(WEEK_DAYS - 1));
   const previousStart = addDays(start, -WEEK_DAYS);
-  const counted = profile.sessionHistory.filter((s) => withConj || s.kind !== 'conj');
-  const current = counted.filter((s) => s.date >= start && s.date <= today);
-  const previous = counted.filter((s) => s.date >= previousStart && s.date < start);
+  const thisWeek = (s: SessionResult) => s.date >= start && s.date <= today;
+  const weekBefore = (s: SessionResult) => s.date >= previousStart && s.date < start;
+  const [mathNow, mathBefore] = [math.filter(thisWeek), math.filter(weekBefore)];
+  const [conjNow, conjBefore] = [conj.filter(thisWeek), conj.filter(weekBefore)];
+  const now = [...mathNow, ...conjNow];
+  const days = new Set(now.map((s) => s.date)).size;
+  const previousDays = new Set([...mathBefore, ...conjBefore].map((s) => s.date)).size;
 
-  const isMath = (s: SessionResult) => s.kind !== 'conj';
-  const mathNow = current.filter(isMath);
-  const mathBefore = previous.filter(isMath);
   // Une séance de maths porte le niveau en cours (×, ÷ ou avec reste). Un
   // niveau débloqué dans la fenêtre fausserait la comparaison — la division
   // avec reste est plus lente que les tables —, d'où une comparaison seulement
   // à niveau égal sur les deux semaines.
-  const mathCompare =
-    mathBefore.length > 0 && new Set([...mathNow, ...mathBefore].map((s) => s.kind)).size === 1;
-  const mathBase = subjectWeek(mathNow, mathBefore, mathCompare);
-  const math: MathWeek | null = mathBase && {
-    ...mathBase,
-    seconds: seconds(totals(mathNow)),
-    secondsDelta: mathCompare ? tenths(seconds(totals(mathNow)) - seconds(totals(mathBefore))) : null,
-  };
-
-  const isConj = (s: SessionResult) => s.kind === 'conj';
-  const conjBefore = previous.filter(isConj);
-  const conj = subjectWeek(current.filter(isConj), conjBefore, conjBefore.length > 0);
-
-  const days = new Set(current.map((s) => s.date)).size;
-  const previousDays = new Set(previous.map((s) => s.date)).size;
+  const mathTotals = totals(mathNow);
+  const mathBaseline =
+    mathBefore.length > 0 && new Set([...mathNow, ...mathBefore].map((s) => s.kind)).size === 1
+      ? totals(mathBefore)
+      : null;
+  const conjTotals = totals(conjNow);
 
   return {
     days,
     // Un enfant qui a commencé en cours de route n'a pas eu sept jours pour
     // pratiquer la semaine d'avant : comparer ses jours serait injuste.
-    daysDelta: profile.startDate <= previousStart ? days - previousDays : null,
-    math,
-    conj,
-    promoted: current.reduce((sum, s) => sum + s.factsPromoted, 0),
-    discovered: current.reduce((sum, s) => sum + s.newFactsIntroduced, 0),
+    daysVs: profile.startDate <= previousStart ? versus(days - previousDays, SAME_DAYS) : null,
+    math:
+      mathTotals.questions === 0
+        ? null
+        : {
+            ...subjectWeek(mathTotals, mathBaseline),
+            seconds: seconds(mathTotals),
+            secondsVs:
+              mathBaseline && versus(tenths(seconds(mathTotals) - seconds(mathBaseline)), SAME_SECONDS, true),
+          },
+    conj:
+      conjTotals.questions === 0
+        ? null
+        : subjectWeek(conjTotals, conjBefore.length > 0 ? totals(conjBefore) : null),
+    promoted: now.reduce((sum, s) => sum + s.factsPromoted, 0),
+    discovered: now.reduce((sum, s) => sum + s.newFactsIntroduced, 0),
   };
-}
-
-export type Trend = 'better' | 'same' | 'worse';
-
-/** Sous 3 points d'écart, la réussite est « comme la semaine d'avant ». */
-export function accuracyTrend(delta: number): Trend {
-  return Math.abs(delta) < 3 ? 'same' : delta > 0 ? 'better' : 'worse';
-}
-
-/** Sous 0,2 s d'écart par calcul, la rapidité est « comme la semaine d'avant ». */
-export function speedTrend(delta: number): Trend {
-  return Math.abs(delta) < 0.2 ? 'same' : delta < 0 ? 'better' : 'worse';
 }

@@ -570,10 +570,6 @@ async function captureBadgesScreen(page) {
   await page.waitForSelector('.home-screen');
 }
 
-// Opens the parent area and shoots what is asked — its overview (`hubShot`),
-// the settings list at the bottom of it (`settingsShot`), the Maths page its
-// subject card opens (`mathShot`), the "Profiles and backup" page
-// (`profilesShot`) — then goes back home.
 // Ouvre une page de l'espace parent, la capture, puis revient à son accueil
 // (dont le propre bouton retour ramène ensuite à l'accueil de l'enfant).
 async function shootSubpage(page, opener, pageSelector, name) {
@@ -584,6 +580,17 @@ async function shootSubpage(page, opener, pageSelector, name) {
   await page.waitForSelector(pageSelector, { state: 'detached' });
 }
 
+// Amène une section de l'accueil de l'espace parent en haut de l'écran, puis
+// la capture. Le body est le conteneur de défilement.
+async function shootSection(page, selector, name) {
+  await page.locator(selector).evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  await shot(page, name);
+}
+
+// Opens the parent area and shoots what is asked — its overview (`hubShot`),
+// the week's summary (`weekShot`), the settings list at the bottom of it
+// (`settingsShot`), the Maths page its subject card opens (`mathShot`), the
+// "Profiles and backup" page (`profilesShot`) — then goes back home.
 async function captureParentDashboard(page, { hubShot, weekShot, settingsShot, mathShot, profilesShot }) {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
@@ -598,18 +605,8 @@ async function captureParentDashboard(page, { hubShot, weekShot, settingsShot, m
   await page.click('.parent-gate-submit');
   await page.waitForSelector('.parent-dashboard');
   if (hubShot) await shot(page, hubShot);
-  if (weekShot) {
-    // body is the scroll container: bring the week's summary to the top.
-    await page
-      .locator('.parent-week-rows')
-      .evaluate((el) => el.closest('.parent-section').scrollIntoView({ block: 'start' }));
-    await shot(page, weekShot);
-  }
-  if (settingsShot) {
-    // body is the scroll container: bring the settings to the top of the viewport.
-    await page.locator('.parent-settings-start').evaluate((el) => el.scrollIntoView({ block: 'start' }));
-    await shot(page, settingsShot);
-  }
+  if (weekShot) await shootSection(page, '.parent-week', weekShot);
+  if (settingsShot) await shootSection(page, '.parent-settings-start', settingsShot);
   if (mathShot) {
     await shootSubpage(page, '.parent-subject-card--math', '.parent-dashboard--subject', mathShot);
   }

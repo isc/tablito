@@ -7,7 +7,8 @@ import { createInitialConjFacts } from '../lib/conjugationFacts';
 import type { Subject } from '../lib/hardestFacts';
 import { createNewProfile } from '../lib/storage';
 import { requireButton, text } from './helpers/dom';
-import { BADGE_IDS, type BoxLevel, type SessionQuestionLog, type SessionResult, type UserProfile } from '../types';
+import { BADGE_IDS, type BoxLevel, type SessionQuestionLog, type UserProfile } from '../types';
+import { makeSession as session } from './helpers/sessions';
 
 // ---------------------------------------------------------------------------
 // Accueil de l'espace parent et page Maths : trois niveaux de maths sans
@@ -150,7 +151,7 @@ describe("accueil de l'espace parent", () => {
     expect(names).toEqual(['7 × 8 = 56', 'nous mangeons', '4 × 9 = 36']);
     // L'idée pour aider porte sur le premier : l'astuce que la séance enseigne.
     expect(document.querySelector('.parent-idea-body')?.textContent).toBe(
-      'Rappelez-lui l’astuce vue dans Tablito\u00a0: «\u00a0× 7, c’est × 5 plus × 2.\u00a0» Par exemple\u00a0: 8 × 7 = 8 × 5 + 8 × 2 = 40 + 16 = 56.',
+      'Rappelez-lui ce que Tablito lui apprend\u00a0: × 7, c’est × 5 plus × 2. Par exemple\u00a0: 8 × 7 = 8 × 5 + 8 × 2 = 40 + 16 = 56.',
     );
   });
 });
@@ -165,20 +166,9 @@ describe('point de la semaine', () => {
     vi.useRealTimers();
   });
 
-  const session = (date: string, over: Partial<SessionResult> = {}): SessionResult => ({
-    date,
-    kind: 'mult',
-    questionsCount: 10,
-    correctCount: 8,
-    averageTimeMs: 3000,
-    newFactsIntroduced: 0,
-    factsPromoted: 0,
-    ...over,
-  });
-
   const rows = () =>
     Array.from(document.querySelectorAll('.parent-week-row')).map((el) =>
-      Array.from(el.querySelectorAll('.parent-week-main, .parent-week-sub')).map((part) => part.textContent),
+      Array.from(el.querySelectorAll('.parent-setting-title, .parent-setting-sub')).map((part) => part.textContent),
     );
 
   it('dit la semaine en phrases, comparée à la semaine d’avant', () => {

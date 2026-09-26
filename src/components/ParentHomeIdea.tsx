@@ -4,11 +4,11 @@
 
 import type { HardFact } from '../lib/hardestFacts';
 import { homeIdea } from '../lib/homeIdea';
-import { useWeekStrings } from '../i18n/week';
+import { useHomeIdeaStrings } from '../i18n/homeIdea';
 import { BulbIcon } from './ParentSettingIcons';
 
 export default function ParentHomeIdea({ fact }: { fact: HardFact }) {
-  const w = useWeekStrings();
+  const t = useHomeIdeaStrings();
   const idea = homeIdea(fact);
   if (!idea) return null;
   return (
@@ -17,8 +17,8 @@ export default function ParentHomeIdea({ fact }: { fact: HardFact }) {
         <BulbIcon />
       </span>
       <div className="parent-idea-text">
-        <div className="parent-idea-heading">{w.ideaHeading}</div>
-        <p className="parent-idea-body">{w.idea(idea)}</p>
+        <div className="parent-idea-heading">{t.heading}</div>
+        <p className="parent-idea-body">{t.idea(idea)}</p>
       </div>
     </div>
   );

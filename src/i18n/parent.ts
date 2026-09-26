@@ -117,7 +117,7 @@ interface ParentDashboardStrings {
   transferCopyLink: string;
   transferQrAlt: string;
   // Sélecteur d'enfant : ceux de l'appareil et ceux suivis à distance.
-  sourceLabel: string;
+  childPickerLabel: string;
   remoteTag: string;
   remoteLoading: string;
   remoteError: string;
@@ -278,7 +278,7 @@ const parentDashboardFr: ParentDashboardStrings = {
     `Scannez ce QR code avec l'appareil photo du nouvel appareil : Tablito s'y ouvrira avec la progression. Valable ${minutes} minutes, une seule fois.`,
   transferCopyLink: 'Ou copier le lien',
   transferQrAlt: 'QR code de transfert vers un autre appareil',
-  sourceLabel: 'Enfant affiché',
+  childPickerLabel: 'Enfant affiché',
   remoteTag: 'à distance',
   remoteLoading: 'Récupération de la progression…',
   remoteError:
@@ -463,7 +463,7 @@ const parentDashboardEn: ParentDashboardStrings = {
     `Scan this QR code with the new device's camera: Tablito will open there with the progress. Valid for ${minutes} minutes, one use only.`,
   transferCopyLink: 'Or copy the link',
   transferQrAlt: 'QR code to transfer to another device',
-  sourceLabel: 'Child shown',
+  childPickerLabel: 'Child shown',
   remoteTag: 'remote',
   remoteLoading: 'Fetching progress…',
   remoteError:

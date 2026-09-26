@@ -3,7 +3,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
 import { addProfile, createNewProfile, getActiveProfileId, setActiveProfile } from '../lib/storage';
-import { flushMicrotasks, openParentDashboard, requireButton } from './helpers/dom';
+import {
+  childChip,
+  childChips,
+  flushMicrotasks,
+  openParentDashboard,
+  requireButton,
+  sessionsShown,
+} from './helpers/dom';
 // Préchauffe le chunk lazy de l'espace parent pour que le React.lazy() d'App
 // se résolve dans le test.
 import '../screens/ParentDashboard';
@@ -26,27 +33,7 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-const chips = () =>
-  Array.from(document.querySelectorAll('.parent-child')).map((el) => ({
-    name: el.querySelector('.parent-child-name')?.textContent,
-    active: el.getAttribute('aria-pressed') === 'true',
-  }));
-
-function chip(name: string): HTMLButtonElement {
-  const found = Array.from(document.querySelectorAll<HTMLButtonElement>('.parent-child')).find(
-    (el) => el.querySelector('.parent-child-name')?.textContent === name,
-  );
-  if (!found) throw new Error(`Pas de pastille pour ${name}`);
-  return found;
-}
-
 const title = () => document.querySelector('.parent-dashboard .parent-title')?.textContent;
-
-// Nombre affiché sous « Séances » dans la carte du jour.
-const sessionsShown = () =>
-  Array.from(document.querySelectorAll('.parent-kpi'))
-    .find((kpi) => kpi.querySelector('.parent-stat-label')?.textContent === 'Séances')
-    ?.querySelector('.parent-stat-value')?.textContent;
 
 describe("sélecteur d'enfant de l'espace parent", () => {
   it("liste tous les enfants de l'appareil, ouvert sur celui qui joue", async () => {
@@ -54,9 +41,9 @@ describe("sélecteur d'enfant de l'espace parent", () => {
     fireEvent.click(requireButton(/Léa/));
     await openParentDashboard();
 
-    expect(chips()).toEqual([
-      { name: 'Léa', active: true },
-      { name: 'Tom', active: false },
+    expect(childChips()).toEqual([
+      { name: 'Léa', remote: false, active: true },
+      { name: 'Tom', remote: false, active: false },
     ]);
     expect(title()).toBe('Léa');
     expect(sessionsShown()).toBe('17');
@@ -67,10 +54,10 @@ describe("sélecteur d'enfant de l'espace parent", () => {
     fireEvent.click(requireButton(/Léa/));
     await openParentDashboard();
 
-    fireEvent.click(chip('Tom'));
+    fireEvent.click(childChip('Tom'));
     expect(title()).toBe('Tom');
     expect(sessionsShown()).toBe('9');
-    expect(chips().find((c) => c.active)?.name).toBe('Tom');
+    expect(childChips().find((c) => c.active)?.name).toBe('Tom');
 
     // Le parent a regardé, il n'a pas pris la main : c'est toujours Léa qui
     // retrouve son accueil en sortant de l'espace parent.
@@ -85,7 +72,7 @@ describe("sélecteur d'enfant de l'espace parent", () => {
     fireEvent.click(requireButton(/Léa/));
     await openParentDashboard();
 
-    fireEvent.click(chip('Tom'));
+    fireEvent.click(childChip('Tom'));
     fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-subject-card--math')!);
     expect(document.querySelector('.parent-dashboard--subject .parent-eyebrow')?.textContent).toBe('Tom');
   });

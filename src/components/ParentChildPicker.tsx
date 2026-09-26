@@ -22,7 +22,7 @@ interface ParentChildPickerProps {
 export default function ParentChildPicker({ items, selected, onSelect }: ParentChildPickerProps) {
   const t = useParentDashboardStrings();
   return (
-    <div className="parent-children" role="group" aria-label={t.sourceLabel}>
+    <div className="parent-children" role="group" aria-label={t.childPickerLabel}>
       {items.map((item) => (
         <button
           key={item.key}
@@ -31,7 +31,7 @@ export default function ParentChildPicker({ items, selected, onSelect }: ParentC
           aria-pressed={item.key === selected}
           onClick={() => onSelect(item.key)}
         >
-          <ProfileAvatar name={item.name} className="parent-child-avatar" />
+          <ProfileAvatar name={item.name} className="parent-avatar parent-child-avatar" />
           <span className="parent-child-name">{item.name}</span>
           {item.remote && <span className="parent-child-remote">{t.remoteTag}</span>}
         </button>

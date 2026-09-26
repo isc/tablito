@@ -1,4 +1,4 @@
-import type { RemainderSessionQuestion } from '../types';
+import type { RemainderFact } from '../types';
 import { remainderDividend } from '../types';
 import { getRemainderStrategyText } from '../i18n/strategies';
 
@@ -27,9 +27,10 @@ export interface RemainderStrategy {
  * l'encadrement. La question porte la zone ET le reste tiré : la stratégie se
  * calcule donc sur la question, pas sur le fait seul.
  */
-export function getRemainderStrategy(
-  question: Pick<RemainderSessionQuestion, 'fact' | 'remainder'>,
-): RemainderStrategy {
+export function getRemainderStrategy(question: {
+  fact: Pick<RemainderFact, 'divisor' | 'quotient'>;
+  remainder: number;
+}): RemainderStrategy {
   const { divisor, quotient } = question.fact;
   const dividend = remainderDividend(question);
   const text = getRemainderStrategyText();

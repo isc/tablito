@@ -5,6 +5,7 @@ import App from '../App';
 import { addProfile, createNewProfile, listProfiles } from '../lib/storage';
 import { startWatch, addWatched, type WatchPairing } from '../lib/watch';
 import { listWatched } from '../lib/watchStore';
+import { childChip, childChips, sessionsShown } from './helpers/dom';
 import { mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
 // Préchauffe les chunks lazy (espace parent, et sa page Nouveautés) pour que
 // leur React.lazy() se résolve en synchrone dans les tests qui les ouvrent.
@@ -62,20 +63,6 @@ function findButton(label: RegExp): HTMLButtonElement | null {
   );
 }
 
-function tabLabels(): string[] {
-  return Array.from(document.querySelectorAll('.parent-children .parent-child')).map((t) =>
-    (t.textContent ?? '').trim(),
-  );
-}
-
-// Nombre affiché sous le libellé « Séances » de l'accueil de l'espace parent.
-function sessionsShown(): string {
-  const kpis = Array.from(document.querySelectorAll('.parent-kpi'));
-  const kpi = kpis.find((c) =>
-    /Séances/.test(c.querySelector('.parent-stat-label')?.textContent ?? ''),
-  );
-  return kpi?.querySelector('.parent-stat-value')?.textContent ?? '';
-}
 
 beforeEach(() => {
   localStorage.clear();
@@ -254,8 +241,7 @@ describe('lien profond #recap (clic sur la notification hebdomadaire)', () => {
     // la progression de l'enfant, l'ouvrir sur « Papa » obligerait à taper
     // l'onglet à chaque fois.
     expect(document.querySelector('.parent-title')?.textContent).toContain('Zoé');
-    const active = document.querySelector('.parent-child.is-active');
-    expect((active?.textContent ?? '')).toContain('Zoé');
+    expect(childChips().find((c) => c.active)?.name).toBe('Zoé');
   });
 });
 
@@ -287,12 +273,9 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     return { entry, child };
   }
 
-  async function clickTab(label: RegExp) {
-    const tab = Array.from(document.querySelectorAll('.parent-children .parent-child')).find((t) =>
-      label.test(t.textContent ?? ''),
-    ) as HTMLButtonElement;
+  async function selectChild(name: string) {
     await act(async () => {
-      fireEvent.click(tab);
+      fireEvent.click(childChip(name));
     });
   }
 
@@ -340,10 +323,12 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
 
-    // Deux onglets de source : le profil local et l'enfant suivi.
-    const labels = tabLabels();
-    expect(labels.some((l) => /Papa/.test(l))).toBe(true);
-    expect(labels.some((l) => /Zoé/.test(l) && /distance/.test(l))).toBe(true);
+    // Un seul sélecteur pour les deux : le profil de l'appareil, puis l'enfant
+    // suivi, marqué « à distance ».
+    expect(childChips()).toEqual([
+      { name: 'Papa', remote: false, active: false },
+      { name: 'Zoé', remote: true, active: true },
+    ]);
 
     // On arrive sur l'enfant scanné…
     expect(sessionsShown()).toBe('30');
@@ -352,7 +337,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     expect(findButton(/^Profils et sauvegarde/)).not.toBeNull();
 
     // …et la bascule vers le profil local montre bien SES stats.
-    await clickTab(/Papa/);
+    await selectChild('Papa');
     expect(sessionsShown()).toBe('4');
   });
 
@@ -415,7 +400,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     });
 
     // Bascule sur le profil local : l'avis suit.
-    await clickTab(/Papa/);
+    await selectChild('Papa');
     await openFeedback();
     expect(attachLabel()).toContain('Papa');
     expect(attachLabel()).not.toContain('Zoé');
@@ -455,7 +440,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
   it('revenir des Nouveautés garde la source affichée', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
-    await clickTab(/Papa/);
+    await selectChild('Papa');
 
     await act(async () => {
       fireEvent.click(findButton(/^Aide et infos/)!);
@@ -472,7 +457,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     await act(async () => {
       fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
     });
-    expect(document.querySelector('.parent-child.is-active')?.textContent).toContain('Papa');
+    expect(childChips().find((c) => c.active)?.name).toBe('Papa');
     expect(sessionsShown()).toBe('4');
   });
 
@@ -481,7 +466,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
   it('supprimer le dernier profil local montre l’enfant suivi', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
-    await clickTab(/Papa/);
+    await selectChild('Papa');
 
     await act(async () => {
       fireEvent.click(findButton(/^Profils et sauvegarde/)!);

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
 import ParentChildPicker from '../components/ParentChildPicker';
@@ -65,8 +65,13 @@ interface ParentDashboardProps {
 // fetchWatched : instantané, partage révoqué, échec).
 type RemoteState = 'loading' | WatchFetchResult;
 
-// Enfant affiché, en clé stable : un profil de cet appareil (`local:<id>`) ou
-// un enfant suivi à distance (`watch:<code>`).
+// Un enfant que l'espace parent peut afficher : un profil de cet appareil, ou
+// un enfant suivi à distance. La clé est son identité stable dans le
+// sélecteur (cf. ParentChildPicker).
+type ChildEntry =
+  | { key: string; name: string; remote: false; id: string }
+  | { key: string; name: string; remote: true; entry: WatchedProfile };
+
 const LOCAL = 'local:';
 const WATCH = 'watch:';
 
@@ -86,12 +91,15 @@ export default function ParentDashboard({
 
   // === Enfants : ceux de cet appareil, et ceux suivis à distance ===
   const [watched, setWatched] = useState<WatchedProfile[]>(listWatched);
-  // Relus à chaque rendu (l'index est minuscule) : une suppression de profil
-  // laisse l'espace parent monté, sa liste doit suivre.
-  const localProfiles = listProfiles();
+  // L'index des profils est relu à chaque rendu (il est minuscule) : une
+  // suppression de profil laisse l'espace parent monté, sa liste doit suivre.
   const activeId = getActiveProfileId();
-  // Enfant choisi (clé LOCAL/WATCH) ; null = celui par défaut. Une chaîne et
-  // non un objet, parce que c'est l'identité stable dont dépend la relecture :
+  const children: ChildEntry[] = [
+    ...listProfiles().map((p) => ({ key: LOCAL + p.id, name: p.name, remote: false as const, id: p.id })),
+    ...watched.map((w) => ({ key: WATCH + w.code, name: w.name, remote: true as const, entry: w })),
+  ];
+  // Enfant choisi (sa clé) ; null = celui par défaut. Une chaîne et non un
+  // objet, parce que c'est l'identité stable dont dépend la relecture :
   // re-choisir l'enfant courant repose la même valeur, React court-circuite le
   // render, et aucune relecture n'est relancée.
   const [chosen, setChosen] = useState<string | null>(() => {
@@ -101,24 +109,30 @@ export default function ParentDashboard({
     // Arrivée par la notification de recap : c'est la progression SUIVIE que le
     // parent vient consulter, pas celle de l'appareil — sans quoi il faudrait
     // encore choisir l'enfant.
-    const first = listWatched()[0];
-    return openOnWatched && first ? WATCH + first.code : null;
+    return openOnWatched && watched[0] ? WATCH + watched[0].code : null;
   });
   // Enfant affiché : le choix, tant qu'il existe encore — sinon (suivi arrêté,
   // profil supprimé) le profil actif de l'appareil, ou à défaut le premier
   // enfant suivi.
-  const keys = [...localProfiles.map((p) => LOCAL + p.id), ...watched.map((w) => WATCH + w.code)];
-  const fallback = profile && activeId ? LOCAL + activeId : watched[0] ? WATCH + watched[0].code : null;
-  const selected = chosen !== null && keys.includes(chosen) ? chosen : fallback;
-  const selectedCode = selected?.startsWith(WATCH) ? selected.slice(WATCH.length) : null;
-  const selectedLocalId = selected?.startsWith(LOCAL) ? selected.slice(LOCAL.length) : null;
-  // Un autre enfant de l'appareil que le profil actif : lu depuis le stockage,
-  // une fois par choix (il ne pratique pas pendant que le parent regarde). Le
-  // profil actif, lui, vient de la prop, à jour après une restauration.
-  const otherLocal = useMemo(
-    () => (selectedLocalId && selectedLocalId !== activeId ? loadProfileById(selectedLocalId) : null),
-    [selectedLocalId, activeId],
-  );
+  const selected =
+    children.find((c) => c.key === chosen) ??
+    (profile ? children.find((c) => !c.remote && c.id === activeId) : undefined) ??
+    children.find((c) => c.remote) ??
+    null;
+  const watchedEntry = selected?.remote ? selected.entry : null;
+  const selectedCode = watchedEntry?.code ?? null;
+  const selectedLocalId = selected && !selected.remote ? selected.id : null;
+  // Un autre enfant de l'appareil que le profil actif : lu depuis le stockage
+  // au moment où le parent le choisit (il ne pratique pas pendant qu'on le
+  // regarde). Le profil actif, lui, vient de la prop, à jour après une
+  // restauration.
+  const [otherLocal, setOtherLocal] = useState<UserProfile | null>(null);
+  const selectChild = (key: string) => {
+    if (key === selected?.key) return;
+    const child = children.find((c) => c.key === key);
+    setOtherLocal(child && !child.remote && child.id !== activeId ? loadProfileById(child.id) : null);
+    setChosen(key);
+  };
 
   // L'instantané distant, ÉTIQUETÉ du code auquel il appartient : c'est ce qui
   // répond à « ai-je déjà les données de la source affichée ? » sans état de
@@ -163,9 +177,6 @@ export default function ParentDashboard({
     if (inFlightRef.current === entry.code) setRemote({ code: entry.code, state });
   };
 
-  const watchedEntry = selectedCode
-    ? watched.find((w) => w.code === selectedCode) ?? null
-    : null;
   // N'est vrai que si l'état chargé correspond bien à la source affichée.
   const remoteState: RemoteState | null =
     watchedEntry && remote?.code === watchedEntry.code ? remote.state : null;
@@ -178,17 +189,6 @@ export default function ParentDashboard({
       ? profile
       : otherLocal;
   const shownName = shown?.name ?? watchedEntry?.name ?? '';
-
-  const pickable = [
-    ...localProfiles.map((p) => ({
-      key: LOCAL + p.id,
-      // Le nom du profil actif vient de la prop : l'index n'est réécrit qu'à la
-      // sauvegarde qui suit une restauration.
-      name: p.id === activeId && profile ? profile.name : p.name,
-      remote: false,
-    })),
-    ...watched.map((w) => ({ key: WATCH + w.code, name: w.name, remote: true })),
-  ];
 
   // Appairage réussi depuis la page du suivi à distance (cf. ParentWatchPairing).
   const handlePaired = (paired: WatchPairing) => {
@@ -225,7 +225,7 @@ export default function ParentDashboard({
           eyebrow={shownName}
           title={page === 'conj' ? t.conjugations : t.math}
         />
-        <ParentSubjectDetail key={selected ?? 'none'} profile={shown} subject={page} />
+        <ParentSubjectDetail key={selected?.key ?? 'none'} profile={shown} subject={page} />
       </div>
     );
   }
@@ -286,8 +286,8 @@ export default function ParentDashboard({
 
       {/* Un seul sélecteur pour tous les enfants, ceux de l'appareil comme
           ceux suivis à distance — seulement s'il y a vraiment un choix. */}
-      {pickable.length > 1 && (
-        <ParentChildPicker items={pickable} selected={selected} onSelect={setChosen} />
+      {children.length > 1 && (
+        <ParentChildPicker items={children} selected={selected?.key ?? null} onSelect={selectChild} />
       )}
 
       {/* Fraîcheur du suivi : sans elle, un appareil enfant éteint depuis une

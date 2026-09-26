@@ -117,17 +117,14 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
     rem: t.currentRem,
   };
 
+  // Les matières que l'accueil lit : une matière masquée ne compte nulle part.
+  const subjects = useMemo<Subject[]>(() => (conjVisible ? ['math', 'conj'] : ['math']), [conjVisible]);
+
   // Trois points toutes matières confondues, triés comme la liste de chaque
   // page de matière.
   const hardFacts = useMemo(
-    () =>
-      getHardestFactsAcross(
-        profile,
-        conjVisible ? ['math', 'conj'] : ['math'],
-        HARD_FACTS_WINDOW,
-        OVERVIEW_HARD_FACTS,
-      ),
-    [profile, conjVisible],
+    () => getHardestFactsAcross(profile, subjects, HARD_FACTS_WINDOW, OVERVIEW_HARD_FACTS),
+    [profile, subjects],
   );
 
   return (
@@ -154,11 +151,7 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
         </ActivityStrip>
       </div>
 
-      {/* Rien à résumer tant que l'enfant n'a fait aucune séance : la journée
-          le dit déjà. */}
-      {profile.sessionHistory.length > 0 && (
-        <ParentWeekCard profile={profile} today={today} conjVisible={conjVisible} />
-      )}
+      <ParentWeekCard profile={profile} today={today} subjects={subjects} />
 
       <div className="parent-section">
         <h2 className="parent-overline">{t.subjects}</h2>

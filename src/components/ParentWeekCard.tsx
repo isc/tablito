@@ -6,27 +6,26 @@
 
 import { useMemo, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
-import { accuracyTrend, speedTrend, weekSummary, type Trend } from '../lib/weekSummary';
+import type { Subject } from '../lib/hardestFacts';
+import { weekSummary, type Trend, type Versus } from '../lib/weekSummary';
 import { useParentDashboardStrings } from '../i18n/parent';
 import { useWeekStrings } from '../i18n/week';
 import { CalendarIcon, GrowthIcon, TargetIcon, TimerIcon } from './ParentSettingIcons';
 
-// Seconde ligne d'une rangée : la comparaison avec la semaine d'avant (et son
-// sens, qui la colore quand c'est un progrès), ou un complément.
-interface Sub {
-  text: string;
-  trend?: Trend;
-}
-
-function Row({ icon, main, sub }: { icon: ReactNode; main: string; sub?: Sub | null }) {
+// Même anatomie qu'une ligne de réglage (icône, titre, sous-titre), en liste
+// serrée. Seul un progrès colore le sous-titre : un recul reste dans le ton
+// neutre, pour ne pas changer une semaine moins bonne en alerte.
+function Row({ icon, main, sub }: { icon: ReactNode; main: string; sub?: { text: string; trend?: Trend } | null }) {
   return (
     <li className="parent-week-row">
-      <span className="parent-week-icon" aria-hidden="true">
+      <span className="parent-setting-icon parent-week-icon" aria-hidden="true">
         {icon}
       </span>
-      <span className="parent-week-text">
-        <span className="parent-week-main">{main}</span>
-        {sub && <span className={`parent-week-sub${sub.trend ? ` is-${sub.trend}` : ''}`}>{sub.text}</span>}
+      <span className="parent-setting-text parent-week-text">
+        <span className="parent-setting-title">{main}</span>
+        {sub && (
+          <span className={`parent-setting-sub${sub.trend === 'better' ? ' is-better' : ''}`}>{sub.text}</span>
+        )}
       </span>
     </li>
   );
@@ -35,67 +34,60 @@ function Row({ icon, main, sub }: { icon: ReactNode; main: string; sub?: Sub | n
 interface ParentWeekCardProps {
   profile: UserProfile;
   today: string;
-  conjVisible: boolean;
+  // Matières visibles (cf. ParentOverview) : une matière masquée ne compte nulle part.
+  subjects: Subject[];
 }
 
-export default function ParentWeekCard({ profile, today, conjVisible }: ParentWeekCardProps) {
+export default function ParentWeekCard({ profile, today, subjects }: ParentWeekCardProps) {
   const t = useParentDashboardStrings();
   const w = useWeekStrings();
-  const week = useMemo(() => weekSummary(profile, today, conjVisible), [profile, today, conjVisible]);
-  const { math, conj, daysDelta, promoted, discovered } = week;
+  const week = useMemo(() => weekSummary(profile, today, subjects), [profile, today, subjects]);
+  // Rien à résumer tant que l'enfant n'a fait aucune séance : la journée le dit.
+  if (!week) return null;
+  const { math, conj, promoted, discovered } = week;
 
-  // Chaque comparaison n'existe que si elle est juste (cf. weekSummary) : sinon,
-  // la rangée s'en tient au chiffre de la semaine.
-  const daysSub = (): Sub | null =>
-    daysDelta === null
-      ? null
-      : { text: w.daysVsBefore(daysDelta), trend: daysDelta > 0 ? 'better' : daysDelta < 0 ? 'worse' : 'same' };
-  const accuracySub = (delta: number | null): Sub | null =>
-    delta === null ? null : { text: w.accuracyVsBefore(accuracyTrend(delta), delta), trend: accuracyTrend(delta) };
-  const speedSub = (delta: number | null): Sub | null =>
-    delta === null
-      ? null
-      : { text: w.speedVsBefore(speedTrend(delta), t.formatSeconds(Math.abs(delta))), trend: speedTrend(delta) };
+  // La comparaison avec la semaine d'avant, quand elle est juste (cf.
+  // weekSummary) ; sinon la rangée s'en tient au chiffre de la semaine.
+  const versus = (vs: Versus | null, say: (trend: Trend, amount: number) => string) =>
+    vs && { text: say(vs.trend, Math.abs(vs.delta)), trend: vs.trend };
 
   return (
-    <div className="parent-section">
+    <div className="parent-section parent-week">
       <h2 className="parent-overline">{w.title}</h2>
       <div className="parent-card">
         <ul className="parent-week-rows">
-          {week.days === 0 ? (
-            <Row icon={<CalendarIcon />} main={w.noSession} />
-          ) : (
+          <Row
+            icon={<CalendarIcon />}
+            main={week.days > 0 ? w.days(week.days) : w.noSession}
+            sub={week.days > 0 ? versus(week.daysVs, w.daysVsBefore) : null}
+          />
+          {math && (
             <>
-              <Row icon={<CalendarIcon />} main={w.days(week.days)} sub={daysSub()} />
-              {math && (
-                <>
-                  <Row
-                    icon={<TargetIcon />}
-                    main={w.mathAccuracy(t.formatPercent(math.accuracy))}
-                    sub={accuracySub(math.accuracyDelta)}
-                  />
-                  <Row
-                    icon={<TimerIcon />}
-                    main={w.speed(t.formatSeconds(math.seconds))}
-                    sub={speedSub(math.secondsDelta)}
-                  />
-                </>
-              )}
-              {conj && (
-                <Row
-                  icon={<TargetIcon />}
-                  main={w.conjAccuracy(t.formatPercent(conj.accuracy))}
-                  sub={accuracySub(conj.accuracyDelta)}
-                />
-              )}
-              {(promoted > 0 || discovered > 0) && (
-                <Row
-                  icon={<GrowthIcon />}
-                  main={promoted > 0 ? w.promoted(promoted) : w.discovered(discovered)}
-                  sub={promoted > 0 && discovered > 0 ? { text: w.discoveredToo(discovered) } : null}
-                />
-              )}
+              <Row
+                icon={<TargetIcon />}
+                main={w.mathAccuracy(t.formatPercent(math.accuracy))}
+                sub={versus(math.accuracyVs, w.accuracyVsBefore)}
+              />
+              <Row
+                icon={<TimerIcon />}
+                main={w.speed(t.formatSeconds(math.seconds))}
+                sub={versus(math.secondsVs, (trend, amount) => w.speedVsBefore(trend, t.formatSeconds(amount)))}
+              />
             </>
+          )}
+          {conj && (
+            <Row
+              icon={<TargetIcon />}
+              main={w.conjAccuracy(t.formatPercent(conj.accuracy))}
+              sub={versus(conj.accuracyVs, w.accuracyVsBefore)}
+            />
+          )}
+          {(promoted > 0 || discovered > 0) && (
+            <Row
+              icon={<GrowthIcon />}
+              main={promoted > 0 ? w.promoted(promoted) : w.discovered(discovered)}
+              sub={promoted > 0 && discovered > 0 ? { text: w.discoveredToo(discovered) } : null}
+            />
           )}
         </ul>
       </div>

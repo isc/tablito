@@ -135,8 +135,6 @@
   line-height: 1.1;
 }
 
-/* Sélecteur de source (profil de cet appareil / enfants suivis à distance),
-   sous l'en-tête de l'accueil. Mêmes pastilles que « Mes images ». */
 /* Sélecteur d'enfant (cf. ParentChildPicker) : une pastille par enfant, avec
    sa couleur. Elles passent à la ligne plutôt que de déborder : le body masque
    tout débordement horizontal, sans bruit. */
@@ -174,18 +172,11 @@
   color: var(--indigo-ink);
 }
 
+/* La pastille d'enfant (.parent-avatar), en petit. */
 .parent-child-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-family: var(--serif);
   font-size: 14px;
-  font-weight: 700;
 }
 
 .parent-child-name {
