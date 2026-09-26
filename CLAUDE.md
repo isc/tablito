@@ -28,10 +28,13 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   récompense tapée à la fin de chaque séance (depuis le Recap) : la
   laisser lazy faisait dépendre cette récompense d'un fetch de chunk
   au moment le plus fragile (fin de séance, WiFi souvent faible).
-- **CSS concaténé** : les ~30 fichiers `.css` sources sont mergés en
-  un seul `dist/styles.css` au build (1 requête HTTP au lieu de 30).
-  En dev, le serveur sert chaque fichier individuellement. Le split
-  source = convention d'auteur, le browser voit toujours 1 fichier.
+- **CSS concaténé et minifié** : les fichiers `.css` sources sont
+  minifiés un par un (esbuild) puis mergés en un seul `dist/styles.css`
+  au build (1 requête HTTP au lieu d'une par fichier). L'ordre est
+  alphabétique par chemin — composants avant écrans —, et la cascade en
+  dépend à spécificité égale. En dev, le serveur sert chaque fichier
+  individuellement, non minifié. Le split source = convention d'auteur,
+  le browser voit toujours 1 fichier.
 - **Fontes self-hostées** dans `public/fonts/` (régénérées par
   `npm run vendor:fonts` depuis Google Fonts, subset latin).
   Précachées par le SW → 0 réseau dès la 2e visite, identité visuelle
