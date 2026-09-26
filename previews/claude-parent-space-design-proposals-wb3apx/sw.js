@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260926190844"
+const CACHE = 'tablito-' + "20260926193222"
 const BASE = "/previews/claude-parent-space-design-proposals-wb3apx/"
 const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/favicon.svg",
@@ -125,6 +125,7 @@ const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/changelog.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/conjugation.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/home.js",
+  "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/homeIdea.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/lang.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/language.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/onboarding.js",
