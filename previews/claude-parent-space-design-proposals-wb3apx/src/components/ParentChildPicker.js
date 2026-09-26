@@ -1,0 +1,3 @@
+import{jsx as a,jsxs as c}from"preact/jsx-runtime";import{useParentDashboardStrings as l}from"../i18n/parent.js";import s from"./ProfileAvatar.js";function o({items:t,selected:r,onSelect:i}){const n=l();return a("div",{className:"parent-children",role:"group","aria-label":n.sourceLabel,children:t.map(e=>c("button",{type:"button",className:`parent-child${e.key===r?" is-active":""}`,"aria-pressed":e.key===r,onClick:()=>i(e.key),children:[a(s,{name:e.name,className:"parent-child-avatar"}),a("span",{className:"parent-child-name",children:e.name}),e.remote&&a("span",{className:"parent-child-remote",children:n.remoteTag})]},e.key))})}export{o as default};
+
+//# sourceMappingURL=ParentChildPicker.js.map

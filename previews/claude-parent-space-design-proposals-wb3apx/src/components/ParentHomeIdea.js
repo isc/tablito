@@ -1,0 +1,3 @@
+import{jsx as a,jsxs as d}from"preact/jsx-runtime";import{homeIdea as r}from"../lib/homeIdea.js";import{useWeekStrings as n}from"../i18n/week.js";import{BulbIcon as o}from"./ParentSettingIcons.js";function s({fact:t}){const e=n(),i=r(t);return i?d("div",{className:"parent-idea",children:[a("span",{className:"parent-idea-icon","aria-hidden":"true",children:a(o,{})}),d("div",{className:"parent-idea-text",children:[a("div",{className:"parent-idea-heading",children:e.ideaHeading}),a("p",{className:"parent-idea-body",children:e.idea(i)})]})]}):null}export{s as default};
+
+//# sourceMappingURL=ParentHomeIdea.js.map
