@@ -9,6 +9,7 @@ import {
   listProfiles,
   loadProfile,
 } from '../lib/storage';
+import { openParentDashboard } from './helpers/dom';
 // Préchauffe le chunk de ParentDashboard pour que le React.lazy() côté App.tsx
 // se résolve en synchrone dans les tests qui ouvrent le dashboard.
 import '../screens/ParentDashboard';
@@ -91,26 +92,6 @@ function completeWelcome(name: string): void {
   fireEvent.click(findButton(/J'ai compris/)!);
 }
 
-// Ouvre le dashboard parent depuis Home (même helper que userJourney).
-async function openParentDashboard(): Promise<void> {
-  fireEvent.click(document.querySelector<HTMLButtonElement>('.home-parent-btn')!);
-  const question = document.querySelector('.parent-gate-question');
-  if (!question) throw new Error('ParentGate non affiché');
-  const operands = Array.from(question.querySelectorAll('span'))
-    .map((s) => parseInt(s.textContent ?? '', 10))
-    .filter((n) => Number.isFinite(n));
-  if (operands.length < 2) throw new Error('Opérandes du ParentGate introuvables');
-  const product = operands[0] * operands[1];
-  const input = document.querySelector<HTMLInputElement>('.parent-gate-input')!;
-  fireEvent.change(input, { target: { value: String(product) } });
-  fireEvent.click(findButton('Valider')!);
-  for (let i = 0; i < 10; i++) {
-    await act(async () => {
-      await Promise.resolve();
-    });
-  }
-}
-
 describe('Mode multi-profils (DOM)', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -163,6 +144,7 @@ describe('Mode multi-profils (DOM)', () => {
 
     // Enfant 2 : ajout via l'espace parent.
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     fireEvent.click(findButton('Ajouter un enfant')!);
     completeWelcome('Max');
     expect(readGreeting()).toContain('Max');
@@ -193,6 +175,7 @@ describe('Mode multi-profils (DOM)', () => {
     completeWelcome('Zoe');
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     fireEvent.click(findButton('Ajouter un enfant')!);
     // Welcome en mode ajout → bouton Annuler présent.
     fireEvent.click(findButton('Annuler')!);
@@ -259,8 +242,9 @@ describe('Mode multi-profils (DOM)', () => {
     expect(readGreeting()).toContain('Max');
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    fireEvent.click(findButton('Supprimer ce profil')!);
+    fireEvent.click(findButton('Supprimer le profil de Max')!);
     confirmSpy.mockRestore();
 
     // Il ne reste que Zoé : retour direct sur son accueil.

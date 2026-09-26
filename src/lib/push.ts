@@ -80,7 +80,12 @@ const NO_PUSH: PushPrefs = { daily: false, weekly: false };
 // rend le toggle inopérant pour DÉSACTIVER (il ne proposerait qu'« activer »).
 const MIRROR_KEY = 'multiplix-push-prefs';
 
-function readMirror(): PushPrefs | null {
+/**
+ * Dernier état connu sur cet appareil, lu sans réseau : l'état de départ des
+ * interrupteurs, que getPushPrefs réconcilie ensuite. Sans lui, chaque retour
+ * sur l'accueil de l'espace parent les montrerait éteints le temps de relire.
+ */
+export function peekPushPrefs(): PushPrefs | null {
   try {
     const raw = localStorage.getItem(MIRROR_KEY);
     if (!raw) return null;
@@ -100,17 +105,39 @@ function writeMirror(prefs: PushPrefs | null): void {
   }
 }
 
+// Aucune notification ne peut arriver, c'est certain : le miroir l'apprend
+// aussi, sans quoi chaque ouverture repartirait d'un interrupteur allumé.
+function noPush(): PushPrefs {
+  writeMirror(null);
+  return NO_PUSH;
+}
+
+// Relecture partagée : les deux interrupteurs la demandent au même montage, et
+// chaque retour sur l'accueil de l'espace parent la redemanderait. Une minute
+// suffit à rattraper une permission révoquée entre-temps ; toute écriture
+// l'invalide (cf. setPushPref, unsubscribeFromReminders).
+const READ_TTL_MS = 60_000;
+let lastRead: { at: number; prefs: Promise<PushPrefs> } | null = null;
+
 /**
  * Préférences de cet appareil. La permission révoquée hors de l'app fait foi
  * (aucune notification n'arrivera), donc elle l'emporte. Sinon on interroge le
  * serveur, et on retombe sur le dernier état connu localement si la lecture
  * échoue — surtout ne pas répondre « rien d'activé » pour cause de hors-ligne.
  */
-export async function getPushPrefs(): Promise<PushPrefs> {
-  if (!pushConfigured || !pushSupported() || Notification.permission !== 'granted') return NO_PUSH;
+export function getPushPrefs(): Promise<PushPrefs> {
+  if (!lastRead || Date.now() - lastRead.at > READ_TTL_MS) {
+    lastRead = { at: Date.now(), prefs: readPushPrefs() };
+  }
+  return lastRead.prefs;
+}
+
+async function readPushPrefs(): Promise<PushPrefs> {
+  if (!pushConfigured || !pushSupported()) return NO_PUSH;
+  if (Notification.permission !== 'granted') return noPush();
   try {
     const sub = await activeSubscription();
-    if (!sub) return NO_PUSH; // pas de canal : rien ne peut arriver, c'est certain
+    if (!sub) return noPush(); // pas de canal
     // La table n'a aucune policy SELECT (anti-énumération) : on passe donc par un
     // RPC SECURITY DEFINER, à qui l'endpoint opaque sert d'autorisation.
     const res = await fetch(`${url}/rest/v1/rpc/read_push_prefs`, {
@@ -118,21 +145,21 @@ export async function getPushPrefs(): Promise<PushPrefs> {
       headers: baseHeaders,
       body: JSON.stringify({ p_endpoint: serialize(sub).endpoint }),
     });
-    if (!res.ok) return readMirror() ?? NO_PUSH;
+    if (!res.ok) return peekPushPrefs() ?? NO_PUSH;
     const row = (await res.json()) as PushPrefs | null;
     const prefs = row ? { daily: !!row.daily, weekly: !!row.weekly } : NO_PUSH;
     writeMirror(prefs);
     return prefs;
   } catch {
-    return readMirror() ?? NO_PUSH;
+    return peekPushPrefs() ?? NO_PUSH;
   }
 }
 
 /**
  * Active ou désactive UNE des deux notifications, sans toucher à l'autre : la
  * mise à jour est partielle côté SQL (paramètre NULL = drapeau inchangé), parce
- * que les deux toggles vivent dans deux endroits distincts de l'espace parent et
- * qu'un read-modify-write côté client les ferait s'écraser mutuellement.
+ * que les deux interrupteurs se basculent chacun de leur côté, parfois coup sur
+ * coup, et qu'un read-modify-write côté client les ferait s'écraser mutuellement.
  *
  * Désactiver la dernière notification active supprime tout l'abonnement : garder
  * une subscription que le cron ignore n'aurait aucun sens. C'est le RPC qui
@@ -144,6 +171,7 @@ export async function setPushPref(
   value: boolean,
 ): Promise<PushPrefResult> {
   if (!pushConfigured || !pushSupported()) return 'unsupported';
+  lastRead = null;
 
   let sub = await activeSubscription();
   const created = sub === null;
@@ -213,6 +241,7 @@ export async function setPushPref(
 
 /** Désactive le rappel : supprime la ligne serveur puis la subscription locale. */
 export async function unsubscribeFromReminders(): Promise<void> {
+  lastRead = null;
   const sub = await activeSubscription();
   if (!sub) return;
   const { endpoint } = serialize(sub);

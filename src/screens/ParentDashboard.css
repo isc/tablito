@@ -78,7 +78,21 @@
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-muted);
+}
+
+/* Marge par défaut, sans spécificité : un composant qui porte aussi cette
+   classe (note sous une carte, sous-titre de la carte du jour…) la remplace
+   d'une simple classe. Sans le :where(), cette feuille, concaténée après
+   celles des composants, gagnait à spécificité égale : la note « Sur les 10
+   dernières séances » remontait contre sa carte. */
+:where(.parent-section-subtitle) {
   margin: -4px 0 10px;
+}
+
+/* Note sous une carte ou un bouton : collée à ce qu'elle commente plutôt qu'à
+   ce qui suit. */
+.parent-note {
+  margin: 8px 0 0;
 }
 
 .parent-section-help {
@@ -218,17 +232,12 @@
   white-space: nowrap;
 }
 
-/* Action buttons */
+/* Boutons d'action côte à côte, à parts égales — ou un seul, sur toute la
+   largeur, y compris dans un bloc qui centre son contenu. */
 .parent-actions {
   display: flex;
   gap: 10px;
-  padding: 0 20px;
-  margin-top: 18px;
-}
-
-.parent-section .parent-actions {
-  padding: 0;
-  margin-top: 0;
+  align-self: stretch;
 }
 
 .parent-action-btn {
@@ -264,8 +273,8 @@
 }
 
 .parent-import-area {
+  align-self: stretch;
   margin-top: 10px;
-  padding: 0 20px;
 }
 
 /* Panneau de transfert vers un autre appareil (QR + lien) */
@@ -421,7 +430,8 @@
   opacity: 0.5;
 }
 
-/* Un bloc par sens du suivi (partager d'ici / suivre d'ailleurs). */
+/* Appairage d'un suivi (cf. ParentWatchPairing) : scanner le QR de l'autre
+   appareil, ou coller son lien. */
 .parent-watch-block {
   display: flex;
   flex-direction: column;
@@ -430,22 +440,10 @@
   margin-top: 12px;
 }
 
-.parent-watch-list {
-  margin: 14px 20px 0;
-  border-top: 1.5px solid var(--line);
-}
-
-.parent-watch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.parent-watch-name {
-  font-weight: 700;
+/* Empilés, comme les boutons des cartes de partage au-dessus : côte à côte,
+   « Scanner un QR code » passait sur deux lignes. */
+.parent-watch-block .parent-actions {
+  flex-direction: column;
 }
 
 .parent-watch-remove {

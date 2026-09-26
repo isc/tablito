@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/preac
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
-import { requireButton } from './helpers/dom';
+import { flushMicrotasks, openParentDashboard, requireButton, settingsPageTitle } from './helpers/dom';
 import { addProfile, createNewProfile } from '../lib/storage';
 // Préchauffe les chunks lazy pour que le React.lazy() d'App se résolve vite.
 import '../screens/ParentDashboard';
@@ -14,25 +14,6 @@ import '../screens/ChangelogScreen';
 // n'existait. `history.back()` est ici le geste : même traversée, même
 // popstate asynchrone qu'un vrai retour système.
 // ---------------------------------------------------------------------------
-
-async function flush(): Promise<void> {
-  for (let i = 0; i < 10; i++) {
-    await act(async () => {
-      await Promise.resolve();
-    });
-  }
-}
-
-async function openParentDashboard(): Promise<void> {
-  fireEvent.click(document.querySelector<HTMLButtonElement>('.home-parent-btn')!);
-  const operands = Array.from(document.querySelectorAll('.parent-gate-question span'))
-    .map((s) => parseInt(s.textContent ?? '', 10))
-    .filter((n) => Number.isFinite(n));
-  const input = document.querySelector<HTMLInputElement>('.parent-gate-input')!;
-  fireEvent.change(input, { target: { value: String(operands[0] * operands[1]) } });
-  fireEvent.click(requireButton(/^Valider$/));
-  await flush();
-}
 
 const onHome = () => document.querySelector('.home-parent-btn') !== null;
 const onParent = () => document.querySelector('.parent-back-btn') !== null;
@@ -63,16 +44,23 @@ describe('geste retour du système', () => {
     await waitFor(() => expect(onHome()).toBe(true));
   });
 
-  it('remonte écran par écran : nouveautés → espace parent → accueil', async () => {
+  it('remonte écran par écran : nouveautés → aide et infos → espace parent → accueil', async () => {
     render(<App />);
     await openParentDashboard();
+    fireEvent.click(requireButton(/^Aide et infos/));
     fireEvent.click(requireButton(/^Nouveautés$/));
-    await flush();
+    await flushMicrotasks();
     expect(onParent()).toBe(false);
 
+    // Nouveautés s'ouvre depuis « Aide et infos » : on y revient.
     await act(async () => window.history.back());
-    await waitFor(() => expect(onParent()).toBe(true));
-    // L'entrée est ré-empilée par un effet, après le rendu de l'espace parent.
+    await waitFor(() => expect(settingsPageTitle()).toBe('Aide et infos'));
+    // L'entrée est ré-empilée par un effet, après le rendu de la page.
+    await waitFor(() => expect(window.history.state?.tablitoBack).toBe(true));
+
+    await act(async () => window.history.back());
+    await waitFor(() => expect(document.querySelector('.parent-dashboard--settings')).toBeNull());
+    expect(onParent()).toBe(true);
     await waitFor(() => expect(window.history.state?.tablitoBack).toBe(true));
 
     await act(async () => window.history.back());
@@ -110,7 +98,7 @@ describe('geste retour du système', () => {
     openMathPage();
 
     fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
-    await flush();
+    await flushMicrotasks();
     expect(onSubject()).toBe(false);
     expect(onParent()).toBe(true);
     // L'accueil de l'espace parent a toujours son retour : l'entrée reste.

@@ -7,8 +7,8 @@ interface Strings {
   label: string;
 }
 
-const fr: Strings = { label: 'Langue de l’application' };
-const en: Strings = { label: 'App language' };
+const fr: Strings = { label: 'Langue' };
+const en: Strings = { label: 'Language' };
 
 export const languageStrings = { fr, en };
 

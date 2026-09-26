@@ -1,4 +1,5 @@
 import Mascot from '../components/Mascot';
+import ProfileAvatar from '../components/ProfileAvatar';
 import type { ProfileSummary } from '../lib/storage';
 import { useProfileSelectStrings } from '../i18n/onboarding';
 
@@ -6,17 +7,6 @@ interface ProfileSelectScreenProps {
   profiles: ProfileSummary[];
   onSelect: (id: string) => void;
   onAdd: () => void;
-}
-
-// Couleur d'avatar stable par prénom : chaque enfant retrouve « sa »
-// pastille d'un lancement à l'autre, sans rien stocker. Palette limitée aux
-// teintes assez foncées pour porter une initiale blanche.
-const AVATAR_COLORS = ['var(--indigo)', 'var(--sage)', 'var(--coral)'];
-
-function avatarColor(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
 }
 
 // Écran « Qui joue ? » — affiché au lancement dès qu'il y a au moins deux
@@ -36,13 +26,7 @@ export default function ProfileSelectScreen({ profiles, onSelect, onAdd }: Profi
             className="profile-select-btn"
             onClick={() => onSelect(p.id)}
           >
-            <span
-              className="profile-select-avatar"
-              style={{ background: avatarColor(p.name) }}
-              aria-hidden="true"
-            >
-              {p.name.trim().charAt(0).toUpperCase()}
-            </span>
+            <ProfileAvatar name={p.name} className="profile-select-avatar" />
             <span className="profile-select-name">{p.name}</span>
           </button>
         ))}

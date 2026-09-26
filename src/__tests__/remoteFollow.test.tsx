@@ -6,9 +6,10 @@ import { addProfile, createNewProfile, listProfiles } from '../lib/storage';
 import { startWatch, addWatched, type WatchPairing } from '../lib/watch';
 import { listWatched } from '../lib/watchStore';
 import { mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
-// Préchauffe le chunk de ParentDashboard pour que le React.lazy() côté App.tsx
-// se résolve en synchrone dans les tests qui ouvrent le dashboard.
+// Préchauffe les chunks lazy (espace parent, et sa page Nouveautés) pour que
+// leur React.lazy() se résolve en synchrone dans les tests qui les ouvrent.
 import '../screens/ParentDashboard';
+import '../screens/ChangelogScreen';
 
 // ---------------------------------------------------------------------------
 // Suivi à distance, vu de l'app entière : l'appareil du parent affiche la
@@ -143,11 +144,9 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
 
     await renderApp();
 
-    // Sauvegarde / transfert / rappels / suppression parleraient d'une
-    // progression qui n'est pas sur cet appareil.
-    expect(findButton(/^Transférer$/)).toBeNull();
-    expect(findButton(/^Supprimer ce profil$/)).toBeNull();
-    expect(document.querySelector('.notification-settings')).toBeNull();
+    // Profils, sauvegarde et suppression parleraient d'une progression qui
+    // n'est pas sur cet appareil : pas de ligne pour eux dans les réglages.
+    expect(findButton(/^Profils et sauvegarde/)).toBeNull();
     // En revanche, la porte de sortie vers un profil local est offerte.
     expect(findButton(/Créer un profil sur cet appareil/)).not.toBeNull();
   });
@@ -190,7 +189,11 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
     await renderApp({ watchPairing: 'error' });
 
     expect(document.querySelector('.parent-dashboard')).not.toBeNull();
-    expect(findButton(/Suivre un enfant à distance/)).not.toBeNull();
+    // Le chemin pour réessayer : la page du suivi à distance, et son scanner.
+    await act(async () => {
+      fireEvent.click(findButton(/^Suivi à distance/)!);
+    });
+    expect(findButton(/^Scanner un QR code$/)).not.toBeNull();
   });
   it('n’affiche pas un écran blanc quand un QR périmé est scanné sur un appareil vierge', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
@@ -201,9 +204,13 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
 
     await renderApp({ watchPairing: 'error' });
 
-    // Quelque chose DOIT s'afficher, avec un chemin de récupération.
+    // Quelque chose DOIT s'afficher, avec un chemin de récupération : le
+    // bouton mène au scanner de la page du suivi à distance.
     expect(document.querySelector('.parent-dashboard')).not.toBeNull();
-    expect(findButton(/Suivre un enfant à distance/)).not.toBeNull();
+    await act(async () => {
+      fireEvent.click(findButton(/^Suivre un enfant à distance$/)!);
+    });
+    expect(findButton(/^Scanner un QR code$/)).not.toBeNull();
   });
 });
 
@@ -340,12 +347,13 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
 
     // On arrive sur l'enfant scanné…
     expect(sessionsShown()).toBe('30');
+    // Les réglages tiennent à l'appareil, pas au profil affiché : les profils
+    // de cet appareil restent à portée, même sur l'enfant suivi.
+    expect(findButton(/^Profils et sauvegarde/)).not.toBeNull();
 
     // …et la bascule vers le profil local montre bien SES stats.
     await clickTab(/Papa/);
     expect(sessionsShown()).toBe('4');
-    // Sur le profil local, les actions locales réapparaissent.
-    expect(findButton(/^Supprimer ce profil$/)).not.toBeNull();
   });
 
   // « J'ai coché joindre l'historique détaillé du profil mais je ne sais pas si
@@ -357,9 +365,13 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
 
+    // « Envoyer un avis » vit dans la page « Aide et infos ».
     const openFeedback = async () => {
       await act(async () => {
-        fireEvent.click(findButton(/^Envoyer un avis$/)!);
+        fireEvent.click(findButton(/^Aide et infos/)!);
+      });
+      await act(async () => {
+        fireEvent.click(findButton(/^Envoyer un avis/)!);
       });
     };
     // Crochet stable plutôt que le texte du libellé : recopier la copy ici la
@@ -397,6 +409,10 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
       // Après l'envoi, la modale passe sur l'écran de remerciement.
       fireEvent.click(document.querySelector<HTMLButtonElement>('.modal-close-btn')!);
     });
+    // Retour à l'accueil de l'espace parent, où se choisit le profil affiché.
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
+    });
 
     // Bascule sur le profil local : l'avis suit.
     await clickTab(/Papa/);
@@ -407,5 +423,79 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     expect(local.profile_snapshot.totalSessions).toBe(4);
     expect(local.profile_source).toBe('local');
     expect(local.profile_fetched_at).toBeUndefined();
+  });
+
+  // Quitter la page d'aide par le geste retour, fenêtre d'avis ouverte, la
+  // faisait resurgir à l'ouverture de la page de réglage suivante.
+  it('la fenêtre d’avis se referme avec sa page, même quittée par le geste retour', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await renderMixed();
+    await act(async () => {
+      fireEvent.click(findButton(/^Aide et infos/)!);
+    });
+    await act(async () => {
+      fireEvent.click(findButton(/^Envoyer un avis/)!);
+    });
+    expect(document.querySelector('.modal-overlay')).not.toBeNull();
+
+    await act(async () => window.history.back());
+    await flush();
+    expect(document.querySelector('.parent-dashboard--settings')).toBeNull();
+    expect(document.querySelector('.modal-overlay')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(findButton(/^Suivi à distance/)!);
+    });
+    expect(document.querySelector('.modal-overlay')).toBeNull();
+  });
+
+  // Les pages d'information ne démontent plus l'espace parent : la source
+  // affichée (ici le profil local, qui n'est pas celle du démarrage) survit à
+  // l'aller-retour.
+  it('revenir des Nouveautés garde la source affichée', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await renderMixed();
+    await clickTab(/Papa/);
+
+    await act(async () => {
+      fireEvent.click(findButton(/^Aide et infos/)!);
+    });
+    await act(async () => {
+      fireEvent.click(findButton(/^Nouveautés$/)!);
+    });
+    await flush();
+    expect(document.querySelector('.changelog-screen')).not.toBeNull();
+
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.changelog-back-btn')!);
+    });
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
+    });
+    expect(document.querySelector('.parent-source-tabs .progress-tab.active')?.textContent).toContain('Papa');
+    expect(sessionsShown()).toBe('4');
+  });
+
+  // L'espace parent reste monté quand son dernier profil local disparaît : il
+  // doit alors basculer sur l'enfant suivi, pas afficher un espace vide.
+  it('supprimer le dernier profil local montre l’enfant suivi', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await renderMixed();
+    await clickTab(/Papa/);
+
+    await act(async () => {
+      fireEvent.click(findButton(/^Profils et sauvegarde/)!);
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await act(async () => {
+      fireEvent.click(findButton(/^Supprimer le profil de Papa$/)!);
+    });
+    await flush();
+
+    expect(listProfiles()).toHaveLength(0);
+    // Retour à l'accueil de l'espace parent, sans page de réglage orpheline.
+    expect(document.querySelector('.parent-dashboard--settings')).toBeNull();
+    expect(document.querySelector('.parent-title')?.textContent).toBe('Zoé');
+    expect(sessionsShown()).toBe('30');
   });
 });

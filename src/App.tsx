@@ -94,8 +94,6 @@ const ConjPlacementScreen = lazy(() => import('./screens/ConjPlacementScreen'));
 const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
 const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
-const PrivacyScreen    = lazy(() => import('./screens/PrivacyScreen'));
-const ChangelogScreen  = lazy(() => import('./screens/ChangelogScreen'));
 
 type Screen =
   | 'welcome'
@@ -108,9 +106,7 @@ type Screen =
   | 'progress'
   | 'badges'
   | 'rules'
-  | 'parent'
-  | 'privacy'
-  | 'changelog';
+  | 'parent';
 
 // Écran d'arrivée d'un profil donné (post-sélection ou post-import).
 function profileHome(profile: UserProfile): Screen {
@@ -155,17 +151,28 @@ type NavAction = Screen | ((prev: Screen) => Screen) | Nav;
 function navReducer(prev: Nav, action: NavAction): Nav {
   if (typeof action === 'object') return action;
   const screen = typeof action === 'function' ? action(prev.screen) : action;
-  return screen === prev.screen ? prev : { screen, parentPage: null };
+  // Une mise à jour fonctionnelle qui rend l'écran courant ne change rien ; un
+  // écran nommé, lui, referme la page ouverte même s'il est déjà affiché.
+  if (screen === prev.screen && (typeof action === 'function' || prev.parentPage === null)) return prev;
+  return { screen, parentPage: null };
 }
+
+// Pages de l'espace parent qui ramènent à une autre page plutôt qu'à son
+// accueil : les pages d'information s'ouvrent depuis « Aide et infos ».
+const PARENT_PAGE_BACK: Partial<Record<ParentPage, ParentPage>> = {
+  privacy: 'help',
+  changelog: 'help',
+};
 
 // Où mènent le bouton retour de l'UI et le geste « retour » du système
 // (Android) — une seule table pour que les deux ne divergent jamais. null = on laisse faire le navigateur (sortie de
 // l'app) — écrans racine, et séance/récap où un retour involontaire ferait
 // perdre du travail.
 function backTarget({ screen, parentPage }: Nav, hasProfile: boolean): Nav | null {
-  // Une page de l'espace parent ramène à son accueil, y compris sur un appareil
-  // qui ne fait que suivre, où cet accueil n'a lui-même aucun retour.
-  if (parentPage) return { screen: 'parent', parentPage: null };
+  // Une page de l'espace parent ramène à son accueil (ou à la page qui l'a
+  // ouverte), y compris sur un appareil qui ne fait que suivre, où cet accueil
+  // n'a lui-même aucun retour.
+  if (parentPage) return { screen: 'parent', parentPage: PARENT_PAGE_BACK[parentPage] ?? null };
   const to = (target: Screen): Nav => ({ screen: target, parentPage: null });
   switch (screen) {
     case 'progress':
@@ -174,9 +181,6 @@ function backTarget({ screen, parentPage }: Nav, hasProfile: boolean): Nav | nul
       return to('home');
     case 'parent':
       return hasProfile ? to('home') : null;
-    case 'privacy':
-    case 'changelog':
-      return to('parent');
     default:
       return null;
   }
@@ -231,7 +235,7 @@ export default function App({
   // qu'un écran à part : ParentDashboard reste monté, avec la source affichée
   // et l'instantané distant déjà relu.
   const openParentPage = useCallback(
-    (parentPage: ParentPage) => setScreen({ screen: 'parent', parentPage }),
+    (parentPage: ParentPage | null) => setScreen({ screen: 'parent', parentPage }),
     [],
   );
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
@@ -409,7 +413,8 @@ export default function App({
   // depuis l'espace parent. Tant qu'un écran a une cible de retour, une entrée
   // factice est empilée ; le popstate qui la consomme ramène à la cible, et
   // `backPops` force le ré-empilement si la cible a elle-même un retour
-  // (changelog → parent → accueil). Quitter l'écran par l'UI retire l'entrée.
+  // (Nouveautés → aide → espace parent → accueil). Quitter l'écran par l'UI
+  // retire l'entrée.
   const back = backTarget(nav, profile !== null);
   const backRef = useRef(back);
   backRef.current = back;
@@ -1055,12 +1060,6 @@ export default function App({
     URL.revokeObjectURL(url);
   }, [profile]);
 
-  const handleImport = useCallback((json: string): UserProfile | null => {
-    const imported = importProfile(json);
-    if (imported) setProfile(imported);
-    return imported;
-  }, []);
-
   // Variante pour l'écran d'accueil (migration / nouvel appareil) : importe en
   // tant que NOUVEAU profil (jamais d'écrasement d'un autre enfant) ET navigue
   // vers l'écran adapté au profil restauré — sinon on resterait bloqué sur
@@ -1238,22 +1237,12 @@ export default function App({
           // part où revenir (ses pages, elles, reviennent à cet accueil).
           onBack={back ? goBack : undefined}
           onExport={handleExport}
-          onImport={handleImport}
+          onRestore={setProfile}
           onAddProfile={handleAddProfile}
           onDeleteProfile={handleDeleteProfile}
-          onShowPrivacy={() => setScreen('privacy')}
-          onShowChangelog={() => setScreen('changelog')}
           page={nav.parentPage}
           onOpenPage={openParentPage}
         />
-      )}
-
-      {screen === 'privacy' && (
-        <PrivacyScreen onBack={goBack} />
-      )}
-
-      {screen === 'changelog' && (
-        <ChangelogScreen onBack={goBack} />
       )}
       </Suspense>
     </div>

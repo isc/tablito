@@ -8,15 +8,13 @@
 // SQL, donc deux hooks montés en même temps ne s'écrasent pas.
 
 import { useCallback, useEffect, useState } from 'react';
-import { getPushPrefs, setPushPref, type PushPrefs } from '../lib/push';
+import { getPushPrefs, peekPushPrefs, setPushPref, type PushPrefs } from '../lib/push';
+import type { PushPrefStrings } from '../i18n/parent';
 
-interface PushPrefStrings {
-  blocked: string;
-  unavailable: string;
-}
-
-export function usePushPref(key: keyof PushPrefs, t: PushPrefStrings) {
-  const [enabled, setEnabled] = useState(false);
+export function usePushPref(key: keyof PushPrefs, t: Pick<PushPrefStrings, 'blocked' | 'unavailable'>) {
+  // Dernier état connu en attendant la relecture : pas d'interrupteur qui
+  // s'éteint puis se rallume à chaque retour sur l'écran.
+  const [enabled, setEnabled] = useState(() => peekPushPrefs()?.[key] ?? false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 

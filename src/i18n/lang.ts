@@ -107,6 +107,13 @@ export function useGuideBase(): string {
   return `${import.meta.env.BASE_URL}guide/${lang === 'fr' ? '' : `${lang}/`}`;
 }
 
+/** « 2, 3 et 4 » / "2, 3 and 4" : une énumération avec la conjonction de la
+ *  langue, pour les prénoms comme pour les tables. */
+export function formatList(items: Array<string | number>, lang: Lang): string {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} ${lang === 'fr' ? 'et' : 'and'} ${items[items.length - 1]}`;
+}
+
 /** Locale BCP-47 de la langue courante du contexte (pour les composants React). */
 export function useLocale(): string {
   return LOCALE[useContext(LangContext).lang];

@@ -66,7 +66,7 @@ const welcomeFr: WelcomeStrings = {
   cancel: 'Annuler',
   importTitle: 'Ta progression',
   importSubtitle:
-    "Sur l'ancien appareil, ouvre Espace parent → « Transférer », puis scanne le QR affiché avec le bouton ci-dessous. Ou colle une sauvegarde exportée.",
+    "Sur l'ancien appareil, ouvre Espace parent → Profils et sauvegarde → « Changer d'appareil », puis scanne le QR affiché avec le bouton ci-dessous. Ou colle une sauvegarde exportée.",
   scanQr: "Scanner le QR de l'ancien appareil",
   scanPrompt: "Vise le QR code affiché sur l'ancien appareil.",
   scanCameraError:
@@ -104,7 +104,7 @@ const welcomeEn: WelcomeStrings = {
   cancel: 'Cancel',
   importTitle: 'Your progress',
   importSubtitle:
-    'On the old device, open Parent area → "Transfer", then scan the QR it shows using the button below. Or paste an exported backup.',
+    'On the old device, open Parent area → Profiles and backup → "Move to another device", then scan the QR it shows using the button below. Or paste an exported backup.',
   scanQr: "Scan the old device's QR code",
   scanPrompt: 'Point at the QR code shown on the old device.',
   scanCameraError: 'Camera unavailable or access denied. You can paste the backup instead.',

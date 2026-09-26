@@ -6,6 +6,7 @@ import { getCompletedTables } from '../lib/badges';
 import { MASTERY_BOX } from '../lib/leitner';
 import { loadProfile } from '../lib/storage';
 import { BADGE_IDS } from '../types';
+import { openParentDashboard } from './helpers/dom';
 // Préchauffe le chunk de ParentDashboard pour que le React.lazy() côté App.tsx
 // se résolve en synchrone dans les tests qui ouvrent le dashboard.
 import '../screens/ParentDashboard';
@@ -163,30 +164,6 @@ function playSessionAndDismissRecap(opts: { shouldErr?: (answerIdx: number) => b
   }
 
   throw new Error('playSession: MAX_ITERS dépassé — boucle probable');
-}
-
-// Ouvre le dashboard parent depuis Home : clique l'icône engrenage, résout
-// la multiplication aléatoire du ParentGate, puis attend le chunk lazy.
-async function openParentDashboard(): Promise<void> {
-  fireEvent.click(document.querySelector<HTMLButtonElement>('.home-parent-btn')!);
-  const question = document.querySelector('.parent-gate-question');
-  if (!question) throw new Error('ParentGate non affiché');
-  const operands = Array.from(question.querySelectorAll('span'))
-    .map((s) => parseInt(s.textContent ?? '', 10))
-    .filter((n) => Number.isFinite(n));
-  if (operands.length < 2) throw new Error('Opérandes du ParentGate introuvables');
-  const product = operands[0] * operands[1];
-  const input = document.querySelector<HTMLInputElement>('.parent-gate-input')!;
-  fireEvent.change(input, { target: { value: String(product) } });
-  fireEvent.click(findButton('Valider')!);
-  // ParentDashboard est chargé via React.lazy → on flushe plusieurs ticks
-  // microtask pour que le chunk dynamique se résolve et que la Suspense
-  // rende. `act(async)` seul ne suffit pas avec les fake timers.
-  for (let i = 0; i < 10; i++) {
-    await act(async () => {
-      await Promise.resolve();
-    });
-  }
 }
 
 describe('Parcours utilisateur de bout en bout (DOM)', () => {
@@ -411,7 +388,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     },
   );
 
-  it("le bouton « Supprimer ce profil » efface le profil et relance le test de placement", async () => {
+  it("« Supprimer le profil » efface le profil et relance le test de placement", async () => {
     render(<App />);
 
     // Setup minimal : on crée un profil en sautant le test de placement.
@@ -426,8 +403,9 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     expect(loadProfile()).not.toBeNull();
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    fireEvent.click(findButton('Supprimer ce profil')!);
+    fireEvent.click(findButton('Supprimer le profil de Zoe')!);
     confirmSpy.mockRestore();
 
     expect(loadProfile()).toBeNull();
@@ -450,8 +428,9 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     expect(before).not.toBeNull();
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    fireEvent.click(findButton('Supprimer ce profil')!);
+    fireEvent.click(findButton('Supprimer le profil de Zoe')!);
     confirmSpy.mockRestore();
 
     expect(loadProfile()?.name).toBe(before!.name);

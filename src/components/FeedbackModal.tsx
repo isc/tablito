@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { submitFeedback, buildContext, feedbackEnabled } from '../lib/feedback';
+import { submitFeedback, buildContext, feedbackEnabled, type FeedbackSource } from '../lib/feedback';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
 import { useFeedbackModalStrings } from '../i18n/parent';
@@ -12,7 +12,7 @@ interface FeedbackModalProps {
    * l'appareil décrit par le user-agent n'est plus forcément celui qui a produit
    * l'historique : le triage a besoin de le savoir.
    */
-  source?: { kind: 'local' | 'watched'; fetchedAt?: string };
+  source?: FeedbackSource;
   onClose: () => void;
 }
 

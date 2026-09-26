@@ -1,41 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
-import FeedbackModal from '../components/FeedbackModal';
-import NotificationSettings from '../components/NotificationSettings';
-import WeeklyRecapSettings from '../components/WeeklyRecapSettings';
-import LanguageToggle from '../components/LanguageToggle';
+import ParentHelpPage from '../components/ParentHelpPage';
 import ParentOverview from '../components/ParentOverview';
+import ParentProfilesPage from '../components/ParentProfilesPage';
+import ParentSettingsList from '../components/ParentSettingsList';
 import ParentSubjectDetail from '../components/ParentSubjectDetail';
-import ParentWatchPairing from '../components/ParentWatchPairing';
-import QrCanvas from '../components/QrCanvas';
-import { useGuideBase } from '../i18n/lang';
+import ParentWatchPage from '../components/ParentWatchPage';
 import { useParentDashboardStrings } from '../i18n/parent';
 import type { Subject } from '../lib/hardestFacts';
-import { getActiveProfileId } from '../lib/storage';
 import { APP_VERSION } from '../lib/version';
 import { setPushPref } from '../lib/push';
-import { createTransfer, transferConfigured, TRANSFER_TTL_MINUTES } from '../lib/transfer';
-import {
-  fetchWatched,
-  startWatch,
-  stopWatch,
-  type WatchFetchResult,
-  type WatchPairing,
-} from '../lib/watch';
-import {
-  listWatched,
-  loadWatchCredentials,
-  removeWatched,
-  watchConfigured,
-  watchLink,
-  type WatchCredentials,
-  type WatchedProfile,
-} from '../lib/watchStore';
+import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
+import { listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 
-/** Page ouverte dans l'espace parent, par-dessus son accueil : la page d'une
- *  matière. La navigation (retour, geste système) vit dans App. */
-export type ParentPage = Subject;
+// Pages d'information d'« Aide et infos », rarement ouvertes : chargées à la
+// demande, comme l'espace parent lui-même.
+const PrivacyScreen = lazy(() => import('./PrivacyScreen'));
+const ChangelogScreen = lazy(() => import('./ChangelogScreen'));
+
+/** Réglage qui a sa propre page, ouverte depuis la liste de l'accueil. */
+type SettingsPage = 'watch' | 'profiles' | 'help';
+
+/** Page ouverte dans l'espace parent, par-dessus son accueil : celle d'une
+ *  matière, d'un réglage, ou une page d'information de l'aide. La navigation
+ *  (retour, geste système) vit dans App. */
+export type ParentPage = Subject | SettingsPage | 'privacy' | 'changelog';
 
 interface ParentDashboardProps {
   // Profil local actif. NULL sur un appareil qui ne fait que suivre un enfant à
@@ -48,13 +38,12 @@ interface ParentDashboardProps {
   // revenir, l'espace parent EST l'app.
   onBack?: () => void;
   onExport: () => void;
-  onImport: (json: string) => void;
+  // Remplace la progression du profil actif par une sauvegarde déjà lue.
+  onRestore: (backup: UserProfile) => void;
   // Multi-profils : lance l'onboarding Welcome pour un nouvel enfant.
   onAddProfile: () => void;
   // Supprime le profil actif (avec confirmation côté App).
   onDeleteProfile: () => void;
-  onShowPrivacy: () => void;
-  onShowChangelog: () => void;
   // Suivi appairé au boot depuis un `#watch=` : déjà déchiffré par main.tsx, on
   // l'affiche sans second aller-retour réseau.
   initialWatch?: WatchPairing | null;
@@ -67,68 +56,47 @@ interface ParentDashboardProps {
   // ce composant — et ce qu'il tient (source affichée, instantané distant déjà
   // relu) — reste monté.
   page: ParentPage | null;
-  onOpenPage: (page: ParentPage) => void;
+  onOpenPage: (page: ParentPage | null) => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
 // fetchWatched : instantané, partage révoqué, échec).
 type RemoteState = 'loading' | WatchFetchResult;
 
-// Cible d'un « Copié ✓ » — un seul état pour les trois boutons qui copient.
-type CopyTarget = 'app' | 'transfer' | 'watch';
-
-// État du partage de la progression locale (côté appareil de l'enfant) — un
-// seul état, l'objet {link} valant « partagé, QR affichable ».
-type ShareState = 'idle' | 'loading' | 'error' | { link: string };
-
 export default function ParentDashboard({
   profile,
   onBack,
   onExport,
-  onImport,
+  onRestore,
   onAddProfile,
   onDeleteProfile,
-  onShowPrivacy,
-  onShowChangelog,
   initialWatch = null,
   openOnWatched = false,
   page,
   onOpenPage,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
-  const guideBase = useGuideBase();
-
-  const [showImport, setShowImport] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
-  // Un seul drapeau « Copié ✓ » pour les trois boutons qui copient un lien.
-  const [copied, setCopied] = useState<CopyTarget | null>(null);
-  // Transfert vers un autre appareil : un seul état, l'objet {link} valant
-  // « prêt, QR à afficher » (cf. lib/transfer) — aucune combinaison incohérente
-  // possible entre statut et lien.
-  const [transfer, setTransfer] = useState<ShareState>('idle');
-  const transferLink = typeof transfer === 'object' ? transfer.link : null;
-
-  const profileId = getActiveProfileId();
 
   // === Sources : profil local + profils suivis à distance ===
   const [watched, setWatched] = useState<WatchedProfile[]>(listWatched);
-  // Source affichée : null = la progression stockée ICI, sinon le code d'un
+  // Source choisie : null = la progression stockée ICI, sinon le code d'un
   // suivi. Une chaîne (et non un objet) parce que c'est l'identité stable dont
   // dépend la relecture : re-cliquer l'onglet courant repose la même valeur,
   // React court-circuite le render, et aucune relecture n'est relancée.
-  const [selectedCode, setSelectedCode] = useState<string | null>(() => {
+  const [chosenCode, setChosenCode] = useState<string | null>(() => {
     // Appairage au boot : on ouvre directement sur l'enfant qu'on vient de
     // scanner, c'est la raison même de l'ouverture de l'app.
     if (initialWatch) return initialWatch.entry.code;
-    const firstWatched = listWatched()[0]?.code ?? null;
     // Arrivée par la notification de recap : c'est la progression SUIVIE que le
     // parent vient consulter, pas la sienne — même s'il a un profil local ici,
     // auquel cas la source par défaut serait ce profil et il faudrait encore
     // taper l'onglet de l'enfant.
-    if (openOnWatched && firstWatched) return firstWatched;
-    return profile ? null : firstWatched;
+    return openOnWatched ? listWatched()[0]?.code ?? null : null;
   });
+  // Source affichée : le choix, tant qu'il existe encore — sinon (suivi arrêté,
+  // profil local supprimé) le profil local, ou à défaut le premier enfant suivi.
+  const chosenExists = chosenCode ? watched.some((w) => w.code === chosenCode) : profile !== null;
+  const selectedCode = chosenExists ? chosenCode : profile ? null : watched[0]?.code ?? null;
 
   // L'instantané distant, ÉTIQUETÉ du code auquel il appartient : c'est ce qui
   // répond à « ai-je déjà les données de la source affichée ? » sans état de
@@ -147,7 +115,7 @@ export default function ParentDashboard({
   // Relecture au changement de source. La promesse est chaînée INLINE et non
   // déportée dans un useCallback : c'est la forme que la règle
   // react-hooks/set-state-in-effect accepte, et celle déjà employée par
-  // NotificationSettings. Aucun état « chargement » n'est posé ici — l'absence
+  // usePushPref. Aucun état « chargement » n'est posé ici — l'absence
   // d'instantané pour la source affichée EST le chargement (cf. remoteState).
   useEffect(() => {
     if (!selectedCode || inFlightRef.current === selectedCode) return;
@@ -189,125 +157,33 @@ export default function ParentDashboard({
     ...watched.map((w) => ({ code: w.code as string | null, label: t.remoteSourceTab(w.name) })),
   ];
 
-  // === Partage de la progression locale (appareil de l'enfant) ===
-  const [share, setShare] = useState<ShareState>('idle');
-  const shareLink = typeof share === 'object' ? share.link : null;
-  // Identifiants du partage déjà ouvert (possiblement lors d'une session
-  // précédente). En state et non relus à chaque render : startWatch/stopWatch
-  // écrivent dans localStorage sans repasser par React, donc c'est ici que vit
-  // la vérité affichée — sinon « Ne plus partager » laisse le bouton continuer à
-  // proposer « Revoir le QR code » jusqu'au prochain render fortuit.
-  const [sharedCreds, setSharedCreds] = useState<WatchCredentials | null>(() =>
-    profileId ? loadWatchCredentials(profileId) : null,
-  );
-
-  // === Appairage d'un suivi (appareil du parent, cf. ParentWatchPairing) ===
+  // Appairage réussi depuis la page du suivi à distance (cf. ParentWatchPairing).
   const handlePaired = (paired: WatchPairing) => {
     setWatched(listWatched());
     // L'instantané est déjà déchiffré : on l'étiquette, et marquer le code comme
     // servi évite que l'effet relance une relecture inutile juste après.
     inFlightRef.current = paired.entry.code;
     setRemote({ code: paired.entry.code, state: paired.snapshot });
-    setSelectedCode(paired.entry.code);
-  };
-
-  // « Copié ✓ » pendant 2 s. Échec silencieux : clipboard indisponible (contexte
-  // non sécurisé), l'utilisateur a d'autres chemins (QR, feuille de partage).
-  const copyWithFeedback = async (text: string, target: CopyTarget) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(target);
-      setTimeout(() => setCopied((c) => (c === target ? null : c)), 2000);
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleShareApp = async () => {
-    const url = window.location.origin + import.meta.env.BASE_URL;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Tablito', text: t.shareText, url });
-      } catch {
-        // Annulation utilisateur : pas de fallback clipboard, sinon on copie
-        // un lien que l'utilisateur a explicitement refusé de partager.
-      }
-      return;
-    }
-    await copyWithFeedback(url, 'app');
-  };
-
-  const handleTransfer = async () => {
-    if (transfer !== 'idle') {
-      // Second clic : replie le panneau. Le code déposé expirera tout seul.
-      setTransfer('idle');
-      return;
-    }
-    if (!profile) return;
-    setTransfer('loading');
-    const link = await createTransfer(profile);
-    setTransfer(link ? { link } : 'error');
-  };
-
-  // Ouvre le partage, ou réaffiche le QR d'un partage déjà ouvert (le lien est
-  // reconstruit depuis les identifiants locaux, sans redéposer d'instantané).
-  const handleShareProgress = async () => {
-    if (share !== 'idle') {
-      setShare('idle');
-      return;
-    }
-    if (!profile || !profileId) return;
-    if (sharedCreds) {
-      setShare({ link: watchLink(sharedCreds) });
-      return;
-    }
-    setShare('loading');
-    const link = await startWatch(profileId, profile);
-    if (!link) {
-      setShare('error');
-      return;
-    }
-    setSharedCreds(loadWatchCredentials(profileId));
-    setShare({ link });
-  };
-
-  const handleStopSharing = async () => {
-    if (!profileId) return;
-    setShare('idle');
-    setSharedCreds(null);
-    await stopWatch(profileId);
-  };
-
-  const handleImport = () => {
-    if (importJson.trim()) {
-      onImport(importJson.trim());
-      setShowImport(false);
-      setImportJson('');
-    }
+    setChosenCode(paired.entry.code);
+    // Retour à l'accueil, sur l'enfant qu'on vient d'appairer : c'est lui qu'on
+    // voulait voir.
+    onOpenPage(null);
   };
 
   const handleStopWatching = (code: string) => {
     const list = removeWatched(code);
     setWatched(list);
     // Plus aucun enfant suivi : le recap hebdomadaire n'a plus rien à annoncer,
-    // et son toggle disparaît avec la liste — le laisser actif condamnerait le
+    // et sa ligne disparaît avec la liste — le laisser actif condamnerait le
     // parent à une notification hebdomadaire qu'il ne pourrait plus éteindre
     // depuis l'app.
     if (list.length === 0) void setPushPref('weekly', false);
-    // Le suivi affiché disparaît : on retombe sur le profil local, ou à défaut
-    // sur un autre enfant suivi.
-    if (selectedCode === code) setSelectedCode(profile ? null : list[0]?.code ?? null);
   };
-
-  // Sections qui n'ont de sens que sur la progression stockée ICI : sauvegarde,
-  // transfert, rappels, suppression de profil. Sur un profil suivi à distance,
-  // elles parleraient d'un appareil qu'on n'a pas en main.
-  const localSelected = selectedCode === null && profile !== null;
 
   // Page d'une matière, sur le profil affiché. Une page ne s'ouvre que depuis
   // une carte de l'accueil, qui n'existe qu'avec un profil affiché ; la clé
   // repart de zéro (niveau actif, bascules) si la source changeait dessous.
-  if (page && shown) {
+  if ((page === 'math' || page === 'conj') && shown) {
     return (
       <div className="parent-dashboard parent-dashboard--subject">
         <Header
@@ -317,6 +193,56 @@ export default function ParentDashboard({
           title={page === 'conj' ? t.conjugations : t.math}
         />
         <ParentSubjectDetail key={selectedCode ?? 'local'} profile={shown} subject={page} />
+      </div>
+    );
+  }
+
+  // Pages d'information, plein écran avec leur propre en-tête. Toujours un
+  // retour (vers « Aide et infos ») : cf. backTarget dans App. Leur frontière
+  // de chargement est ici et non celle d'App : sous Preact, un chargement
+  // suspendu recrée tout ce que sa frontière enveloppe, et l'espace parent y
+  // perdrait sa source affichée.
+  if ((page === 'privacy' || page === 'changelog') && onBack) {
+    return (
+      <Suspense fallback={null}>
+        {page === 'privacy' ? <PrivacyScreen onBack={onBack} /> : <ChangelogScreen onBack={onBack} />}
+      </Suspense>
+    );
+  }
+
+  // Page d'un réglage. Ce qu'elles règlent tient à l'APPAREIL (ses profils, ses
+  // partages, ses suivis), pas au profil affiché.
+  if (page === 'watch' || page === 'help' || (page === 'profiles' && profile)) {
+    const title: Record<SettingsPage, string> = {
+      watch: t.watchTitle,
+      profiles: t.profilesTitle,
+      help: t.helpTitle,
+    };
+    return (
+      <div className="parent-dashboard parent-dashboard--settings">
+        <Header onBack={onBack} backLabel={t.backToOverview} eyebrow={t.settingsEyebrow} title={title[page]} />
+        {page === 'watch' && (
+          <ParentWatchPage watched={watched} onPaired={handlePaired} onStopWatching={handleStopWatching} />
+        )}
+        {page === 'profiles' && profile && (
+          <ParentProfilesPage
+            profile={profile}
+            onAddProfile={onAddProfile}
+            onDeleteProfile={onDeleteProfile}
+            onExport={onExport}
+            onRestore={onRestore}
+          />
+        )}
+        {page === 'help' && (
+          <ParentHelpPage
+            feedbackProfile={shown}
+            feedbackSource={
+              watchedEntry ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt } : { kind: 'local' }
+            }
+            onShowChangelog={() => onOpenPage('changelog')}
+            onShowPrivacy={() => onOpenPage('privacy')}
+          />
+        )}
       </div>
     );
   }
@@ -334,7 +260,7 @@ export default function ParentDashboard({
               key={item.code ?? 'local'}
               type="button"
               className={`progress-tab ${item.code === selectedCode ? 'active' : ''}`}
-              onClick={() => setSelectedCode(item.code)}
+              onClick={() => setChosenCode(item.code)}
             >
               {item.label}
             </button>
@@ -376,252 +302,44 @@ export default function ParentDashboard({
 
       {shown ? (
         <ParentOverview profile={shown} onOpenSubject={onOpenPage} />
-      ) : (
+      ) : watchedEntry ? (
         <div className="parent-section">
           <p className="parent-section-subtitle">
             {remoteState === null || remoteState === 'loading' ? t.remoteLoading : t.remoteNoData}
           </p>
+        </div>
+      ) : (
+        // Ni profil ici ni enfant suivi (un QR périmé scanné sans Tablito) :
+        // rien à montrer, et le chemin pour suivre un enfant en tête.
+        <div className="parent-section">
+          <div className="parent-card parent-empty">
+            <p className="parent-empty-text">{t.emptyProgress}</p>
+            {watchConfigured() && (
+              <button className="parent-action-btn" onClick={() => onOpenPage('watch')}>
+                {t.watchFollow}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Au-delà : ce qu'on règle, par opposition à ce qu'on consulte. */}
       <div className="parent-section parent-settings-start">
         <h2 className="parent-overline">{t.settings}</h2>
+        <ParentSettingsList hasLocalProfile={profile !== null} watched={watched} onOpenPage={onOpenPage} />
       </div>
 
-      {/* Actions de sauvegarde — propres à la progression stockée ici. */}
-      {localSelected && (
+      {/* Appareil qui ne fait que suivre : la porte de sortie vers un profil
+          local, à la place de la ligne « Profils et sauvegarde ». */}
+      {!profile && (
         <div className="parent-section">
-          <h3>{t.backup}</h3>
           <div className="parent-actions">
-            {transferConfigured() && (
-              <button className="parent-action-btn" onClick={handleTransfer}>
-                {t.transfer}
-              </button>
-            )}
-            <button className="parent-action-btn" onClick={onExport}>
-              {t.export}
-            </button>
-            <button className="parent-action-btn" onClick={() => setShowImport(!showImport)}>
-              {t.import}
+            <button className="parent-action-btn" onClick={onAddProfile}>
+              {t.createLocalProfile}
             </button>
           </div>
-          {transfer !== 'idle' && (
-            <div className="parent-transfer-area">
-              {transfer === 'loading' && (
-                <p className="parent-transfer-status">{t.transferPreparing}</p>
-              )}
-              {transfer === 'error' && (
-                <p className="parent-transfer-status parent-transfer-status--error">
-                  {t.transferError}
-                </p>
-              )}
-              {transferLink && (
-                <>
-                  <QrCanvas
-                    value={transferLink}
-                    className="parent-transfer-qr"
-                    ariaLabel={t.transferQrAlt}
-                    onError={() => setTransfer('error')}
-                  />
-                  <p className="parent-transfer-hint">{t.transferHint(TRANSFER_TTL_MINUTES)}</p>
-                  <button
-                    className="parent-action-btn"
-                    onClick={() => void copyWithFeedback(transferLink, 'transfer')}
-                  >
-                    {copied === 'transfer' ? t.linkCopied : t.transferCopyLink}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+          <p className="parent-section-subtitle parent-note">{t.profilesSubtitleWatcher}</p>
         </div>
-      )}
-
-      {/* Suivi à distance — les deux sens : partager la progression de cet
-          appareil, et suivre celle d'un autre. */}
-      {watchConfigured() && (
-        <div className="parent-section">
-          <h3>{t.watchTitle}</h3>
-          <p className="parent-section-subtitle">{t.watchSubtitle}</p>
-
-          {localSelected && (
-            <div className="parent-watch-block">
-              <div className="parent-actions">
-                <button className="parent-action-btn" onClick={handleShareProgress}>
-                  {sharedCreds ? t.watchShowQr(profile.name) : t.watchShare(profile.name)}
-                </button>
-                {sharedCreds && (
-                  <button
-                    className="parent-action-btn parent-action-btn--danger"
-                    onClick={handleStopSharing}
-                  >
-                    {t.watchStopSharing}
-                  </button>
-                )}
-              </div>
-              {share !== 'idle' && (
-                <div className="parent-transfer-area">
-                  {share === 'loading' && (
-                    <p className="parent-transfer-status">{t.watchPreparing}</p>
-                  )}
-                  {share === 'error' && (
-                    <p className="parent-transfer-status parent-transfer-status--error">
-                      {t.watchShareError}
-                    </p>
-                  )}
-                  {shareLink && (
-                    <>
-                      <QrCanvas
-                        value={shareLink}
-                        className="parent-transfer-qr"
-                        ariaLabel={t.watchQrAlt}
-                        onError={() => setShare('error')}
-                      />
-                      <p className="parent-transfer-hint">{t.watchShareHint}</p>
-                      <button
-                        className="parent-action-btn"
-                        onClick={() => void copyWithFeedback(shareLink, 'watch')}
-                      >
-                        {copied === 'watch' ? t.linkCopied : t.transferCopyLink}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          <ParentWatchPairing onPaired={handlePaired} />
-
-          {/* Recap hebdomadaire et liste des suivis : n'ont de sens que si cet
-              appareil suit quelqu'un. */}
-          {watched.length > 0 && (
-            <>
-              <WeeklyRecapSettings />
-              <div className="parent-watch-list">
-                {watched.map((w) => (
-                  <div key={w.code} className="parent-watch-row">
-                    <span className="parent-watch-name">{w.name}</span>
-                    <button
-                      className="parent-watch-remove"
-                      onClick={() => handleStopWatching(w.code)}
-                    >
-                      {t.watchStopFollowing}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="parent-section">
-        <h3>{t.helpAndFeedback}</h3>
-        <div className="parent-actions">
-          <a
-            className="parent-action-btn"
-            href={guideBase}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t.userGuide}
-          </a>
-          <button className="parent-action-btn" onClick={() => setShowFeedback(true)}>
-            {t.sendFeedback}
-          </button>
-        </div>
-      </div>
-
-      {localSelected && <NotificationSettings />}
-
-      <div className="parent-section">
-        <h3>{t.shareTablito}</h3>
-        <p className="parent-section-subtitle">{t.shareSubtitle}</p>
-        <div className="parent-actions">
-          <button className="parent-action-btn" onClick={handleShareApp}>
-            {copied === 'app' ? t.linkCopied : t.shareApp}
-          </button>
-        </div>
-      </div>
-
-      <div className="parent-section">
-        <LanguageToggle />
-      </div>
-
-      <div className="parent-section">
-        <h3>{t.about}</h3>
-        <div className="parent-actions">
-          <button className="parent-action-btn" onClick={onShowChangelog}>
-            {t.whatsNew}
-          </button>
-          <button className="parent-action-btn" onClick={onShowPrivacy}>
-            {t.privacy}
-          </button>
-        </div>
-      </div>
-
-      <div className="parent-section">
-        <h3>{t.profiles}</h3>
-        <p className="parent-section-subtitle">
-          {localSelected && profile
-            ? t.profilesSubtitle(profile.name)
-            : t.profilesSubtitleWatcher}
-        </p>
-        <div className="parent-actions">
-          <button className="parent-action-btn" onClick={onAddProfile}>
-            {profile ? t.addChild : t.createLocalProfile}
-          </button>
-          {localSelected && (
-            <button
-              className="parent-action-btn parent-action-btn--danger"
-              onClick={onDeleteProfile}
-            >
-              {t.deleteThisProfile}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {showImport && (
-        <div className="parent-import-area">
-          <textarea
-            className="parent-import-textarea"
-            placeholder={t.pasteJsonHere}
-            value={importJson}
-            onChange={(e) => setImportJson((e.target as HTMLTextAreaElement).value)}
-          />
-          <button
-            className="parent-import-confirm"
-            onClick={handleImport}
-            disabled={!importJson.trim()}
-          >
-            {t.confirmImport}
-          </button>
-        </div>
-      )}
-
-      {showFeedback && (
-        // Le profil JOINT est celui qu'on REGARDE, pas celui de l'appareil :
-        // un parent qui signale un souci depuis l'onglet de son enfant suivi à
-        // distance parle de l'enfant, et joindre son propre profil rendait
-        // l'avis indébuggable (vécu : « 12 divisions bloquées » impossible à
-        // reproduire faute du bon historique).
-        //
-        // `shown` et non `shown ?? profile` : pendant « Récupération… » il vaut
-        // null, et le repli joindrait le profil local sous un libellé qui nomme
-        // l'enfant distant. FeedbackModal masque simplement la case quand il
-        // n'a pas de profil — l'avis part sans historique, ce qui est vrai.
-        <FeedbackModal
-          profile={shown}
-          source={
-            watchedEntry
-              ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt }
-              : { kind: 'local' }
-          }
-          onClose={() => setShowFeedback(false)}
-        />
       )}
 
       <div className="parent-version" aria-label={t.appVersionLabel}>
