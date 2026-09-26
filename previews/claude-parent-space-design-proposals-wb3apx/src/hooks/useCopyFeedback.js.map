@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["hooks/useCopyFeedback.ts"],
+  "sourcesContent": ["import { useCallback, useState } from 'react';\n\n/**\n * Copie un texte dans le presse-papiers et signale \u00AB Copi\u00E9 \u2713 \u00BB pendant 2 s.\n * \u00C9chec silencieux : presse-papiers indisponible (contexte non s\u00E9curis\u00E9),\n * l'utilisateur a d'autres chemins (QR, feuille de partage).\n */\nexport function useCopyFeedback(): { copied: boolean; copy: (text: string) => Promise<void> } {\n  const [copied, setCopied] = useState(false);\n  const copy = useCallback(async (text: string) => {\n    try {\n      await navigator.clipboard.writeText(text);\n      setCopied(true);\n      setTimeout(() => setCopied(false), 2000);\n    } catch {\n      // ignore\n    }\n  }, []);\n  return { copied, copy };\n}\n"],
+  "mappings": "AAAA,OAAS,eAAAA,EAAa,YAAAC,MAAgB,QAO/B,SAASC,GAA8E,CAC5F,KAAM,CAACC,EAAQC,CAAS,EAAIH,EAAS,EAAK,EACpCI,EAAOL,EAAY,MAAOM,GAAiB,CAC/C,GAAI,CACF,MAAM,UAAU,UAAU,UAAUA,CAAI,EACxCF,EAAU,EAAI,EACd,WAAW,IAAMA,EAAU,EAAK,EAAG,GAAI,CACzC,MAAQ,CAER,CACF,EAAG,CAAC,CAAC,EACL,MAAO,CAAE,OAAAD,EAAQ,KAAAE,CAAK,CACxB",
+  "names": ["useCallback", "useState", "useCopyFeedback", "copied", "setCopied", "copy", "text"]
+}

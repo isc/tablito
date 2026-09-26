@@ -1,0 +1,3 @@
+import{jsx as t}from"preact/jsx-runtime";import{pushConfigured as s,pushSupported as u}from"../lib/push.js";import{isIOS as f,isStandalone as m}from"../lib/install.js";import{useWeeklyRecapStrings as p}from"../i18n/parent.js";import{usePushPref as a}from"../hooks/usePushPref.js";import{SettingRow as g,SwitchRow as b}from"./ParentSettingRow.js";import{CalendarIcon as o}from"./ParentSettingIcons.js";function c(){const e=p(),{enabled:i,busy:r,message:n,toggle:l}=a("weekly",e);return s?u()?t(b,{icon:t(o,{}),title:e.title,sub:e.subtitle,enabled:i,busy:r,message:n,onToggle:l}):f()&&!m()?t(g,{icon:t(o,{}),title:e.title,sub:e.iosInstallSubtitle}):null:null}export{c as default};
+
+//# sourceMappingURL=WeeklyRecapSettings.js.map

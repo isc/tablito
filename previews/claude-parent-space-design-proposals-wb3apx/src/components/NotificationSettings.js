@@ -1,0 +1,3 @@
+import{jsx as i}from"preact/jsx-runtime";import{pushConfigured as s,pushSupported as u}from"../lib/push.js";import{isIOS as m,isStandalone as f}from"../lib/install.js";import{useNotificationSettingsStrings as a}from"../i18n/parent.js";import{usePushPref as d}from"../hooks/usePushPref.js";import{SettingRow as g,SwitchRow as p}from"./ParentSettingRow.js";import{BellIcon as e}from"./ParentSettingIcons.js";function S(){const t=a(),{enabled:o,busy:n,message:r,toggle:l}=d("daily",t);return s?u()?i(p,{icon:i(e,{}),title:t.dailyReminder,sub:t.reminderSubtitle,enabled:o,busy:n,message:r,onToggle:l}):m()&&!f()?i(g,{icon:i(e,{}),title:t.dailyReminder,sub:t.iosInstallSubtitle}):null:null}export{S as default};
+
+//# sourceMappingURL=NotificationSettings.js.map

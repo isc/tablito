@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["i18n/tense.ts"],
+  "sourcesContent": ["// Nom affichable d'un temps de conjugaison, par langue. Vit \u00E0 part parce que\n// deux modules le lisent depuis des mondes diff\u00E9rents : `i18n/badges.ts`, qui\n// est bilingue, et `i18n/conjugation.ts`, dont l'en-t\u00EAte dit qu'il est FR\n// SEULEMENT \u00E0 dessein. Loger la table dans l'un ou l'autre revenait \u00E0 mettre la\n// ligne `fr` dans le module monolingue et la ligne `en` ailleurs \u2014 un concept,\n// deux domiciles, et deux orthographes le jour o\u00F9 l'un bouge. (Loger la table\n// dans `conjugation.ts` \u00E9tait de toute fa\u00E7on exclu : `scripts/generate-tts.mjs`\n// charge ce module-l\u00E0 via `importTs`, qui interdit les imports runtime.)\n//\n// Les \u00E9crans de la mati\u00E8re indexent `.fr` en clair : la conjugaison est fr-only,\n// autant que le point d'appel le dise.\n\nimport type { Lang } from './lang';\nimport type { ConjTense } from '../types';\n\nexport const TENSE_NAMES: Record<Lang, Record<ConjTense, string>> = {\n  fr: { present: 'pr\u00E9sent', imparfait: 'imparfait', futur: 'futur' },\n  // La mati\u00E8re est fr-only : cette ligne existe pour que la table reste totale\n  // (les badges de conjugaison sont masqu\u00E9s quand l'interface est en anglais).\n  en: { present: 'present', imparfait: 'imperfect', futur: 'future' },\n};\n"],
+  "mappings": "AAeO,MAAMA,EAAuD,CAClE,GAAI,CAAE,QAAS,aAAW,UAAW,YAAa,MAAO,OAAQ,EAGjE,GAAI,CAAE,QAAS,UAAW,UAAW,YAAa,MAAO,QAAS,CACpE",
+  "names": ["TENSE_NAMES"]
+}
