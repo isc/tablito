@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260926115659"
+const CACHE = 'tablito-' + "20260926122435"
 const BASE = "/previews/claude-parent-space-design-proposals-wb3apx/"
 const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/favicon.svg",
@@ -79,7 +79,6 @@ const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/Modal.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/MysteryGrid.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/MysteryImage.js",
-  "/previews/claude-parent-space-design-proposals-wb3apx/src/components/NotificationSettings.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/NumPad.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentGate.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentHardFacts.js",
@@ -95,7 +94,9 @@ const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentSubjectDetail.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentWatchPage.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentWatchPairing.js",
+  "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ProfileAvatar.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ProgressGrid.js",
+  "/previews/claude-parent-space-design-proposals-wb3apx/src/components/PushPrefRow.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/QrCanvas.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/RemainderMysteryImage.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/RemainderProgressGrid.js",
@@ -104,7 +105,6 @@ const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/StrategyHintShell.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/StreakDetailModal.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/VoiceInput.js",
-  "/previews/claude-parent-space-design-proposals-wb3apx/src/components/WeeklyRecapSettings.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/conjHintLine.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/hooks/useConfetti.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/hooks/useCopyFeedback.js",
@@ -126,6 +126,7 @@ const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/language.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/onboarding.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/parent.js",
+  "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/parentGate.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/privacy.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/progress.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/i18n/recap.js",

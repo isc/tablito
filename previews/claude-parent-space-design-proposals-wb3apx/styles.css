@@ -1841,47 +1841,6 @@
   box-shadow: 0 1px 0 var(--indigo-ink);
 }
 
-/* ===== components/NotificationSettings.css ===== */
-/* Interrupteur des notifications de l'espace parent (rappel quotidien, recap
-   du dimanche), au bout de leur ligne de réglage (cf. ParentSettingRow). */
-.notif-switch {
-  position: relative;
-  width: 46px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--line);
-  flex-shrink: 0;
-  transition: background 0.2s ease;
-}
-
-.notif-switch--on {
-  background: var(--sage);
-}
-
-.notif-switch-knob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--paper);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
-}
-
-.notif-switch--on .notif-switch-knob {
-  transform: translateX(18px);
-}
-
-.notif-message {
-  margin-top: 10px;
-  font-family: var(--sans);
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--coral);
-}
-
 /* ===== components/NumPad.css ===== */
 /* Pavé numérique des maths. Le socle commun aux deux pavés (ardoise, relief,
    états, curseur) vit dans Pad.css ; ici ne restent que les dimensions et la
@@ -2369,12 +2328,10 @@
   color: var(--ink-muted);
 }
 
-/* Le chevron de retour, retourné. */
 .parent-subject-chevron {
   display: inline-flex;
   flex-shrink: 0;
   color: var(--ink-muted);
-  transform: scaleX(-1);
 }
 
 /* Niveaux passés : une pastille chacun, cochée tant qu'il reste maîtrisé. */
@@ -2420,11 +2377,6 @@
   font-weight: 800;
   color: var(--ink);
   white-space: nowrap;
-}
-
-/* Fenêtre de la liste « À retravailler », sous la carte. */
-.parent-overview-note {
-  margin: 8px 0 0;
 }
 
 /* ===== components/ParentSegmented.css ===== */
@@ -2521,7 +2473,6 @@
   opacity: 0.6;
 }
 
-/* Icône, ou initiale d'un enfant dans la page des profils. */
 .parent-setting-icon {
   width: 34px;
   height: 34px;
@@ -2532,6 +2483,12 @@
   justify-content: center;
   background: var(--cream-deep);
   color: var(--ink-soft);
+}
+
+/* Pastille d'un enfant (cf. ProfileAvatar), à la place de l'icône. */
+.parent-setting-avatar {
+  border-radius: 50%;
+  color: #fff;
   font-family: var(--serif);
   font-size: 16px;
   font-weight: 700;
@@ -2564,18 +2521,44 @@
   color: var(--ink-muted);
 }
 
-/* Le chevron de retour, retourné. */
-.parent-setting-chevron {
-  transform: scaleX(-1);
+/* Interrupteur d'une notification, au bout de sa ligne (cf. SwitchRow). */
+.notif-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  flex-shrink: 0;
+  transition: background 0.2s ease;
 }
 
-.parent-setting-btn--danger .parent-setting-title {
-  color: var(--coral);
+.notif-switch--on {
+  background: var(--sage);
 }
 
-/* Erreur d'un interrupteur, alignée sur le texte de sa ligne. */
-.parent-setting .notif-message {
+.notif-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.notif-switch--on .notif-switch-knob {
+  transform: translateX(18px);
+}
+
+/* Erreur de la dernière bascule, alignée sur le texte de sa ligne. */
+.notif-message {
   margin: 0 0 10px 46px;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--coral);
 }
 
 /* === Accueil === */
@@ -2590,14 +2573,6 @@
   font-size: 14px;
   line-height: 1.45;
   color: var(--ink-soft);
-}
-
-.parent-create-profile {
-  width: 100%;
-}
-
-.parent-create-profile-note {
-  margin: 10px 0 0;
 }
 
 /* === Pages de réglages === */
@@ -2635,8 +2610,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--indigo-soft);
-  color: var(--indigo);
+  color: #fff;
   font-family: var(--serif);
   font-size: 17px;
   font-weight: 700;
@@ -2689,10 +2663,6 @@
 
 .parent-danger {
   margin-top: 28px;
-}
-
-.parent-danger .parent-action-btn {
-  width: 100%;
 }
 
 /* ===== components/ParentSubjectDetail.css ===== */
@@ -4137,6 +4107,12 @@ input, select, textarea {
   margin: -4px 0 10px;
 }
 
+/* Note sous une carte ou un bouton : collée à ce qu'elle commente plutôt qu'à
+   ce qui suit. */
+.parent-note {
+  margin: 8px 0 0;
+}
+
 .parent-section-help {
   display: inline-flex;
   align-items: center;
@@ -4274,17 +4250,12 @@ input, select, textarea {
   white-space: nowrap;
 }
 
-/* Action buttons */
+/* Boutons d'action côte à côte, à parts égales — ou un seul, sur toute la
+   largeur, y compris dans un bloc qui centre son contenu. */
 .parent-actions {
   display: flex;
   gap: 10px;
-  padding: 0 20px;
-  margin-top: 18px;
-}
-
-.parent-section .parent-actions {
-  padding: 0;
-  margin-top: 0;
+  align-self: stretch;
 }
 
 .parent-action-btn {
@@ -4477,7 +4448,8 @@ input, select, textarea {
   opacity: 0.5;
 }
 
-/* Un bloc par sens du suivi (partager d'ici / suivre d'ailleurs). */
+/* Appairage d'un suivi (cf. ParentWatchPairing) : scanner le QR de l'autre
+   appareil, ou coller son lien. */
 .parent-watch-block {
   display: flex;
   flex-direction: column;
@@ -4486,25 +4458,10 @@ input, select, textarea {
   margin-top: 12px;
 }
 
-/* Enfants suivis, dans leur carte-liste de la page du suivi à distance. */
-.parent-watch-list {
-  list-style: none;
-}
-
-.parent-watch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 48px;
-}
-
-.parent-watch-row + .parent-watch-row {
-  border-top: 1px solid var(--line-soft);
-}
-
-.parent-watch-name {
-  font-weight: 700;
+/* Empilés, comme les boutons des cartes de partage au-dessus : côte à côte,
+   « Scanner un QR code » passait sur deux lignes. */
+.parent-watch-block .parent-actions {
+  flex-direction: column;
 }
 
 .parent-watch-remove {
