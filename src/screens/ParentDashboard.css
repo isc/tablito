@@ -135,15 +135,59 @@
   line-height: 1.1;
 }
 
-/* Sélecteur de source (profil de cet appareil / enfants suivis à distance),
-   sous l'en-tête de l'accueil. Mêmes pastilles que « Mes images ». */
-.parent-source-tabs {
-  margin-top: 16px;
-  padding-bottom: 2px;
+/* Sélecteur d'enfant (cf. ParentChildPicker) : une pastille par enfant, avec
+   sa couleur. Elles passent à la ligne plutôt que de déborder : le body masque
+   tout débordement horizontal, sans bruit. */
+.parent-children {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px 2px;
 }
 
-.parent-source-tabs + .parent-section {
+.parent-children + .parent-section {
   margin-top: 10px;
+}
+
+.parent-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 4px 14px 4px 4px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.parent-child.is-active {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+  color: var(--indigo-ink);
+}
+
+/* La pastille d'enfant (.parent-avatar), en petit. */
+.parent-child-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+}
+
+.parent-child-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.parent-child-remote {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-muted);
 }
 
 /* Courbe d'évolution, dans sa carte de la page de matière : pas de second

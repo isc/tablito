@@ -52,6 +52,32 @@ export function settingsPageTitle(): string | null | undefined {
   return document.querySelector('.parent-dashboard--settings .parent-title')?.textContent;
 }
 
+/** Nombre affiché sous « Séances » dans la carte du jour de l'espace parent. */
+export function sessionsShown(): string {
+  const kpi = Array.from(document.querySelectorAll('.parent-kpi')).find(
+    (el) => el.querySelector('.parent-stat-label')?.textContent === 'Séances',
+  );
+  return kpi?.querySelector('.parent-stat-value')?.textContent ?? '';
+}
+
+/** Les pastilles du sélecteur d'enfant de l'espace parent, dans l'ordre. */
+export function childChips(): Array<{ name: string; remote: boolean; active: boolean }> {
+  return Array.from(document.querySelectorAll('.parent-child')).map((el) => ({
+    name: el.querySelector('.parent-child-name')?.textContent ?? '',
+    remote: el.querySelector('.parent-child-remote') !== null,
+    active: el.getAttribute('aria-pressed') === 'true',
+  }));
+}
+
+/** La pastille d'un enfant, par son prénom. */
+export function childChip(name: string): HTMLButtonElement {
+  const found = Array.from(document.querySelectorAll<HTMLButtonElement>('.parent-child')).find(
+    (el) => el.querySelector('.parent-child-name')?.textContent === name,
+  );
+  if (!found) throw new Error(`Pas de pastille pour ${name}`);
+  return found;
+}
+
 /** Tout le texte rendu, pour les assertions « l'écran dit … ». */
 export function text(): string {
   return document.body.textContent ?? '';

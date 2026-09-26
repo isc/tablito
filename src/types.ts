@@ -321,7 +321,10 @@ export interface RemainderSessionQuestion {
 }
 
 /** Dividende affiché d'une question de division avec reste. */
-export function remainderDividend(q: Pick<RemainderSessionQuestion, 'fact' | 'remainder'>): number {
+export function remainderDividend(q: {
+  fact: Pick<RemainderFact, 'divisor' | 'quotient'>;
+  remainder: number;
+}): number {
   return q.fact.divisor * q.fact.quotient + q.remainder;
 }
 

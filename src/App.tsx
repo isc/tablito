@@ -1060,6 +1060,15 @@ export default function App({
     URL.revokeObjectURL(url);
   }, [profile]);
 
+  // Restauration d'une sauvegarde depuis l'espace parent : elle remplace le
+  // profil actif. Sauvegardée tout de suite, et pas seulement par l'effet de
+  // sauvegarde qui suit le rendu : l'index des profils doit porter le prénom
+  // restauré dès ce rendu-là, que l'espace parent relit.
+  const handleRestore = useCallback((backup: UserProfile) => {
+    saveProfile(backup);
+    setProfile(backup);
+  }, []);
+
   // Variante pour l'écran d'accueil (migration / nouvel appareil) : importe en
   // tant que NOUVEAU profil (jamais d'écrasement d'un autre enfant) ET navigue
   // vers l'écran adapté au profil restauré — sinon on resterait bloqué sur
@@ -1237,7 +1246,7 @@ export default function App({
           // part où revenir (ses pages, elles, reviennent à cet accueil).
           onBack={back ? goBack : undefined}
           onExport={handleExport}
-          onRestore={setProfile}
+          onRestore={handleRestore}
           onAddProfile={handleAddProfile}
           onDeleteProfile={handleDeleteProfile}
           page={nav.parentPage}

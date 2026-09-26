@@ -1,57 +1,57 @@
 import { pickStrings, useStrings, type Lang } from './lang';
 import type { StrategyKind } from '../lib/strategies';
 
-// Textes des stratégies de dérivation (titre + lignes de calcul). Les lignes
-// sont surtout de la notation mathématique (langue-neutre) ; seuls les
-// connecteurs ("On compte :" / "Count:") et les titres sont traduits. KEEP IN
+// Textes des stratégies de dérivation (titre, étapes de calcul, consigne). Les
+// étapes sont de la notation mathématique (langue-neutre) ; seuls les titres et
+// la consigne du × 5 (« On compte : » / "Count:") sont traduits. KEEP IN
 // SYNC conceptuellement avec scripts/generate-tts.mjs (strategyText) qui énonce
 // ces mêmes astuces à l'oral.
 
 export interface StrategyTemplate {
   kind: StrategyKind;
   title: string;
-  lines: (other: number, product: number) => string[];
+  /** Les étapes du calcul, une par ligne : `n × 9 = …`, puis `= …`. */
+  steps: (other: number, product: number) => string[];
+  /** Consigne glissée après la première étape (× 5 : « On compte : 5 → 10 → … »). */
+  aside?: (other: number) => string;
 }
 
 const fr: ReadonlyArray<readonly [number, StrategyTemplate]> = [
   [9, {
     kind: 'near-ten',
     title: '× 9, c’est comme × 10 mais on enlève une fois.',
-    lines: (n, p) => [`${n} × 9 = ${n} × 10 − ${n}`, `= ${n * 10} − ${n}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 9 = ${n} × 10 − ${n}`, `= ${n * 10} − ${n}`, `= ${p}`],
   }],
   [5, {
     kind: 'skip-count',
     title: '× 5, c’est compter par 5.',
-    lines: (n, p) => {
-      const sequence = Array.from({ length: n }, (_, i) => (i + 1) * 5).join(' → ');
-      const sum = Array.from({ length: n }, () => '5').join(' + ');
-      return [`${n} × 5 = ${sum}`, `On compte : ${sequence}`, `= ${p}`];
-    },
+    steps: (n, p) => [`${n} × 5 = ${Array.from({ length: n }, () => '5').join(' + ')}`, `= ${p}`],
+    aside: (n) => `On compte : ${Array.from({ length: n }, (_, i) => (i + 1) * 5).join(' → ')}`,
   }],
   [3, {
     kind: 'double-add',
     title: '× 3, c’est × 2 plus une fois.',
-    lines: (n, p) => [`${n} × 3 = ${n} × 2 + ${n}`, `= ${n * 2} + ${n}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 3 = ${n} × 2 + ${n}`, `= ${n * 2} + ${n}`, `= ${p}`],
   }],
   [4, {
     kind: 'double-double',
     title: '× 4, c’est le double de × 2.',
-    lines: (n, p) => [`${n} × 4 = (${n} × 2) × 2`, `= ${n * 2} × 2`, `= ${p}`],
+    steps: (n, p) => [`${n} × 4 = (${n} × 2) × 2`, `= ${n * 2} × 2`, `= ${p}`],
   }],
   [6, {
     kind: 'five-plus-one',
     title: '× 6, c’est × 5 plus une fois.',
-    lines: (n, p) => [`${n} × 6 = ${n} × 5 + ${n}`, `= ${n * 5} + ${n}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 6 = ${n} × 5 + ${n}`, `= ${n * 5} + ${n}`, `= ${p}`],
   }],
   [7, {
     kind: 'five-plus-two',
     title: '× 7, c’est × 5 plus × 2.',
-    lines: (n, p) => [`${n} × 7 = ${n} × 5 + ${n} × 2`, `= ${n * 5} + ${n * 2}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 7 = ${n} × 5 + ${n} × 2`, `= ${n * 5} + ${n * 2}`, `= ${p}`],
   }],
   [8, {
     kind: 'double-double-double',
     title: '× 8, c’est doubler trois fois.',
-    lines: (n, p) => [
+    steps: (n, p) => [
       `${n} × 8 = ${n} × 2 × 2 × 2`,
       `= ${n * 2} × 2 × 2`,
       `= ${n * 4} × 2`,
@@ -64,41 +64,38 @@ const en: ReadonlyArray<readonly [number, StrategyTemplate]> = [
   [9, {
     kind: 'near-ten',
     title: '× 9 is like × 10, then take one away.',
-    lines: (n, p) => [`${n} × 9 = ${n} × 10 − ${n}`, `= ${n * 10} − ${n}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 9 = ${n} × 10 − ${n}`, `= ${n * 10} − ${n}`, `= ${p}`],
   }],
   [5, {
     kind: 'skip-count',
     title: '× 5 is counting by 5s.',
-    lines: (n, p) => {
-      const sequence = Array.from({ length: n }, (_, i) => (i + 1) * 5).join(' → ');
-      const sum = Array.from({ length: n }, () => '5').join(' + ');
-      return [`${n} × 5 = ${sum}`, `Count: ${sequence}`, `= ${p}`];
-    },
+    steps: (n, p) => [`${n} × 5 = ${Array.from({ length: n }, () => '5').join(' + ')}`, `= ${p}`],
+    aside: (n) => `Count: ${Array.from({ length: n }, (_, i) => (i + 1) * 5).join(' → ')}`,
   }],
   [3, {
     kind: 'double-add',
     title: '× 3 is × 2 plus one more.',
-    lines: (n, p) => [`${n} × 3 = ${n} × 2 + ${n}`, `= ${n * 2} + ${n}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 3 = ${n} × 2 + ${n}`, `= ${n * 2} + ${n}`, `= ${p}`],
   }],
   [4, {
     kind: 'double-double',
     title: '× 4 is double of × 2.',
-    lines: (n, p) => [`${n} × 4 = (${n} × 2) × 2`, `= ${n * 2} × 2`, `= ${p}`],
+    steps: (n, p) => [`${n} × 4 = (${n} × 2) × 2`, `= ${n * 2} × 2`, `= ${p}`],
   }],
   [6, {
     kind: 'five-plus-one',
     title: '× 6 is × 5 plus one more.',
-    lines: (n, p) => [`${n} × 6 = ${n} × 5 + ${n}`, `= ${n * 5} + ${n}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 6 = ${n} × 5 + ${n}`, `= ${n * 5} + ${n}`, `= ${p}`],
   }],
   [7, {
     kind: 'five-plus-two',
     title: '× 7 is × 5 plus × 2.',
-    lines: (n, p) => [`${n} × 7 = ${n} × 5 + ${n} × 2`, `= ${n * 5} + ${n * 2}`, `= ${p}`],
+    steps: (n, p) => [`${n} × 7 = ${n} × 5 + ${n} × 2`, `= ${n * 5} + ${n * 2}`, `= ${p}`],
   }],
   [8, {
     kind: 'double-double-double',
     title: '× 8 is doubling three times.',
-    lines: (n, p) => [
+    steps: (n, p) => [
       `${n} × 8 = ${n} × 2 × 2 × 2`,
       `= ${n * 2} × 2 × 2`,
       `= ${n * 4} × 2`,

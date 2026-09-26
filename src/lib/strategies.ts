@@ -13,8 +13,10 @@ export interface Strategy {
   kind: StrategyKind;
   /** Phrase courte expliquant l'astuce (ex : « × 9, c'est × 10 moins une fois »). */
   title: string;
-  /** Étapes de calcul, une par ligne, à afficher en colonne. */
+  /** Lignes affichées en colonne : les étapes, et la consigne éventuelle après la première. */
   lines: string[];
+  /** Les seules étapes du calcul, pour le citer d'une traite (idée de l'espace parent). */
+  steps: string[];
 }
 
 import { getStrategyTemplates } from '../i18n/strategies';
@@ -36,10 +38,12 @@ export function getStrategy(a: number, b: number): Strategy | null {
   for (const [pivot, template] of getStrategyTemplates()) {
     if (lo === pivot || hi === pivot) {
       const other = pivot === lo ? hi : lo;
+      const steps = template.steps(other, pivot * other);
       return {
         kind: template.kind,
         title: template.title,
-        lines: template.lines(other, pivot * other),
+        lines: template.aside ? [steps[0], template.aside(other), ...steps.slice(1)] : steps,
+        steps,
       };
     }
   }

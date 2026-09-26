@@ -1,5 +1,5 @@
 import { pickStrings, type Lang } from './lang';
-import { TENSE_NAMES } from './tense';
+import { TENSE_NAMES, tenseFr } from './tense';
 import type { ConjTense } from '../types';
 
 // Traductions des badges. Les métadonnées non textuelles (id, icône, couleur,
@@ -141,14 +141,11 @@ const fr: BadgeI18n = {
     conditionText: 'Place toutes les divisions avec reste dans la boîte 5 (le top niveau !).',
   },
   conjTense: (tense) => {
-    const name = TENSE_NAMES.fr[tense];
-    // Élision devant voyelle : « l’imparfait », « de l’imparfait ».
-    const vowel = /^[aeiouyéèê]/i.test(name);
-    const le = vowel ? `l’${name}` : `le ${name}`;
+    const le = tenseFr(tense);
     return {
       name: `${le.charAt(0).toUpperCase()}${le.slice(1)}, c’est fait !`,
       description: `Maîtriser tout ${le}`,
-      conditionText: `Place toutes les formes ${vowel ? `de l’${name}` : `du ${name}`} dans la boîte 4 ou 5.`,
+      conditionText: `Place toutes les formes ${tenseFr(tense, 'de')} dans la boîte 4 ou 5.`,
     };
   },
   conjVerb: (verb) => ({
