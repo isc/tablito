@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260926184533"
+const CACHE = 'tablito-' + "20260926210139"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
@@ -80,9 +80,11 @@ const ASSETS = [
   "/src/components/MysteryGrid.js",
   "/src/components/MysteryImage.js",
   "/src/components/NumPad.js",
+  "/src/components/ParentChildPicker.js",
   "/src/components/ParentGate.js",
   "/src/components/ParentHardFacts.js",
   "/src/components/ParentHelpPage.js",
+  "/src/components/ParentHomeIdea.js",
   "/src/components/ParentMastery.js",
   "/src/components/ParentOverview.js",
   "/src/components/ParentProfilesPage.js",
@@ -94,6 +96,7 @@ const ASSETS = [
   "/src/components/ParentSubjectDetail.js",
   "/src/components/ParentWatchPage.js",
   "/src/components/ParentWatchPairing.js",
+  "/src/components/ParentWeekCard.js",
   "/src/components/ProfileAvatar.js",
   "/src/components/ProgressGrid.js",
   "/src/components/PushPrefRow.js",
@@ -122,6 +125,7 @@ const ASSETS = [
   "/src/i18n/changelog.js",
   "/src/i18n/conjugation.js",
   "/src/i18n/home.js",
+  "/src/i18n/homeIdea.js",
   "/src/i18n/lang.js",
   "/src/i18n/language.js",
   "/src/i18n/onboarding.js",
@@ -134,6 +138,7 @@ const ASSETS = [
   "/src/i18n/strategies.js",
   "/src/i18n/tense.js",
   "/src/i18n/voice.js",
+  "/src/i18n/week.js",
   "/src/lib/activity.js",
   "/src/lib/audioContext.js",
   "/src/lib/badges.js",
@@ -152,6 +157,7 @@ const ASSETS = [
   "/src/lib/facts.js",
   "/src/lib/feedback.js",
   "/src/lib/hardestFacts.js",
+  "/src/lib/homeIdea.js",
   "/src/lib/install.js",
   "/src/lib/leitner.js",
   "/src/lib/letterNames.js",
@@ -182,6 +188,7 @@ const ASSETS = [
   "/src/lib/voiceDebug.js",
   "/src/lib/watch.js",
   "/src/lib/watchStore.js",
+  "/src/lib/weekSummary.js",
   "/src/main.js",
   "/src/screens/BadgesScreen.js",
   "/src/screens/ChangelogScreen.js",
