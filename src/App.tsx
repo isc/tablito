@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useReducer, useRef, useMemo, lazy, Suspense } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import type {
   UserProfile,
@@ -17,7 +17,7 @@ import { composeDailySession } from './lib/dailyComposer';
 import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
 import { createInitialConjFacts } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
-import { processAnswer } from './lib/leitner';
+import { factsOf, processAnswer } from './lib/leitner';
 import {
   checkBadges,
   getCompletedTables,
@@ -55,6 +55,7 @@ import { preflightMicPermission } from './lib/micPreflight';
 import { syncLastSession } from './lib/push';
 import { listWatched } from './lib/watchStore';
 import type { WatchPairing } from './lib/watch';
+import type { ParentPage } from './screens/ParentDashboard';
 import { isVoiceMode } from './hooks/useInputMode';
 import { useLang } from './i18n/lang';
 import { useAppStrings } from './i18n/app';
@@ -138,21 +139,44 @@ function isDisposableScreen(screen: Screen): boolean {
   return screen === 'home' || screen === 'welcome' || screen === 'profiles';
 }
 
+// Écran affiché, et page ouverte par-dessus l'accueil de l'espace parent (null
+// ailleurs, et sur cet accueil). Un seul état, pour qu'une seule table de
+// retour les couvre tous les deux.
+interface Nav {
+  screen: Screen;
+  parentPage: ParentPage | null;
+}
+
+// `setScreen(écran)` change d'écran et referme toute page de l'espace parent :
+// on y entre toujours par son accueil. Une cible complète ({ screen,
+// parentPage }) ouvre une page précise — c'est aussi ce que rend backTarget.
+type NavAction = Screen | ((prev: Screen) => Screen) | Nav;
+
+function navReducer(prev: Nav, action: NavAction): Nav {
+  if (typeof action === 'object') return action;
+  const screen = typeof action === 'function' ? action(prev.screen) : action;
+  return screen === prev.screen ? prev : { screen, parentPage: null };
+}
+
 // Où mènent le bouton retour de l'UI et le geste « retour » du système
 // (Android) — une seule table pour que les deux ne divergent jamais. null = on laisse faire le navigateur (sortie de
 // l'app) — écrans racine, et séance/récap où un retour involontaire ferait
 // perdre du travail.
-function backTarget(screen: Screen, hasProfile: boolean): Screen | null {
+function backTarget({ screen, parentPage }: Nav, hasProfile: boolean): Nav | null {
+  // Une page de l'espace parent ramène à son accueil, y compris sur un appareil
+  // qui ne fait que suivre, où cet accueil n'a lui-même aucun retour.
+  if (parentPage) return { screen: 'parent', parentPage: null };
+  const to = (target: Screen): Nav => ({ screen: target, parentPage: null });
   switch (screen) {
     case 'progress':
     case 'badges':
     case 'rules':
-      return 'home';
+      return to('home');
     case 'parent':
-      return hasProfile ? 'home' : null;
+      return hasProfile ? to('home') : null;
     case 'privacy':
     case 'changelog':
-      return 'parent';
+      return to('parent');
     default:
       return null;
   }
@@ -193,11 +217,22 @@ export default function App({
   // Un #watch= au boot signifie que le parent vient de scanner le QR de son
   // enfant : quoi qu'il y ait par ailleurs sur l'appareil, ce qu'il veut voir
   // est l'espace parent (même en cas d'échec — il peut y réessayer l'appairage).
-  const [screen, setScreen] = useState<Screen>(() =>
+  // Un réducteur plutôt qu'un useState : son dispatch est reconnu stable par le
+  // lint des hooks, comme le setter qu'il remplace (cf. navReducer).
+  const [nav, setScreen] = useReducer(navReducer, null, (): Nav => ({
     // Un #watch= au boot signifie un appairage ; #recap vient du clic sur la
     // notification hebdomadaire. Dans les deux cas c'est l'espace parent qu'on
     // veut, pas l'accueil de l'enfant.
-    watchPairing || recapRequested ? 'parent' : initialScreen(profile, listProfiles().length),
+    screen: watchPairing || recapRequested ? 'parent' : initialScreen(profile, listProfiles().length),
+    parentPage: null,
+  }));
+  const { screen } = nav;
+  // Une page de l'espace parent est un sous-état de l'écran 'parent' plutôt
+  // qu'un écran à part : ParentDashboard reste monté, avec la source affichée
+  // et l'instantané distant déjà relu.
+  const openParentPage = useCallback(
+    (parentPage: ParentPage) => setScreen({ screen: 'parent', parentPage }),
+    [],
   );
   // Pilote l'affichage du bouton « changer de joueur » sur Home et le retour
   // du Welcome « ajout d'un enfant ». Lu à chaque render : l'index est
@@ -312,10 +347,14 @@ export default function App({
   // body en `overflow: auto`, c'est body qui scroll (pas window), donc
   // window.scrollTo n'a aucun effet — vérifié au Playwright. On garde aussi
   // documentElement par sécurité au cas où le contexte change.
+  //
+  // Même traitement à l'ouverture et à la fermeture d'une page de l'espace
+  // parent, qui change tout le contenu sans changer d'écran : `nav` couvre les
+  // deux.
   useLayoutEffect(() => {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
-  }, [screen]);
+  }, [nav]);
 
   // Signale au pwa-register si on est dans un écran "safe" pour appliquer
   // une mise à jour SW (= reload) — cf. isDisposableScreen. `welcome` est
@@ -371,7 +410,7 @@ export default function App({
   // factice est empilée ; le popstate qui la consomme ramène à la cible, et
   // `backPops` force le ré-empilement si la cible a elle-même un retour
   // (changelog → parent → accueil). Quitter l'écran par l'UI retire l'entrée.
-  const back = backTarget(screen, profile !== null);
+  const back = backTarget(nav, profile !== null);
   const backRef = useRef(back);
   backRef.current = back;
   const [backPops, setBackPops] = useState(0);
@@ -1002,15 +1041,7 @@ export default function App({
 
   // Faits du niveau de la séance qui vient de se terminer — alimente la jauge
   // de progression du récap (« Tu connais X / Y »).
-  const recapFacts = !profile
-    ? []
-    : recapMode === 'conj'
-      ? (profile.conjFacts ?? [])
-      : recapMode === 'rem'
-        ? (profile.remainderFacts ?? [])
-        : recapMode === 'div'
-          ? (profile.divisionFacts ?? [])
-          : profile.facts;
+  const recapFacts = profile ? factsOf(profile, recapMode) : [];
 
   const handleExport = useCallback(() => {
     if (!profile) return;
@@ -1203,7 +1234,8 @@ export default function App({
           profile={profile}
           initialWatch={watchPairing && watchPairing !== 'error' ? watchPairing : null}
           openOnWatched={recapRequested}
-          // Sans profil local, l'espace parent EST l'app : nulle part où revenir.
+          // Sans profil local, l'accueil de l'espace parent EST l'app : nulle
+          // part où revenir (ses pages, elles, reviennent à cet accueil).
           onBack={back ? goBack : undefined}
           onExport={handleExport}
           onImport={handleImport}
@@ -1211,6 +1243,8 @@ export default function App({
           onDeleteProfile={handleDeleteProfile}
           onShowPrivacy={() => setScreen('privacy')}
           onShowChangelog={() => setScreen('changelog')}
+          page={nav.parentPage}
+          onOpenPage={openParentPage}
         />
       )}
 

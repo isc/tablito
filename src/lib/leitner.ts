@@ -1,4 +1,4 @@
-import type { BoxLevel, Attempt } from '../types';
+import type { BoxLevel, Attempt, FactKind, UserProfile } from '../types';
 import { BOX_INTERVALS, FAST_THRESHOLD_MS } from '../types';
 import { addDays, shuffle } from './utils';
 
@@ -176,6 +176,53 @@ export const MASTERY_BOX: BoxLevel = 4;
 /** Nombre de faits maîtrisés (boîte ≥ MASTERY_BOX), × ou ÷. */
 export function countMastered(facts: { box: BoxLevel }[]): number {
   return facts.filter((f) => f.box >= MASTERY_BOX).length;
+}
+
+/**
+ * Inventaire Leitner d'un niveau de maths ou de la conjugaison, tel que le
+ * profil le stocke — vide pour une matière jamais ouverte.
+ */
+export function factsOf(
+  profile: UserProfile,
+  kind: FactKind,
+): Array<{ box: BoxLevel; introduced: boolean }> {
+  switch (kind) {
+    case 'mult':
+      return profile.facts;
+    case 'div':
+      return profile.divisionFacts ?? [];
+    case 'rem':
+      return profile.remainderFacts ?? [];
+    case 'conj':
+      return profile.conjFacts ?? [];
+  }
+}
+
+/**
+ * Répartition d'un inventaire en quatre paliers lisibles par un parent, à la
+ * place des boîtes B1 à B5 (que la grille détaillée continue de montrer).
+ * `mastered` compte comme countMastered, que lisent les autres écrans ; les
+ * trois autres paliers se partagent le reste, donc la somme vaut toujours
+ * `facts.length`.
+ */
+export interface MasteryBuckets {
+  mastered: number;
+  // Boîte 3 : revu plusieurs fois sans erreur, pas encore ancré.
+  onTrack: number;
+  // Boîtes 1 et 2 : récent, ou retombé après une erreur.
+  fragile: number;
+  unseen: number;
+}
+
+export function masteryBuckets(facts: { box: BoxLevel; introduced: boolean }[]): MasteryBuckets {
+  const buckets: MasteryBuckets = { mastered: 0, onTrack: 0, fragile: 0, unseen: 0 };
+  for (const f of facts) {
+    if (f.box >= MASTERY_BOX) buckets.mastered++;
+    else if (!f.introduced) buckets.unseen++;
+    else if (f.box >= 3) buckets.onTrack++;
+    else buckets.fragile++;
+  }
+  return buckets;
 }
 
 // --- Briques de composition de séance, partagées par les composeurs × et ÷ ---

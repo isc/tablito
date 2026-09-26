@@ -2,7 +2,8 @@ import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../App';
-import ParentStats from '../components/ParentStats';
+import ParentOverview from '../components/ParentOverview';
+import ParentSubjectDetail from '../components/ParentSubjectDetail';
 // Précharge les chunks lazy touchés par ces parcours pour qu'ils se résolvent
 // dans le test (même pratique que divisionJourney).
 import ConjPlacementScreen from '../screens/ConjPlacementScreen';
@@ -13,6 +14,7 @@ import { applyLang } from '../i18n/lang';
 import { MAX_FRAGILE } from '../lib/leitner';
 import { createNewProfile, exportProfile, importProfile, loadProfile, saveProfile } from '../lib/storage';
 import { checkBadges, visibleBadgeDefinitions } from '../lib/badges';
+import type { Subject } from '../lib/hardestFacts';
 import { CONJ_TENSE_BADGE_ID, unlockedConjTenses } from '../lib/conjugationComposer';
 import {
   createInitialConjFacts,
@@ -367,41 +369,31 @@ describe('Parcours : première ouverture → placement → première séance (sp
   });
 });
 
-describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => {
-  function renderStats(p: UserProfile) {
+describe('Espace parent — la matière conjugaison (spec §8, §11)', () => {
+  function renderSubject(p: UserProfile, subject: Subject) {
     return render(
       <LangProvider>
-        <ParentStats profile={p} />
+        <ParentSubjectDetail profile={p} subject={subject} />
       </LangProvider>,
     );
   }
 
-  it('un onglet Conjugaison ouvre l’histogramme et la grille 8×8 de la matière', () => {
-    const p = conjReadyProfile();
-    renderStats(p);
-
-    const tab = Array.from(document.querySelectorAll<HTMLButtonElement>('.progress-tab')).find(
-      (b) => b.textContent === 'Conjugaison',
+  function renderOverview(p: UserProfile, onOpenSubject: (s: Subject) => void = () => {}) {
+    return render(
+      <LangProvider>
+        <ParentOverview profile={p} onOpenSubject={onOpenSubject} />
+      </LangProvider>,
     );
-    expect(tab).toBeDefined();
-    fireEvent.click(tab!);
+  }
 
-    expect(text()).toContain('Formes verbales maîtrisées');
-    // Grille sans en-têtes : 64 cases, aucune gouttière de numéros de table.
-    expect(document.querySelector('.progress-grid--plain')).not.toBeNull();
-    expect(document.querySelectorAll('.progress-grid-cell')).toHaveLength(64);
-    expect(document.querySelectorAll('.progress-grid-header')).toHaveLength(0);
-    // Histogramme : les 63 faits sont répartis — les fragiles du fixture en
-    // boîte 1, tout le reste non introduit.
-    const counts = Array.from(document.querySelectorAll('.parent-histogram-count')).map((n) =>
-      Number(n.textContent),
+  // Compte d'un palier dans la légende de la barre de maîtrise.
+  const bucketCount = (bucket: string) =>
+    Number(
+      document.querySelector(`[data-bucket="${bucket}"] .parent-mastery-legend-count`)?.textContent,
     );
-    expect(counts[0]).toBe(63 - CONJ_FRAGILES.length);
-    expect(counts[1]).toBe(CONJ_FRAGILES.length);
-  });
 
-  it('les faits difficiles de la matière apparaissent sous son onglet', () => {
-    const p = conjReadyProfile();
+  // Une séance de conjugaison ratée sur « nous mangeons ».
+  function withConjMistake(p: UserProfile): UserProfile {
     p.sessionHistory = [
       {
         kind: 'conj',
@@ -426,26 +418,61 @@ describe('Espace parent — section conjugaison miroir (spec §8, §11)', () => 
         ],
       },
     ];
-    renderStats(p);
-    // Sous l'onglet maths, les verbes ne s'invitent plus dans la liste.
-    expect(text()).not.toContain('nous mangeons');
+    return p;
+  }
 
-    fireEvent.click(
-      Array.from(document.querySelectorAll<HTMLButtonElement>('.progress-tab')).find(
-        (b) => b.textContent === 'Conjugaison',
-      )!,
-    );
-    expect(text()).toContain('Faits les plus difficiles');
+  it('l’accueil a une carte Conjugaison, qui ouvre la page de la matière', () => {
+    const open = vi.fn();
+    renderOverview(conjReadyProfile(), open);
+
+    const card = document.querySelector<HTMLButtonElement>('.parent-subject-card--conj');
+    expect(card?.textContent).toContain('Conjugaison');
+    expect(card?.querySelector('.parent-level-count')?.textContent).toBe('0 / 63');
+    fireEvent.click(card!);
+    expect(open).toHaveBeenCalledWith('conj');
+  });
+
+  it('la page Conjugaison montre la maîtrise et la grille 8×8 de la matière', () => {
+    renderSubject(conjReadyProfile(), 'conj');
+
+    expect(text()).toContain('Formes verbales maîtrisées');
+    // Un seul niveau : pas de sélecteur.
+    expect(document.querySelector('.parent-segmented')).toBeNull();
+    // Grille sans en-têtes : 64 cases, aucune gouttière de numéros de table.
+    expect(document.querySelector('.progress-grid--plain')).not.toBeNull();
+    expect(document.querySelectorAll('.progress-grid-cell')).toHaveLength(64);
+    expect(document.querySelectorAll('.progress-grid-header')).toHaveLength(0);
+    // Barre de maîtrise : les 63 faits sont répartis — les fragiles du fixture
+    // à consolider, tout le reste pas encore vu.
+    expect(bucketCount('fragile')).toBe(CONJ_FRAGILES.length);
+    expect(bucketCount('unseen')).toBe(63 - CONJ_FRAGILES.length);
+    expect(bucketCount('mastered')).toBe(0);
+  });
+
+  it('les faits difficiles de la matière sont sur sa page, pas sur celle des maths', () => {
+    const p = withConjMistake(conjReadyProfile());
+    renderSubject(p, 'math');
+    expect(text()).not.toContain('nous mangeons');
+    cleanup();
+
+    renderSubject(p, 'conj');
+    expect(text()).toContain('À retravailler');
+    expect(text()).toContain('nous mangeons');
+  });
+
+  it('l’accueil mêle les deux matières dans « À retravailler »', () => {
+    renderOverview(withConjMistake(conjReadyProfile()));
+    expect(text()).toContain('À retravailler');
     expect(text()).toContain('nous mangeons');
   });
 
   it('en anglais, la matière n’apparaît nulle part dans l’espace parent', () => {
-    const p = conjReadyProfile();
+    const p = withConjMistake(conjReadyProfile());
     applyLang('en');
-    renderStats(p);
+    renderOverview(p);
 
-    expect(text()).not.toMatch(/Conjugation|Verb forms mastered/);
-    expect(document.querySelector('.progress-grid--plain')).toBeNull();
+    expect(document.querySelector('.parent-subject-card--conj')).toBeNull();
+    expect(text()).not.toMatch(/Conjugation|Verb forms|nous mangeons/);
   });
 });
 

@@ -1,13 +1,13 @@
 // Bandeau d'activité de l'espace parent : l'état du jour en une phrase, puis
-// les 14 derniers jours en colonnes. Répond à la question que ni les cartes
-// cumulatives (« Séances », « Série ») ni le sélecteur d'opération ne
-// posaient — « a-t-il travaillé aujourd'hui, et sur quoi ? ».
+// les 14 derniers jours en colonnes. Répond à la question que les compteurs
+// cumulés (« Séances », « Série ») ne posent pas — « a-t-il travaillé
+// aujourd'hui, et sur quoi ? ».
 //
 // Une colonne = un jour, un segment = une matière (maths en haut, conjugaison
 // en dessous). Comme une matière ne peut être faite qu'une fois par jour, un
 // segment est plein ou vide : rien à compter, rien à plafonner.
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import { buildActivityDays } from '../lib/activity';
 import { daysBetween } from '../lib/utils';
@@ -19,14 +19,17 @@ interface ActivityStripProps {
   // Matière conjugaison ouverte : sans elle le bandeau n'a qu'une ligne, et la
   // phrase du jour parle de « la » séance plutôt que de nommer les matières.
   conjVisible: boolean;
+  // Bas de carte : les compteurs cumulés (séances, séries) de l'accueil de
+  // l'espace parent, qui complètent la journée sans prendre une carte de plus.
+  children?: ReactNode;
 }
 
-export default function ActivityStrip({ profile, today, conjVisible }: ActivityStripProps) {
+export default function ActivityStrip({ profile, today, conjVisible, children }: ActivityStripProps) {
   const t = useParentDashboardStrings();
   const days = useMemo(() => buildActivityDays(profile, today), [profile, today]);
   // Initiales des jours calculées avec la fenêtre, pas au rendu : chaque appel
   // à `toLocaleDateString` avec des options construit un `Intl.DateTimeFormat`,
-  // et le bandeau se re-rend à chaque clic d'onglet d'opération au-dessus.
+  // et le bandeau se re-rend avec l'accueil de l'espace parent.
   const labels = useMemo(
     () => days.map((d) => t.formatWeekdayNarrow(new Date(`${d.date}T00:00:00`))),
     [days, t],
@@ -68,7 +71,7 @@ export default function ActivityStrip({ profile, today, conjVisible }: ActivityS
   const sub = subtitle();
 
   return (
-    <div className="parent-stat-card parent-activity">
+    <div className="parent-card parent-activity">
       <div className="parent-activity-heading">{t.activityHeading(todayState())}</div>
       {sub && <div className="parent-section-subtitle parent-activity-sub">{sub}</div>}
       <div className="parent-activity-strip" role="img" aria-label={t.activityAlt(days.length)}>
@@ -89,7 +92,7 @@ export default function ActivityStrip({ profile, today, conjVisible }: ActivityS
         <div className="parent-activity-legend">
           <span className="parent-activity-legend-item">
             <span className="parent-activity-swatch parent-activity-swatch--math" />
-            {t.activityMath}
+            {t.math}
           </span>
           <span className="parent-activity-legend-item">
             <span className="parent-activity-swatch parent-activity-swatch--conj" />
@@ -97,6 +100,7 @@ export default function ActivityStrip({ profile, today, conjVisible }: ActivityS
           </span>
         </div>
       )}
+      {children}
     </div>
   );
 }

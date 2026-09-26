@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { MAX_FRAGILE, shouldIntroduceNew } from '../lib/leitner';
+import { MAX_FRAGILE, countMastered, masteryBuckets, shouldIntroduceNew } from '../lib/leitner';
 import { createInitialFacts } from '../lib/facts';
 import type { BoxLevel } from '../types';
 
@@ -65,5 +65,29 @@ describe('shouldIntroduceNew — phase finale sur les jeux de faits plus grands'
     // (12) : c'est donc bien le plafond qui répond. Le cas exact du parent
     // (52/64) tombe pile SUR le filet — il ne discriminerait pas le plafond.
     expect(shouldIntroduceNew(deck(64, 40, 1))).toBe(true);
+  });
+});
+
+describe('masteryBuckets', () => {
+  const fact = (box: BoxLevel, introduced = true) => ({ box, introduced });
+
+  it('range chaque fait dans un seul palier : la somme vaut toujours le total', () => {
+    const facts = [
+      fact(1, false),
+      fact(1, false),
+      fact(1),
+      fact(2),
+      fact(3),
+      fact(4),
+      fact(5),
+    ];
+    expect(masteryBuckets(facts)).toEqual({ mastered: 2, onTrack: 1, fragile: 2, unseen: 2 });
+  });
+
+  // La barre et le compteur « 23 / 64 » de l'espace parent ne doivent jamais
+  // se contredire, même sur un fait placé haut sans avoir été vu en séance.
+  it('compte comme maîtrisé exactement ce que compte countMastered', () => {
+    const facts = [fact(4, false), fact(5), fact(3), fact(1, false)];
+    expect(masteryBuckets(facts).mastered).toBe(countMastered(facts));
   });
 });

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { getHardestFacts } from '../lib/hardestFacts';
+import { getHardestFacts, getHardestFactsAcross } from '../lib/hardestFacts';
 import { createInitialFacts } from '../lib/facts';
 import { createInitialDivisionFacts } from '../lib/divisionFacts';
 import type { UserProfile, SessionResult, SessionQuestionLog } from '../types';
@@ -202,5 +202,29 @@ describe('getHardestFacts — une matière à la fois', () => {
     const profile = mixedProfile();
     const hard = getHardestFacts(profile, 1, 5);
     expect(hard).toHaveLength(1);
+  });
+
+  it('croise les matières demandées, chacune sur sa fenêtre, triées ensemble', () => {
+    const profile = mixedProfile();
+    // Deux erreurs de conjugaison contre une de maths : le verbe passe devant.
+    profile.sessionHistory.push({
+      ...makeSession('2026-07-21', [
+        { kind: 'conj', factKey: 'pres-g1-nous', a: undefined, b: undefined, correct: false },
+      ]),
+      kind: 'conj',
+    });
+    const ranked = (window: number, limit: number) =>
+      getHardestFactsAcross(profile, ['math', 'conj'], window, limit).map((f) => [f.kind, f.errorCount]);
+    expect(ranked(10, 5)).toEqual([
+      ['conj', 2],
+      ['mult', 1],
+    ]);
+    expect(ranked(10, 1)).toEqual([['conj', 2]]);
+    // Fenêtre d'une séance PAR matière : la dernière séance de conjugaison ne
+    // chasse pas celle de maths de la veille.
+    expect(ranked(1, 5)).toEqual([
+      ['mult', 1],
+      ['conj', 1],
+    ]);
   });
 });

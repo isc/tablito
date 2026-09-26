@@ -5,16 +5,18 @@ import FeedbackModal from '../components/FeedbackModal';
 import NotificationSettings from '../components/NotificationSettings';
 import WeeklyRecapSettings from '../components/WeeklyRecapSettings';
 import LanguageToggle from '../components/LanguageToggle';
-import ParentStats from '../components/ParentStats';
+import ParentOverview from '../components/ParentOverview';
+import ParentSubjectDetail from '../components/ParentSubjectDetail';
+import ParentWatchPairing from '../components/ParentWatchPairing';
 import QrCanvas from '../components/QrCanvas';
 import { useGuideBase } from '../i18n/lang';
 import { useParentDashboardStrings } from '../i18n/parent';
+import type { Subject } from '../lib/hardestFacts';
 import { getActiveProfileId } from '../lib/storage';
 import { APP_VERSION } from '../lib/version';
 import { setPushPref } from '../lib/push';
 import { createTransfer, transferConfigured, TRANSFER_TTL_MINUTES } from '../lib/transfer';
 import {
-  addWatched,
   fetchWatched,
   startWatch,
   stopWatch,
@@ -24,21 +26,25 @@ import {
 import {
   listWatched,
   loadWatchCredentials,
-  parseWatchLink,
   removeWatched,
   watchConfigured,
   watchLink,
   type WatchCredentials,
   type WatchedProfile,
 } from '../lib/watchStore';
-import { useQrScan } from '../hooks/useQrScan';
+
+/** Page ouverte dans l'espace parent, par-dessus son accueil : la page d'une
+ *  matière. La navigation (retour, geste système) vit dans App. */
+export type ParentPage = Subject;
 
 interface ParentDashboardProps {
   // Profil local actif. NULL sur un appareil qui ne fait que suivre un enfant à
   // distance : un parent peut découvrir Tablito en scannant le QR de l'appareil
   // de son enfant, sans jamais créer de profil ici.
   profile: UserProfile | null;
-  // Absent quand il n'y a pas de profil local : il n'y a alors nulle part où
+  // Retour de l'écran affiché : de l'accueil vers celui de l'enfant, d'une page
+  // vers l'accueil de l'espace parent (cf. backTarget dans App). Absent sur
+  // l'accueil quand il n'y a pas de profil local : il n'y a alors nulle part où
   // revenir, l'espace parent EST l'app.
   onBack?: () => void;
   onExport: () => void;
@@ -55,6 +61,13 @@ interface ParentDashboardProps {
   // Vrai quand l'espace parent est ouvert par la notification de recap
   // hebdomadaire : change la source affichée par défaut.
   openOnWatched?: boolean;
+  // Page ouverte (null = accueil de l'espace parent). L'état vit dans App, avec
+  // l'écran : c'est sa table de retour qui ramène d'une page à l'accueil, pour
+  // le bouton comme pour le geste système. L'écran reste le même pour App, donc
+  // ce composant — et ce qu'il tient (source affichée, instantané distant déjà
+  // relu) — reste monté.
+  page: ParentPage | null;
+  onOpenPage: (page: ParentPage) => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -79,6 +92,8 @@ export default function ParentDashboard({
   onShowChangelog,
   initialWatch = null,
   openOnWatched = false,
+  page,
+  onOpenPage,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
   const guideBase = useGuideBase();
@@ -165,7 +180,7 @@ export default function ParentDashboard({
   const remoteState: RemoteState | null =
     watchedEntry && remote?.code === watchedEntry.code ? remote.state : null;
   const remoteSnapshot = typeof remoteState === 'object' ? remoteState : null;
-  // Profil réellement rendu par ParentStats.
+  // Profil réellement rendu : le local, ou l'instantané de l'enfant suivi.
   const shown = watchedEntry ? remoteSnapshot?.profile ?? null : profile;
   const shownName = shown?.name ?? watchedEntry?.name ?? '';
 
@@ -186,34 +201,15 @@ export default function ParentDashboard({
     profileId ? loadWatchCredentials(profileId) : null,
   );
 
-  // === Appairage d'un suivi (appareil du parent) ===
-  type PairState = 'idle' | 'scanning' | 'fetching' | 'cameraError' | 'linkError' | 'manual';
-  const [pair, setPair] = useState<PairState>('idle');
-  const [pairText, setPairText] = useState('');
-
-  const acceptWatchLink = async (text: string): Promise<boolean> => {
-    if (!parseWatchLink(text)) return false;
-    setPair('fetching');
-    const paired = await addWatched(text);
-    if (!paired) {
-      setPair('linkError');
-      return true; // lien reconnu mais illisible : inutile de continuer à filmer
-    }
+  // === Appairage d'un suivi (appareil du parent, cf. ParentWatchPairing) ===
+  const handlePaired = (paired: WatchPairing) => {
     setWatched(listWatched());
     // L'instantané est déjà déchiffré : on l'étiquette, et marquer le code comme
     // servi évite que l'effet relance une relecture inutile juste après.
     inFlightRef.current = paired.entry.code;
     setRemote({ code: paired.entry.code, state: paired.snapshot });
     setSelectedCode(paired.entry.code);
-    setPair('idle');
-    return true;
   };
-
-  const scanVideoRef = useQrScan({
-    active: pair === 'scanning',
-    onCode: acceptWatchLink,
-    onCameraError: () => setPair('cameraError'),
-  });
 
   // « Copié ✓ » pendant 2 s. Échec silencieux : clipboard indisponible (contexte
   // non sécurisé), l'utilisateur a d'autres chemins (QR, feuille de partage).
@@ -308,24 +304,31 @@ export default function ParentDashboard({
   // elles parleraient d'un appareil qu'on n'a pas en main.
   const localSelected = selectedCode === null && profile !== null;
 
+  // Page d'une matière, sur le profil affiché. Une page ne s'ouvre que depuis
+  // une carte de l'accueil, qui n'existe qu'avec un profil affiché ; la clé
+  // repart de zéro (niveau actif, bascules) si la source changeait dessous.
+  if (page && shown) {
+    return (
+      <div className="parent-dashboard parent-dashboard--subject">
+        <Header
+          onBack={onBack}
+          backLabel={t.backToOverview}
+          eyebrow={shownName}
+          title={page === 'conj' ? t.conjugations : t.math}
+        />
+        <ParentSubjectDetail key={selectedCode ?? 'local'} profile={shown} subject={page} />
+      </div>
+    );
+  }
+
   return (
     <div className="parent-dashboard">
-      <div className="parent-header">
-        {onBack && (
-          <button className="parent-back-btn" onClick={onBack} aria-label={t.back}>
-            <BackChevron />
-          </button>
-        )}
-        <div className="parent-header-titles">
-          <div className="parent-eyebrow">{t.parentArea}</div>
-          <div className="parent-title">{t.profileSuffix(shownName)}</div>
-        </div>
-      </div>
+      <Header onBack={onBack} backLabel={t.back} eyebrow={t.parentArea} title={shownName} />
 
       {/* Sélecteur de source — n'apparaît que s'il y a vraiment un choix à
-          faire. Mêmes classes que le sélecteur d'opération. */}
+          faire. Mêmes pastilles que les onglets de « Mes images ». */}
       {sources.length > 1 && (
-        <div className="progress-tabs parent-op-tabs" role="tablist" aria-label={t.sourceLabel}>
+        <div className="progress-tabs parent-source-tabs" role="tablist" aria-label={t.sourceLabel}>
           {sources.map((item) => (
             <button
               key={item.code ?? 'local'}
@@ -372,7 +375,7 @@ export default function ParentDashboard({
       )}
 
       {shown ? (
-        <ParentStats profile={shown} />
+        <ParentOverview profile={shown} onOpenSubject={onOpenPage} />
       ) : (
         <div className="parent-section">
           <p className="parent-section-subtitle">
@@ -380,6 +383,11 @@ export default function ParentDashboard({
           </p>
         </div>
       )}
+
+      {/* Au-delà : ce qu'on règle, par opposition à ce qu'on consulte. */}
+      <div className="parent-section parent-settings-start">
+        <h2 className="parent-overline">{t.settings}</h2>
+      </div>
 
       {/* Actions de sauvegarde — propres à la progression stockée ici. */}
       {localSelected && (
@@ -484,60 +492,7 @@ export default function ParentDashboard({
             </div>
           )}
 
-          <div className="parent-watch-block">
-            {pair === 'scanning' || pair === 'fetching' ? (
-              <>
-                <video ref={scanVideoRef} className="parent-scan-video" />
-                <p className="parent-transfer-status">
-                  {pair === 'fetching' ? t.remoteLoading : t.watchScanPrompt}
-                </p>
-                <button className="parent-action-btn" onClick={() => setPair('idle')}>
-                  {t.cancel}
-                </button>
-              </>
-            ) : (
-              <>
-                {pair === 'cameraError' && (
-                  <p className="parent-transfer-status parent-transfer-status--error">
-                    {t.watchCameraError}
-                  </p>
-                )}
-                {pair === 'linkError' && (
-                  <p className="parent-transfer-status parent-transfer-status--error">
-                    {t.watchLinkError}
-                  </p>
-                )}
-                <div className="parent-actions">
-                  <button className="parent-action-btn" onClick={() => setPair('scanning')}>
-                    {t.watchScanQr}
-                  </button>
-                  <button className="parent-action-btn" onClick={() => setPair('manual')}>
-                    {t.watchPasteLink}
-                  </button>
-                </div>
-              </>
-            )}
-            {pair === 'manual' && (
-              <div className="parent-import-area">
-                <textarea
-                  className="parent-import-textarea"
-                  placeholder={t.watchPastePlaceholder}
-                  value={pairText}
-                  onChange={(e) => setPairText((e.target as HTMLTextAreaElement).value)}
-                />
-                <button
-                  className="parent-import-confirm"
-                  disabled={!pairText.trim()}
-                  onClick={async () => {
-                    if (!(await acceptWatchLink(pairText.trim()))) setPair('linkError');
-                    setPairText('');
-                  }}
-                >
-                  {t.watchPasteConfirm}
-                </button>
-              </div>
-            )}
-          </div>
+          <ParentWatchPairing onPaired={handlePaired} />
 
           {/* Recap hebdomadaire et liste des suivis : n'ont de sens que si cet
               appareil suit quelqu'un. */}
@@ -671,6 +626,30 @@ export default function ParentDashboard({
 
       <div className="parent-version" aria-label={t.appVersionLabel}>
         v{APP_VERSION}
+      </div>
+    </div>
+  );
+}
+
+interface HeaderProps {
+  onBack?: () => void;
+  backLabel: string;
+  eyebrow: string;
+  title: string;
+}
+
+// En-tête commun à l'accueil de l'espace parent et à ses pages.
+function Header({ onBack, backLabel, eyebrow, title }: HeaderProps) {
+  return (
+    <div className="parent-header">
+      {onBack && (
+        <button className="parent-back-btn" onClick={onBack} aria-label={backLabel}>
+          <BackChevron />
+        </button>
+      )}
+      <div className="parent-header-titles">
+        <div className="parent-eyebrow">{eyebrow}</div>
+        <div className="parent-title">{title}</div>
       </div>
     </div>
   );

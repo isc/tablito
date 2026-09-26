@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-09-26',
+    items: [
+      "Espace parent réorganisé. Tout s'empilait jusqu'ici sur une seule page, avec un onglet de plus à chaque niveau débloqué, et des sections qui ne suivaient pas toutes le même onglet. L'accueil va désormais à l'essentiel et garde la même taille quel que soit le niveau de votre enfant\u00a0: la journée d'abord (séance faite ou pas, les quatorze derniers jours, les séries), puis une carte par matière avec le niveau en cours et sa barre de maîtrise — maîtrisées, en bonne voie, à consolider, pas encore vues —, les niveaux déjà passés restant cochés tant qu'ils tiennent, et enfin les trois faits sur lesquels votre enfant bute le plus en ce moment. Touchez une carte pour ouvrir la page de la matière\u00a0: la grille Leitner niveau par niveau, l'évolution (réussite ou rapidité, d'une touche), les faits à retravailler et l'historique des séances. Les réglages (sauvegarde, suivi à distance, rappels, profils) n'ont pas changé, en bas de l'accueil.",
+    ],
+  },
+  {
     date: '2026-09-22',
     items: [
       "Gels de série\u00a0: un jour sauvé par un gel ne compte plus pour gagner le suivant. Jusqu'ici, la série continuait à travers le jour manqué et pouvait franchir un palier de 7 grâce à lui — le récap annonçait alors dans la même séance «\u00a0ton gel a sauvé ta série\u00a0» et «\u00a0tu as gagné un gel\u00a0». Désormais, après un gel utilisé, il faut rejouer 7 jours d'affilée pour en gagner un nouveau. La série elle-même n'est pas touchée.",
@@ -228,6 +234,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-09-26',
+    items: [
+      "The parent area has been reorganized. Until now everything was stacked on a single page, with one more tab for each level unlocked, and sections that didn't all follow the same tab. The overview now sticks to the essentials and stays the same size whatever your child's level: the day first (session done or not, the last fourteen days, the streaks), then one card per subject with the current level and its mastery bar — mastered, on track, still shaky, not seen yet —, the levels already completed staying checked off as long as they hold, and finally the three facts your child is struggling with most right now. Tap a card to open that subject's page: the Leitner grid level by level, the trend (accuracy or speed, one tap away), the facts that need practice and the session history. The settings (backup, remote follow-up, reminders, profiles) haven't changed: they're at the bottom of the overview.",
+    ],
+  },
   {
     date: '2026-09-22',
     items: [

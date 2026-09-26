@@ -64,6 +64,16 @@ export function sessionsOfSubject(history: SessionResult[], subject: Subject): S
   return history.filter((s) => (s.kind === 'conj') === (subject === 'conj'));
 }
 
+/** Fenêtre de « difficile en ce moment » de l'espace parent, en séances de la
+ *  matière — et non « difficile un jour » (cf. getHardestFacts). */
+export const HARD_FACTS_WINDOW = 10;
+
+// Erreurs décroissantes, puis la boîte la plus basse : à erreurs égales, le fait
+// le plus fragile d'abord.
+function byDifficulty(a: HardFact, b: HardFact): number {
+  return b.errorCount - a.errorCount || a.box - b.box;
+}
+
 /**
  * Faits sur lesquels l'enfant a le plus buté récemment, pour UNE matière :
  * les maths (×, ÷ et reste mélangés — une séance de maths l'est par
@@ -154,11 +164,29 @@ export function getHardestFacts(
 
   return facts
     .filter((f) => f.errorCount > 0)
-    .sort((a, b) => b.errorCount - a.errorCount || a.box - b.box)
+    .sort(byDifficulty)
     .slice(0, limit)
     .map((f) =>
       f.kind === 'conj'
         ? { ...f, label: resolveConjQuestion(requireConjFactDef(f.key), 0).label }
         : f,
     );
+}
+
+/**
+ * Les faits les plus ratés de plusieurs matières à la fois (accueil de l'espace
+ * parent), triés comme ceux d'une seule. Chaque matière est lue sur SA fenêtre
+ * de séances : une journée de conjugaison ne chasse pas les erreurs de maths de
+ * la veille.
+ */
+export function getHardestFactsAcross(
+  profile: UserProfile,
+  subjects: Subject[],
+  windowSize: number,
+  limit: number,
+): HardFact[] {
+  return subjects
+    .flatMap((subject) => getHardestFacts(profile, windowSize, limit, subject))
+    .sort(byDifficulty)
+    .slice(0, limit);
 }
