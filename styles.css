@@ -1324,47 +1324,6 @@
   margin-left: 10px;
 }
 
-/* ===== components/LanguageToggle.css ===== */
-.language-toggle {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.language-toggle-label {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.language-toggle-options {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--cream-deep, rgba(30, 26, 46, 0.06));
-  border-radius: 999px;
-  width: fit-content;
-}
-
-.language-toggle-option {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.language-toggle-option.is-active {
-  background: var(--indigo);
-  color: #fff;
-}
-
 /* ===== components/LetterKeyboard.css ===== */
 /* Mini-clavier alphabétique de la matière conjugaison (spec Verbito §15.5).
    Le socle commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit
@@ -1882,73 +1841,6 @@
   box-shadow: 0 1px 0 var(--indigo-ink);
 }
 
-/* ===== components/NotificationSettings.css ===== */
-/* Toggle « Rappel quotidien » de l'espace parent (cf. NotificationSettings.tsx). */
-.notif-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 12px;
-  cursor: pointer;
-  font-family: var(--sans);
-  box-sizing: border-box;
-}
-
-.notif-toggle:disabled {
-  opacity: 0.6;
-  cursor: progress;
-}
-
-.notif-toggle-label {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--ink);
-  letter-spacing: 0.2px;
-}
-
-.notif-switch {
-  position: relative;
-  width: 46px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--line);
-  flex-shrink: 0;
-  transition: background 0.2s ease;
-}
-
-.notif-switch--on {
-  background: var(--sage);
-}
-
-.notif-switch-knob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--paper);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
-}
-
-.notif-switch--on .notif-switch-knob {
-  transform: translateX(18px);
-}
-
-.notif-message {
-  margin-top: 10px;
-  font-family: var(--sans);
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--coral);
-}
-
 /* ===== components/NumPad.css ===== */
 /* Pavé numérique des maths. Le socle commun aux deux pavés (ardoise, relief,
    états, curseur) vit dans Pad.css ; ici ne restent que les dimensions et la
@@ -2327,13 +2219,9 @@
   padding: 4px 16px;
 }
 
-/* Premier bloc de réglages : le sur-titre les sépare de la progression. */
+/* Réglages : le sur-titre les sépare de la progression. */
 .parent-settings-start {
   margin-top: 28px;
-}
-
-.parent-settings-start .parent-overline {
-  margin-bottom: 0;
 }
 
 /* === Compteurs cumulés, au pied de la carte du jour === */
@@ -2440,12 +2328,10 @@
   color: var(--ink-muted);
 }
 
-/* Le chevron de retour, retourné. */
 .parent-subject-chevron {
   display: inline-flex;
   flex-shrink: 0;
   color: var(--ink-muted);
-  transform: scaleX(-1);
 }
 
 /* Niveaux passés : une pastille chacun, cochée tant qu'il reste maîtrisé. */
@@ -2493,11 +2379,6 @@
   white-space: nowrap;
 }
 
-/* Fenêtre de la liste « À retravailler », sous la carte. */
-.parent-overview-note {
-  margin: 8px 0 0;
-}
-
 /* ===== components/ParentSegmented.css ===== */
 /* Contrôle segmenté de l'espace parent (cf. ParentSegmented.tsx). */
 
@@ -2543,6 +2424,245 @@
   padding: 0 12px;
   border-radius: 999px;
   font-size: 12.5px;
+}
+
+/* ===== components/ParentSettings.css ===== */
+/* Réglages de l'espace parent : lignes de la liste de l'accueil et des pages
+   de réglages (cf. ParentSettingRow.tsx), et le contenu propre à ces pages. */
+
+.parent-settings {
+  list-style: none;
+}
+
+.parent-setting + .parent-setting {
+  border-top: 1px solid var(--line-soft);
+}
+
+/* La ligne entière est la cible du doigt : elle déborde du padding de la carte
+   pour que son fond au toucher aille d'un bord à l'autre. */
+.parent-setting-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% + 32px);
+  min-height: 60px;
+  margin: 0 -16px;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.parent-setting-btn:active {
+  background: var(--cream-deep);
+}
+
+.parent-setting-btn--static {
+  cursor: default;
+}
+
+.parent-setting-btn--static:active {
+  background: transparent;
+}
+
+.parent-setting-btn:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.parent-setting-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream-deep);
+  color: var(--ink-soft);
+}
+
+/* Pastille d'un enfant (cf. ProfileAvatar), à la place de l'icône. */
+.parent-setting-avatar {
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.parent-setting-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.parent-setting-title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.parent-setting-sub {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink-muted);
+}
+
+.parent-setting-trailing {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+}
+
+/* Interrupteur d'une notification, au bout de sa ligne (cf. SwitchRow). */
+.notif-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.notif-switch--on {
+  background: var(--sage);
+}
+
+.notif-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.notif-switch--on .notif-switch-knob {
+  transform: translateX(18px);
+}
+
+/* Erreur de la dernière bascule, alignée sur le texte de sa ligne. */
+.notif-message {
+  margin: 0 0 10px 46px;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--coral);
+}
+
+/* === Accueil === */
+
+.parent-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.parent-empty-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* === Pages de réglages === */
+
+.parent-page-intro {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* Suivi à distance : un bloc par enfant de l'appareil. */
+.parent-share-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.parent-share-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.parent-share-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.parent-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.parent-share-titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.parent-share-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.parent-share-status {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.parent-share-status.is-on {
+  color: var(--sage-ink);
+}
+
+.parent-share-card .parent-transfer-area {
+  margin-top: 0;
+}
+
+.parent-share-card .parent-watch-remove {
+  align-self: center;
+}
+
+/* Profils et sauvegarde */
+.parent-import-status {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--sage-ink);
+}
+
+.parent-import-status--error {
+  color: var(--coral);
+}
+
+.parent-danger {
+  margin-top: 28px;
 }
 
 /* ===== components/ParentSubjectDetail.css ===== */
@@ -3976,7 +4096,21 @@ input, select, textarea {
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-muted);
+}
+
+/* Marge par défaut, sans spécificité : un composant qui porte aussi cette
+   classe (note sous une carte, sous-titre de la carte du jour…) la remplace
+   d'une simple classe. Sans le :where(), cette feuille, concaténée après
+   celles des composants, gagnait à spécificité égale : la note « Sur les 10
+   dernières séances » remontait contre sa carte. */
+:where(.parent-section-subtitle) {
   margin: -4px 0 10px;
+}
+
+/* Note sous une carte ou un bouton : collée à ce qu'elle commente plutôt qu'à
+   ce qui suit. */
+.parent-note {
+  margin: 8px 0 0;
 }
 
 .parent-section-help {
@@ -4116,17 +4250,12 @@ input, select, textarea {
   white-space: nowrap;
 }
 
-/* Action buttons */
+/* Boutons d'action côte à côte, à parts égales — ou un seul, sur toute la
+   largeur, y compris dans un bloc qui centre son contenu. */
 .parent-actions {
   display: flex;
   gap: 10px;
-  padding: 0 20px;
-  margin-top: 18px;
-}
-
-.parent-section .parent-actions {
-  padding: 0;
-  margin-top: 0;
+  align-self: stretch;
 }
 
 .parent-action-btn {
@@ -4162,8 +4291,8 @@ input, select, textarea {
 }
 
 .parent-import-area {
+  align-self: stretch;
   margin-top: 10px;
-  padding: 0 20px;
 }
 
 /* Panneau de transfert vers un autre appareil (QR + lien) */
@@ -4319,7 +4448,8 @@ input, select, textarea {
   opacity: 0.5;
 }
 
-/* Un bloc par sens du suivi (partager d'ici / suivre d'ailleurs). */
+/* Appairage d'un suivi (cf. ParentWatchPairing) : scanner le QR de l'autre
+   appareil, ou coller son lien. */
 .parent-watch-block {
   display: flex;
   flex-direction: column;
@@ -4328,22 +4458,10 @@ input, select, textarea {
   margin-top: 12px;
 }
 
-.parent-watch-list {
-  margin: 14px 20px 0;
-  border-top: 1.5px solid var(--line);
-}
-
-.parent-watch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.parent-watch-name {
-  font-weight: 700;
+/* Empilés, comme les boutons des cartes de partage au-dessus : côte à côte,
+   « Scanner un QR code » passait sur deux lignes. */
+.parent-watch-block .parent-actions {
+  flex-direction: column;
 }
 
 .parent-watch-remove {

@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260926113107"
+const CACHE = 'tablito-' + "20260926184533"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
@@ -79,17 +79,24 @@ const ASSETS = [
   "/src/components/Modal.js",
   "/src/components/MysteryGrid.js",
   "/src/components/MysteryImage.js",
-  "/src/components/NotificationSettings.js",
   "/src/components/NumPad.js",
   "/src/components/ParentGate.js",
   "/src/components/ParentHardFacts.js",
+  "/src/components/ParentHelpPage.js",
   "/src/components/ParentMastery.js",
   "/src/components/ParentOverview.js",
+  "/src/components/ParentProfilesPage.js",
+  "/src/components/ParentQrPanel.js",
   "/src/components/ParentSegmented.js",
+  "/src/components/ParentSettingIcons.js",
+  "/src/components/ParentSettingRow.js",
+  "/src/components/ParentSettingsList.js",
   "/src/components/ParentSubjectDetail.js",
+  "/src/components/ParentWatchPage.js",
   "/src/components/ParentWatchPairing.js",
+  "/src/components/ProfileAvatar.js",
   "/src/components/ProgressGrid.js",
-  "/src/components/PushToggle.js",
+  "/src/components/PushPrefRow.js",
   "/src/components/QrCanvas.js",
   "/src/components/RemainderMysteryImage.js",
   "/src/components/RemainderProgressGrid.js",
@@ -98,9 +105,9 @@ const ASSETS = [
   "/src/components/StrategyHintShell.js",
   "/src/components/StreakDetailModal.js",
   "/src/components/VoiceInput.js",
-  "/src/components/WeeklyRecapSettings.js",
   "/src/components/conjHintLine.js",
   "/src/hooks/useConfetti.js",
+  "/src/hooks/useCopyFeedback.js",
   "/src/hooks/useInputMode.js",
   "/src/hooks/useLatestRef.js",
   "/src/hooks/usePushPref.js",
@@ -119,6 +126,7 @@ const ASSETS = [
   "/src/i18n/language.js",
   "/src/i18n/onboarding.js",
   "/src/i18n/parent.js",
+  "/src/i18n/parentGate.js",
   "/src/i18n/privacy.js",
   "/src/i18n/progress.js",
   "/src/i18n/recap.js",
