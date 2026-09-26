@@ -25,6 +25,12 @@ function daysAgoLabel(daysAgo: number, lang: Lang): string {
   return new Intl.RelativeTimeFormat(localeFor(lang), { numeric: 'auto' }).format(-daysAgo, 'day');
 }
 
+// « Léa et Tom », « Léa, Tom et Zoé » — la conjonction et sa virgule selon la
+// langue.
+function joinNames(names: string[], lang: Lang): string {
+  return new Intl.ListFormat(localeFor(lang), { type: 'conjunction' }).format(names);
+}
+
 // === ParentDashboard ===
 
 interface ParentDashboardStrings {
@@ -105,12 +111,11 @@ interface ParentDashboardStrings {
   boxLabel: (box: number) => string;
   sessionHistory: string;
   showAllSessions: (count: number) => string;
-  // Séparateur entre la progression et les réglages de l'accueil.
+  // Réglages : une liste au bas de l'accueil, dont chaque ligne ouvre sa page
+  // (ou bascule sur place : rappels, langue).
   settings: string;
-  backup: string;
-  export: string;
-  import: string;
-  transfer: string;
+  settingsEyebrow: string;
+  emptyProgress: string;
   transferPreparing: string;
   transferError: string;
   transferHint: (minutes: number) => string;
@@ -125,9 +130,15 @@ interface ParentDashboardStrings {
   remoteSyncedAgo: (iso: string) => string;
   remoteRefresh: string;
   remoteNoData: string;
-  // Suivi à distance : partager la progression d'ici, suivre celle d'ailleurs
+  // Suivi à distance : partager la progression d'ici (un bloc par enfant de
+  // l'appareil), suivre celle d'ailleurs.
   watchTitle: string;
-  watchSubtitle: string;
+  watchRowSummary: (shared: string[], following: string[]) => string;
+  watchIntro: string;
+  watchShareHeading: string;
+  watchShareSubtitle: string;
+  watchShared: string;
+  watchNotShared: string;
   watchShare: (name: string) => string;
   watchShowQr: (name: string) => string;
   watchStopSharing: string;
@@ -135,7 +146,9 @@ interface ParentDashboardStrings {
   watchShareError: string;
   watchShareHint: string;
   watchQrAlt: string;
-  watchScanQr: string;
+  watchFollow: string;
+  watchFollowSubtitle: string;
+  watchScan: string;
   watchScanPrompt: string;
   watchCameraError: string;
   watchLinkError: string;
@@ -144,24 +157,39 @@ interface ParentDashboardStrings {
   watchPasteConfirm: string;
   watchStopFollowing: string;
   cancel: string;
-  helpAndFeedback: string;
+  // Profils et sauvegarde
+  profilesTitle: string;
+  profilesRowSubtitle: (names: string[]) => string;
+  profilesHeading: string;
+  profileActive: string;
+  sessionsCount: (count: number) => string;
+  addChild: string;
+  createLocalProfile: string;
+  profilesSubtitleWatcher: string;
+  backupHeading: (name: string) => string;
+  transferRowTitle: string;
+  transferRowSubtitle: (minutes: number) => string;
+  exportRowTitle: string;
+  exportRowSubtitle: string;
+  importRowTitle: string;
+  importRowSubtitle: (name: string) => string;
+  importInvalid: string;
+  importConfirm: (current: string, backup: string, sessions: string) => string;
+  importDone: (name: string) => string;
+  deleteProfile: (name: string) => string;
+  deleteProfileHint: string;
+  // Aide et infos
+  helpTitle: string;
+  helpRowSubtitle: string;
   userGuide: string;
+  guideSubtitle: string;
   sendFeedback: string;
+  feedbackSubtitle: string;
   shareTablito: string;
   shareSubtitle: string;
   linkCopied: string;
-  shareApp: string;
-  about: string;
   whatsNew: string;
   privacy: string;
-  profiles: string;
-  profilesSubtitle: (name: string) => string;
-  profilesSubtitleWatcher: string;
-  addChild: string;
-  createLocalProfile: string;
-  deleteThisProfile: string;
-  pasteJsonHere: string;
-  confirmImport: string;
   appVersionLabel: string;
   shareText: string;
   // formats de date / durée / pourcentage / opérande
@@ -246,13 +274,11 @@ const parentDashboardFr: ParentDashboardStrings = {
   sessionHistory: 'Historique des séances',
   showAllSessions: (count) => `Tout afficher (${count})`,
   settings: 'Réglages et infos',
-  backup: 'Sauvegarde',
-  export: 'Exporter',
-  import: 'Importer',
-  transfer: 'Transférer',
+  settingsEyebrow: 'Réglages',
+  emptyProgress: 'Aucune progression à afficher sur cet appareil pour le moment.',
   transferPreparing: 'Préparation du transfert…',
   transferError:
-    "Transfert impossible pour le moment. Vérifiez la connexion internet, ou passez par Exporter / Importer.",
+    'Transfert impossible pour le moment. Vérifiez la connexion internet, ou passez par une sauvegarde\u00a0: exportez-la ici, puis importez-la sur le nouvel appareil.',
   transferHint: (minutes) =>
     `Scannez ce QR code avec l'appareil photo du nouvel appareil : Tablito s'y ouvrira avec la progression. Valable ${minutes} minutes, une seule fois.`,
   transferCopyLink: 'Ou copier le lien',
@@ -271,8 +297,26 @@ const parentDashboardFr: ParentDashboardStrings = {
   remoteRefresh: 'Actualiser',
   remoteNoData: 'Aucune progression à afficher pour le moment.',
   watchTitle: 'Suivi à distance',
-  watchSubtitle:
-    "Votre enfant pratique sur un autre appareil\u00a0? Suivez sa progression depuis celui-ci, sans y installer son profil. Chaque séance met le suivi à jour, et rien n'est lisible en dehors de vos appareils.",
+  watchRowSummary: (shared, following) => {
+    const parts: string[] = [];
+    if (shared.length > 0) {
+      parts.push(
+        shared.length > 1
+          ? `Progressions de ${joinNames(shared, 'fr')} partagées`
+          : `Progression de ${shared[0]} partagée`,
+      );
+    }
+    if (following.length > 0) {
+      parts.push(`${parts.length > 0 ? 'vous suivez' : 'Vous suivez'} ${joinNames(following, 'fr')}`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : 'Partager ou suivre une progression';
+  },
+  watchIntro:
+    "Suivez la progression d'un enfant depuis le téléphone d'un parent. Chaque séance met le suivi à jour, et tout est chiffré\u00a0: seuls vos appareils peuvent la lire.",
+  watchShareHeading: 'Partager depuis cet appareil',
+  watchShareSubtitle: 'Un QR code par enfant, à scanner avec le téléphone du parent.',
+  watchShared: 'Progression partagée',
+  watchNotShared: 'Progression non partagée',
   watchShare: (name) => `Partager la progression de ${name}`,
   watchShowQr: (name) => `Revoir le QR code de ${name}`,
   watchStopSharing: 'Ne plus partager',
@@ -282,7 +326,10 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchShareHint:
     "Scannez ce QR code depuis l'appareil du parent\u00a0: la progression y apparaîtra, et se mettra à jour après chaque séance. Le partage reste ouvert jusqu'à ce que vous l'arrêtiez.",
   watchQrAlt: 'QR code de suivi à distance',
-  watchScanQr: 'Suivre un enfant à distance',
+  watchFollow: 'Suivre un enfant à distance',
+  watchFollowSubtitle:
+    "Votre enfant pratique sur un autre appareil\u00a0? Suivez sa progression d'ici, sans installer son profil.",
+  watchScan: 'Scanner un QR code',
   watchScanPrompt: "Visez le QR code affiché sur l'appareil de l'enfant.",
   watchCameraError: 'Caméra indisponible. Vous pouvez coller le lien de suivi à la place.',
   watchLinkError:
@@ -292,26 +339,40 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchPasteConfirm: 'Suivre',
   watchStopFollowing: 'Ne plus suivre',
   cancel: 'Annuler',
-  helpAndFeedback: 'Aide & retours',
+  profilesTitle: 'Profils et sauvegarde',
+  profilesRowSubtitle: (names) => `${joinNames(names, 'fr')} · sauvegarde`,
+  profilesHeading: 'Enfants sur cet appareil',
+  profileActive: 'Profil actif',
+  sessionsCount: (count) => `${count} séance${count > 1 ? 's' : ''}`,
+  addChild: 'Ajouter un enfant',
+  createLocalProfile: 'Créer un profil sur cet appareil',
+  profilesSubtitleWatcher:
+    "Cet appareil ne sert qu'à suivre la progression d'un enfant qui pratique ailleurs. Vous pouvez aussi créer un profil ici, par exemple pour vous entraîner vous-même\u00a0: les deux coexistent, et vous basculez de l'un à l'autre en haut de cette page.",
+  backupHeading: (name) => `Sauvegarde de ${name}`,
+  transferRowTitle: "Changer d'appareil",
+  transferRowSubtitle: (minutes) => `Transfert par QR code, valable ${minutes} minutes`,
+  exportRowTitle: 'Exporter une sauvegarde',
+  exportRowSubtitle: 'Un fichier .json à garder',
+  importRowTitle: 'Importer une sauvegarde',
+  importRowSubtitle: (name) => `Remplace la progression de ${name}`,
+  importInvalid: "Ce fichier n'est pas une sauvegarde Tablito.",
+  importConfirm: (current, backup, sessions) =>
+    `Remplacer la progression de ${current} par cette sauvegarde (${backup}, ${sessions})\u00a0?`,
+  importDone: (name) => `Sauvegarde importée\u00a0: la progression de ${name} est restaurée.`,
+  deleteProfile: (name) => `Supprimer le profil de ${name}`,
+  deleteProfileHint:
+    'Efface sa progression, ses badges et ses images de cet appareil. Pensez à exporter une sauvegarde avant. Pour repartir de zéro, supprimez puis recréez le profil.',
+  helpTitle: 'Aide et infos',
+  helpRowSubtitle: 'Guide, avis, nouveautés, confidentialité',
   userGuide: 'Guide utilisateur',
+  guideSubtitle: 'Le fonctionnement de Tablito, écran par écran',
   sendFeedback: 'Envoyer un avis',
+  feedbackSubtitle: 'Une question, une idée, un souci\u00a0?',
   shareTablito: 'Partager Tablito',
   shareSubtitle: "Envoyez le lien de l'app à un autre parent.",
   linkCopied: 'Lien copié ✓',
-  shareApp: 'Partager l’app',
-  about: 'À propos',
   whatsNew: 'Nouveautés',
   privacy: 'Confidentialité',
-  profiles: 'Profils',
-  profilesSubtitle: (name) =>
-    `Plusieurs enfants sur le même appareil\u00a0? Chacun a son profil\u00a0: progression, badges et images séparés. La suppression efface le profil de ${name} de cet appareil — pour recommencer à zéro, supprimez puis recréez le profil.`,
-  profilesSubtitleWatcher:
-    "Cet appareil ne sert qu'à suivre la progression d'un enfant qui pratique ailleurs. Vous pouvez aussi créer un profil ici, par exemple pour vous entraîner vous-même\u00a0: les deux coexistent, et vous basculez de l'un à l'autre en haut de cette page.",
-  addChild: 'Ajouter un enfant',
-  createLocalProfile: 'Créer un profil sur cet appareil',
-  deleteThisProfile: 'Supprimer ce profil',
-  pasteJsonHere: 'Collez le JSON ici...',
-  confirmImport: "Confirmer l'import",
   appVersionLabel: "Version de l'app",
   shareText: 'Tablito — pour apprendre les tables de multiplication.',
   formatSeconds: (seconds) =>
@@ -398,13 +459,11 @@ const parentDashboardEn: ParentDashboardStrings = {
   sessionHistory: 'Session history',
   showAllSessions: (count) => `Show all (${count})`,
   settings: 'Settings and info',
-  backup: 'Backup',
-  export: 'Export',
-  import: 'Import',
-  transfer: 'Transfer',
+  settingsEyebrow: 'Settings',
+  emptyProgress: 'No progress to show on this device yet.',
   transferPreparing: 'Preparing the transfer…',
   transferError:
-    "Can't transfer right now. Check the internet connection, or use Export / Import instead.",
+    "Can't transfer right now. Check the internet connection, or use a backup instead: export it here, then import it on the new device.",
   transferHint: (minutes) =>
     `Scan this QR code with the new device's camera: Tablito will open there with the progress. Valid for ${minutes} minutes, one use only.`,
   transferCopyLink: 'Or copy the link',
@@ -423,8 +482,20 @@ const parentDashboardEn: ParentDashboardStrings = {
   remoteRefresh: 'Refresh',
   remoteNoData: 'No progress to show yet.',
   watchTitle: 'Remote follow',
-  watchSubtitle:
-    'Is your child practising on another device? Follow their progress from this one, without installing their profile here. Every session updates it, and nothing is readable outside your devices.',
+  watchRowSummary: (shared, following) => {
+    const parts: string[] = [];
+    if (shared.length > 0) parts.push(`Sharing ${joinNames(shared, 'en')}'s progress`);
+    if (following.length > 0) {
+      parts.push(`${parts.length > 0 ? 'following' : 'Following'} ${joinNames(following, 'en')}`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : 'Share or follow progress';
+  },
+  watchIntro:
+    "Follow a child's progress from a parent's phone. Every session updates it, and everything is encrypted: only your devices can read it.",
+  watchShareHeading: 'Share from this device',
+  watchShareSubtitle: "One QR code per child, to scan with the parent's phone.",
+  watchShared: 'Progress shared',
+  watchNotShared: 'Progress not shared',
   watchShare: (name) => `Share ${name}'s progress`,
   watchShowQr: (name) => `Show ${name}'s QR code again`,
   watchStopSharing: 'Stop sharing',
@@ -433,7 +504,10 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchShareHint:
     "Scan this QR code from the parent's device: the progress will show up there, and refresh after every session. Sharing stays on until you stop it.",
   watchQrAlt: 'Remote follow QR code',
-  watchScanQr: 'Follow a child remotely',
+  watchFollow: 'Follow a child remotely',
+  watchFollowSubtitle:
+    'Is your child practising on another device? Follow their progress from here, without installing their profile.',
+  watchScan: 'Scan a QR code',
   watchScanPrompt: "Point at the QR code shown on the child's device.",
   watchCameraError: 'Camera unavailable. You can paste the follow link instead.',
   watchLinkError:
@@ -443,26 +517,40 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchPasteConfirm: 'Follow',
   watchStopFollowing: 'Stop following',
   cancel: 'Cancel',
-  helpAndFeedback: 'Help & feedback',
+  profilesTitle: 'Profiles and backup',
+  profilesRowSubtitle: (names) => `${joinNames(names, 'en')} · backup`,
+  profilesHeading: 'Children on this device',
+  profileActive: 'Active profile',
+  sessionsCount: (count) => `${count} session${count === 1 ? '' : 's'}`,
+  addChild: 'Add a child',
+  createLocalProfile: 'Create a profile on this device',
+  profilesSubtitleWatcher:
+    'This device only follows the progress of a child practising elsewhere. You can also create a profile here — to practise yourself, for instance: the two coexist, and you switch between them at the top of this page.',
+  backupHeading: (name) => `${name}'s backup`,
+  transferRowTitle: 'Move to another device',
+  transferRowSubtitle: (minutes) => `Transfer by QR code, valid for ${minutes} minutes`,
+  exportRowTitle: 'Export a backup',
+  exportRowSubtitle: 'A .json file to keep',
+  importRowTitle: 'Import a backup',
+  importRowSubtitle: (name) => `Replaces ${name}'s progress`,
+  importInvalid: "This file isn't a Tablito backup.",
+  importConfirm: (current, backup, sessions) =>
+    `Replace ${current}'s progress with this backup (${backup}, ${sessions})?`,
+  importDone: (name) => `Backup imported: ${name}'s progress has been restored.`,
+  deleteProfile: (name) => `Delete ${name}'s profile`,
+  deleteProfileHint:
+    'Erases their progress, badges and pictures from this device. Remember to export a backup first. To start over, delete and recreate the profile.',
+  helpTitle: 'Help and info',
+  helpRowSubtitle: 'Guide, feedback, what’s new, privacy',
   userGuide: 'User guide',
+  guideSubtitle: 'How Tablito works, screen by screen',
   sendFeedback: 'Send feedback',
+  feedbackSubtitle: 'A question, an idea, a problem?',
   shareTablito: 'Share Tablito',
   shareSubtitle: 'Send the app link to another parent.',
   linkCopied: 'Link copied ✓',
-  shareApp: 'Share the app',
-  about: 'About',
   whatsNew: "What's new",
   privacy: 'Privacy',
-  profiles: 'Profiles',
-  profilesSubtitle: (name) =>
-    `Several children on the same device?\u00a0Each has their own profile: progress, badges and pictures kept separate. Deleting removes ${name}'s profile from this device — to start over, delete then recreate the profile.`,
-  profilesSubtitleWatcher:
-    'This device only follows the progress of a child practising elsewhere. You can also create a profile here — to practise yourself, for instance: the two coexist, and you switch between them at the top of this page.',
-  addChild: 'Add a child',
-  createLocalProfile: 'Create a profile on this device',
-  deleteThisProfile: 'Delete this profile',
-  pasteJsonHere: 'Paste the JSON here...',
-  confirmImport: 'Confirm import',
   appVersionLabel: 'App version',
   shareText: 'Tablito — to learn the multiplication tables.',
   formatSeconds: (seconds) => `${seconds.toFixed(1)}s`,
@@ -533,8 +621,6 @@ interface NotificationSettingsStrings {
   dailyReminder: string;
   iosInstallSubtitle: string;
   reminderSubtitle: string;
-  enabled: string;
-  enableReminder: string;
   blocked: string;
   unavailable: string;
 }
@@ -543,10 +629,7 @@ const notificationSettingsFr: NotificationSettingsStrings = {
   dailyReminder: 'Rappel quotidien',
   iosInstallSubtitle:
     "Pour recevoir un petit rappel chaque jour à 18h, installe d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → « Sur l'écran d'accueil »).",
-  reminderSubtitle:
-    'Une notification chaque jour à 18h pour penser à réviser les tables (jamais les jours où la séance est déjà faite).',
-  enabled: 'Activé',
-  enableReminder: 'Activer le rappel',
+  reminderSubtitle: 'Chaque jour à 18 h, sauf si la séance est déjà faite',
   blocked:
     'Notifications bloquées. Autorise-les dans les réglages de ton navigateur, puis réessaie.',
   unavailable: "Impossible d'activer le rappel pour le moment. Réessaie plus tard.",
@@ -556,10 +639,7 @@ const notificationSettingsEn: NotificationSettingsStrings = {
   dailyReminder: 'Daily reminder',
   iosInstallSubtitle:
     'To get a little reminder every day at 6pm, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
-  reminderSubtitle:
-    'A notification every day at 6pm to remember to review the tables (never on days the session is already done).',
-  enabled: 'On',
-  enableReminder: 'Turn on reminder',
+  reminderSubtitle: 'Every day at 6pm, unless the session is already done',
   blocked:
     'Notifications are blocked. Allow them in your browser settings, then try again.',
   unavailable: "Can't turn on the reminder right now. Please try again later.",
@@ -577,19 +657,16 @@ export function useNotificationSettingsStrings(): NotificationSettingsStrings {
 // === WeeklyRecapSettings (recap hebdomadaire du suivi à distance) ===
 
 interface WeeklyRecapStrings {
+  title: string;
   subtitle: string;
-  enabled: string;
-  enable: string;
   iosInstallSubtitle: string;
   blocked: string;
   unavailable: string;
 }
 
 const weeklyRecapFr: WeeklyRecapStrings = {
-  subtitle:
-    'Une notification le dimanche soir pour penser à regarder la progression de la semaine. Elle ne contient aucune donnée\u00a0: elle ouvre simplement cette page, où la progression est déchiffrée sur votre appareil.',
-  enabled: 'Activé',
-  enable: 'Recevoir un recap chaque semaine',
+  title: 'Recap du dimanche',
+  subtitle: 'Le point de la semaine, chaque dimanche soir',
   iosInstallSubtitle:
     "Pour recevoir le recap hebdomadaire, installez d'abord Tablito sur l'écran d'accueil (menu Partager de Safari → «\u00a0Sur l'écran d'accueil\u00a0»).",
   blocked:
@@ -598,10 +675,8 @@ const weeklyRecapFr: WeeklyRecapStrings = {
 };
 
 const weeklyRecapEn: WeeklyRecapStrings = {
-  subtitle:
-    'A notification on Sunday evening, to remember to check the week\u2019s progress. It carries no data: it simply opens this page, where the progress is decrypted on your device.',
-  enabled: 'On',
-  enable: 'Get a weekly recap',
+  title: 'Sunday recap',
+  subtitle: 'A look back at the week, every Sunday evening',
   iosInstallSubtitle:
     'To get the weekly recap, first add Tablito to your home screen (Safari Share menu → "Add to Home Screen").',
   blocked:

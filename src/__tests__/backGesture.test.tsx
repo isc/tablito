@@ -38,6 +38,9 @@ const onHome = () => document.querySelector('.home-parent-btn') !== null;
 const onParent = () => document.querySelector('.parent-back-btn') !== null;
 // Page d'une matière de l'espace parent (elle a aussi son `.parent-back-btn`).
 const onSubject = () => document.querySelector('.parent-dashboard--subject') !== null;
+// Page d'un réglage, reconnue à son titre.
+const onSettingsPage = (title: string) =>
+  document.querySelector('.parent-dashboard--settings .parent-title')?.textContent === title;
 
 function openMathPage(): void {
   fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-subject-card--math')!);
@@ -63,16 +66,23 @@ describe('geste retour du système', () => {
     await waitFor(() => expect(onHome()).toBe(true));
   });
 
-  it('remonte écran par écran : nouveautés → espace parent → accueil', async () => {
+  it('remonte écran par écran : nouveautés → aide et infos → espace parent → accueil', async () => {
     render(<App />);
     await openParentDashboard();
+    fireEvent.click(requireButton(/^Aide et infos/));
     fireEvent.click(requireButton(/^Nouveautés$/));
     await flush();
     expect(onParent()).toBe(false);
 
+    // Nouveautés s'ouvre depuis « Aide et infos » : on y revient.
     await act(async () => window.history.back());
-    await waitFor(() => expect(onParent()).toBe(true));
-    // L'entrée est ré-empilée par un effet, après le rendu de l'espace parent.
+    await waitFor(() => expect(onSettingsPage('Aide et infos')).toBe(true));
+    // L'entrée est ré-empilée par un effet, après le rendu de la page.
+    await waitFor(() => expect(window.history.state?.tablitoBack).toBe(true));
+
+    await act(async () => window.history.back());
+    await waitFor(() => expect(document.querySelector('.parent-dashboard--settings')).toBeNull());
+    expect(onParent()).toBe(true);
     await waitFor(() => expect(window.history.state?.tablitoBack).toBe(true));
 
     await act(async () => window.history.back());

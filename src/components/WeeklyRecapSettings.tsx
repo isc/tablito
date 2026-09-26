@@ -1,9 +1,8 @@
-// Toggle « Recap hebdomadaire » — la contrepartie parent du rappel quotidien.
+// Ligne « Recap du dimanche » — la contrepartie parent du rappel quotidien.
 //
-// Vit dans la section « Suivi à distance » et non à côté du rappel quotidien,
-// pour deux raisons : il n'a de sens que si cet appareil suit au moins un enfant
-// (sinon il n'y a aucun recap à annoncer), et sur un appareil purement suiveur
-// NotificationSettings n'est jamais rendu — il est conditionné au profil local.
+// N'est rendue que si cet appareil suit au moins un enfant (sinon il n'y a
+// aucun recap à annoncer), y compris sur un appareil purement suiveur, où le
+// rappel quotidien, lui, n'apparaît pas — il est lié à un profil local.
 //
 // La notification elle-même reste GÉNÉRIQUE : le serveur ne peut pas lire le
 // prénom de l'enfant, l'instantané étant chiffré de bout en bout. Elle dit
@@ -13,7 +12,8 @@ import { pushConfigured, pushSupported } from '../lib/push';
 import { isIOS, isStandalone } from '../lib/install';
 import { useWeeklyRecapStrings } from '../i18n/parent';
 import { usePushPref } from '../hooks/usePushPref';
-import PushToggle from './PushToggle';
+import { SettingRow, SwitchRow } from './ParentSettingRow';
+import { CalendarIcon } from './ParentSettingIcons';
 
 export default function WeeklyRecapSettings() {
   const t = useWeeklyRecapStrings();
@@ -25,20 +25,18 @@ export default function WeeklyRecapSettings() {
     // Même règle que le rappel quotidien : on n'explique que le cas iOS non
     // installé, seul cas réparable par l'utilisateur.
     if (!(isIOS() && !isStandalone())) return null;
-    return <p className="parent-section-subtitle">{t.iosInstallSubtitle}</p>;
+    return <SettingRow icon={<CalendarIcon />} title={t.title} sub={t.iosInstallSubtitle} />;
   }
 
   return (
-    <div className="parent-watch-block">
-      <p className="parent-section-subtitle">{t.subtitle}</p>
-      <PushToggle
-        enabled={enabled}
-        busy={busy}
-        message={message}
-        onToggle={toggle}
-        onLabel={t.enabled}
-        offLabel={t.enable}
-      />
-    </div>
+    <SwitchRow
+      icon={<CalendarIcon />}
+      title={t.title}
+      sub={t.subtitle}
+      enabled={enabled}
+      busy={busy}
+      message={message}
+      onToggle={toggle}
+    />
   );
 }

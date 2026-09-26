@@ -23,13 +23,9 @@
   padding: 4px 16px;
 }
 
-/* Premier bloc de réglages : le sur-titre les sépare de la progression. */
+/* Réglages : le sur-titre les sépare de la progression. */
 .parent-settings-start {
   margin-top: 28px;
-}
-
-.parent-settings-start .parent-overline {
-  margin-bottom: 0;
 }
 
 /* === Compteurs cumulés, au pied de la carte du jour === */

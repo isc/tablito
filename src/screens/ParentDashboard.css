@@ -264,8 +264,8 @@
 }
 
 .parent-import-area {
+  align-self: stretch;
   margin-top: 10px;
-  padding: 0 20px;
 }
 
 /* Panneau de transfert vers un autre appareil (QR + lien) */
@@ -430,9 +430,9 @@
   margin-top: 12px;
 }
 
+/* Enfants suivis, dans leur carte-liste de la page du suivi à distance. */
 .parent-watch-list {
-  margin: 14px 20px 0;
-  border-top: 1.5px solid var(--line);
+  list-style: none;
 }
 
 .parent-watch-row {
@@ -440,8 +440,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
+  min-height: 48px;
+}
+
+.parent-watch-row + .parent-watch-row {
+  border-top: 1px solid var(--line-soft);
 }
 
 .parent-watch-name {

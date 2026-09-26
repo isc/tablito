@@ -174,9 +174,10 @@ function backTarget({ screen, parentPage }: Nav, hasProfile: boolean): Nav | nul
       return to('home');
     case 'parent':
       return hasProfile ? to('home') : null;
+    // Ouverts depuis la page « Aide et infos » de l'espace parent : on y revient.
     case 'privacy':
     case 'changelog':
-      return to('parent');
+      return { screen: 'parent', parentPage: 'help' };
     default:
       return null;
   }

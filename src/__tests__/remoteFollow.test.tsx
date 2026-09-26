@@ -143,11 +143,9 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
 
     await renderApp();
 
-    // Sauvegarde / transfert / rappels / suppression parleraient d'une
-    // progression qui n'est pas sur cet appareil.
-    expect(findButton(/^Transférer$/)).toBeNull();
-    expect(findButton(/^Supprimer ce profil$/)).toBeNull();
-    expect(document.querySelector('.notification-settings')).toBeNull();
+    // Profils, sauvegarde et suppression parleraient d'une progression qui
+    // n'est pas sur cet appareil : pas de ligne pour eux dans les réglages.
+    expect(findButton(/^Profils et sauvegarde/)).toBeNull();
     // En revanche, la porte de sortie vers un profil local est offerte.
     expect(findButton(/Créer un profil sur cet appareil/)).not.toBeNull();
   });
@@ -190,7 +188,11 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
     await renderApp({ watchPairing: 'error' });
 
     expect(document.querySelector('.parent-dashboard')).not.toBeNull();
-    expect(findButton(/Suivre un enfant à distance/)).not.toBeNull();
+    // Le chemin pour réessayer : la page du suivi à distance, et son scanner.
+    await act(async () => {
+      fireEvent.click(findButton(/^Suivi à distance/)!);
+    });
+    expect(findButton(/^Scanner un QR code$/)).not.toBeNull();
   });
   it('n’affiche pas un écran blanc quand un QR périmé est scanné sur un appareil vierge', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
@@ -201,9 +203,13 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
 
     await renderApp({ watchPairing: 'error' });
 
-    // Quelque chose DOIT s'afficher, avec un chemin de récupération.
+    // Quelque chose DOIT s'afficher, avec un chemin de récupération : le
+    // bouton mène au scanner de la page du suivi à distance.
     expect(document.querySelector('.parent-dashboard')).not.toBeNull();
-    expect(findButton(/Suivre un enfant à distance/)).not.toBeNull();
+    await act(async () => {
+      fireEvent.click(findButton(/^Suivre un enfant à distance$/)!);
+    });
+    expect(findButton(/^Scanner un QR code$/)).not.toBeNull();
   });
 });
 
@@ -340,12 +346,13 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
 
     // On arrive sur l'enfant scanné…
     expect(sessionsShown()).toBe('30');
+    // Les réglages tiennent à l'appareil, pas au profil affiché : les profils
+    // de cet appareil restent à portée, même sur l'enfant suivi.
+    expect(findButton(/^Profils et sauvegarde/)).not.toBeNull();
 
     // …et la bascule vers le profil local montre bien SES stats.
     await clickTab(/Papa/);
     expect(sessionsShown()).toBe('4');
-    // Sur le profil local, les actions locales réapparaissent.
-    expect(findButton(/^Supprimer ce profil$/)).not.toBeNull();
   });
 
   // « J'ai coché joindre l'historique détaillé du profil mais je ne sais pas si
@@ -357,9 +364,13 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
 
+    // « Envoyer un avis » vit dans la page « Aide et infos ».
     const openFeedback = async () => {
       await act(async () => {
-        fireEvent.click(findButton(/^Envoyer un avis$/)!);
+        fireEvent.click(findButton(/^Aide et infos/)!);
+      });
+      await act(async () => {
+        fireEvent.click(findButton(/^Envoyer un avis/)!);
       });
     };
     // Crochet stable plutôt que le texte du libellé : recopier la copy ici la
@@ -396,6 +407,10 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     await act(async () => {
       // Après l'envoi, la modale passe sur l'écran de remerciement.
       fireEvent.click(document.querySelector<HTMLButtonElement>('.modal-close-btn')!);
+    });
+    // Retour à l'accueil de l'espace parent, où se choisit le profil affiché.
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
     });
 
     // Bascule sur le profil local : l'avis suit.

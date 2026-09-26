@@ -12,6 +12,7 @@ const fr: ChangelogEntry[] = [
     date: '2026-09-26',
     items: [
       "Espace parent réorganisé. Tout s'empilait jusqu'ici sur une seule page, avec un onglet de plus à chaque niveau débloqué, et des sections qui ne suivaient pas toutes le même onglet. L'accueil va désormais à l'essentiel et garde la même taille quel que soit le niveau de votre enfant\u00a0: la journée d'abord (séance faite ou pas, les quatorze derniers jours, les séries), puis une carte par matière avec le niveau en cours et sa barre de maîtrise — maîtrisées, en bonne voie, à consolider, pas encore vues —, les niveaux déjà passés restant cochés tant qu'ils tiennent, et enfin les trois faits sur lesquels votre enfant bute le plus en ce moment. Touchez une carte pour ouvrir la page de la matière\u00a0: la grille Leitner niveau par niveau, l'évolution (réussite ou rapidité, d'une touche), les faits à retravailler et l'historique des séances. Les réglages (sauvegarde, suivi à distance, rappels, profils) n'ont pas changé, en bas de l'accueil.",
+      "Espace parent, réglages rangés\u00a0: ils tiennent en une liste au bas de l'accueil, dont chaque ligne ouvre sa page — Suivi à distance, Profils et sauvegarde, Aide et infos — ou se règle sur place (rappel quotidien, langue). Deux nouveautés au passage. Chaque enfant de l'appareil peut désormais partager sa progression, et plus seulement celui qui est sélectionné. Et une sauvegarde s'importe en choisissant le fichier exporté, au lieu d'en coller le contenu, après une confirmation qui dit ce qui va être remplacé.",
     ],
   },
   {
@@ -238,6 +239,7 @@ const en: ChangelogEntry[] = [
     date: '2026-09-26',
     items: [
       "The parent area has been reorganized. Until now everything was stacked on a single page, with one more tab for each level unlocked, and sections that didn't all follow the same tab. The overview now sticks to the essentials and stays the same size whatever your child's level: the day first (session done or not, the last fourteen days, the streaks), then one card per subject with the current level and its mastery bar — mastered, on track, still shaky, not seen yet —, the levels already completed staying checked off as long as they hold, and finally the three facts your child is struggling with most right now. Tap a card to open that subject's page: the Leitner grid level by level, the trend (accuracy or speed, one tap away), the facts that need practice and the session history. The settings (backup, remote follow-up, reminders, profiles) haven't changed: they're at the bottom of the overview.",
+      "Parent area settings tidied up: they now sit in one list at the bottom of the overview, each row opening its own page — Remote follow, Profiles and backup, Help and info — or set right there (daily reminder, language). Two new things along the way. Every child on the device can now share their progress, not only the one currently selected. And a backup is imported by picking the exported file instead of pasting its content, after a confirmation that says what will be replaced.",
     ],
   },
   {

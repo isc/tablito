@@ -76,6 +76,7 @@ const TEXT = {
     consistency: 'Régularité', // src/i18n/badges.ts (badge streak)
     divisions: 'Divisions',
     remainders: 'Avec reste', // src/i18n/progress.ts (onglet niveau 3)
+    profilesPage: 'Profils et sauvegarde', // src/i18n/parent.ts (profilesTitle)
   },
   en: {
     greeting: 'Hi',        // greeting "Hi <name> !"
@@ -86,6 +87,7 @@ const TEXT = {
     consistency: 'Consistency',
     divisions: 'Divisions',
     remainders: 'Remainders',
+    profilesPage: 'Profiles and backup',
   },
 };
 
@@ -568,9 +570,11 @@ async function captureBadgesScreen(page) {
   await page.waitForSelector('.home-screen');
 }
 
-// Opens the parent area and shoots its overview (`hubShot`) and/or the Maths
-// page its subject card opens (`mathShot`), then goes back home.
-async function captureParentDashboard(page, { hubShot, mathShot }) {
+// Opens the parent area and shoots what is asked — its overview (`hubShot`),
+// the settings list at the bottom of it (`settingsShot`), the Maths page its
+// subject card opens (`mathShot`), the "Profiles and backup" page
+// (`profilesShot`) — then goes back home.
+async function captureParentDashboard(page, { hubShot, settingsShot, mathShot, profilesShot }) {
   // Open the parent gate (click) then solve the displayed multiplication.
   await page.click('.home-parent-btn');
   await page.waitForSelector('.parent-gate-modal');
@@ -584,6 +588,11 @@ async function captureParentDashboard(page, { hubShot, mathShot }) {
   await page.click('.parent-gate-submit');
   await page.waitForSelector('.parent-dashboard');
   if (hubShot) await shot(page, hubShot);
+  if (settingsShot) {
+    // body is the scroll container: bring the settings to the top of the viewport.
+    await page.locator('.parent-settings-start').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await shot(page, settingsShot);
+  }
   if (mathShot) {
     await page.click('.parent-subject-card--math');
     await page.waitForSelector('.parent-dashboard--subject');
@@ -592,6 +601,13 @@ async function captureParentDashboard(page, { hubShot, mathShot }) {
     // button then returns home.
     await page.click('.parent-back-btn');
     await page.waitForSelector('.parent-dashboard--subject', { state: 'detached' });
+  }
+  if (profilesShot) {
+    await page.click(`.parent-setting-btn:has-text("${tx('profilesPage')}")`);
+    await page.waitForSelector('.parent-dashboard--settings');
+    await shot(page, profilesShot);
+    await page.click('.parent-back-btn');
+    await page.waitForSelector('.parent-dashboard--settings', { state: 'detached' });
   }
   await page.click('.parent-back-btn');
   await page.waitForSelector('.home-screen');
@@ -1015,6 +1031,9 @@ async function captureMultiProfileScreens(page) {
   await page.waitForSelector('.home-screen');
   await page.waitForSelector('.home-switch-btn');
   await shot(page, '20-home-multi');
+
+  // Les enfants de l'appareil, dans la page « Profils et sauvegarde ».
+  await captureParentDashboard(page, { profilesShot: '20b-parent-profiles' });
 }
 
 // --- HTML guide generator ---------------------------------------------------
@@ -1277,13 +1296,18 @@ const SECTIONS_FR = [
       matières confondues. Une carte ouvre la page de sa matière : maîtrise
       et grille Leitner par niveau, évolution de la réussite ou de la
       rapidité, faits à retravailler et historique des séances. En bas de
-      l'accueil, les réglages : sauvegarde (export / import du profil,
-      transfert), suivi à distance, rappels, et gestion des profils — ajouter
-      un enfant ou supprimer le profil affiché (voir « Plusieurs enfants »
-      ci-dessous).`,
+      l'accueil, les réglages, une ligne chacun : le suivi à distance
+      (partager la progression de chaque enfant de l'appareil, ou suivre un
+      enfant qui pratique ailleurs), les profils et la sauvegarde (ajouter un
+      enfant, changer d'appareil, exporter ou importer une sauvegarde,
+      supprimer un profil — voir « Plusieurs enfants » ci-dessous), le rappel
+      quotidien, la langue, et l'aide (guide, avis, nouveautés,
+      confidentialité). Chaque ligne ouvre sa page, sauf le rappel et la
+      langue, qui se règlent sur place.`,
     shots: [
       { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent : la journée, puis une carte par matière.' },
       { file: '13a-parent-math', caption: 'La page Maths : maîtrise du niveau et grille Leitner, puis les séances.' },
+      { file: '13d-parent-settings', caption: 'Les réglages, en bas de l\'accueil : une ligne par réglage.' },
     ],
   },
   {
@@ -1292,16 +1316,17 @@ const SECTIONS_FR = [
     description: `Une tablette pour toute la fratrie : chaque enfant a son
       propre profil — progression, badges, série et images mystère totalement
       séparés. On ajoute un enfant depuis l'espace parent (« Ajouter un
-      enfant », section Profils) ou directement depuis l'écran de choix du
-      joueur. Dès deux profils, l'app demande « Qui joue ? » à l'ouverture,
+      enfant », page « Profils et sauvegarde ») ou directement depuis l'écran
+      de choix du joueur. Dès deux profils, l'app demande « Qui joue ? » à l'ouverture,
       et un bouton dédié en haut de l'accueil permet de changer de joueur à
       tout moment. Avec un seul profil, rien ne change : pas d'écran ni de
-      bouton en plus. La suppression d'un profil se fait dans l'espace
-      parent, après confirmation — et l'export / import de sauvegarde reste
-      disponible profil par profil.`,
+      bouton en plus. La même page de l'espace parent sauvegarde le profil
+      actif (changer d'appareil, exporter ou importer une sauvegarde) et le
+      supprime, après confirmation.`,
     shots: [
       { file: '19-profile-select', caption: '« Qui joue ? » — l\'écran de choix affiché à l\'ouverture dès deux profils.' },
       { file: '20-home-multi', caption: 'Le bouton « changer de joueur » apparaît en haut de l\'accueil, à côté de l\'engrenage.' },
+      { file: '20b-parent-profiles', caption: 'La page « Profils et sauvegarde » de l\'espace parent : les enfants de l\'appareil, puis la sauvegarde du profil actif.' },
     ],
   },
 ];
@@ -1538,13 +1563,17 @@ const SECTIONS_EN = [
       the child is struggling with most right now, across subjects. A card
       opens its subject's page: mastery and Leitner grid per level, the
       accuracy or speed trend, the facts that need practice and the session
-      history. At the bottom of the overview are the settings: backup (profile
-      export / import, transfer), remote follow-up, reminders, and profile
-      management — adding a child or deleting the displayed profile (see
-      “Several children” below).`,
+      history. At the bottom of the overview are the settings, one row each:
+      remote follow (share the progress of each child on this device, or
+      follow a child practising elsewhere), profiles and backup (add a child,
+      move to another device, export or import a backup, delete a profile —
+      see “Several children” below), the daily reminder, the language, and
+      help (guide, feedback, what's new, privacy). Each row opens its own
+      page, except the reminder and the language, which are set right there.`,
     shots: [
       { file: '13-parent-dashboard', caption: 'The parent area overview: the day first, then one card per subject.' },
       { file: '13a-parent-math', caption: 'The Math page: level mastery and Leitner grid, then the sessions.' },
+      { file: '13d-parent-settings', caption: 'The settings, at the bottom of the overview: one row per setting.' },
     ],
   },
   {
@@ -1552,16 +1581,17 @@ const SECTIONS_EN = [
     title: 'Several children',
     description: `One tablet for the whole family: each child has their own
       profile — progress, badges, streak and mystery pictures fully separate.
-      You add a child from the parent area (“Add a child”, Profiles section)
-      or straight from the player-selection screen. With two or more profiles,
+      You add a child from the parent area (“Add a child”, on the “Profiles
+      and backup” page) or straight from the player-selection screen. With two or more profiles,
       the app asks “Who's playing?” on launch, and a dedicated button at the
       top of the home screen lets you switch player at any time. With a single
-      profile, nothing changes: no extra screen or button. Deleting a profile
-      happens in the parent area, after confirmation — and backup export /
-      import stays available profile by profile.`,
+      profile, nothing changes: no extra screen or button. The same page of
+      the parent area backs up the active profile (move to another device,
+      export or import a backup) and deletes it, after confirmation.`,
     shots: [
       { file: '19-profile-select', caption: '“Who\'s playing?” — the selection screen shown on launch with two or more profiles.' },
       { file: '20-home-multi', caption: 'The “switch player” button appears at the top of the home screen, next to the gear.' },
+      { file: '20b-parent-profiles', caption: 'The “Profiles and backup” page of the parent area: the children on this device, then the active profile\'s backup.' },
     ],
   },
 ];
@@ -1989,6 +2019,7 @@ async function generateForLang(browser, lang) {
   await captureNavScreen(page, NAV_SCREENS[1]); // Rules
   await captureParentDashboard(page, {
     hubShot: '13-parent-dashboard',
+    settingsShot: '13d-parent-settings',
     mathShot: '13a-parent-math',
   });
   await captureSessionScreens(page);

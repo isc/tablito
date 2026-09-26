@@ -74,7 +74,7 @@ export default function ParentWatchPairing({ onPaired }: ParentWatchPairingProps
           )}
           <div className="parent-actions">
             <button className="parent-action-btn" onClick={() => setPair('scanning')}>
-              {t.watchScanQr}
+              {t.watchScan}
             </button>
             <button className="parent-action-btn" onClick={() => setPair('manual')}>
               {t.watchPasteLink}

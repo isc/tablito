@@ -163,6 +163,7 @@ describe('Mode multi-profils (DOM)', () => {
 
     // Enfant 2 : ajout via l'espace parent.
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     fireEvent.click(findButton('Ajouter un enfant')!);
     completeWelcome('Max');
     expect(readGreeting()).toContain('Max');
@@ -193,6 +194,7 @@ describe('Mode multi-profils (DOM)', () => {
     completeWelcome('Zoe');
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     fireEvent.click(findButton('Ajouter un enfant')!);
     // Welcome en mode ajout → bouton Annuler présent.
     fireEvent.click(findButton('Annuler')!);
@@ -259,8 +261,9 @@ describe('Mode multi-profils (DOM)', () => {
     expect(readGreeting()).toContain('Max');
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    fireEvent.click(findButton('Supprimer ce profil')!);
+    fireEvent.click(findButton('Supprimer le profil de Max')!);
     confirmSpy.mockRestore();
 
     // Il ne reste que Zoé : retour direct sur son accueil.

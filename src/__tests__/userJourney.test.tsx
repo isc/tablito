@@ -411,7 +411,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     },
   );
 
-  it("le bouton « Supprimer ce profil » efface le profil et relance le test de placement", async () => {
+  it("« Supprimer le profil » efface le profil et relance le test de placement", async () => {
     render(<App />);
 
     // Setup minimal : on crée un profil en sautant le test de placement.
@@ -426,8 +426,9 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     expect(loadProfile()).not.toBeNull();
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    fireEvent.click(findButton('Supprimer ce profil')!);
+    fireEvent.click(findButton('Supprimer le profil de Zoe')!);
     confirmSpy.mockRestore();
 
     expect(loadProfile()).toBeNull();
@@ -450,8 +451,9 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
     expect(before).not.toBeNull();
 
     await openParentDashboard();
+    fireEvent.click(findButton(/^Profils et sauvegarde/)!);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-    fireEvent.click(findButton('Supprimer ce profil')!);
+    fireEvent.click(findButton('Supprimer le profil de Zoe')!);
     confirmSpy.mockRestore();
 
     expect(loadProfile()?.name).toBe(before!.name);

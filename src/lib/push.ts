@@ -80,6 +80,15 @@ const NO_PUSH: PushPrefs = { daily: false, weekly: false };
 // rend le toggle inopérant pour DÉSACTIVER (il ne proposerait qu'« activer »).
 const MIRROR_KEY = 'multiplix-push-prefs';
 
+/**
+ * Dernier état connu sur cet appareil, lu sans réseau : l'état de départ des
+ * interrupteurs, que getPushPrefs réconcilie ensuite. Sans lui, chaque retour
+ * sur l'accueil de l'espace parent les montrerait éteints le temps de relire.
+ */
+export function peekPushPrefs(): PushPrefs | null {
+  return readMirror();
+}
+
 function readMirror(): PushPrefs | null {
   try {
     const raw = localStorage.getItem(MIRROR_KEY);
