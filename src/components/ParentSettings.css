@@ -119,8 +119,7 @@
   width: 100%;
 }
 
-/* Deux classes pour passer devant la marge négative de `.parent-section-subtitle`. */
-.parent-section-subtitle.parent-create-profile-note {
+.parent-create-profile-note {
   margin: 10px 0 0;
 }
 

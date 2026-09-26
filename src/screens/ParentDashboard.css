@@ -78,6 +78,14 @@
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-muted);
+}
+
+/* Marge par défaut, sans spécificité : un composant qui porte aussi cette
+   classe (note sous une carte, sous-titre de la carte du jour…) la remplace
+   d'une simple classe. Sans le :where(), cette feuille, concaténée après
+   celles des composants, gagnait à spécificité égale : la note « Sur les 10
+   dernières séances » remontait contre sa carte. */
+:where(.parent-section-subtitle) {
   margin: -4px 0 10px;
 }
 
