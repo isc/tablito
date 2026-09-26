@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260926081424"
+const CACHE = 'tablito-' + "20260926112704"
 const BASE = "/previews/claude-parent-space-design-proposals-wb3apx/"
 const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/favicon.svg",
@@ -85,7 +85,9 @@ const ASSETS = [
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentHardFacts.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentMastery.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentOverview.js",
+  "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentSegmented.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentSubjectDetail.js",
+  "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ParentWatchPairing.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/ProgressGrid.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/PushToggle.js",
   "/previews/claude-parent-space-design-proposals-wb3apx/src/components/QrCanvas.js",

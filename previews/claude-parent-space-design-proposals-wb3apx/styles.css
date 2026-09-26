@@ -55,15 +55,9 @@
 
 /* ===== components/ActivityStrip.css ===== */
 /* Bandeau d'activité de l'espace parent (cf. ActivityStrip.tsx). Le châssis de
-   carte et la typo du sous-titre viennent de `.parent-stat-card` et
-   `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
+   carte et la typo du sous-titre viennent de `.parent-card` (ParentOverview.css)
+   et `.parent-section-subtitle` (ParentDashboard.css), portés en plus sur les
    éléments : on ne redéclare ici que ce qui diffère. */
-
-/* Carte autonome en tête de l'accueil ; les compteurs cumulés en ferment le
-   bas (cf. ParentOverview). */
-.parent-activity {
-  padding-bottom: 12px;
-}
 
 .parent-activity-heading {
   font-family: var(--serif);
@@ -2313,15 +2307,10 @@
    elle-même vient d'ActivityStrip, qui porte les compteurs cumulés à sa base. */
 
 /* Sur-titre de section : « Matières », « À retravailler », « Réglages et
-   infos ». Moins appuyé qu'un titre de carte, il annonce un groupe. */
+   infos ». Moins appuyé qu'un titre de carte, il annonce un groupe. Même typo
+   que le sur-titre de l'en-tête (cf. `.parent-eyebrow`). */
 .parent-overline {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 800;
   line-height: 14px;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--ink-muted);
   margin-bottom: 10px;
 }
 
@@ -2366,11 +2355,6 @@
   border-left: 1px solid var(--line-soft);
 }
 
-.parent-kpi .parent-stat-value {
-  font-size: 22px;
-  margin-top: 0;
-}
-
 .parent-kpi--streak .parent-stat-value {
   color: var(--coral);
 }
@@ -2379,7 +2363,8 @@
   color: var(--sage);
 }
 
-/* === Cartes de matière : la carte entière est le bouton qui ouvre la page === */
+/* === Cartes de matière : la carte entière est le bouton qui ouvre la page.
+   Fond, bordure et rayon viennent de `.parent-card`. === */
 
 .parent-subject-cards {
   display: flex;
@@ -2392,9 +2377,6 @@
   flex-direction: column;
   width: 100%;
   padding: 14px 16px 16px;
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 16px;
   color: var(--ink);
   font-family: var(--sans);
   text-align: left;
@@ -2458,9 +2440,12 @@
   color: var(--ink-muted);
 }
 
+/* Le chevron de retour, retourné. */
 .parent-subject-chevron {
+  display: inline-flex;
   flex-shrink: 0;
   color: var(--ink-muted);
+  transform: scaleX(-1);
 }
 
 /* Niveaux passés : une pastille chacun, cochée tant qu'il reste maîtrisé. */
@@ -2513,13 +2498,9 @@
   margin: 8px 0 0;
 }
 
-/* ===== components/ParentSubjectDetail.css ===== */
-/* Page de matière de l'espace parent (cf. ParentSubjectDetail.tsx). Cartes et
-   sur-titres : cf. ParentOverview.css. */
+/* ===== components/ParentSegmented.css ===== */
+/* Contrôle segmenté de l'espace parent (cf. ParentSegmented.tsx). */
 
-/* Sélecteur de niveau : un contrôle segmenté sur une seule ligne, quel que
-   soit le nombre de niveaux débloqués — là où les pastilles de l'ancien écran
-   passaient sur deux lignes dès la quatrième. */
 .parent-segmented {
   display: flex;
   padding: 3px;
@@ -2549,15 +2530,29 @@
   box-shadow: 0 1px 3px rgba(30, 26, 46, 0.14);
 }
 
-/* Titres de carte. Sélecteur à deux classes pour passer devant la règle
-   générique `.parent-section h3` (marge basse de 10 px). */
+/* Variante compacte, à côté d'un titre de carte. */
+.parent-segmented--pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.parent-segmented--pill .parent-segmented-option {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+}
+
+/* ===== components/ParentSubjectDetail.css ===== */
+/* Page de matière de l'espace parent (cf. ParentSubjectDetail.tsx). Cartes et
+   sur-titres : cf. ParentOverview.css ; sélecteurs : ParentSegmented.css. */
+
+/* Titres de carte : la typo vient de `.parent-section h3` ; deux classes pour
+   passer devant sa marge basse de 10 px. */
 .parent-section .parent-card-title {
-  font-family: var(--serif);
-  font-size: 17px;
-  font-weight: 600;
   line-height: 1.3;
-  letter-spacing: -0.2px;
-  color: var(--ink);
   margin-bottom: 0;
 }
 
@@ -2627,41 +2622,6 @@
   height: 12px;
   border-radius: 6px;
   margin-top: 14px;
-}
-
-/* === Évolution : une seule courbe, à bascule réussite / rapidité === */
-
-.parent-toggle {
-  display: inline-flex;
-  flex-shrink: 0;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--cream-deep);
-}
-
-.parent-toggle-option {
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-soft);
-  font-family: var(--sans);
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-.parent-toggle-option.is-active {
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 1px 2px rgba(30, 26, 46, 0.14);
-}
-
-/* La courbe vit dans la carte : pas de second cadre autour d'elle. */
-.parent-evolution .parent-evolution-chart {
-  padding: 10px 0 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
 }
 
 /* « Tout afficher » au pied de l'historique. */
@@ -3978,7 +3938,8 @@ input, select, textarea {
   gap: 0;
 }
 
-.parent-eyebrow {
+.parent-eyebrow,
+.parent-overline {
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 800;
@@ -4039,15 +4000,7 @@ input, select, textarea {
   background: var(--line);
 }
 
-/* Carte du jour (ActivityStrip) et ses compteurs cumulés (cf. ParentOverview). */
-.parent-stat-card {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 14px;
-  padding: 12px 14px;
-  text-align: left;
-}
-
+/* Compteurs cumulés au pied de la carte du jour (cf. ParentOverview). */
 .parent-stat-label {
   font-family: var(--sans);
   font-size: 10px;
@@ -4059,31 +4012,28 @@ input, select, textarea {
 
 .parent-stat-value {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--ink);
-  margin-top: 2px;
   letter-spacing: -0.5px;
   line-height: 1.1;
 }
 
 /* Sélecteur de source (profil de cet appareil / enfants suivis à distance),
    sous l'en-tête de l'accueil. Mêmes pastilles que « Mes images ». */
-.parent-op-tabs {
+.parent-source-tabs {
   margin-top: 16px;
   padding-bottom: 2px;
 }
 
-.parent-op-tabs + .parent-section {
+.parent-source-tabs + .parent-section {
   margin-top: 10px;
 }
 
-/* Evolution chart */
+/* Courbe d'évolution, dans sa carte de la page de matière : pas de second
+   cadre autour d'elle. */
 .parent-evolution-chart {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-  padding: 12px 8px 4px;
+  padding: 10px 0 0;
   overflow: hidden;
 }
 
