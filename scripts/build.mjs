@@ -7,10 +7,10 @@
 // Pas de bundling JS : chaque .ts/.tsx devient un .js indépendant. Les
 // imports relatifs sont réécrits pour pointer vers les .js générés.
 //
-// CSS : tous les .css sources sont concaténés en un seul `dist/styles.css`
-// chargé via un unique <link> dans index.html. Le split par composant est
-// purement une convention d'auteur (lisibilité) ; le browser n'a aucune
-// raison de recevoir 30 requêtes là où 1 suffit.
+// CSS : tous les .css sources sont minifiés puis concaténés en un seul
+// `dist/styles.css` chargé via un unique <link> dans index.html. Le split par
+// composant est purement une convention d'auteur (lisibilité) ; le browser n'a
+// aucune raison de recevoir une requête par fichier là où 1 suffit.
 
 import crypto from 'node:crypto'
 import esbuild from 'esbuild'
@@ -151,17 +151,33 @@ for await (const file of walk(SRC)) {
 }
 
 // 1.5) Concat tous les CSS sources en un seul dist/styles.css.
-// Économise 30 requêtes HTTP au cold load. L'ordre est alphabétique
-// pour la reproductibilité, donc index.css n'est pas en tête (c'est
-// `App.css` qui sort en premier). Sans impact pratique : les classnames
-// sont préfixés par composant (`.session-*`, `.parent-*`…) donc pas de
-// collision de spécificité, et les `var(--*)` se résolvent à
-// l'utilisation, pas au parse de leur définition.
+// Économise une requête HTTP par fichier au cold load. L'ordre est
+// alphabétique par chemin, donc index.css n'est pas en tête (c'est
+// `App.css` qui sort en premier) et les feuilles des composants passent
+// avant celles des écrans. Cet ordre compte : à spécificité égale, la
+// dernière règle gagne (cf. le `:where()` de ParentDashboard.css). Les
+// `var(--*)`, eux, se résolvent à l'utilisation, pas au parse de leur
+// définition.
+//
+// Minifié : cette feuille bloque le premier rendu de chaque visiteur,
+// landing comprise, et les sources sont très commentées (gzip divisé par
+// deux). Fichier par fichier, pour qu'aucune optimisation ne franchisse la
+// frontière d'un fichier et qu'un warning d'esbuild désigne le bon fichier
+// source. esbuild ne réordonne pas les règles : il fusionne au plus des
+// règles adjacentes aux déclarations identiques et ne retire un doublon
+// exact qu'au profit de sa dernière occurrence, ce qui laisse la cascade
+// intacte. Sans `target`, aucune syntaxe n'est abaissée ni préfixée.
 cssFiles.sort((a, b) => a.rel.localeCompare(b.rel))
-const concatenated = (await Promise.all(
-  cssFiles.map(async ({ rel, abs }) => `/* ===== ${rel} ===== */\n${await fs.readFile(abs, 'utf8')}`),
-)).join('\n')
-await fs.writeFile(path.join(OUT, 'styles.css'), concatenated)
+const minifiedCss = await Promise.all(cssFiles.map(async ({ rel, abs }) =>
+  (await esbuild.transform(await fs.readFile(abs, 'utf8'), {
+    loader: 'css',
+    minify: true,
+    sourcefile: `src/${rel}`,
+    logLevel: 'warning', // transform est muet par défaut
+  })).code,
+))
+// Une ligne par fichier source : esbuild termine chaque sortie par un \n.
+await fs.writeFile(path.join(OUT, 'styles.css'), minifiedCss.join(''))
 
 // 2) Vendor + public
 await copyTree(VENDOR, path.join(OUT, 'vendor'))
