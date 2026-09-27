@@ -19,6 +19,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LAZY_GROUPS, STANDALONE_DOCS, classify } from './cache-config.mjs'
+import { listSrcCssFiles } from './css-order.mjs'
 
 const ROOT     = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC      = path.join(ROOT, 'src')
@@ -119,9 +120,8 @@ const isTestFile = (rel) =>
 // dans dist/ et précaché pour rien (c'était le cas de src/env.d.ts).
 const isDeclaration = (rel) => rel.endsWith('.d.ts')
 
-// 1) Transforme/copie src/. Les .css sources sont collectés pour
-// concaténation en bundle unique (étape 1.5).
-const cssFiles = []
+// 1) Transforme/copie src/, sauf les .css : ils sont concaténés en un
+// bundle unique à l'étape 1.5.
 for await (const file of walk(SRC)) {
   const rel = path.relative(SRC, file)
   if (isTestFile(rel) || isDeclaration(rel)) continue
@@ -148,22 +148,16 @@ for await (const file of walk(SRC)) {
     const codeWithMap = code + `\n//# sourceMappingURL=${outName}.map\n`
     await fs.writeFile(path.join(outDir, outName), codeWithMap)
     await fs.writeFile(path.join(outDir, outName + '.map'), result.map)
-  } else if (ext === '.css') {
-    cssFiles.push({ rel, abs: file })
-  } else {
+  } else if (ext !== '.css') {
     await ensureDir(outDir)
     await fs.copyFile(file, path.join(outDir, path.basename(rel)))
   }
 }
 
 // 1.5) Concat tous les CSS sources en un seul dist/styles.css.
-// Économise une requête HTTP par fichier au cold load. L'ordre est
-// alphabétique par chemin, donc index.css n'est pas en tête (c'est
-// `App.css` qui sort en premier) et les feuilles des composants passent
-// avant celles des écrans. Cet ordre compte : à spécificité égale, la
-// dernière règle gagne (cf. le `:where()` de ParentDashboard.css). Les
-// `var(--*)`, eux, se résolvent à l'utilisation, pas au parse de leur
-// définition.
+// Économise une requête HTTP par fichier au cold load. L'ordre, dont la
+// cascade dépend, vient de css-order.mjs : le même que celui des <link> du
+// dev server.
 //
 // Minifié : cette feuille bloque le premier rendu de chaque visiteur,
 // landing comprise, et les sources sont très commentées (gzip divisé par
@@ -173,9 +167,9 @@ for await (const file of walk(SRC)) {
 // règles adjacentes aux déclarations identiques et ne retire un doublon
 // exact qu'au profit de sa dernière occurrence, ce qui laisse la cascade
 // intacte. Sans `target`, aucune syntaxe n'est abaissée ni préfixée.
-cssFiles.sort((a, b) => a.rel.localeCompare(b.rel))
-const minifiedCss = await Promise.all(cssFiles.map(async ({ rel, abs }) =>
-  (await esbuild.transform(await fs.readFile(abs, 'utf8'), {
+const cssFiles = await listSrcCssFiles(SRC)
+const minifiedCss = await Promise.all(cssFiles.map(async (rel) =>
+  (await esbuild.transform(await fs.readFile(path.join(SRC, rel), 'utf8'), {
     loader: 'css',
     minify: true,
     sourcefile: `src/${rel}`,

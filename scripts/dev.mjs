@@ -10,14 +10,16 @@
 //  - virtual:pwa-register → no-op via import map (pas de SW en dev)
 //
 // CSS : tous les .css sous src/ sont auto-découverts et pré-injectés via
-// <link> dans index.html (cf. listSrcCssFiles plus bas). Pas d'import CSS
-// dans le source — la concaténation au build et l'injection en dev font foi.
+// <link> dans index.html (évite le FOUC), un par fichier, servi tel quel. Pas
+// d'import CSS dans le source — la concaténation au build et l'injection en
+// dev font foi, avec la même liste dans le même ordre (css-order.mjs).
 
 import http from 'node:http'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import esbuild from 'esbuild'
+import { listSrcCssFiles } from './css-order.mjs'
 import { MIME } from './mime.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -72,23 +74,6 @@ async function resolveUrl(pathname) {
   return null
 }
 
-// Liste tous les .css de src/ pour les pré-charger via <link> dans
-// l'index.html — évite le FOUC (sinon les CSS importés depuis JS arrivent
-// après le 1er render).
-async function listSrcCssFiles() {
-  const out = []
-  async function walk(dir, prefix) {
-    for (const e of await fs.readdir(dir, { withFileTypes: true })) {
-      const p = path.join(dir, e.name)
-      const rel = prefix ? prefix + '/' + e.name : e.name
-      if (e.isDirectory()) await walk(p, rel)
-      else if (e.name.endsWith('.css')) out.push('/src/' + rel)
-    }
-  }
-  await walk(path.join(ROOT, 'src'), '')
-  return out.sort()
-}
-
 const server = http.createServer(async (req, res) => {
   try {
     const u = new URL(req.url, `http://localhost:${PORT}`)
@@ -98,8 +83,8 @@ const server = http.createServer(async (req, res) => {
     // Sert l'index.html avec les <link> CSS pré-injectés.
     if (pathname === '/index.html') {
       let html = await fs.readFile(path.join(ROOT, 'index.html'), 'utf8')
-      const cssFiles = await listSrcCssFiles()
-      const linkTags = cssFiles.map((p) => `    <link rel="stylesheet" href="${p}" />`).join('\n')
+      const cssFiles = await listSrcCssFiles(path.join(ROOT, 'src'))
+      const linkTags = cssFiles.map((rel) => `    <link rel="stylesheet" href="/src/${rel}" />`).join('\n')
       html = html.replace(/(<\/head>)/, `${linkTags}\n  $1`)
       res.writeHead(200, { 'Content-Type': MIME['.html'] })
       return res.end(html)
