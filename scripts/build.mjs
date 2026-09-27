@@ -3,6 +3,7 @@
 //
 //   npm run build                         → dist/ (BASE=/)
 //   BASE=/ npm run build        → dist/ pour sous-chemin
+//   OUT_DIR=/tmp/x node scripts/build.mjs → dossier hors du dépôt (tests)
 //
 // Pas de bundling JS : chaque .ts/.tsx devient un .js indépendant. Les
 // imports relatifs sont réécrits pour pointer vers les .js générés.
@@ -26,7 +27,7 @@ const VENDOR   = path.join(ROOT, 'vendor')
 const TEMPLATE = path.join(ROOT, 'index.html')
 const SW_SRC   = path.join(ROOT, 'scripts/sw.js')
 const REG_SRC  = path.join(ROOT, 'scripts/pwa-register.js')
-const OUT      = path.join(ROOT, 'dist')
+const OUT      = process.env.OUT_DIR ? path.resolve(process.env.OUT_DIR) : path.join(ROOT, 'dist')
 
 const BASE    = process.env.BASE ?? '/'
 const VERSION = process.env.VERSION ?? new Date().toISOString().slice(0, 19).replace(/[-T:]/g, '')
@@ -100,6 +101,11 @@ async function rewriteImports(code, sourceFile) {
 }
 
 console.log(`Building into ${OUT} (BASE=${BASE}, VERSION=${VERSION})`)
+// Le build commence par vider sa sortie : un OUT_DIR qui recouvre le dépôt
+// (`.`, `src`, un parent) effacerait des sources.
+if (process.env.OUT_DIR && [path.relative(ROOT, OUT), path.relative(OUT, ROOT)].some((r) => !r.startsWith('..'))) {
+  throw new Error(`OUT_DIR doit être hors du dépôt : ${OUT}`)
+}
 await fs.rm(OUT, { recursive: true, force: true })
 await ensureDir(OUT)
 
@@ -195,6 +201,14 @@ html = html
   .replace(/(<\/head>)/, `${stylesLink}\n  $1`)
 await fs.writeFile(path.join(OUT, 'index.html'), html)
 
+// Cible de `virtual:pwa-register` dans l'import map ci-dessus. main.js l'importe
+// au démarrage : à écrire avant la marche de l'étape 4, sinon il manque au
+// précache et l'app ne démarre plus hors ligne (cf. « précache du build » dans
+// scripts/sw-cache.test.mjs).
+let reg = await fs.readFile(REG_SRC, 'utf8')
+reg = reg.replaceAll('__SW_PATH__', JSON.stringify(BASE + 'sw.js'))
+await fs.writeFile(path.join(OUT, 'pwa-register.js'), reg)
+
 // 3.5) Réécrit les URLs dans dist/fonts/fonts.css (`url("/fonts/...")`)
 // pour respecter BASE — sinon en prod (BASE=/) les @font-face
 // pointent sur /fonts/... et 404 sur GitHub Pages.
@@ -241,7 +255,9 @@ for (const [group, files] of Object.entries(lazyFiles)) {
   lazyVersions[group] = h.digest('hex').slice(0, 12)
 }
 
-// 5) SW + pwa-register
+// 5) SW, écrit en dernier : il embarque la liste de précache, qui ne connaît que
+// les fichiers présents dans dist/ lors de la marche de l'étape 4. Lui-même
+// n'y figure jamais (`skip` dans classify).
 let sw = await fs.readFile(SW_SRC, 'utf8')
 sw = sw
   .replaceAll('__VERSION__', JSON.stringify(VERSION))
@@ -254,10 +270,6 @@ sw = sw
   .replaceAll('__LAZY_VERSIONS__', JSON.stringify(lazyVersions))
   .replaceAll('__STANDALONE_DOCS__', JSON.stringify(STANDALONE_DOCS))
 await fs.writeFile(path.join(OUT, 'sw.js'), sw)
-
-let reg = await fs.readFile(REG_SRC, 'utf8')
-reg = reg.replaceAll('__SW_PATH__', JSON.stringify(BASE + 'sw.js'))
-await fs.writeFile(path.join(OUT, 'pwa-register.js'), reg)
 
 const totalKB = Math.round((await du(OUT)) / 1024)
 // Somme des assets réellement précachés, accumulée pendant la marche : le
