@@ -4,6 +4,9 @@
 //   à l'arbre de travail courant).
 // - Sert chacun sur un port différent.
 // - Lighthouse mobile (3 runs, médiane) → score normalisé + métriques.
+//   Sur le Chrome for Testing de Playwright (ou CHROME_PATH), jamais le Chrome
+//   système que chrome-launcher prend par défaut : lancé en headless, il
+//   empêche ensuite d'ouvrir Chrome sur macOS (LaunchServices).
 // - Playwright avec contexte persistant → mesure 1re visite (SW vide)
 //   PUIS 2e visite (SW chaud) sur le même contexte.
 // - Affiche un tableau side-by-side.
@@ -24,6 +27,14 @@ const baselineRef = process.argv[2]
 const candidateRef = process.argv[3] || 'HEAD'
 if (!baselineRef) {
   console.error('Usage: node scripts/perf-compare.mjs <baseline-ref> [candidate-ref=HEAD]')
+  process.exit(1)
+}
+
+const chromePath = process.env.CHROME_PATH || chromium.executablePath()
+if (!existsSync(chromePath)) {
+  console.error(process.env.CHROME_PATH
+    ? `CHROME_PATH introuvable : ${chromePath}`
+    : `Chromium de Playwright non installé (${chromePath}).\n→ npx playwright install chromium`)
   process.exit(1)
 }
 
@@ -82,6 +93,7 @@ async function waitForServer(port, timeoutMs = 5000) {
 // --- Lighthouse run -------------------------------------------------------
 async function runLighthouse(url) {
   const chrome = await chromeLauncher.launch({
+    chromePath,
     chromeFlags: ['--headless=new', '--no-sandbox'],
   })
   // Le trace engine de Lighthouse 13 lance des LanternError NO_LCP en
