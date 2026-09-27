@@ -5,13 +5,17 @@
 // été pendant longtemps (un seul cache, versionné par build) → ~13 Mo d'images
 // et ~55 Mo d'audio repartaient sur le réseau à chaque déploiement.
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { STANDALONE_DOCS } from './cache-config.mjs';
+import { STANDALONE_DOCS, classify } from './cache-config.mjs';
 
-const SW_SRC = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sw.js');
+const SCRIPTS = path.dirname(fileURLToPath(import.meta.url));
+const SW_SRC = path.join(SCRIPTS, 'sw.js');
 
 const VERSION = '20260101000000';
 const LAZY_GROUPS = { audio: ['/audio/'], media: ['/mystery/', '/splash/'] };
@@ -45,8 +49,7 @@ class FakeCaches {
   }
 }
 
-// Charge sw.js avec ses marqueurs substitués (ce que fait scripts/build.mjs) et
-// renvoie les handlers enregistrés, plus le CacheStorage qu'ils manipulent.
+// Charge sw.js avec ses marqueurs substitués (ce que fait scripts/build.mjs).
 async function loadSW(existingCaches = []) {
   const src = (await fs.readFile(SW_SRC, 'utf8'))
     .replaceAll('__VERSION__', JSON.stringify(VERSION))
@@ -55,7 +58,12 @@ async function loadSW(existingCaches = []) {
     .replaceAll('__LAZY_GROUPS__', JSON.stringify(LAZY_GROUPS))
     .replaceAll('__LAZY_VERSIONS__', JSON.stringify(LAZY_VERSIONS))
     .replaceAll('__STANDALONE_DOCS__', JSON.stringify(STANDALONE_DOCS));
+  return runSW(src, existingCaches);
+}
 
+// Exécute le source d'un SW et renvoie les handlers qu'il enregistre, plus le
+// CacheStorage qu'ils manipulent.
+function runSW(src, existingCaches) {
   const handlers = {};
   const self = {
     addEventListener: (type, fn) => { handlers[type] = fn; },
@@ -92,6 +100,14 @@ function navigate(handlers, url) {
   return responded;
 }
 
+// Déclenche un évènement de cycle de vie (`install`, `activate`) et attend ses
+// `waitUntil`.
+async function lifecycle(handlers, type) {
+  const waits = [];
+  await handlers[type]({ waitUntil: (p) => waits.push(p) });
+  await Promise.all(waits);
+}
+
 describe('activate', () => {
   it('garde les caches média quand seule la version du build change', async () => {
     const { handlers, caches } = await loadSW([
@@ -100,9 +116,7 @@ describe('activate', () => {
       MEDIA_CACHE,
     ]);
 
-    const waits = [];
-    await handlers.activate({ waitUntil: (p) => waits.push(p) });
-    await Promise.all(waits);
+    await lifecycle(handlers, 'activate');
 
     expect((await caches.keys()).sort()).toEqual([AUDIO_CACHE, MEDIA_CACHE].sort());
   });
@@ -113,9 +127,7 @@ describe('activate', () => {
       AUDIO_CACHE,
     ]);
 
-    const waits = [];
-    await handlers.activate({ waitUntil: (p) => waits.push(p) });
-    await Promise.all(waits);
+    await lifecycle(handlers, 'activate');
 
     expect(await caches.keys()).toEqual([AUDIO_CACHE]);
   });
@@ -169,11 +181,48 @@ describe('documents autonomes', () => {
 
   it("sert l'index.html précaché pour une navigation de l'app", async () => {
     const { handlers, fetched } = await loadSW();
-    const installs = [];
-    await handlers.install({ waitUntil: (p) => installs.push(p) });
-    await Promise.all(installs);
+    await lifecycle(handlers, 'install');
 
     await expect(navigate(handlers, '/quelque-chose')).resolves.toEqual({ body: '/index.html' });
     expect(fetched).toEqual([]); // cold launch : rien ne part sur le réseau
+  });
+});
+
+// Le précache du VRAI build. Sa liste est dressée par une marche de dist/
+// (scripts/build.mjs, étape 4) : un fichier écrit après cette marche en est
+// absent, sans le moindre message. C'est arrivé à pwa-register.js, de la
+// migration nobuild à septembre 2026 : main.js l'importe au démarrage, et à la
+// 1re visite il est chargé avant que le SW ne contrôle la page, donc jamais mis
+// en cache à la volée. Passé hors ligne avant une 2e visite en ligne, l'app ne
+// démarrait plus (la landing statique, elle, s'affichait).
+describe('précache du build', () => {
+  let out;
+  let sw;
+
+  beforeAll(async () => {
+    out = await fs.mkdtemp(path.join(os.tmpdir(), 'tablito-build-'));
+    await promisify(execFile)(process.execPath, [path.join(SCRIPTS, 'build.mjs')], {
+      env: { ...process.env, OUT_DIR: out, BASE: '/', VERSION },
+      timeout: 50_000, // tué avant le délai du hook, pour ne plus écrire pendant afterAll
+    });
+    sw = runSW(await fs.readFile(path.join(out, 'sw.js'), 'utf8'));
+    await lifecycle(sw.handlers, 'install');
+  }, 60_000); // le build copie public/ (~80 Mo)
+
+  afterAll(() => fs.rm(out, { recursive: true, force: true }));
+
+  it("précache le module d'enregistrement du SW, importé au démarrage de l'app", async () => {
+    await expect(sw.caches.match('/pwa-register.js')).resolves.toEqual({ body: '/pwa-register.js' });
+  });
+
+  it('précache chaque fichier shell de dist/', async () => {
+    const shell = (await fs.readdir(out, { recursive: true, withFileTypes: true }))
+      .filter((e) => e.isFile())
+      .map((e) => '/' + path.relative(out, path.join(e.parentPath, e.name)).split(path.sep).join('/'))
+      .filter((rel) => classify(rel) === 'shell')
+      .map((rel) => `https://tablito.app${rel}`);
+
+    const precached = [...(await sw.caches.open(SHELL_CACHE)).entries.keys()];
+    expect(precached.sort()).toEqual(shell.sort());
   });
 });
