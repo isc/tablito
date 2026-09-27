@@ -70,7 +70,8 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   et parsing des nombres parlés branchés sur la langue (`lib/parseSpokenNumber`).
   Les specs publiques et le guide utilisateur restent FR pour l'instant.
 - localStorage pour la persistance (pas de backend).
-- Déploiement : GitHub Pages via GitHub Actions (`BASE=/`).
+- Déploiement : GitHub Pages via GitHub Actions (`BASE=/`), voir
+  « Déploiement et previews » plus bas.
 - Node minimum : 22.12+ (CI utilise Node 22).
 
 ## Structure
@@ -98,6 +99,26 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 - `npm run perf:audit` — audit perf en place (Playwright + CDP : timing, Web Vitals, coverage JS/CSS)
 - `npm run perf:compare <baseline-ref> [candidate-ref=HEAD]` — compare 2 git refs (Lighthouse + warm-SW)
 - `npm test` — vitest (alias `react` → `preact/compat`)
+
+## Déploiement et previews
+
+Trois workflows écrivent sur la branche `gh-pages` : `deploy.yml` (racine, à
+chaque push sur main), `preview.yml` (`previews/<slug>/` de chaque PR) et
+`preview-cleanup.yml` (suppression à la fermeture). Chaque push sur gh-pages
+déclenche `pages-build-deployment` (géré par GitHub), qui met en ligne.
+
+**Tout workflow qui écrit sur gh-pages rejoint le groupe de concurrence
+`gh-pages` avec `queue: max`** (donc `cancel-in-progress: false`). Sans la file,
+GitHub ne garde qu'un run en attente par groupe et annule l'autre en silence :
+au merge d'une PR, déploiement et nettoyage arrivent ensemble et l'un des deux
+disparaissait. La file garde aussi les écritures une par une, ce qu'exige
+peaceiris (il ne réessaie pas un push rejeté). GitHub ne garantit l'ordre de la
+file qu'au mieux : le déploiement publie donc la tête de main du moment, jamais
+le commit de son événement.
+
+Un run `deploy.yml` vert veut dire « en ligne » : il attend que tablito.app
+serve le commit publié dans `/.deploy-sha` (et redemande un build Pages une
+fois sinon). À la main : `curl -s https://tablito.app/.deploy-sha`.
 
 ## Guide utilisateur
 

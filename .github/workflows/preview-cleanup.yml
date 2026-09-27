@@ -8,9 +8,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Même groupe que deploy.yml et preview.yml ; `queue: max` : voir le
+# commentaire dans deploy.yml.
 concurrency:
   group: gh-pages
   cancel-in-progress: false
+  queue: max
 
 jobs:
   delete-preview:
