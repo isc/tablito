@@ -1,3 +1,0 @@
-import{jsx as M}from"preact/jsx-runtime";import{useMemo as l}from"react";import c from"./MysteryGrid.js";import{useFactCellStrings as y}from"../i18n/progress.js";function u({facts:o,theme:n}){const m=y(),i=l(()=>{const r=new Map;for(const e of o)r.set(`${e.a},${e.b}`,e);return r},[o]);return M(c,{theme:n,cellFor:(r,e)=>{const a=Math.min(r,e),s=Math.max(r,e),t=i.get(`${a},${s}`);return{level:t?.introduced?t.box:0,introduced:t?.introduced??!1,ariaLabel:m.multLabel(r,e,r*e),detailHeading:t?`${t.a} \xD7 ${t.b} = ${t.product}`:"",gridA:t?.a??a,gridB:t?.b??s,box:t?.box??1}}})}export{u as default};
-
-//# sourceMappingURL=MysteryImage.js.map
