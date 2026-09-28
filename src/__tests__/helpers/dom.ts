@@ -60,6 +60,14 @@ export function sessionsShown(): string {
   return kpi?.querySelector('.parent-stat-value')?.textContent ?? '';
 }
 
+/**
+ * Compte d'une colonne de la répartition par boîte, sur la page de matière de
+ * l'espace parent : 0 pour les faits pas encore vus, 1 à 5 pour les boîtes.
+ */
+export function boxCount(box: number): number {
+  return Number(document.querySelector(`[data-box="${box}"] .parent-box-count`)?.textContent);
+}
+
 /** Les pastilles du sélecteur d'enfant de l'espace parent, dans l'ordre. */
 export function childChips(): Array<{ name: string; remote: boolean; active: boolean }> {
   return Array.from(document.querySelectorAll('.parent-child')).map((el) => ({

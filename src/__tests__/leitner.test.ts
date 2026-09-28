@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { MAX_FRAGILE, countMastered, masteryBuckets, shouldIntroduceNew } from '../lib/leitner';
+import { MAX_FRAGILE, boxCounts, countMastered, masteryBuckets, shouldIntroduceNew } from '../lib/leitner';
 import { createInitialFacts } from '../lib/facts';
 import type { BoxLevel } from '../types';
 
@@ -68,10 +68,17 @@ describe('shouldIntroduceNew — phase finale sur les jeux de faits plus grands'
   });
 });
 
-describe('masteryBuckets', () => {
-  const fact = (box: BoxLevel, introduced = true) => ({ box, introduced });
+const fact = (box: BoxLevel, introduced = true) => ({ box, introduced });
 
-  it('range chaque fait dans un seul palier : la somme vaut toujours le total', () => {
+describe('boxCounts', () => {
+  it('compte chaque boîte à part, les faits pas encore introduits en tête', () => {
+    const facts = [fact(1, false), fact(1, false), fact(1), fact(2), fact(4), fact(4), fact(5)];
+    expect(boxCounts(facts)).toEqual([2, 1, 1, 0, 2, 1]);
+  });
+});
+
+describe('masteryBuckets', () => {
+  it('regroupe les boîtes 4-5, 3 et 1-2, sans les faits pas encore vus', () => {
     const facts = [
       fact(1, false),
       fact(1, false),
@@ -81,13 +88,16 @@ describe('masteryBuckets', () => {
       fact(4),
       fact(5),
     ];
-    expect(masteryBuckets(facts)).toEqual({ mastered: 2, onTrack: 1, fragile: 2, unseen: 2 });
+    expect(masteryBuckets(facts)).toEqual({ mastered: 2, onTrack: 1, fragile: 2 });
   });
 
-  // La barre et le compteur « 23 / 64 » de l'espace parent ne doivent jamais
-  // se contredire, même sur un fait placé haut sans avoir été vu en séance.
+  // Le compteur « 23 / 64 » de l'espace parent, sa barre et sa répartition par
+  // boîte ne doivent jamais se contredire, même sur un fait placé haut sans
+  // avoir été vu en séance.
   it('compte comme maîtrisé exactement ce que compte countMastered', () => {
     const facts = [fact(4, false), fact(5), fact(3), fact(1, false)];
+    const [, , , , b4, b5] = boxCounts(facts);
     expect(masteryBuckets(facts).mastered).toBe(countMastered(facts));
+    expect(b4 + b5).toBe(countMastered(facts));
   });
 });

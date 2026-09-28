@@ -18,7 +18,7 @@
 import { memo, useMemo, useState, type ReactNode } from 'react';
 import type { FactKind, SessionResult, UserProfile } from '../types';
 import { activeLevel, unlockedMathLevels, type MathLevel } from '../lib/badges';
-import { factsOf, masteryBuckets } from '../lib/leitner';
+import { countMastered, factsOf } from '../lib/leitner';
 import {
   getHardestFacts,
   HARD_FACTS_WINDOW,
@@ -32,7 +32,7 @@ import DivisionProgressGrid from './DivisionProgressGrid';
 import RemainderProgressGrid from './RemainderProgressGrid';
 import ConjProgressGrid from './ConjProgressGrid';
 import EvolutionChart from './EvolutionChart';
-import MasteryBar from './ParentMastery';
+import ParentBoxChart from './ParentBoxChart';
 import HardFactList from './ParentHardFacts';
 import ParentSegmented from './ParentSegmented';
 
@@ -160,7 +160,6 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
   const [level, setLevel] = useState<MathLevel>(() => activeLevel(profile));
   const kind: FactKind = subject === 'conj' ? 'conj' : level;
   const facts = factsOf(profile, kind);
-  const buckets = masteryBuckets(facts);
 
   const levelLabel: Record<MathLevel, string> = {
     mult: t.multiplications,
@@ -212,13 +211,13 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
       )}
 
       <div className="parent-section">
-        <div className="parent-card parent-mastery">
+        <div className="parent-card">
           <div className="parent-mastery-count">
-            <span className="parent-mastery-number">{buckets.mastered}</span>
+            <span className="parent-mastery-number">{countMastered(facts)}</span>
             <span className="parent-mastery-total">/ {facts.length}</span>
           </div>
           <div className="parent-mastery-label">{kindText[kind].mastered}</div>
-          <MasteryBar buckets={buckets} total={facts.length} legend />
+          <ParentBoxChart facts={facts} />
         </div>
       </div>
 

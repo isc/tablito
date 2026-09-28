@@ -1305,8 +1305,9 @@ const SECTIONS_FR = [
       l'enfant bute le plus en ce moment, toutes matières confondues, avec une
       idée pour l'aider à la maison — souvent l'astuce que la séance lui
       enseigne déjà. Une carte ouvre la page de sa matière : maîtrise
-      et grille Leitner par niveau, évolution de la réussite ou de la
-      rapidité, faits à retravailler et historique des séances. En bas de
+      boîte par boîte et grille Leitner, niveau par niveau, évolution de la
+      réussite ou de la rapidité, faits à retravailler et historique des
+      séances. En bas de
       l'accueil, les réglages, une ligne chacun : le suivi à distance
       (partager la progression de chaque enfant de l'appareil, ou suivre un
       enfant qui pratique ailleurs), les profils et la sauvegarde (ajouter un
@@ -1318,7 +1319,7 @@ const SECTIONS_FR = [
     shots: [
       { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent commence par la journée.' },
       { file: '13e-parent-week', caption: 'Le point de la semaine, en phrases, puis une carte par matière.' },
-      { file: '13a-parent-math', caption: 'La page Maths : maîtrise du niveau et grille Leitner, puis les séances.' },
+      { file: '13a-parent-math', caption: 'La page Maths : la maîtrise du niveau boîte par boîte, la grille Leitner, puis les séances.' },
       { file: '13d-parent-settings', caption: 'Les réglages, en bas de l\'accueil : une ligne par réglage.' },
     ],
   },
@@ -1580,9 +1581,10 @@ const SECTIONS_EN = [
       checked off as long as they stay mastered. Then the three facts the
       child is struggling with most right now, across subjects, with an idea
       to help at home — often the very trick the session teaches. A card
-      opens its subject's page: mastery and Leitner grid per level, the
-      accuracy or speed trend, the facts that need practice and the session
-      history. At the bottom of the overview are the settings, one row each:
+      opens its subject's page: mastery box by box and the Leitner grid, level
+      by level, the accuracy or speed trend, the facts that need practice and
+      the session history. At the bottom of the overview are the settings, one
+      row each:
       remote follow (share the progress of each child on this device, or
       follow a child practising elsewhere), profiles and backup (add a child,
       move to another device, export or import a backup, delete a profile —
@@ -1592,7 +1594,7 @@ const SECTIONS_EN = [
     shots: [
       { file: '13-parent-dashboard', caption: 'The parent area overview starts with the day.' },
       { file: '13e-parent-week', caption: 'The week at a glance, in sentences, then one card per subject.' },
-      { file: '13a-parent-math', caption: 'The Math page: level mastery and Leitner grid, then the sessions.' },
+      { file: '13a-parent-math', caption: 'The Math page: level mastery box by box, the Leitner grid, then the sessions.' },
       { file: '13d-parent-settings', caption: 'The settings, at the bottom of the overview: one row per setting.' },
     ],
   },

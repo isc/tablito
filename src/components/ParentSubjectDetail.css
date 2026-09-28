@@ -70,12 +70,6 @@
   color: var(--ink-soft);
 }
 
-.parent-mastery .parent-mastery-bar {
-  height: 12px;
-  border-radius: 6px;
-  margin-top: 14px;
-}
-
 /* « Tout afficher » au pied de l'historique. */
 .parent-card-more {
   display: flex;

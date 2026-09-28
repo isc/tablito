@@ -74,12 +74,14 @@ interface ParentDashboardStrings {
   multiplicationsMastered: string;
   remaindersMastered: string;
   conjugationsMastered: string;
-  // Quatre paliers lisibles à la place des boîtes B1 à B5 (cf. masteryBuckets).
-  bucketMastered: string;
-  bucketOnTrack: string;
-  bucketFragile: string;
-  bucketUnseen: string;
+  // Barre de maîtrise de l'accueil, en quatre paliers (cf. masteryBuckets).
   masteryBarLabel: (mastered: number, total: number) => string;
+  // Répartition par boîte de la page de matière (cf. ParentBoxChart) : nom
+  // court de la colonne des faits pas encore vus, résumé pour les lecteurs
+  // d'écran, et seuil de maîtrise rappelé sous le graphique.
+  boxUnseenShort: string;
+  boxChartLabel: (counts: number[]) => string;
+  masteredFromBox: (box: number) => string;
   learnMoreLeitner: string;
   leitnerGrid: string;
   leitnerGridSubtitle: (op: string) => string;
@@ -238,11 +240,14 @@ const parentDashboardFr: ParentDashboardStrings = {
   multiplicationsMastered: 'Multiplications maîtrisées',
   remaindersMastered: 'Divisions avec reste maîtrisées',
   conjugationsMastered: 'Formes verbales maîtrisées',
-  bucketMastered: 'Maîtrisées',
-  bucketOnTrack: 'En bonne voie',
-  bucketFragile: 'À consolider',
-  bucketUnseen: 'Pas encore vues',
   masteryBarLabel: (mastered, total) => `${mastered} maîtrisées sur ${total}`,
+  boxUnseenShort: 'Pas vues',
+  boxChartLabel: (counts) =>
+    `Par boîte : ${formatList(
+      counts.map((n, box) => `${box === 0 ? 'pas encore vues' : `boîte ${box}`} : ${n}`),
+      'fr',
+    )}`,
+  masteredFromBox: (box) => `Maîtrisées : à partir de la boîte ${box}.`,
   learnMoreLeitner: 'En savoir plus sur le système de Leitner',
   leitnerGrid: 'Grille Leitner',
   leitnerGridSubtitle: (op) =>
@@ -423,11 +428,14 @@ const parentDashboardEn: ParentDashboardStrings = {
   multiplicationsMastered: 'Multiplication facts mastered',
   remaindersMastered: 'Remainder facts mastered',
   conjugationsMastered: 'Verb forms mastered',
-  bucketMastered: 'Mastered',
-  bucketOnTrack: 'On track',
-  bucketFragile: 'Still shaky',
-  bucketUnseen: 'Not seen yet',
   masteryBarLabel: (mastered, total) => `${mastered} of ${total} mastered`,
+  boxUnseenShort: 'Not seen',
+  boxChartLabel: (counts) =>
+    `By box: ${formatList(
+      counts.map((n, box) => `${box === 0 ? 'not seen yet' : `box ${box}`}: ${n}`),
+      'en',
+    )}`,
+  masteredFromBox: (box) => `Mastered: box ${box} and up.`,
   learnMoreLeitner: 'Learn more about the Leitner system',
   leitnerGrid: 'Leitner grid',
   leitnerGridSubtitle: (op) =>

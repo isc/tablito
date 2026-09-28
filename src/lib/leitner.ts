@@ -199,30 +199,35 @@ export function factsOf(
 }
 
 /**
- * Répartition d'un inventaire en quatre paliers lisibles par un parent, à la
- * place des boîtes B1 à B5 (que la grille détaillée continue de montrer).
- * `mastered` compte comme countMastered, que lisent les autres écrans ; les
- * trois autres paliers se partagent le reste, donc la somme vaut toujours
- * `facts.length`.
+ * Nombre de faits par boîte : l'indice 0 compte les faits pas encore
+ * introduits, les indices 1 à 5 les boîtes B1 à B5 ; la somme vaut
+ * `facts.length`. Un fait déjà en boîte de maîtrise y compte même sans avoir
+ * été introduit, comme pour countMastered : le compte des maîtrisées et sa
+ * répartition ne se contredisent jamais.
+ */
+export function boxCounts(facts: { box: BoxLevel; introduced: boolean }[]): number[] {
+  const counts = [0, 0, 0, 0, 0, 0];
+  for (const f of facts) counts[f.introduced || f.box >= MASTERY_BOX ? f.box : 0]++;
+  return counts;
+}
+
+/**
+ * Les boîtes regroupées en trois paliers lisibles par un parent, pour le
+ * résumé d'une matière sur l'accueil de l'espace parent (sa page détaille les
+ * boîtes elles-mêmes). Ce qui n'est dans aucun palier n'a pas encore été vu.
  */
 export interface MasteryBuckets {
+  // Boîtes 4 et 5 : ce que compte countMastered, que lisent les autres écrans.
   mastered: number;
   // Boîte 3 : revu plusieurs fois sans erreur, pas encore ancré.
   onTrack: number;
   // Boîtes 1 et 2 : récent, ou retombé après une erreur.
   fragile: number;
-  unseen: number;
 }
 
 export function masteryBuckets(facts: { box: BoxLevel; introduced: boolean }[]): MasteryBuckets {
-  const buckets: MasteryBuckets = { mastered: 0, onTrack: 0, fragile: 0, unseen: 0 };
-  for (const f of facts) {
-    if (f.box >= MASTERY_BOX) buckets.mastered++;
-    else if (!f.introduced) buckets.unseen++;
-    else if (f.box >= 3) buckets.onTrack++;
-    else buckets.fragile++;
-  }
-  return buckets;
+  const [, b1, b2, b3, b4, b5] = boxCounts(facts);
+  return { mastered: b4 + b5, onTrack: b3, fragile: b1 + b2 };
 }
 
 // --- Briques de composition de séance, partagées par les composeurs × et ÷ ---
