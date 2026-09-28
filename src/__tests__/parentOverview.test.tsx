@@ -6,7 +6,7 @@ import ParentSubjectDetail from '../components/ParentSubjectDetail';
 import { createInitialConjFacts } from '../lib/conjugationFacts';
 import type { Subject } from '../lib/hardestFacts';
 import { createNewProfile } from '../lib/storage';
-import { requireButton, text } from './helpers/dom';
+import { boxCount, requireButton, text } from './helpers/dom';
 import { BADGE_IDS, type BoxLevel, type SessionQuestionLog, type UserProfile } from '../types';
 import { makeSession as session } from './helpers/sessions';
 
@@ -232,5 +232,8 @@ describe('page Maths', () => {
     );
     expect(document.querySelector('.parent-mastery-number')?.textContent).toBe(String(p.facts.length));
     expect(document.querySelector('.parent-mastery-total')?.textContent).toBe(`/ ${p.facts.length}`);
+    // Le compte se lit boîte par boîte : les maîtrisées sont celles des boîtes
+    // 4 et 5, celles qui ouvrent les divisions.
+    expect(boxCount(4) + boxCount(5)).toBe(p.facts.length);
   });
 });

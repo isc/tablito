@@ -291,34 +291,38 @@ export default function ParentDashboard({
       )}
 
       {/* Fraîcheur du suivi : sans elle, un appareil enfant éteint depuis une
-          semaine afficherait des stats périmées sans le dire. */}
+          semaine afficherait des stats périmées sans le dire. Une section
+          comme les autres : elle en prend les marges, sous l'en-tête comme
+          sous le sélecteur. */}
       {watchedEntry && (
-        <div className="parent-remote-bar">
-          {(remoteState === null || remoteState === 'loading') && (
-            <span className="parent-remote-status">{t.remoteLoading}</span>
-          )}
-          {remoteState === 'error' && (
-            <span className="parent-remote-status parent-remote-status--error">
-              {t.remoteError}
-            </span>
-          )}
-          {remoteState === 'revoked' && (
-            <span className="parent-remote-status parent-remote-status--error">
-              {t.remoteRevoked(watchedEntry.name)}
-            </span>
-          )}
-          {remoteSnapshot && (
-            <span className="parent-remote-status">
-              {t.remoteSyncedAgo(remoteSnapshot.updatedAt)}
-            </span>
-          )}
-          <button
-            className="parent-action-btn parent-remote-refresh"
-            onClick={() => void refreshRemote(watchedEntry)}
-            disabled={remoteState === null || remoteState === 'loading'}
-          >
-            {t.remoteRefresh}
-          </button>
+        <div className="parent-section">
+          <div className="parent-remote-bar">
+            {(remoteState === null || remoteState === 'loading') && (
+              <span className="parent-remote-status">{t.remoteLoading}</span>
+            )}
+            {remoteState === 'error' && (
+              <span className="parent-remote-status parent-remote-status--error">
+                {t.remoteError}
+              </span>
+            )}
+            {remoteState === 'revoked' && (
+              <span className="parent-remote-status parent-remote-status--error">
+                {t.remoteRevoked(watchedEntry.name)}
+              </span>
+            )}
+            {remoteSnapshot && (
+              <span className="parent-remote-status">
+                {t.remoteSyncedAgo(remoteSnapshot.updatedAt)}
+              </span>
+            )}
+            <button
+              className="parent-action-btn parent-remote-refresh"
+              onClick={() => void refreshRemote(watchedEntry)}
+              disabled={remoteState === null || remoteState === 'loading'}
+            >
+              {t.remoteRefresh}
+            </button>
+          </div>
         </div>
       )}
 

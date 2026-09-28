@@ -440,13 +440,12 @@
 
 /* === Suivi à distance === */
 
-/* Barre de fraîcheur du profil suivi, juste sous le sélecteur de source. */
+/* Barre de fraîcheur du profil suivi, dans sa section (cf. ParentDashboard). */
 .parent-remote-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 0 20px 4px;
   padding: 10px 14px;
   border: 1.5px solid var(--line);
   border-radius: 12px;

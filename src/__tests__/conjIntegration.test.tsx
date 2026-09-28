@@ -21,7 +21,7 @@ import {
   requireConjFactDef,
   resolveConjQuestion,
 } from '../lib/conjugationFacts';
-import { advance, findButton as button, tapLetters, text } from './helpers/dom';
+import { advance, boxCount, findButton as button, tapLetters, text } from './helpers/dom';
 import { seedConjFromPlacement } from '../lib/conjugationPlacement';
 import type { ConjFact, UserProfile } from '../types';
 
@@ -386,12 +386,6 @@ describe('Espace parent — la matière conjugaison (spec §8, §11)', () => {
     );
   }
 
-  // Compte d'un palier dans la légende de la barre de maîtrise.
-  const bucketCount = (bucket: string) =>
-    Number(
-      document.querySelector(`[data-bucket="${bucket}"] .parent-mastery-legend-count`)?.textContent,
-    );
-
   // Une séance de conjugaison ratée sur « nous mangeons ».
   function withConjMistake(p: UserProfile): UserProfile {
     p.sessionHistory = [
@@ -442,11 +436,11 @@ describe('Espace parent — la matière conjugaison (spec §8, §11)', () => {
     expect(document.querySelector('.progress-grid--plain')).not.toBeNull();
     expect(document.querySelectorAll('.progress-grid-cell')).toHaveLength(64);
     expect(document.querySelectorAll('.progress-grid-header')).toHaveLength(0);
-    // Barre de maîtrise : les 63 faits sont répartis — les fragiles du fixture
-    // à consolider, tout le reste pas encore vu.
-    expect(bucketCount('fragile')).toBe(CONJ_FRAGILES.length);
-    expect(bucketCount('unseen')).toBe(63 - CONJ_FRAGILES.length);
-    expect(bucketCount('mastered')).toBe(0);
+    // Répartition par boîte : les 63 faits y sont — les fragiles du fixture en
+    // boîte 1, tout le reste pas encore vu.
+    expect(boxCount(1)).toBe(CONJ_FRAGILES.length);
+    expect(boxCount(0)).toBe(63 - CONJ_FRAGILES.length);
+    expect(boxCount(4) + boxCount(5)).toBe(0);
   });
 
   it('les faits difficiles de la matière sont sur sa page, pas sur celle des maths', () => {
