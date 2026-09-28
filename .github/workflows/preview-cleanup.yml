@@ -19,10 +19,14 @@ jobs:
   delete-preview:
     runs-on: ubuntu-latest
     steps:
+      # Même calcul que preview.yml, sinon le dossier de la preview n'est pas
+      # retrouvé ; head_ref passe aussi par l'env (voir le commentaire là-bas).
       - name: Compute preview slug
         id: slug
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          raw='${{ github.head_ref }}'
+          raw="$HEAD_REF"
           slug=$(echo "$raw" | tr -c 'a-zA-Z0-9-' '-' | tr -s '-' | sed 's/^-\|-$//g')
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
 
