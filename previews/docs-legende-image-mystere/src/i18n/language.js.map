@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["i18n/language.ts"],
-  "sourcesContent": ["import { useStrings } from './lang';\n\n// Strings du s\u00E9lecteur de langue lui-m\u00EAme. Les noms de langue restent dans leur\n// propre langue (Fran\u00E7ais / English), convention usuelle des s\u00E9lecteurs.\n\ninterface Strings {\n  label: string;\n}\n\nconst fr: Strings = { label: 'Langue de l\u2019application' };\nconst en: Strings = { label: 'App language' };\n\nexport const languageStrings = { fr, en };\n\nexport function useLanguageStrings(): Strings {\n  return useStrings(languageStrings);\n}\n"],
-  "mappings": "AAAA,OAAS,cAAAA,MAAkB,SAS3B,MAAMC,EAAc,CAAE,MAAO,8BAA0B,EACjDC,EAAc,CAAE,MAAO,cAAe,EAE/BC,EAAkB,CAAE,GAAAF,EAAI,GAAAC,CAAG,EAEjC,SAASE,GAA8B,CAC5C,OAAOJ,EAAWG,CAAe,CACnC",
-  "names": ["useStrings", "fr", "en", "languageStrings", "useLanguageStrings"]
-}

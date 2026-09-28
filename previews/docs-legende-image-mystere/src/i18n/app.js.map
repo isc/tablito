@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["i18n/app.ts"],
-  "sourcesContent": ["import { useStrings } from './lang';\n\n// Strings pilot\u00E9es depuis App.tsx (en dehors d'un \u00E9cran d\u00E9di\u00E9) : pour l'instant\n// la confirmation de suppression de profil.\n\ninterface Strings {\n  confirmDeleteProfile: (name: string) => string;\n}\n\nconst fr: Strings = {\n  confirmDeleteProfile: (name) =>\n    `Supprimer le profil de ${name} ?\\n\\nLe pr\u00E9nom, les s\u00E9ances, les badges et la s\u00E9rie seront effac\u00E9s de cet appareil. Cette action est irr\u00E9versible.`,\n};\n\nconst en: Strings = {\n  confirmDeleteProfile: (name) =>\n    `Delete ${name}'s profile?\\n\\nThe name, sessions, badges and streak will be erased from this device. This action cannot be undone.`,\n};\n\nexport const appStrings = { fr, en };\n\nexport function useAppStrings(): Strings {\n  return useStrings(appStrings);\n}\n"],
-  "mappings": "AAAA,OAAS,cAAAA,MAAkB,SAS3B,MAAMC,EAAc,CAClB,qBAAuBC,GACrB,0BAA0BA,CAAI;AAAA;AAAA,6HAClC,EAEMC,EAAc,CAClB,qBAAuBD,GACrB,UAAUA,CAAI;AAAA;AAAA,qGAClB,EAEaE,EAAa,CAAE,GAAAH,EAAI,GAAAE,CAAG,EAE5B,SAASE,GAAyB,CACvC,OAAOL,EAAWI,CAAU,CAC9B",
-  "names": ["useStrings", "fr", "name", "en", "appStrings", "useAppStrings"]
-}
