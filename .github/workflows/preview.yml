@@ -34,10 +34,15 @@ jobs:
       # Slug = branch name with any non-alphanumeric char collapsed to `-`.
       # Example: `claude/document-leitner-choice-9dMPQ`
       #       -> `claude-document-leitner-choice-9dMPQ`
+      # Le nom de branche passe par l'env, jamais interpolé dans le script :
+      # choisi par l'auteur de la PR (fork compris), une apostrophe y
+      # fermerait les guillemets et exécuterait du shell sur le runner.
       - name: Compute preview slug
         id: slug
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          raw='${{ github.head_ref }}'
+          raw="$HEAD_REF"
           slug=$(echo "$raw" | tr -c 'a-zA-Z0-9-' '-' | tr -s '-' | sed 's/^-\|-$//g')
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
           echo "base=/previews/$slug/" >> "$GITHUB_OUTPUT"
