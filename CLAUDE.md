@@ -104,8 +104,11 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
 
 Trois workflows écrivent sur la branche `gh-pages` : `deploy.yml` (racine, à
 chaque push sur main), `preview.yml` (`previews/<slug>/` de chaque PR) et
-`preview-cleanup.yml` (suppression à la fermeture). Chaque push sur gh-pages
-déclenche `pages-build-deployment` (géré par GitHub), qui met en ligne.
+`preview-cleanup.yml` (à chaque fermeture de PR, suppression de toute preview
+sans PR ouverte, donc aussi celles qu'un nettoyage perdu a laissées). Chaque
+push sur gh-pages déclenche `pages-build-deployment` (géré par GitHub), qui met
+en ligne. Purger à la main : `gh workflow run preview-cleanup.yml`, qui passe
+par la file décrite ci-dessous, jamais un push direct sur gh-pages.
 
 **Tout workflow qui écrit sur gh-pages rejoint le groupe de concurrence
 `gh-pages` avec `queue: max`** (donc `cancel-in-progress: false`). Sans la file,
