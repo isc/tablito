@@ -1,8 +1,14 @@
 name: Cleanup branch preview
 
+# Supprime toute preview dont aucune PR ouverte ne porte le slug, pas seulement
+# celle de la PR qui se ferme : un nettoyage perdu (run en échec ou annulé, PR
+# fermée en conflit, pour laquelle GitHub ne lance aucun workflow) est rattrapé
+# par le suivant. `workflow_dispatch` : purge à la main (cf. CLAUDE.md,
+# « Déploiement et previews »).
 on:
   pull_request:
     types: [closed]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,17 +25,6 @@ jobs:
   delete-preview:
     runs-on: ubuntu-latest
     steps:
-      # Même calcul que preview.yml, sinon le dossier de la preview n'est pas
-      # retrouvé ; head_ref passe aussi par l'env (voir le commentaire là-bas).
-      - name: Compute preview slug
-        id: slug
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          raw="$HEAD_REF"
-          slug=$(echo "$raw" | tr -c 'a-zA-Z0-9-' '-' | tr -s '-' | sed 's/^-\|-$//g')
-          echo "slug=$slug" >> "$GITHUB_OUTPUT"
-
       - name: Checkout gh-pages
         uses: actions/checkout@v6
         with:
@@ -38,26 +33,55 @@ jobs:
           # Need a token that can push back.
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Remove preview directory
+      - name: Remove previews without an open PR
+        id: sweep
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Jamais interpolé dans le script : voir preview.yml.
+          HEAD_REF: ${{ github.head_ref }}
+          CLOSED_PR: ${{ github.event.pull_request.number }}
         run: |
-          dir="previews/${{ steps.slug.outputs.slug }}"
-          if [ -d "$dir" ]; then
-            git config user.name 'github-actions[bot]'
-            git config user.email 'github-actions[bot]@users.noreply.github.com'
-            git rm -rf "$dir"
-            git commit -m "cleanup: remove preview ${{ steps.slug.outputs.slug }}"
-            git push origin gh-pages
-          else
-            echo "No preview directory at $dir, nothing to clean."
+          # Même fonction que preview.yml (scripts/preview-slug.test.mjs) : un
+          # slug qui divergerait ferait supprimer les previews des PR ouvertes.
+          slug() { echo "$1" | tr -c 'a-zA-Z0-9-' '-' | tr -s '-' | sed 's/^-\|-$//g'; }
+          echo "slug=$(slug "$HEAD_REF")" >> "$GITHUB_OUTPUT"
+
+          # Branches des PR ouvertes, sauf la PR qui se ferme (au cas où l'API
+          # la listerait encore). Si l'appel échoue, le step s'arrête ici :
+          # sans cette liste, tout serait supprimé (d'où `shell: bash`, qui
+          # ajoute -o pipefail au -e par défaut).
+          refs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 1000 \
+            --json number,headRefName --jq ".[] | select(.number != ${CLOSED_PR:-0}) | .headRefName")
+          keep=$(while IFS= read -r ref; do slug "$ref"; echo; done <<< "$refs")
+
+          shopt -s nullglob
+          removed=()
+          for dir in previews/*/; do
+            name=$(basename "$dir")
+            if ! grep -qxF -- "$name" <<< "$keep"; then
+              git rm -rq -- "previews/$name"
+              removed+=("$name")
+            fi
+          done
+
+          if [ ${#removed[@]} -eq 0 ]; then
+            echo "No preview without an open PR, nothing to clean."
+            exit 0
           fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -q -m "cleanup: remove preview ${removed[*]}"
+          git push origin gh-pages
 
       - name: Update PR comment
+        if: github.event_name == 'pull_request'
         uses: Wandalen/wretry.action@v3.8.0
         with:
           action: marocchino/sticky-pull-request-comment@v2
           attempt_limit: 3
           attempt_delay: 10000
           with: |
-            header: preview-${{ steps.slug.outputs.slug }}
+            header: preview-${{ steps.sweep.outputs.slug }}
             message: |
               _Preview supprimée_ (PR fermée). Les URLs ne sont plus accessibles.
