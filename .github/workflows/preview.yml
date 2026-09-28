@@ -11,8 +11,10 @@ permissions:
 concurrency:
   # Serialize gh-pages writes across all preview jobs AND the main deploy,
   # otherwise two jobs can race on the same branch.
+  # `queue: max` : voir le commentaire dans deploy.yml.
   group: gh-pages
   cancel-in-progress: false
+  queue: max
 
 # Voir le commentaire dans deploy.yml — opt-in Node 24 pour peaceiris@v4.
 env:
@@ -76,7 +78,7 @@ jobs:
         run: |
           url="https://tablito.app/previews/$SLUG/.preview-sha"
           for i in $(seq 1 60); do
-            actual=$(curl -fsSL "$url" 2>/dev/null | tr -d '[:space:]' || true)
+            actual=$(curl -fsSL --max-time 10 "$url" 2>/dev/null | tr -d '[:space:]' || true)
             if [ "$actual" = "$EXPECTED_SHA" ]; then
               echo "Preview live with $EXPECTED_SHA after ${i}×5s"
               exit 0

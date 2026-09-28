@@ -11,10 +11,16 @@ on:
 
 permissions:
   contents: write
+  # Relance du build Pages par la dernière étape.
+  pages: write
 
+# Groupe partagé par tout workflow qui écrit sur gh-pages. `queue: max` : sans
+# lui, GitHub annule en silence le run qui attendait déjà (cf. CLAUDE.md,
+# « Déploiement et previews »).
 concurrency:
   group: gh-pages
   cancel-in-progress: false
+  queue: max
 
 # peaceiris/actions-gh-pages@v4 déclare encore Node.js 20 et le maintainer
 # n'a pas publié de v5. À partir de 2026-06-02, GitHub forcera Node 24 par
@@ -27,7 +33,12 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # La tête de main au moment du run, pas le commit de l'événement : ni le
+      # re-run d'un ancien déploiement, ni deux runs sortis de la file dans le
+      # désordre ne peuvent remettre en ligne une version plus ancienne.
       - uses: actions/checkout@v6
+        with:
+          ref: main
 
       - uses: actions/setup-node@v6
         with:
@@ -47,6 +58,13 @@ jobs:
         env:
           BASE: /
 
+      # Témoin du commit publié, lu par la dernière étape (comme .preview-sha).
+      - name: Write deployment marker
+        run: |
+          sha=$(git rev-parse HEAD)
+          echo "$sha" > dist/.deploy-sha
+          echo "DEPLOY_SHA=$sha" >> "$GITHUB_ENV"
+
       # Publish dist/ at the ROOT of the `gh-pages` branch. `keep_files: true`
       # preserves the sibling `previews/` directory written by the preview
       # workflow, so branch previews survive main deploys.
@@ -57,4 +75,33 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           keep_files: true
-          commit_message: 'deploy: main @ ${{ github.sha }}'
+          commit_message: 'deploy: main @ ${{ env.DEPLOY_SHA }}'
+
+      # Le push ne met pas le site en ligne : c'est pages-build-deployment (géré
+      # par GitHub), qui échoue parfois de façon transitoire (03/07/2026 : site
+      # resté sur l'ancienne version derrière un déploiement vert). On attend
+      # que tablito.app serve ce commit, on redemande un build Pages une fois
+      # sinon, puis on échoue : un déploiement vert veut dire « en ligne ».
+      # 10 min par attente, car quelques builds Pages sains dépassent 5 min.
+      - name: Wait for tablito.app to serve this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          wait_live() {
+            for i in $(seq 1 120); do
+              actual=$(curl -fsSL --max-time 10 https://tablito.app/.deploy-sha 2>/dev/null | tr -d '[:space:]' || true)
+              if [ "$actual" = "$DEPLOY_SHA" ]; then
+                echo "Live with $DEPLOY_SHA after ${i}×5s"
+                return 0
+              fi
+              echo "Attempt $i/120: got '$actual', want '$DEPLOY_SHA'"
+              sleep 5
+            done
+            return 1
+          }
+          wait_live && exit 0
+          echo "::warning::tablito.app ne sert pas $DEPLOY_SHA après 10 min : nouvelle demande de build Pages"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || true
+          wait_live && exit 0
+          echo "::error::tablito.app ne sert toujours pas $DEPLOY_SHA : voir les runs pages-build-deployment"
+          exit 1
