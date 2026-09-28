@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260927072815"
+const CACHE = 'tablito-' + "20260928111459"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
@@ -81,6 +81,7 @@ const ASSETS = [
   "/src/components/MysteryGrid.js",
   "/src/components/MysteryImage.js",
   "/src/components/NumPad.js",
+  "/src/components/ParentBoxChart.js",
   "/src/components/ParentChildPicker.js",
   "/src/components/ParentGate.js",
   "/src/components/ParentHardFacts.js",
