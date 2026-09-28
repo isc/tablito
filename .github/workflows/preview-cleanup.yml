@@ -38,6 +38,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          # Jamais interpolé dans le script : voir preview.yml.
           HEAD_REF: ${{ github.head_ref }}
           CLOSED_PR: ${{ github.event.pull_request.number }}
         run: |

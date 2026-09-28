@@ -34,7 +34,10 @@ jobs:
       # Slug = branch name with any non-alphanumeric char collapsed to `-`.
       # Example: `claude/document-leitner-choice-9dMPQ`
       #       -> `claude-document-leitner-choice-9dMPQ`
-      # Même fonction dans preview-cleanup.yml, qui supprime tout
+      # Le nom de branche passe par l'env, jamais interpolé dans le script :
+      # choisi par l'auteur de la PR (fork compris), une apostrophe y
+      # fermerait les guillemets et exécuterait du shell sur le runner.
+      # Même fonction `slug` dans preview-cleanup.yml, qui supprime tout
       # `previews/<slug>` sans PR ouverte : scripts/preview-slug.test.mjs
       # vérifie que les deux lignes sont identiques.
       - name: Compute preview slug
