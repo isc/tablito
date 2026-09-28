@@ -40,6 +40,9 @@ jobs:
       # Même fonction `slug` dans preview-cleanup.yml, qui supprime tout
       # `previews/<slug>` sans PR ouverte : scripts/preview-slug.test.mjs
       # vérifie que les deux lignes sont identiques.
+      # Un nom sans lettre ni chiffre ASCII (`_`, `+`, `é`, valides pour git)
+      # donne un slug vide : le build serait publié à la racine de previews/,
+      # mêlé aux previews des autres PR. On s'arrête donc avant le build.
       - name: Compute preview slug
         id: slug
         env:
@@ -47,6 +50,7 @@ jobs:
         run: |
           slug() { echo "$1" | tr -c 'a-zA-Z0-9-' '-' | tr -s '-' | sed 's/^-\|-$//g'; }
           slug=$(slug "$HEAD_REF")
+          [ -n "$slug" ] || { echo "::error::Slug de preview vide pour la branche '$HEAD_REF' : rien n'est publié."; exit 1; }
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
           echo "base=/previews/$slug/" >> "$GITHUB_OUTPUT"
 
