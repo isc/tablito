@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20260929193610"
+const CACHE = 'tablito-' + "20260929194233"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
