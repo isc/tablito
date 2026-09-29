@@ -733,10 +733,9 @@ export default function App({
           const current =
             prev.remainderFacts.find((f) => f.divisor === divisor && f.quotient === quotient) ??
             item.fact;
-          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
-          if (updated.history.length > 0) {
-            updated.history[updated.history.length - 1].answeredWith = answered;
-          }
+          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs, {
+            answeredWith: answered,
+          });
           if (!updated.introduced) updated.introduced = true;
           trackPromotion(getRemainderFactKey(divisor, quotient), current.box, updated.box);
           return {
@@ -753,10 +752,9 @@ export default function App({
           const current =
             prev.divisionFacts.find((f) => f.dividend === dividend && f.divisor === divisor) ??
             item.fact;
-          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
-          if (updated.history.length > 0) {
-            updated.history[updated.history.length - 1].answeredWith = answered;
-          }
+          const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs, {
+            answeredWith: answered,
+          });
           // Pas d'`introducedAt` côté division : pas de fenêtre 48h ici (§11.6),
           // l'anti-interférence passe par `questionConflict` (même dividende).
           if (!updated.introduced) updated.introduced = true;
@@ -771,10 +769,9 @@ export default function App({
 
         const { a, b } = item.fact;
         const current = prev.facts.find((f) => f.a === a && f.b === b) ?? item.fact;
-        const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs);
-        if (updated.history.length > 0) {
-          updated.history[updated.history.length - 1].answeredWith = answered;
-        }
+        const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs, {
+          answeredWith: answered,
+        });
         if (!updated.introduced) {
           updated.introduced = true;
           updated.introducedAt = today; // date d'intro réelle (cf. §1.2)
@@ -887,13 +884,11 @@ export default function App({
             today,
             'keypad',
             fastMs,
+            // Fait posé OU blâmé par ricochet : la réponse écrite et la forme
+            // de la question posée, pour qu'on voie l'erreur récurrente (« -ai »
+            // pour « -ais »…) et pas seulement qu'il y en a une.
+            { answeredWith, expectedForm },
           );
-          // Fait posé OU blâmé par ricochet : la réponse écrite et la forme de
-          // la question posée, pour qu'on voie l'erreur récurrente (« -ai »
-          // pour « -ais »…) et pas seulement qu'il y en a une.
-          if (updated.history.length > 0) {
-            Object.assign(updated.history[updated.history.length - 1], { answeredWith, expectedForm });
-          }
           // `introduced` seulement pour le fait POSÉ : un fait blâmé par
           // ricochet (la terminaison derrière « seron ») n'a jamais été
           // présenté. Le marquer introduit le sortirait à jamais des candidats

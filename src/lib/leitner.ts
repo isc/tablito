@@ -57,12 +57,15 @@ export function processAnswer<T extends Schedulable>(
   // Seuil de rapidité (montée de boîte). Par défaut celui de la multiplication ;
   // la division passe un seuil plus généreux (specs §11.6).
   fastThresholdMs: number = FAST_THRESHOLD_MS[inputMode],
+  // Réponse donnée (nombre, ou forme écrite + attendue en conjugaison),
+  // consignée telle quelle dans la tentative.
+  answer: Pick<Attempt, 'answeredWith' | 'expectedForm'> = { answeredWith: null },
 ): T {
   const attempt: Attempt = {
     date: now,
     correct,
     responseTimeMs,
-    answeredWith: null, // the caller can fill this in before calling
+    ...answer,
   };
 
   const updatedHistory = [...fact.history, attempt].slice(-30);
