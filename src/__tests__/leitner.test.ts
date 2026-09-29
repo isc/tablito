@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { MAX_FRAGILE, boxCounts, countMastered, masteryBuckets, shouldIntroduceNew } from '../lib/leitner';
+import { MAX_FRAGILE, boxCounts, countMastered, masteryBuckets, processAnswer, shouldIntroduceNew } from '../lib/leitner';
 import { createInitialFacts } from '../lib/facts';
 import type { BoxLevel } from '../types';
 
@@ -99,5 +99,23 @@ describe('masteryBuckets', () => {
     const [, , , , b4, b5] = boxCounts(facts);
     expect(masteryBuckets(facts).mastered).toBe(countMastered(facts));
     expect(b4 + b5).toBe(countMastered(facts));
+  });
+});
+
+describe('processAnswer — la réponse donnée', () => {
+  const fact = () => ({ ...createInitialFacts()[0], introduced: true });
+
+  it('est consignée dans la tentative, forme attendue comprise', () => {
+    const updated = processAnswer(fact(), false, 4000, '2026-09-29', 'keypad', 0, {
+      answeredWith: 'chanterais',
+      expectedForm: 'chanterai',
+    });
+    expect(updated.history.at(-1)).toMatchObject({ answeredWith: 'chanterais', expectedForm: 'chanterai' });
+  });
+
+  it('reste à null quand l’appelant ne la donne pas', () => {
+    const updated = processAnswer(fact(), true, 1000, '2026-09-29', 'keypad');
+    expect(updated.history.at(-1)?.answeredWith).toBeNull();
+    expect(updated.history.at(-1)).not.toHaveProperty('expectedForm');
   });
 });
