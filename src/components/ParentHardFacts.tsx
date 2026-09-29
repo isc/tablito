@@ -43,7 +43,14 @@ export default function HardFactList({ facts, showBox = false }: HardFactListPro
           <span className={`parent-hard-fact-kind parent-hard-fact-kind--${f.kind}`} aria-label={marker[f.kind].name}>
             {marker[f.kind].symbol}
           </span>
-          <span className="parent-hard-fact-name">{label(f)}</span>
+          <span className="parent-hard-fact-name">
+            {label(f)}
+            {f.kind === 'conj' && f.recentMistakes.length > 0 && (
+              <span className="parent-hard-fact-mistakes">
+                {`${t.recentMistakes} ${f.recentMistakes.map((m) => t.mistake(m.answeredWith, m.expectedForm)).join(' · ')}`}
+              </span>
+            )}
+          </span>
           <span className="parent-hard-fact-errors">
             {showBox ? `${t.errors(f.errorCount)} · ${t.boxLabel(f.box)}` : t.errors(f.errorCount)}
           </span>

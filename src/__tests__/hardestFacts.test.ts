@@ -204,6 +204,39 @@ describe('getHardestFacts — une matière à la fois', () => {
     expect(hard).toHaveLength(1);
   });
 
+  it('garde les dernières réponses fausses de conjugaison, la plus récente d’abord', () => {
+    const profile = mixedProfile();
+    const wrong = (answeredWith: string) => ({
+      kind: 'conj' as const,
+      factKey: 'pres-g1-nous',
+      a: undefined,
+      b: undefined,
+      correct: false,
+      answeredWith,
+      expectedForm: 'mangeons',
+    });
+    profile.sessionHistory.push({
+      ...makeSession('2026-07-21', [
+        wrong('mangons'),
+        wrong('manjons'),
+        // Une bonne réponse n'est pas une erreur à montrer.
+        { ...wrong('mangeons'), correct: true },
+        wrong('mangeont'),
+        wrong('mangez'),
+      ]),
+      kind: 'conj',
+    });
+    const [hard] = getHardestFacts(profile, 10, 5, 'conj');
+    // 5 erreurs comptées (l'ancienne, sans réponse enregistrée, comprise)…
+    expect(hard.errorCount).toBe(5);
+    // … mais seules les 3 dernières réponses écrites sont montrées.
+    expect(hard.kind === 'conj' && hard.recentMistakes).toEqual([
+      { answeredWith: 'mangez', expectedForm: 'mangeons' },
+      { answeredWith: 'mangeont', expectedForm: 'mangeons' },
+      { answeredWith: 'manjons', expectedForm: 'mangeons' },
+    ]);
+  });
+
   it('croise les matières demandées, chacune sur sa fenêtre, triées ensemble', () => {
     const profile = mixedProfile();
     // Deux erreurs de conjugaison contre une de maths : le verbe passe devant.

@@ -3,7 +3,7 @@ import ConjForm from './ConjForm';
 import { renderConjHintLine } from './conjHintLine';
 import FeedbackStar from './FeedbackStar';
 import StrategyHintShell from './StrategyHintShell';
-import type { ConjQuestionView } from '../lib/conjugationFacts';
+import { conjWrittenForm, type ConjQuestionView } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
 import { pickRandom } from '../lib/utils';
 import { conjStrings as t } from '../i18n/conjugation';
@@ -95,7 +95,7 @@ export default function ConjFeedbackOverlay({
             télescopaient en fin de carte. */}
         {tenseChip}
         <div className="feedback-user-answer">
-          {t.youWrote} <b>{view.displayedStem}{typed}</b>
+          {t.youWrote} <b>{conjWrittenForm(view, typed)}</b>
         </div>
         {/* La forme correcte, segmentée, pronom et marque illuminés : le support
             conceptuel de l'erreur — l'équivalent de la grille de points. */}

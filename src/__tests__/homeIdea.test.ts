@@ -52,7 +52,7 @@ describe('homeIdea', () => {
   });
 
   it('une terminaison reprend la règle du temps, avec deux exemples', () => {
-    expect(homeIdea({ ...base, kind: 'conj', key: 'fut-nous', label: 'nous mangerons' })).toEqual({
+    expect(homeIdea({ ...base, kind: 'conj', key: 'fut-nous', label: 'nous mangerons', recentMistakes: [] })).toEqual({
       kind: 'strategy',
       title: 'Le futur se fabrique avec l’infinitif',
       example: 'nous mangerons, nous regarderons.',
@@ -61,7 +61,7 @@ describe('homeIdea', () => {
 
   it('le piège du g passe devant la règle générale, avec ses seuls exemples', () => {
     // « nous mangeons » : le e de l'euphonie ; « nous chantons » n'en a pas.
-    expect(homeIdea({ ...base, kind: 'conj', key: 'pres-g1-nous', label: 'nous mangeons' })).toEqual({
+    expect(homeIdea({ ...base, kind: 'conj', key: 'pres-g1-nous', label: 'nous mangeons', recentMistakes: [] })).toEqual({
       kind: 'strategy',
       title: 'Le piège du g et du c',
       example: 'nous mangeons.',
@@ -69,7 +69,7 @@ describe('homeIdea', () => {
   });
 
   it('une forme irrégulière se retient dans une phrase', () => {
-    expect(homeIdea({ ...base, kind: 'conj', key: 'pres-etre-nous', label: 'nous sommes' })).toEqual({
+    expect(homeIdea({ ...base, kind: 'conj', key: 'pres-etre-nous', label: 'nous sommes', recentMistakes: [] })).toEqual({
       kind: 'conjIrregular',
       label: 'nous sommes',
       sentence: 'Aujourd’hui, nous sommes huit à table.',
@@ -77,7 +77,7 @@ describe('homeIdea', () => {
   });
 
   it('un radical irrégulier montre le radical en contexte', () => {
-    expect(homeIdea({ ...base, kind: 'conj', key: 'fut-etre', label: 'je serai' })).toEqual({
+    expect(homeIdea({ ...base, kind: 'conj', key: 'fut-etre', label: 'je serai', recentMistakes: [] })).toEqual({
       kind: 'conjStem',
       tense: 'futur',
       verb: 'être',
@@ -86,6 +86,6 @@ describe('homeIdea', () => {
   });
 
   it("un fait de conjugaison disparu de l'inventaire n'a pas d'idée", () => {
-    expect(homeIdea({ ...base, kind: 'conj', key: 'inconnu', label: '' })).toBeNull();
+    expect(homeIdea({ ...base, kind: 'conj', key: 'inconnu', label: '', recentMistakes: [] })).toBeNull();
   });
 });

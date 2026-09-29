@@ -847,3 +847,14 @@ export function isPhoneticallyClose(a: string, b: string): boolean {
 export function normalizeConjAnswer(raw: string): string {
   return raw.trim().toLowerCase().replace(/\s+/g, ' ').replace(/’/g, "'");
 }
+
+/**
+ * La forme que l'enfant a ÉCRITE, telle qu'on la lit à l'écran : radical
+ * affiché + saisie quand seule la terminaison était à taper (« chant » + « ai »
+ * → « chantai »), la saisie seule sinon. C'est elle qu'on enregistre dans les
+ * historiques (Attempt.answeredWith) : une terminaison seule (« ai ») ne dit
+ * rien sans le verbe de la phrase porteuse, qui tourne d'une question à l'autre.
+ */
+export function conjWrittenForm(view: ConjQuestionView, typed: string): string {
+  return view.displayedStem + normalizeConjAnswer(typed);
+}

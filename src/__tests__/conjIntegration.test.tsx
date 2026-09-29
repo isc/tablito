@@ -460,6 +460,28 @@ describe('Espace parent — la matière conjugaison (spec §8, §11)', () => {
     expect(text()).toContain('nous mangeons');
   });
 
+  it('une forme difficile montre les dernières réponses fausses à côté de la forme attendue', () => {
+    const p = withConjMistake(conjReadyProfile());
+    const [old] = p.sessionHistory[0].questions!;
+    // Deux erreurs enregistrées après l'ancienne (null, antérieure à
+    // l'enregistrement des réponses) : la plus récente d'abord.
+    p.sessionHistory[0].questions!.push(
+      { ...old, answeredWith: 'mangons', expectedForm: 'mangeons' },
+      { ...old, answeredWith: 'manjons', expectedForm: 'mangeons' },
+    );
+    renderSubject(p, 'conj');
+
+    expect(document.querySelector('.parent-hard-fact-mistakes')?.textContent).toBe(
+      'Écrit : « manjons » au lieu de « mangeons » · « mangons » au lieu de « mangeons »',
+    );
+  });
+
+  it('sans réponse enregistrée (profil ancien), la forme difficile reste affichée seule', () => {
+    renderSubject(withConjMistake(conjReadyProfile()), 'conj');
+    expect(text()).toContain('nous mangeons');
+    expect(document.querySelector('.parent-hard-fact-mistakes')).toBeNull();
+  });
+
   it('en anglais, la matière n’apparaît nulle part dans l’espace parent', () => {
     const p = withConjMistake(conjReadyProfile());
     applyLang('en');
@@ -499,6 +521,48 @@ describe('Leitner de la matière (spec §4.5, §5.3)', () => {
     expect(fact.seen).toBe(1);
     expect(fact.box).toBe(1);
     expect(document.querySelector('.feedback-star-rays')).toBeNull();
+  });
+});
+
+describe('Réponse écrite de conjugaison : enregistrée comme en calcul', () => {
+  it('la forme écrite et la forme attendue vont dans l’historique du fait et dans le log de la séance', async () => {
+    // Retour 0aa1c434 : `answeredWith` restait à null en conjugaison, et un
+    // futur « je » raté 15 fois ne disait pas QUELLE erreur l'enfant faisait.
+    saveProfile(conjReadyProfile());
+    renderApp();
+    fireEvent.click(button(/Conjugaison/)!);
+    await flush();
+
+    // « nous man|geons » : le radical est donné, l'enfant tape « ez ». C'est la
+    // forme lue à l'écran, radical compris, qu'on garde — « ez » seul ne dirait
+    // rien sans le verbe de la phrase porteuse.
+    expect(expectedOf('pres-g1-nous')).toBe('geons');
+    tapLetters('ez');
+    fireEvent.click(button(/J'ai compris/)!);
+    playConjSession();
+    expect(document.querySelector('.recap-screen')).not.toBeNull();
+
+    const saved = loadProfile()!;
+    const history = saved.conjFacts!.find((f) => f.key === 'pres-g1-nous')!.history;
+    expect(history.find((h) => !h.correct)).toMatchObject({
+      answeredWith: 'manez',
+      expectedForm: 'mangeons',
+    });
+    // La bonne réponse du re-test est enregistrée elle aussi.
+    expect(history.find((h) => h.correct)).toMatchObject({
+      answeredWith: 'mangeons',
+      expectedForm: 'mangeons',
+    });
+
+    const logs = saved.sessionHistory[0].questions!;
+    expect(logs[0]).toMatchObject({
+      kind: 'conj',
+      factKey: 'pres-g1-nous',
+      correct: false,
+      answeredWith: 'manez',
+      expectedForm: 'mangeons',
+    });
+    expect(logs.every((q) => typeof q.answeredWith === 'string' && q.expectedForm)).toBe(true);
   });
 });
 

@@ -1,4 +1,4 @@
-import type { UserProfile, BoxLevel, Attempt, SessionResult } from '../types';
+import type { UserProfile, BoxLevel, Attempt, SessionResult, ConjWrittenAnswer } from '../types';
 import { getFactKey } from './facts';
 import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey } from './remainderFacts';
@@ -13,7 +13,14 @@ export type HardFact =
   | { kind: 'rem'; key: string; box: BoxLevel; errorCount: number; divisor: number; quotient: number }
   // Matière conjugaison : rien de numérique à afficher — le fait EST une forme
   // (« vous faites »), résolue ici une fois pour toutes plutôt que par l'UI.
-  | { kind: 'conj'; key: string; box: BoxLevel; errorCount: number; label: string };
+  // `recentMistakes` : les dernières réponses fausses, la plus récente
+  // d'abord — c'est l'erreur récurrente (« chanterais » pour « chanterai »)
+  // qu'un parent peut reprendre, pas le seul compte. Vide pour les réponses
+  // antérieures à leur enregistrement.
+  | { kind: 'conj'; key: string; box: BoxLevel; errorCount: number; label: string; recentMistakes: ConjWrittenAnswer[] };
+
+/** Nombre de réponses fausses montrées par forme dans l'espace parent. */
+const CONJ_MISTAKES_SHOWN = 3;
 
 // Erreurs par fait (clé préfixée `mult:`/`div:`) depuis les logs par-question
 // des séances. C'est la MÊME source que le taux de bonnes réponses de l'espace
@@ -46,6 +53,23 @@ function countErrorsFromLogs(sessions: SessionResult[]): Map<string, number> {
     }
   }
   return errors;
+}
+
+// Dernières réponses fausses de conjugaison par fait, depuis les mêmes logs que
+// le compte d'erreurs (fait POSÉ), la plus récente d'abord. Les entrées sans
+// forme écrite (antérieures à son enregistrement) sont ignorées.
+function conjMistakesFromLogs(sessions: SessionResult[]): Map<string, ConjWrittenAnswer[]> {
+  const mistakes = new Map<string, ConjWrittenAnswer[]>();
+  for (const q of sessions.flatMap((s) => s.questions ?? []).reverse()) {
+    if (q.kind !== 'conj' || q.correct || !q.factKey) continue;
+    if (typeof q.answeredWith !== 'string' || !q.expectedForm) continue;
+    let list = mistakes.get(q.factKey);
+    if (!list) mistakes.set(q.factKey, (list = []));
+    if (list.length < CONJ_MISTAKES_SHOWN) {
+      list.push({ answeredWith: q.answeredWith, expectedForm: q.expectedForm });
+    }
+  }
+  return mistakes;
 }
 
 // Repli pour les profils dont aucune séance de la fenêtre n'a de log
@@ -103,6 +127,7 @@ export function getHardestFacts(
 
   const errorCount = (key: string, history: Attempt[]): number =>
     logErrors ? (logErrors.get(key) ?? 0) : countErrorsFromHistory(history, cutoff);
+  const conjMistakes = subject === 'conj' ? conjMistakesFromLogs(recent) : null;
 
   // Seule la matière demandée est construite (les autres faits seraient jetés).
   const facts: HardFact[] = [];
@@ -119,6 +144,7 @@ export function getHardestFacts(
         // Résolu plus bas : nommer un fait demande de dériver sa question, et
         // la liste n'en affiche qu'une poignée sur les 63 de la matière.
         label: '',
+        recentMistakes: conjMistakes?.get(f.key) ?? [],
       });
     }
   } else {

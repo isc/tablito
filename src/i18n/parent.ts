@@ -105,6 +105,9 @@ interface ParentDashboardStrings {
   toPractise: string;
   hardestFactsSubtitle: (window: number) => string;
   errors: (count: number) => string;
+  // Conjugaison : dernières réponses fausses d'une forme difficile.
+  recentMistakes: string;
+  mistake: (answered: string, expected: string) => string;
   boxLabel: (box: number) => string;
   sessionHistory: string;
   showAllSessions: (count: number) => string;
@@ -270,6 +273,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   toPractise: 'À retravailler',
   hardestFactsSubtitle: (window) => `Sur les ${window} dernières séances.`,
   errors: (count) => `${count} erreur${count > 1 ? 's' : ''}`,
+  recentMistakes: 'Écrit :',
+  mistake: (answered, expected) => `« ${answered || '…'} » au lieu de « ${expected} »`,
   boxLabel: (box) => `Boîte ${box}`,
   sessionHistory: 'Historique des séances',
   showAllSessions: (count) => `Tout afficher (${count})`,
@@ -458,6 +463,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   toPractise: 'Needs practice',
   hardestFactsSubtitle: (window) => `Over the last ${window} sessions.`,
   errors: (count) => `${count} error${count > 1 ? 's' : ''}`,
+  recentMistakes: 'Wrote:',
+  mistake: (answered, expected) => `“${answered || '…'}” instead of “${expected}”`,
   boxLabel: (box) => `Box ${box}`,
   sessionHistory: 'Session history',
   showAllSessions: (count) => `Show all (${count})`,

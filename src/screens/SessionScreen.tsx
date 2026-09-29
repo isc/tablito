@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type {
   AnySessionItem,
   ConjSessionItem,
+  ConjWrittenAnswer,
   SessionItem,
   SessionResult,
 } from '../types';
@@ -26,6 +27,7 @@ import {
   remainderDividend,
 } from '../types';
 import {
+  conjWrittenForm,
   requireConjFactDef,
   resolveConjQuestion,
   type ConjQuestionView,
@@ -126,8 +128,10 @@ interface SessionScreenProps {
     fast: boolean,
     timeMs: number,
     inputMode: 'keypad' | 'voice',
+    written: ConjWrittenAnswer,
   ) => void;
 }
+
 
 // Vue d'affichage selon le type : opérandes affichés (via itemDisplay,
 // partagé avec FeedbackOverlay), réponse attendue, seuil de rapidité, clé TTS.
@@ -534,7 +538,10 @@ export default function SessionScreen({
 
       // `timeMs` (et non `judgedMs`) part dans l'historique : le temps réel de
       // la question reste vrai, c'est le SEUIL qui change de définition.
-      onConjAnswer(currentItem, judgement, fast, timeMs, source);
+      onConjAnswer(currentItem, judgement, fast, timeMs, source, {
+        answeredWith: conjWrittenForm(view, typed),
+        expectedForm: view.form,
+      });
 
       // Re-pose 2 à 3 questions plus tard : après une erreur, et après une
       // introduction (§5.2 étape 5 — le re-test différé). Ici `accepted`
