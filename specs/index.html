@@ -443,7 +443,9 @@ interface Attempt {
   date: string;
   correct: boolean;
   responseTimeMs: number;
-  answeredWith: number | null;  // ce que l'enfant a répondu
+  answeredWith: number | string | null;  // ce que l'enfant a répondu : nombre en maths,
+                                        // forme écrite en conjugaison (radical affiché compris)
+  expectedForm?: string;                // conjugaison : forme attendue par la question posée
 }
 
 interface UserProfile {
@@ -788,7 +790,7 @@ interface Badge {
     <li>Puis, sous « Séances de maths » (ou « de conjugaison »), ce qui se lit <strong>par séance</strong> :
       <ul>
         <li><strong>Évolution</strong> sur les 20 dernières séances, une seule courbe à bascule : <strong>réussite</strong> (% correct par séance) ou <strong>rapidité</strong> (temps de réponse moyen, en secondes par question), la moyenne de la fenêtre rappelée dessous. La rapidité donne un signal de fluence qui reste vivant longtemps après que la précision plafonne autour de 100 % : un enfant qui passe de 4 s à 2,5 s a clairement progressé, même si son taux de bonnes réponses n'a pas bougé. Son échelle Y est dynamique (min 0, max = plafond entier des données ou 4 s, le plus grand des deux) pour éviter qu'une variation de 0,2 s ne paraisse dramatique.</li>
-        <li><strong>À retravailler</strong> : top 5 par nombre d'erreurs <strong>sur les 10 dernières séances</strong> de la matière (fenêtre glissante, pour refléter la difficulté actuelle et pas l'historique cumulé : un fait galéré il y a longtemps mais désormais maîtrisé n'apparaît plus). Si l'enfant a moins de 10 séances au compteur, toutes sont prises en compte. En cas d'égalité, on départage par boîte la plus basse. Chaque ligne porte le signe de son opération et sa boîte.</li>
+        <li><strong>À retravailler</strong> : top 5 par nombre d'erreurs <strong>sur les 10 dernières séances</strong> de la matière (fenêtre glissante, pour refléter la difficulté actuelle et pas l'historique cumulé : un fait galéré il y a longtemps mais désormais maîtrisé n'apparaît plus). Si l'enfant a moins de 10 séances au compteur, toutes sont prises en compte. En cas d'égalité, on départage par boîte la plus basse. Chaque ligne porte le signe de son opération et sa boîte. En conjugaison, la ligne montre en plus les 3 dernières réponses fausses de la fenêtre à côté de la forme attendue («&nbsp;chanterais&nbsp;» au lieu de «&nbsp;chanterai&nbsp;») : c'est l'erreur récurrente, pas le seul compte, qui dit au parent quoi reprendre. La forme écrite est enregistrée dans l'historique du fait et dans le log de la séance (<code>answeredWith</code>, <code>expectedForm</code>) ; les entrées antérieures restent à <code>null</code> et ne montrent rien.</li>
         <li><strong>Historique des séances</strong> (date, score, temps moyen) : les 5 dernières, le reste derrière « Tout afficher ».</li>
       </ul>
     </li>
