@@ -1,3 +1,0 @@
-import{jsx as r}from"preact/jsx-runtime";import{pushConfigured as p,pushSupported as l}from"../lib/push.js";import{isIOS as P,isStandalone as m}from"../lib/install.js";import{useStrings as a}from"../i18n/lang.js";import{usePushPref as g}from"../hooks/usePushPref.js";import{SettingRow as h,SwitchRow as c}from"./ParentSettingRow.js";function d({pref:o,icon:t,strings:s}){const e=a(s),{enabled:i,busy:n,message:u,toggle:f}=g(o,e);return p?l()?r(c,{icon:t,title:e.title,sub:e.subtitle,enabled:i,busy:n,message:u,onToggle:f}):P()&&!m()?r(h,{icon:t,title:e.title,sub:e.iosInstallSubtitle}):null:null}export{d as default};
-
-//# sourceMappingURL=PushPrefRow.js.map
