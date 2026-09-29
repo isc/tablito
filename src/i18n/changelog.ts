@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-09-29',
+    items: [
+      "Conjugaison, espace parent\u00a0: sous chaque forme à retravailler, les dernières réponses fausses de votre enfant à côté de la forme attendue — «\u00a0chanterais\u00a0» au lieu de «\u00a0chanterai\u00a0». Jusqu'ici on voyait qu'une forme était ratée, pas comment\u00a0; or confondre le futur et le conditionnel, oublier le e de l'infinitif ou écrire «\u00a0-ai\u00a0» pour «\u00a0-ais\u00a0» ne se reprennent pas de la même façon. Les réponses sont enregistrées à partir de cette version\u00a0: les erreurs plus anciennes restent comptées, sans le détail.",
+    ],
+  },
+  {
     date: '2026-09-26',
     items: [
       "Espace parent réorganisé. Tout s'empilait jusqu'ici sur une seule page, avec un onglet de plus à chaque niveau débloqué, et des sections qui ne suivaient pas toutes le même onglet. L'accueil va désormais à l'essentiel et garde la même taille quel que soit le niveau de votre enfant\u00a0: la journée d'abord (séance faite ou pas, les quatorze derniers jours, les séries), puis une carte par matière avec le niveau en cours et sa barre de maîtrise — maîtrisées, en bonne voie, à consolider, pas encore vues —, les niveaux déjà passés restant cochés tant qu'ils tiennent, et enfin les trois faits sur lesquels votre enfant bute le plus en ce moment. Touchez une carte pour ouvrir la page de la matière\u00a0: la grille Leitner niveau par niveau, l'évolution (réussite ou rapidité, d'une touche), les faits à retravailler et l'historique des séances. Les réglages (sauvegarde, suivi à distance, rappels, profils) n'ont pas changé, en bas de l'accueil.",
@@ -236,6 +242,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-09-29',
+    items: [
+      "Conjugation, parent area: under each verb form that needs practice, your child's latest wrong answers next to the expected form — “chanterais” instead of “chanterai”. Until now you could see that a form was missed, not how; yet mixing up the future and the conditional, dropping the e of the infinitive or writing “-ai” for “-ais” are not fixed the same way. Answers are recorded from this version on: older mistakes still count, without the detail.",
+    ],
+  },
   {
     date: '2026-09-26',
     items: [

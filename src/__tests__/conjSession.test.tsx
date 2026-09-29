@@ -134,6 +134,25 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
     const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
     expect(isConjAccepted(judgement.verdict)).toBe(false);
     expect(document.querySelector('.feedback-message.incorrect')).not.toBeNull();
+    // Aucun radical affiché : la forme écrite est la saisie elle-même.
+    expect(onConjAnswer.mock.calls[0][5]).toEqual({ answeredWith: 'ons', expectedForm: 'mangerons' });
+  });
+
+  it('terminaison seule : la réponse transmise est la forme écrite, radical affiché compris', () => {
+    const onConjAnswer = vi.fn();
+    render(
+      <SessionScreen
+        questions={[conjItem('pres-g1-nous', 0)]}
+        onComplete={() => {}}
+        onAnswer={() => {}}
+        onConjAnswer={onConjAnswer}
+      />,
+    );
+
+    tapLetters('ons');
+    tapValidate();
+
+    expect(onConjAnswer.mock.calls[0][5]).toEqual({ answeredWith: 'manons', expectedForm: 'mangeons' });
   });
 
   it('la phrase porteuse est lue à voix haute, et réécoutable à la demande', async () => {

@@ -4,7 +4,16 @@ export interface Attempt {
   date: string;
   correct: boolean;
   responseTimeMs: number;
-  answeredWith: number | null;
+  // Réponse donnée : le nombre tapé en maths, la forme ÉCRITE en conjugaison
+  // (« chanterais » — radical affiché compris quand seule la terminaison était
+  // à taper, cf. conjWrittenForm). null dans les tentatives antérieures à
+  // l'enregistrement des réponses de conjugaison.
+  answeredWith: number | string | null;
+  // Conjugaison uniquement : la forme attendue par la question POSÉE. La
+  // phrase porteuse (donc le verbe) tourne d'une question à l'autre, et un fait
+  // blâmé par ricochet (-ons derrière « seron ») n'était même pas le fait posé :
+  // sans elle, « seron » serait illisible dans l'historique de `fut-nous`.
+  expectedForm?: string;
 }
 
 export interface MultiFact {
@@ -397,7 +406,10 @@ export interface SessionQuestionLog {
   factKey?: string;
   correct: boolean;
   responseTimeMs: number;
-  answeredWith: number | null;
+  // Cf. Attempt : nombre en maths, forme écrite en conjugaison.
+  answeredWith: number | string | null;
+  // Conjugaison uniquement : forme attendue (cf. Attempt.expectedForm).
+  expectedForm?: string;
   // Niveau 3 uniquement : reste tiré pour la question, et reste répondu (null
   // si la question s'est arrêtée à un quotient faux). `answeredWith` porte le
   // quotient répondu.
@@ -413,6 +425,13 @@ export interface SessionQuestionLog {
   // Division : l'enfant avait d'abord multiplié au lieu de diviser (27 pour
   // 9 ÷ 3) et la réponse loggée est sa seconde chance (specs §11.6).
   afterSignSlip?: boolean;
+}
+
+/** Conjugaison : ce que l'enfant a écrit, et ce qu'il fallait écrire (formes
+ *  entières). Transmis par l'écran de séance, montré dans l'espace parent. */
+export interface ConjWrittenAnswer {
+  answeredWith: string;
+  expectedForm: string;
 }
 
 export interface SessionResult {

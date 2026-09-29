@@ -229,6 +229,16 @@
   flex: 1;
 }
 
+/* Conjugaison : les dernières réponses fausses, sous la forme attendue. */
+.parent-hard-fact-mistakes {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
 .parent-hard-fact-errors {
   font-family: var(--sans);
   font-size: 11px;

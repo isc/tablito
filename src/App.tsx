@@ -5,6 +5,7 @@ import type {
   AnySessionItem,
   ConjFact,
   ConjSessionItem,
+  ConjWrittenAnswer,
   FactKind,
   SessionItem,
   SessionResult,
@@ -802,6 +803,7 @@ export default function App({
       fast: boolean,
       timeMs: number,
       inputMode: 'keypad' | 'voice',
+      { answeredWith, expectedForm }: ConjWrittenAnswer,
     ) => {
       const accepted = isConjAccepted(judgement.verdict);
 
@@ -811,7 +813,8 @@ export default function App({
         factKey: item.fact.key,
         correct: accepted,
         responseTimeMs: timeMs,
-        answeredWith: null,
+        answeredWith,
+        expectedForm,
         isBonusReview: item.isBonusReview,
         // Clavier, ou mode vocal épelé (§15.10) : c'est l'écran de séance qui
         // sait lequel a servi.
@@ -885,6 +888,12 @@ export default function App({
             'keypad',
             fastMs,
           );
+          // Fait posé OU blâmé par ricochet : la réponse écrite et la forme de
+          // la question posée, pour qu'on voie l'erreur récurrente (« -ai »
+          // pour « -ais »…) et pas seulement qu'il y en a une.
+          if (updated.history.length > 0) {
+            Object.assign(updated.history[updated.history.length - 1], { answeredWith, expectedForm });
+          }
           // `introduced` seulement pour le fait POSÉ : un fait blâmé par
           // ricochet (la terminaison derrière « seron ») n'a jamais été
           // présenté. Le marquer introduit le sortirait à jamais des candidats

@@ -15,6 +15,52 @@ describe('buildContext — ce que joint la case « historique détaillé »', ()
     expect(ctx.profile_snapshot?.facts).toHaveLength(profile.facts.length);
   });
 
+  // Retour 0aa1c434 : sans la réponse écrite, un « je » raté 15 fois au futur
+  // ne disait pas quelle erreur l'enfant faisait.
+  it('joint les réponses écrites de conjugaison, fait par fait et question par question', () => {
+    const profile = createNewProfile('Zoé');
+    const attempt = {
+      date: '2026-09-29',
+      correct: false,
+      responseTimeMs: 4000,
+      answeredWith: 'chanterais',
+      expectedForm: 'chanterai',
+    };
+    profile.conjFacts = [
+      { key: 'fut-je', box: 1, lastSeen: '2026-09-29', nextDue: '2026-09-30', introduced: true, history: [attempt] },
+    ];
+    profile.sessionHistory = [
+      {
+        kind: 'conj',
+        date: '2026-09-29',
+        questionsCount: 1,
+        correctCount: 0,
+        averageTimeMs: 4000,
+        newFactsIntroduced: 0,
+        factsPromoted: 0,
+        questions: [
+          {
+            kind: 'conj',
+            factKey: 'fut-je',
+            correct: false,
+            responseTimeMs: 4000,
+            answeredWith: 'chanterais',
+            expectedForm: 'chanterai',
+            isBonusReview: false,
+            inputMode: 'keypad',
+          },
+        ],
+      },
+    ];
+    // Aller-retour JSON : c'est ce qui part vers Supabase.
+    const sent = JSON.parse(JSON.stringify(buildContext(profile, true).profile_snapshot));
+    expect(sent.conjFacts[0].history[0]).toMatchObject({ answeredWith: 'chanterais', expectedForm: 'chanterai' });
+    expect(sent.sessionHistory[0].questions[0]).toMatchObject({
+      answeredWith: 'chanterais',
+      expectedForm: 'chanterai',
+    });
+  });
+
   it('retire le prénom du snapshot', () => {
     const ctx = buildContext(createNewProfile('Zoé'), true);
     expect(ctx.profile_snapshot).not.toHaveProperty('name');
