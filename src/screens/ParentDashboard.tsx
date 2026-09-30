@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
 import ParentChildPicker from '../components/ParentChildPicker';
+import ParentFeedbackButton from '../components/ParentFeedbackButton';
 import ParentHelpPage from '../components/ParentHelpPage';
 import ParentOverview from '../components/ParentOverview';
 import ParentProfilesPage from '../components/ParentProfilesPage';
@@ -268,10 +269,6 @@ export default function ParentDashboard({
         )}
         {page === 'help' && (
           <ParentHelpPage
-            feedbackProfile={shown}
-            feedbackSource={
-              watchedEntry ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt } : { kind: 'local' }
-            }
             onShowChangelog={() => onOpenPage('changelog')}
             onShowPrivacy={() => onOpenPage('privacy')}
           />
@@ -282,7 +279,12 @@ export default function ParentDashboard({
 
   return (
     <div className="parent-dashboard">
-      <Header onBack={onBack} backLabel={t.back} eyebrow={t.parentArea} title={shownName} />
+      <Header onBack={onBack} backLabel={t.back} eyebrow={t.parentArea} title={shownName}>
+        <ParentFeedbackButton
+          profile={shown}
+          source={watchedEntry ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt } : { kind: 'local' }}
+        />
+      </Header>
 
       {/* Un seul sélecteur pour tous les enfants, ceux de l'appareil comme
           ceux suivis à distance — seulement s'il y a vraiment un choix. */}
@@ -380,10 +382,12 @@ interface HeaderProps {
   backLabel: string;
   eyebrow: string;
   title: string;
+  /** Action à droite du titre (l'accueil y met « Envoyer un avis »). */
+  children?: ReactNode;
 }
 
 // En-tête commun à l'accueil de l'espace parent et à ses pages.
-function Header({ onBack, backLabel, eyebrow, title }: HeaderProps) {
+function Header({ onBack, backLabel, eyebrow, title, children }: HeaderProps) {
   return (
     <div className="parent-header">
       {onBack && (
@@ -395,6 +399,7 @@ function Header({ onBack, backLabel, eyebrow, title }: HeaderProps) {
         <div className="parent-eyebrow">{eyebrow}</div>
         <div className="parent-title">{title}</div>
       </div>
+      {children}
     </div>
   );
 }

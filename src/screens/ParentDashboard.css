@@ -38,6 +38,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  min-width: 0;
 }
 
 .parent-eyebrow,
@@ -324,6 +325,16 @@
 
 .parent-action-btn--danger:active {
   background: color-mix(in srgb, var(--coral) 12%, var(--paper));
+}
+
+/* « Envoyer un avis », à droite du titre de l'accueil : visible sans défiler.
+   Après .parent-action-btn, dont il reprend l'allure et surcharge la taille. */
+.parent-feedback-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--cream);
 }
 
 .parent-import-area {

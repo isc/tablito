@@ -350,11 +350,8 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
 
-    // « Envoyer un avis » vit dans la page « Aide et infos ».
+    // « Envoyer un avis » est dans l'en-tête de l'accueil.
     const openFeedback = async () => {
-      await act(async () => {
-        fireEvent.click(findButton(/^Aide et infos/)!);
-      });
       await act(async () => {
         fireEvent.click(findButton(/^Envoyer un avis/)!);
       });
@@ -394,10 +391,6 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
       // Après l'envoi, la modale passe sur l'écran de remerciement.
       fireEvent.click(document.querySelector<HTMLButtonElement>('.modal-close-btn')!);
     });
-    // Retour à l'accueil de l'espace parent, où se choisit le profil affiché.
-    await act(async () => {
-      fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-back-btn')!);
-    });
 
     // Bascule sur le profil local : l'avis suit.
     await selectChild('Papa');
@@ -410,14 +403,11 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     expect(local.profile_fetched_at).toBeUndefined();
   });
 
-  // Quitter la page d'aide par le geste retour, fenêtre d'avis ouverte, la
-  // faisait resurgir à l'ouverture de la page de réglage suivante.
-  it('la fenêtre d’avis se referme avec sa page, même quittée par le geste retour', async () => {
+  // Quitter l'espace parent par le geste retour, fenêtre d'avis ouverte : elle
+  // doit partir avec lui, pas resurgir au retour dans l'espace parent.
+  it('la fenêtre d’avis se referme avec l’accueil, même quitté par le geste retour', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await renderMixed();
-    await act(async () => {
-      fireEvent.click(findButton(/^Aide et infos/)!);
-    });
     await act(async () => {
       fireEvent.click(findButton(/^Envoyer un avis/)!);
     });
@@ -425,12 +415,7 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
 
     await act(async () => window.history.back());
     await flush();
-    expect(document.querySelector('.parent-dashboard--settings')).toBeNull();
-    expect(document.querySelector('.modal-overlay')).toBeNull();
-
-    await act(async () => {
-      fireEvent.click(findButton(/^Suivi à distance/)!);
-    });
+    expect(document.querySelector('.parent-dashboard')).toBeNull();
     expect(document.querySelector('.modal-overlay')).toBeNull();
   });
 
