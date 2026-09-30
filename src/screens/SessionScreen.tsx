@@ -47,6 +47,7 @@ import { getDivisionStrategy } from '../lib/divisionStrategies';
 import { getRemainderStrategy } from '../lib/remainderStrategies';
 import { getDivisionFactKey } from '../lib/divisionFacts';
 import { getRemainderFactKey } from '../lib/remainderFacts';
+import { parseSpokenRemainder } from '../lib/parseSpokenRemainder';
 import { getFactKey } from '../lib/facts';
 import { itemDisplay } from '../lib/sessionItemView';
 import { MATH_RETRY_GAPS } from '../lib/dailyComposer';
@@ -300,6 +301,7 @@ export default function SessionScreen({
         // générique d'erreur (le dividende varie, l'astuce parlée est fixe).
         keys.add('rem-rest');
         keys.add('strategy-rem');
+        keys.add('rem-gap');
       }
       if (item.kind === 'div') keys.add('div-sign-slip');
     }
@@ -388,7 +390,9 @@ export default function SessionScreen({
   }, [currentIndex, questions, onComplete]);
 
   const handleAnswer = useCallback(
-    (value: number) => {
+    // Niveau 3 : `quotient` est le quotient déjà juste (étape 2, ou réponse
+    // dite d'une traite) ; `value` est alors le reste.
+    (value: number, quotient: number | null = remQuotient) => {
       if (!currentItem || submittingRef.current) return;
       // Canal numérique : les questions de conjugaison passent par
       // `handleConjSubmit` (réponse en chaîne, verdict non booléen).
@@ -400,7 +404,7 @@ export default function SessionScreen({
       // court-circuite : la question se termine incorrecte, le feedback cible
       // l'encadrement (pas la peine de demander un reste sur un mauvais
       // multiple).
-      if (currentItem.kind === 'rem' && remQuotient === null && value === currentItem.fact.quotient) {
+      if (currentItem.kind === 'rem' && quotient === null && value === currentItem.fact.quotient) {
         stopSpeech();
         setRemQuotient(value);
         speak('rem-rest');
@@ -424,7 +428,7 @@ export default function SessionScreen({
 
       const v = view(currentItem);
       const timeMs = activeMsSince(questionStartTime.current);
-      const isRemainderStep = currentItem.kind === 'rem' && remQuotient !== null;
+      const isRemainderStep = currentItem.kind === 'rem' && quotient !== null;
       // Étape 2 : la valeur saisie est le reste ; le quotient est déjà validé.
       const correct = isRemainderStep
         ? value === currentItem.remainder
@@ -439,7 +443,7 @@ export default function SessionScreen({
       if (correct) playCorrect();
       else playIncorrect();
 
-      const answeredQuotient = isRemainderStep ? remQuotient : value;
+      const answeredQuotient = isRemainderStep ? quotient : value;
       const answeredRemainder =
         currentItem.kind === 'rem' ? (isRemainderStep ? value : null) : undefined;
       onAnswer({
@@ -464,15 +468,16 @@ export default function SessionScreen({
         item: currentItem,
         correct,
         fast,
-        submittedValue: isRemainderStep ? remQuotient! : value,
+        submittedValue: isRemainderStep ? quotient : value,
         submittedRemainder: answeredRemainder,
       });
 
       // Astuce parlée sur l'overlay d'erreur (gated boîte ≤ 2 comme l'overlay).
       if (!correct && currentItem.fact.box <= 2) {
         if (currentItem.kind === 'rem') {
-          // Le dividende varie à chaque présentation : astuce générique fixe.
-          speak('strategy-rem');
+          // Le dividende varie à chaque présentation : phrases génériques
+          // fixes, qui visent l'étape ratée (specs §12.5).
+          speak(isRemainderStep ? 'rem-gap' : 'strategy-rem');
         } else if (currentItem.kind === 'div') {
           speak(`strategyd-${currentItem.fact.dividend}-${currentItem.fact.divisor}`);
         } else if (hasStrategy(currentItem.fact.a, currentItem.fact.b)) {
@@ -1020,6 +1025,17 @@ export default function SessionScreen({
                   currentItem.kind === 'rem' && remQuotient !== null
                     ? currentItem.remainder
                     : v.answer
+                }
+                parseNumber={currentItem.kind === 'rem' && remQuotient !== null ? parseSpokenRemainder : undefined}
+                pair={
+                  currentItem.kind === 'rem' && remQuotient === null
+                    ? {
+                        expectedRemainder: currentItem.remainder,
+                        // Quotient faux : la question se clôt comme au clavier ;
+                        // juste, le reste est jugé aussitôt, sans relance.
+                        onSubmit: (q, r) => (q === currentItem.fact.quotient ? handleAnswer(r, q) : handleAnswer(q)),
+                      }
+                    : undefined
                 }
               />
             ) : (

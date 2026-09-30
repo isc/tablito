@@ -6,7 +6,8 @@ import type { SessionItem, RemainderFact } from '../types';
 import { useEffect } from 'react';
 
 // Division avec reste en mode VOCAL (specs §12.5) : la question se répond en
-// deux temps sur le même écran (quotient, puis reste). Entre les deux, l'app
+// deux temps sur le même écran (quotient, puis reste), ou d'une traite
+// (« six, reste un »). Entre les deux, l'app
 // lit « Et il reste combien ? » — et sur Android le micro est coupé pendant la
 // synthèse puis rouvert à la fin. C'est ce ré-armement du micro pour l'étape 2
 // qu'on vérifie ici : sans lui, l'enfant reste bloqué face à un micro mort.
@@ -157,14 +158,15 @@ describe('Division avec reste en vocal', () => {
     const startsAfterQuestion = startCalls;
     expect(startsAfterQuestion).toBeGreaterThan(0);
 
-    // L'enfant dit le quotient : validé par le chemin rapide sur l'interim.
+    // L'enfant dit le quotient seul. L'interim n'est pas validé à la volée
+    // (il couperait « six, reste un ») : c'est le final qui passe à l'étape 2.
+    const quotientStep = stepLabel();
     emit('six', false);
     await flush();
-    expect(stepLabel()).not.toBe('');
-
-    // Le final traînant du MÊME énoncé ne doit pas être pris pour le reste.
+    expect(stepLabel()).toBe(quotientStep);
     emit('six', true);
     await flush();
+    expect(stepLabel()).not.toBe(quotientStep);
     expect(onAnswer).not.toHaveBeenCalled();
 
     // Fin de « Et il reste combien ? » → le micro doit se rouvrir.
@@ -197,7 +199,7 @@ describe('Division avec reste en vocal', () => {
     const startsAfterQuestion = startCalls;
     expect(startsAfterQuestion).toBeGreaterThan(0);
 
-    emit('six', false);
+    emit('six', true);
     await settle();
 
     // Fin de « Et il reste combien ? » : le micro doit finir par se rouvrir,
@@ -206,5 +208,60 @@ describe('Division avec reste en vocal', () => {
     await settle();
     expect(live?.running).toBe(true);
     expect(startCalls).toBeGreaterThan(startsAfterQuestion);
+  });
+
+  async function renderQuestion(question = remainderQuestion()) {
+    render(<VoiceMode />);
+    const onAnswer = vi.fn();
+    render(
+      <SessionScreen
+        questions={[question]}
+        onComplete={() => {}}
+        onAnswer={onAnswer}
+        onConjAnswer={() => {}}
+      />,
+    );
+    await flush();
+    endSpeech();
+    await flush();
+    return onAnswer;
+  }
+
+  // Specs §12.5 : la réponse peut se dire d'une traite, sans relance.
+  it('accepte « six, reste un » en une phrase', async () => {
+    const onAnswer = await renderQuestion();
+    emit('six', false);
+    emit('six reste', false);
+    await flush();
+    expect(onAnswer).not.toHaveBeenCalled();
+
+    emit('six reste un', true);
+    await flush();
+    expect(onAnswer).toHaveBeenCalledTimes(1);
+    expect(onAnswer.mock.calls[0][0]).toMatchObject({ correct: true, answered: 6, answeredRemainder: 1 });
+  });
+
+  it('valide à la volée la phrase complète et juste', async () => {
+    const onAnswer = await renderQuestion();
+    emit('six et il reste un', false);
+    await flush();
+    expect(onAnswer).toHaveBeenCalledTimes(1);
+    expect(onAnswer.mock.calls[0][0]).toMatchObject({ correct: true, answeredRemainder: 1 });
+  });
+
+  it('un mauvais reste dit d’une traite est jugé sur le reste', async () => {
+    const onAnswer = await renderQuestion();
+    emit('six reste trois', true);
+    await flush();
+    expect(onAnswer.mock.calls[0][0]).toMatchObject({ correct: false, answered: 6, answeredRemainder: 3 });
+  });
+
+  it('« ça tombe juste » vaut un reste nul', async () => {
+    // 12 ÷ 2 = 6, reste 0.
+    const q = remainderQuestion();
+    const onAnswer = await renderQuestion({ ...q, remainder: 0 } as SessionItem);
+    emit('six ça tombe juste', true);
+    await flush();
+    expect(onAnswer.mock.calls[0][0]).toMatchObject({ correct: true, answeredRemainder: 0 });
   });
 });

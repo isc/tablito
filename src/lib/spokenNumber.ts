@@ -31,19 +31,24 @@ export interface SpokenNumberParser {
   parseAnswer: (input: string) => number | null;
 }
 
+/** Normalisation commune aux langues : minuscules, sans accents ni ponctuation. */
+export function normalizeSpokenText(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[-‐-―]/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function makeSpokenNumberParser(config: SpokenNumberConfig): SpokenNumberParser {
   const { phraseMap, normalizeExtra, equalityMarkerRe, multiplicationMarkers } = config;
 
   function normalize(s: string): string {
-    let r = s
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/[-‐-―]/g, ' ')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ');
-    if (normalizeExtra) r = normalizeExtra(r);
-    return r.replace(/\s+/g, ' ').trim();
+    const r = normalizeSpokenText(s);
+    return normalizeExtra ? normalizeExtra(r).replace(/\s+/g, ' ').trim() : r;
   }
 
   // Chaîne DÉJÀ normalisée → valeur. Toute la grammaire de repli travaille sur
