@@ -190,6 +190,14 @@ export default function ParentDashboard({
       ? profile
       : otherLocal;
   const shownName = shown?.name ?? watchedEntry?.name ?? '';
+  // « Envoyer un avis » : sur l'accueil et sur la page d'une matière, là où
+  // un parent repère un souci. L'avis joint le profil affiché.
+  const feedbackButton = (
+    <ParentFeedbackButton
+      profile={shown}
+      source={watchedEntry ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt } : { kind: 'local' }}
+    />
+  );
 
   // Appairage réussi depuis la page du suivi à distance (cf. ParentWatchPairing).
   const handlePaired = (paired: WatchPairing) => {
@@ -225,7 +233,9 @@ export default function ParentDashboard({
           backLabel={t.backToOverview}
           eyebrow={shownName}
           title={page === 'conj' ? t.conjugations : t.math}
-        />
+        >
+          {feedbackButton}
+        </Header>
         <ParentSubjectDetail key={selected?.key ?? 'none'} profile={shown} subject={page} />
       </div>
     );
@@ -280,10 +290,7 @@ export default function ParentDashboard({
   return (
     <div className="parent-dashboard">
       <Header onBack={onBack} backLabel={t.back} eyebrow={t.parentArea} title={shownName}>
-        <ParentFeedbackButton
-          profile={shown}
-          source={watchedEntry ? { kind: 'watched', fetchedAt: remoteSnapshot?.updatedAt } : { kind: 'local' }}
-        />
+        {feedbackButton}
       </Header>
 
       {/* Un seul sélecteur pour tous les enfants, ceux de l'appareil comme
@@ -382,7 +389,7 @@ interface HeaderProps {
   backLabel: string;
   eyebrow: string;
   title: string;
-  /** Action à droite du titre (l'accueil y met « Envoyer un avis »). */
+  /** Action à droite du titre (« Envoyer un avis »). */
   children?: ReactNode;
 }
 

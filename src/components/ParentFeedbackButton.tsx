@@ -1,7 +1,7 @@
-// « Envoyer un avis », dans l'en-tête de l'accueil de l'espace parent : visible
-// sans défiler. Rangé dans « Aide et infos », au bas de l'accueil puis une page
-// plus loin, il était devenu introuvable pour poser une question ou signaler un
-// souci (avis parent du 30/09/2026).
+// « Envoyer un avis », dans l'en-tête de l'accueil de l'espace parent et des
+// pages matière : visible sans défiler. Rangé dans « Aide et infos », au bas de
+// l'accueil puis une page plus loin, il était devenu introuvable pour poser une
+// question ou signaler un souci (avis parent du 30/09/2026).
 
 import { useState } from 'react';
 import type { UserProfile } from '../types';
@@ -25,8 +25,8 @@ interface ParentFeedbackButtonProps {
 
 export default function ParentFeedbackButton({ profile, source }: ParentFeedbackButtonProps) {
   const t = useParentDashboardStrings();
-  // Ici et non dans l'espace parent : la fenêtre se referme avec l'accueil, par
-  // quelque chemin qu'on le quitte (geste retour compris).
+  // Ici et non dans l'espace parent : la fenêtre se referme avec sa page, par
+  // quelque chemin qu'on la quitte (geste retour compris).
   const [open, setOpen] = useState(false);
 
   return (

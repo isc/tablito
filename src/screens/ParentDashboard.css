@@ -327,7 +327,7 @@
   background: color-mix(in srgb, var(--coral) 12%, var(--paper));
 }
 
-/* « Envoyer un avis », à droite du titre de l'accueil : visible sans défiler.
+/* « Envoyer un avis », à droite du titre : visible sans défiler.
    Après .parent-action-btn, dont il reprend l'allure et surcharge la taille. */
 .parent-feedback-btn {
   flex: 0 0 auto;

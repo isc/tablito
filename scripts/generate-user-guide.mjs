@@ -1290,32 +1290,26 @@ const SECTIONS_FR = [
   {
     id: 'parent',
     title: 'Espace parent',
-    description: `Accessible depuis l'accueil via l'engrenage, après une
-      petite multiplication (un opérande entre 11 et 19, l'autre entre 3
-      et 9) pour confirmer qu'un adulte est derrière l'écran. L'accueil de
-      l'espace parent répond d'abord à la question du jour — la séance
-      est-elle faite ? — avec les 14 derniers jours, le nombre de séances et
-      les séries. Vient ensuite le point de la semaine, en phrases : les jours
-      pratiqués, la réussite et la rapidité, les faits qui ont progressé,
-      chacun comparé à la semaine d'avant quand la comparaison est juste
-      (pas à travers un changement de niveau, par exemple). Suit une carte par
-      matière : le niveau en cours et sa barre de maîtrise (maîtrisées, en
-      bonne voie, à consolider, pas encore vues), les niveaux déjà passés
-      cochés tant qu'ils restent maîtrisés. Puis les trois faits sur lesquels
-      l'enfant bute le plus en ce moment, toutes matières confondues, avec une
-      idée pour l'aider à la maison — souvent l'astuce que la séance lui
-      enseigne déjà. Une carte ouvre la page de sa matière : maîtrise
-      boîte par boîte et grille Leitner, niveau par niveau, évolution de la
-      réussite ou de la rapidité, faits à retravailler et historique des
-      séances. En bas de
-      l'accueil, les réglages, une ligne chacun : le suivi à distance
-      (partager la progression de chaque enfant de l'appareil, ou suivre un
-      enfant qui pratique ailleurs), les profils et la sauvegarde (ajouter un
-      enfant, changer d'appareil, exporter ou importer une sauvegarde,
-      supprimer un profil — voir « Plusieurs enfants » ci-dessous), le rappel
-      quotidien, la langue, et l'aide (guide, avis, nouveautés,
-      confidentialité). Chaque ligne ouvre sa page, sauf le rappel et la
-      langue, qui se règlent sur place.`,
+    body: `
+      <p>On y entre par l'engrenage de l'accueil, après une petite
+      multiplication qui vérifie qu'un adulte est derrière l'écran. De haut en
+      bas :</p>
+      <ul class="guide-list">
+        <li><strong>La journée.</strong> La séance est-elle faite ? Les 14
+        derniers jours, les séances, les séries.</li>
+        <li><strong>La semaine.</strong> Jours pratiqués, réussite, rapidité,
+        faits qui ont progressé, comparés à la semaine d'avant.</li>
+        <li><strong>Une carte par matière.</strong> Le niveau en cours et sa
+        barre de maîtrise. Un clic ouvre la page de la matière : boîtes, grille
+        Leitner, évolution, historique des séances.</li>
+        <li><strong>À retravailler.</strong> Les trois faits qui résistent le
+        plus, avec une idée pour aider à la maison.</li>
+        <li><strong>Les réglages.</strong> Suivi à distance, profils et
+        sauvegarde, rappel quotidien, langue, aide.</li>
+      </ul>
+      <p>Une question, un souci, une idée ? Le bouton « Envoyer un avis », en
+      haut à droite.</p>
+    `,
     shots: [
       { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent commence par la journée.' },
       { file: '13e-parent-week', caption: 'Le point de la semaine, en phrases, puis une carte par matière.' },
@@ -1568,29 +1562,26 @@ const SECTIONS_EN = [
   {
     id: 'parent',
     title: 'Parent area',
-    description: `Reachable from the home screen via the gear, after a small
-      multiplication (one operand between 11 and 19, the other between 3 and 9)
-      to confirm an adult is behind the screen. The parent area's overview
-      first answers the question of the day — has today's session been done?
-      — with the last 14 days, the number of sessions and the streaks. Next
-      comes the week at a glance, in sentences: days practised, accuracy and
-      speed, facts that moved up, each compared with the week before when the
-      comparison is fair (not across a level change, for instance). Then comes
-      one card per subject: the current level and its mastery bar (mastered,
-      on track, still shaky, not seen yet), with the levels already completed
-      checked off as long as they stay mastered. Then the three facts the
-      child is struggling with most right now, across subjects, with an idea
-      to help at home — often the very trick the session teaches. A card
-      opens its subject's page: mastery box by box and the Leitner grid, level
-      by level, the accuracy or speed trend, the facts that need practice and
-      the session history. At the bottom of the overview are the settings, one
-      row each:
-      remote follow (share the progress of each child on this device, or
-      follow a child practising elsewhere), profiles and backup (add a child,
-      move to another device, export or import a backup, delete a profile —
-      see “Several children” below), the daily reminder, the language, and
-      help (guide, feedback, what's new, privacy). Each row opens its own
-      page, except the reminder and the language, which are set right there.`,
+    body: `
+      <p>Open it from the gear on the home screen, after a small
+      multiplication that checks an adult is behind the screen. From top to
+      bottom:</p>
+      <ul class="guide-list">
+        <li><strong>Today.</strong> Has the session been done? The last 14
+        days, sessions, streaks.</li>
+        <li><strong>The week.</strong> Days practised, accuracy, speed, facts
+        that moved up, compared with the week before.</li>
+        <li><strong>One card per subject.</strong> The current level and its
+        mastery bar. Tap it for the subject's page: boxes, Leitner grid,
+        trends, session history.</li>
+        <li><strong>Needs practice.</strong> The three toughest facts right
+        now, with an idea to help at home.</li>
+        <li><strong>Settings.</strong> Remote follow, profiles and backup,
+        daily reminder, language, help.</li>
+      </ul>
+      <p>A question, a problem, an idea? The “Send feedback” button, top
+      right.</p>
+    `,
     shots: [
       { file: '13-parent-dashboard', caption: 'The parent area overview starts with the day.' },
       { file: '13e-parent-week', caption: 'The week at a glance, in sentences, then one card per subject.' },
@@ -1907,6 +1898,16 @@ async function buildHtml({ generatedAt, lang }) {
     font-size: 12px;
     font-style: italic;
   }
+  ul.guide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  ul.guide-list li { padding: 8px 0; border-top: 1px solid var(--line); }
+  ul.guide-list li:first-child { border-top: 0; }
+  ul.guide-list strong { color: var(--ink); }
   .principles-footer {
     font-size: 14px;
     color: var(--ink-soft);
