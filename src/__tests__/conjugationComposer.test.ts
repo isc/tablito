@@ -206,3 +206,49 @@ describe('judgeConjAnswer — coquilles de radical sur « nous verrons »', () =
     expect(j.blamedKeys).toEqual(['fut-nous']);
   });
 });
+
+describe('contraste futur -ai / imparfait -ais (§3.4)', () => {
+  const keysOf = (profile: UserProfile) => composeConjSession(profile, TODAY).map((q) => q.fact.key);
+  const adjacent = (keys: string[]) => Math.abs(keys.indexOf('fut-je') - keys.indexOf('imp-je')) === 1;
+
+  it('consolidés, l’un dû appelle l’autre en bonus, juste à côté', () => {
+    const session = composeConjSession(
+      profileWith({ 'fut-je': { box: 3 }, 'imp-je': { box: 4, due: false }, 'pres-g1-tu': { box: 2 } }),
+      TODAY,
+    );
+    const keys = session.map((q) => q.fact.key);
+    expect(keys).toContain('imp-je');
+    expect(adjacent(keys)).toBe(true);
+    // Le partenaire n'était pas dû : son calendrier ne bouge pas.
+    expect(session.find((q) => q.fact.key === 'imp-je')!.isBonusReview).toBe(true);
+  });
+
+  it('tous deux dus et consolidés : posés l’un après l’autre', () => {
+    const keys = keysOf(profileWith({ 'fut-je': { box: 3 }, 'imp-je': { box: 3 }, 'pres-g1-tu': { box: 2 } }));
+    expect(adjacent(keys)).toBe(true);
+  });
+
+  it('la paire posée d’un bloc ne crée aucune jonction en conflit', () => {
+    const session = composeConjSession(
+      profileWith({
+        'fut-je': { box: 3 }, 'imp-je': { box: 3, due: false },
+        'pres-g1-je': { box: 2 }, 'pres-g1-tu': { box: 2 }, 'pres-etre-nous': { box: 2 },
+        'pres-avoir-il': { box: 3 }, 'imp-nous': { box: 4 }, 'fut-tu': { box: 3 },
+      }),
+      TODAY,
+    );
+    const keys = session.map((q) => q.fact.key);
+    expect(adjacent(keys)).toBe(true);
+    for (let k = 1; k < session.length; k++) {
+      const [a, b] = [session[k - 1], session[k]];
+      const isPair = [a.fact.key, b.fact.key].sort().join() === 'fut-je,imp-je';
+      if (!isPair) expect(conjQuestionConflict(a, b), `${a.fact.key} → ${b.fact.key}`).toBe(false);
+    }
+  });
+
+  it('en apprentissage, jamais dans la même séance', () => {
+    const keys = keysOf(profileWith({ 'fut-je': { box: 2 }, 'imp-je': { box: 4, due: false } }));
+    expect(keys).toContain('fut-je');
+    expect(keys).not.toContain('imp-je');
+  });
+});

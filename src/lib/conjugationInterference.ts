@@ -95,7 +95,7 @@ export function conjKeysInterfere(a: string, b: string): boolean {
 }
 
 /** La paire futur -ai / imparfait -ais (§3.4), dans un sens ou dans l'autre. */
-export function isConjContrastPair(a: ConjFactDef, b: ConjFactDef): boolean {
+export function isConjContrastPair(a: { key: string }, b: { key: string }): boolean {
   const [x, y] = CONJ_CONTRAST_PAIR;
   return (a.key === x && b.key === y) || (a.key === y && b.key === x);
 }
@@ -120,7 +120,8 @@ export function canConjCoexist(
  *
  * Plus strict que la cohabitation : même consolidés, deux faits confusibles
  * restent séparés dans la série — SAUF la paire de contraste futur/imparfait,
- * dont l'adjacence est précisément l'objectif une fois les deux en boîte ≥ 3.
+ * dont l'adjacence est précisément l'objectif une fois les deux en boîte ≥ 3
+ * (le composeur la rapproche alors délibérément, cf. placeContrastPair).
  */
 export function canConjBeAdjacent(
   a: { key: string; box: BoxLevel },

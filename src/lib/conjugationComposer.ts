@@ -26,10 +26,12 @@ import {
   type ConjQuestionView,
 } from './conjugationFacts';
 import {
+  CONJ_CONTRAST_PAIR,
   CONJ_INTRO_SPACING_DAYS,
   canConjBeAdjacent,
   canConjCoexist,
   conjFactsInterfere,
+  isConjContrastPair,
 } from './conjugationInterference';
 import { daysBetween, interleaveGreedy } from './utils';
 
@@ -210,6 +212,9 @@ export function conjQuestionConflict(a: ConjSessionQuestion, b: ConjSessionQuest
   const carrierA = carrierOf(a);
   const carrierB = carrierOf(b);
   if (!carrierA || !carrierB) return false;
+  // Paire de contraste : consolidée, son voisinage est voulu (§3.4), même
+  // personne comprise — cf. placeContrastPair.
+  if (isConjContrastPair(a.fact, b.fact)) return !canConjBeAdjacent(a.fact, b.fact);
   if (carrierA.verb === carrierB.verb) return true;
   if (carrierA.person === carrierB.person) return true;
   return !canConjBeAdjacent(a.fact, b.fact);
@@ -304,6 +309,15 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
     if (isMaintenance) maintenance++;
   }
 
+  // Contraste futur -ai / imparfait -ais (§3.4) : une fois les deux faits
+  // consolidés, l'un retenu appelle l'autre, posé juste après lui — c'est ce
+  // voisinage qui construit la discrimination. En bonus : le partenaire n'a
+  // pas été retenu (pas dû, ou écarté par le plafond d'entretien), la séance
+  // ne touche pas à son calendrier.
+  const partner = contrastPartner(facts, selected, newFacts);
+  const contrastFacts =
+    partner && selected.length + newFacts.length < CONJ_MAX_QUESTIONS ? [partner] : [];
+
   // Padding par révisions bonus, qui ne touchent pas au calendrier Leitner.
   // Elles passent par le MÊME filtre d'interférence que les révisions dues :
   // `pickBonusReviewFacts` trie les plus faibles d'abord, donc exactement les
@@ -311,9 +325,10 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   // courte (les premiers jours) repêchait en bonus le fait que la sélection
   // venait d'écarter, et « tu es » / « il est » se retrouvaient ensemble.
   const bonusFacts: ConjFact[] = [];
-  if (selected.length + newFacts.length < CONJ_MIN_QUESTIONS) {
-    const need = CONJ_MIN_QUESTIONS - selected.length - newFacts.length;
-    const used = new Set([...newFacts, ...selected].map((f) => f.key));
+  const planned = selected.length + newFacts.length + contrastFacts.length;
+  if (planned < CONJ_MIN_QUESTIONS) {
+    const need = CONJ_MIN_QUESTIONS - planned;
+    const used = new Set([...newFacts, ...selected, ...contrastFacts].map((f) => f.key));
     const ranked = pickBonusReviewFacts(
       facts,
       (f) => used.has(f.key) || !conjFactDef(f.key),
@@ -321,7 +336,7 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
     );
     for (const fact of ranked) {
       if (bonusFacts.length >= need) break;
-      if (!conjCoexistsWithAll(fact, newFacts, selected, bonusFacts)) continue;
+      if (!conjCoexistsWithAll(fact, newFacts, selected, contrastFacts, bonusFacts)) continue;
       bonusFacts.push(fact);
     }
   }
@@ -333,16 +348,65 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   // entrelacer les blocs isolément laissait leurs jonctions hors contrôle, et
   // deux questions consécutives pouvaient y partager le verbe ou la personne
   // (§5.1), voire être en interférence.
-  const reviews = interleave(
-    selected.map((fact) => makeQuestion(fact, conjCarrierIndex(fact))),
-    intros.at(-1),
+  //
+  // La paire de contraste, quand la séance la contient, reste hors de
+  // l'entrelacement : elle est posée d'un bloc ensuite (placeContrastPair).
+  const reviewQuestions = selected.map((fact) => makeQuestion(fact, conjCarrierIndex(fact)));
+  const bonusQuestions = [...contrastFacts, ...bonusFacts].map((fact) =>
+    makeQuestion(fact, conjCarrierIndex(fact), { isBonusReview: true }),
   );
-  const bonus = interleave(
-    bonusFacts.map((fact) => makeQuestion(fact, conjCarrierIndex(fact), { isBonusReview: true })),
-    reviews.at(-1) ?? intros.at(-1),
-  );
+  const [x, y] = CONJ_CONTRAST_PAIR;
+  const all = [...reviewQuestions, ...bonusQuestions];
+  const pair = [x, y].map((key) => all.find((q) => q.fact.key === key));
+  const hasPair = pair.every(Boolean);
+  const outsidePair = (q: ConjSessionQuestion) => !hasPair || !pair.includes(q);
 
-  return [...intros, ...reviews, ...bonus];
+  const reviews = interleave(reviewQuestions.filter(outsidePair), intros.at(-1));
+  const bonus = interleave(bonusQuestions.filter(outsidePair), reviews.at(-1) ?? intros.at(-1));
+  const questions = [...intros, ...reviews, ...bonus];
+  if (!hasPair) return questions;
+  // Le fait dû d'abord, son partenaire de contraste juste après.
+  const unit = (pair as ConjSessionQuestion[]).sort((a, b) => Number(a.isBonusReview) - Number(b.isBonusReview));
+  return placeContrastPair(questions, unit, intros.length);
+}
+
+/**
+ * Le partenaire de contraste à ajouter à la séance : l'un des deux faits de la
+ * paire futur/imparfait est retenu, l'autre non, et les deux sont consolidés.
+ */
+function contrastPartner(facts: ConjFact[], selected: ConjFact[], newFacts: ConjFact[]): ConjFact | null {
+  const [x, y] = CONJ_CONTRAST_PAIR;
+  const fx = facts.find((f) => f.key === x);
+  const fy = facts.find((f) => f.key === y);
+  // Adjacence permise ⇔ paire consolidée (canConjBeAdjacent).
+  if (!fx?.introduced || !fy?.introduced || !canConjBeAdjacent(fx, fy)) return null;
+  const hasX = selected.some((f) => f.key === x);
+  if (hasX === selected.some((f) => f.key === y)) return null;
+  const partner = hasX ? fy : fx;
+  return conjCoexistsWithAll(partner, newFacts, selected) ? partner : null;
+}
+
+/**
+ * Insère la paire de contraste, d'un bloc, au premier créneau après les intros
+ * dont les deux jonctions sont sans conflit (§5.1) ; à la fin à défaut. La
+ * séance ne peut la contenir que consolidée — l'anti-interférence écarte sinon
+ * l'un des deux faits (§3.4).
+ */
+function placeContrastPair(
+  questions: ConjSessionQuestion[],
+  [first, second]: ConjSessionQuestion[],
+  from: number,
+): ConjSessionQuestion[] {
+  let at = questions.length;
+  for (let k = from; k <= questions.length; k++) {
+    const before = questions[k - 1];
+    const after = questions[k];
+    if ((!before || !conjQuestionConflict(before, first)) && (!after || !conjQuestionConflict(second, after))) {
+      at = k;
+      break;
+    }
+  }
+  return [...questions.slice(0, at), first, second, ...questions.slice(at)];
 }
 
 /**
