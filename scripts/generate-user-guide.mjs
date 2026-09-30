@@ -1122,16 +1122,17 @@ const SECTIONS_FR = [
   {
     id: 'home',
     title: 'Écran d\'accueil',
-    description: `Le hub quotidien. La mascotte est un compagnon stable —
-      elle accueille l'enfant à chaque session, réagit aux bonnes réponses,
-      encourage en cas d'erreur, sans jamais juger. La flamme affiche la
-      série en cours. Le gros bouton lance la séance du jour, et la barre du
-      bas donne accès aux progrès, aux badges et aux règles ×1 / ×10. L'icône
-      engrenage ouvre l'espace parent, après une courte multiplication-gate
-      pour écarter les doigts curieux. Quand toutes les tables sont maîtrisées,
-      le niveau 2 (division) se débloque — sans second bouton ni nouvelle tuile :
-      la tuile « Mon image » devient « Mes images » et la séance du jour bascule
-      sur la division (voir le niveau 2 plus bas).`,
+    body: `
+      <p>Le point de départ de chaque jour.</p>
+      <ul class="guide-list">
+        <li><strong>La mascotte</strong> accueille l'enfant, le félicite, l'encourage après une erreur. Jamais elle ne juge.</li>
+        <li><strong>La flamme</strong> compte les jours de suite.</li>
+        <li><strong>Le gros bouton</strong> lance la séance du jour.</li>
+        <li><strong>La barre du bas</strong> ouvre l'image mystère, les badges et les règles ×1 / ×10.</li>
+        <li><strong>L'engrenage</strong> ouvre l'espace parent, derrière une petite multiplication.</li>
+      </ul>
+      <p>Quand toutes les tables sont maîtrisées, la séance du jour passe d'elle-même à la division : pas de nouveau bouton.</p>
+    `,
     shots: [
       { file: '05-home', caption: 'Accueil avec la mascotte et la série de 5 jours.' },
     ],
@@ -1139,18 +1140,15 @@ const SECTIONS_FR = [
   {
     id: 'session',
     title: 'La séance',
-    description: `Une séance contient 12 à 15 questions. Quand un fait
-      nouveau apparaît, il est introduit en trois temps : une grille de points
-      qui montre la multiplication comme une addition répétée, la propriété de
-      commutativité (3×5 = 5×3, sauf pour les carrés), et une astuce de
-      dérivation adaptée au fait (par exemple « × 9 = × 10 moins une fois »).
-      Ensuite viennent les questions. L'enfant peut répondre au clavier ou
-      à la voix — un bouton sous le pavé numérique permet de basculer en
-      cours de séance, et le choix est mémorisé pour les séances suivantes.
-      Une bonne réponse rapide donne une étoile dorée. En cas d'erreur, la
-      bonne réponse est affichée avec la grille de points et — tant que le
-      fait est en début d'apprentissage — l'astuce de dérivation est rappelée.
-      Le fait est re-posé un peu plus loin dans la séance.`,
+    body: `
+      <p>12 à 15 questions, quelques minutes.</p>
+      <ul class="guide-list">
+        <li><strong>Un fait nouveau</strong> est d'abord présenté en trois temps : une grille de points (l'addition répétée), l'échange des facteurs (3×5 = 5×3), puis une astuce (« × 9, c'est × 10 moins une fois »).</li>
+        <li><strong>Réponse</strong> au clavier ou à la voix. Un bouton sous le pavé change de mode, et le choix est retenu.</li>
+        <li><strong>Bonne réponse rapide</strong> : une étoile dorée.</li>
+        <li><strong>Erreur</strong> : la bonne réponse, la grille de points, l'astuce si le fait est récent. La question revient un peu plus loin.</li>
+      </ul>
+    `,
     shots: [
       { file: '06-session-intro', caption: 'Introduction d\'un nouveau fait — étape 1 : grille de points et addition répétée.' },
       { file: '06b-session-intro-strategy', caption: 'Introduction — étape 3 : astuce de dérivation pour mémoriser le fait.' },
@@ -1190,20 +1188,16 @@ const SECTIONS_FR = [
   {
     id: 'division',
     title: 'Niveau 2 — la division',
-    description: `Quand l'enfant a maîtrisé toutes ses tables (le badge « Génie de
-      la multiplication »), un niveau se débloque : réviser les mêmes faits, mais sous
-      forme de division (« 56 ÷ 7 = ? »), avec sa propre image mystère — l'image
-      des tables, elle, reste acquise. La tuile « Mon image » devient « Mes
-      images » : on y bascule entre l'image des multiplications et celle des
-      divisions. La tuile maths reste unique : la séance du jour devient la
-      division, et les quelques tables à réviser pour l'entretien y sont
-      glissées au passage (× et ÷ dans la même séance).
-      Les divisions arrivent progressivement (pas toutes d'un coup), dans le même
-      ordre pensé que les tables — du plus simple au plus difficile — et l'app
-      enseigne explicitement l'astuce clé : pour 56 ÷ 7, on cherche « 7 fois
-      combien font 56 ? ». Tout le reste — boîtes de Leitner, image qui se
-      révèle, encouragements sans jugement — fonctionne exactement comme pour la
-      multiplication.`,
+    body: `
+      <p>Une fois toutes les tables maîtrisées (badge « Génie de la multiplication »), les mêmes faits reviennent à l'envers : « 56 ÷ 7 = ? ».</p>
+      <ul class="guide-list">
+        <li><strong>L'astuce</strong> est enseignée : pour 56 ÷ 7, on cherche « 7 fois combien font 56 ? ».</li>
+        <li><strong>Petit à petit</strong> : les divisions arrivent dans le même ordre que les tables, de la plus simple à la plus dure.</li>
+        <li><strong>Une seule séance</strong> : elle passe à la division, et y glisse quelques tables à entretenir.</li>
+        <li><strong>Une nouvelle image mystère</strong>. « Mon image » devient « Mes images » ; celle des tables reste acquise.</li>
+      </ul>
+      <p>Le reste (boîtes de Leitner, encouragements) marche comme pour les tables.</p>
+    `,
     shots: [
       { file: '15-division-home', caption: 'Une fois les tables maîtrisées, « Mon image » devient « Mes images » (multiplications + divisions).' },
       { file: '13b-parent-dashboard-division', caption: 'Dans l\'espace parent, la carte Maths passe aux divisions ; les multiplications, maîtrisées, y restent cochées.' },
@@ -1215,20 +1209,15 @@ const SECTIONS_FR = [
   {
     id: 'remainder',
     title: 'Niveau 3 — la division avec reste',
-    description: `Quand toutes les divisions sont maîtrisées (les huit badges
-      « Divisions par N »), un troisième niveau se débloque : la division quand
-      ça ne tombe pas juste (« 45 ÷ 7 = 6, reste 3 »), le geste attendu en fin
-      de CE2 et formalisé en CM1 avec la division posée. L'app enseigne
-      explicitement l'astuce d'encadrement : chercher le multiple juste en
-      dessous, sans dépasser — ce qui manque pour y arriver, c'est le reste.
-      La réponse se donne en deux temps : « Combien de fois ? » puis « Il reste
-      combien ? » (toujours des réponses à un chiffre), et le nombre à diviser
-      change à chaque révision pour que l'enfant refasse vraiment le geste.
-      Parfois, ça tombe juste — le reste est zéro, il faut le remarquer !
-      Une troisième image mystère se dévoile, et les tables comme les divisions
-      continuent d'être entretenues discrètement dans la même séance
-      quotidienne. Comme toujours : rien de tout cela n'est visible avant
-      d'être débloqué.`,
+    body: `
+      <p>Une fois toutes les divisions maîtrisées, la division qui ne tombe pas juste : « 45 ÷ 7 = 6, reste 3 ». C'est l'attendu de fin de CE2.</p>
+      <ul class="guide-list">
+        <li><strong>L'astuce</strong> : chercher le multiple juste en dessous, sans dépasser. Ce qui manque, c'est le reste.</li>
+        <li><strong>Deux temps</strong> : « Combien de fois ? », puis « Il reste combien ? ».</li>
+        <li><strong>Jamais le même calcul</strong> : le nombre à diviser change à chaque révision. Parfois le reste est zéro : à l'enfant de le voir.</li>
+        <li><strong>Une troisième image mystère</strong>. Tables et divisions continuent d'être entretenues dans la même séance.</li>
+      </ul>
+    `,
     shots: [
       { file: '21-remainder-intro', caption: 'Introduction d\'une division avec reste : les rangées pleines, et les points qui « ne rentrent pas » — le reste.' },
       { file: '22-remainder-question', caption: 'La réponse en deux temps : le quotient validé s\'installe dans la formule, puis « Il reste combien ? ».' },
@@ -1239,15 +1228,16 @@ const SECTIONS_FR = [
   {
     id: 'conjugaison',
     title: 'La conjugaison',
-    description: `À côté des maths, l'accueil propose une seconde tuile pour
-      réviser les conjugaisons du CE2 : présent, imparfait et futur du 1er
-      groupe et des verbes être, avoir, aller, faire, dire, venir, voir. Même
-      méthode que les tables : un court test de placement au départ, des
-      séances de quelques minutes, chaque phrase lue à voix haute, et une image
-      mystère dédiée. L'enfant complète une phrase sur un clavier de lettres
-      (ou en épelant à voix haute) ; la correction sépare le radical de la
-      terminaison, pour que la règle se voie. Les deux matières ont chacune
-      leur séance du jour, mais partagent la même série.`,
+    body: `
+      <p>Une seconde matière, à côté des maths : les conjugaisons du CE2.</p>
+      <ul class="guide-list">
+        <li><strong>Au programme</strong> : présent, imparfait et futur du 1<sup>er</sup> groupe, et des verbes être, avoir, aller, faire, dire, venir, voir.</li>
+        <li><strong>Même méthode</strong> que les tables : un court test au départ, des séances de quelques minutes, une image mystère.</li>
+        <li><strong>L'enfant complète une phrase</strong>, lue à voix haute, sur un clavier de lettres ou en épelant à l'oral.</li>
+        <li><strong>La correction</strong> colore à part le radical et la terminaison, pour que la règle se voie.</li>
+      </ul>
+      <p>Chaque matière a sa séance du jour ; la série de jours est commune.</p>
+    `,
     shots: [
       { file: '24-conj-question', caption: 'Une phrase à compléter, au clavier de lettres. L\'infinitif est rappelé sous la question.' },
       { file: '25-conj-feedback-correct', caption: 'Bonne réponse : la forme s\'affiche, radical et terminaison en deux couleurs.' },
@@ -1256,16 +1246,15 @@ const SECTIONS_FR = [
   {
     id: 'badges',
     title: 'Les badges',
-    description: `Dix-huit badges pour les tables, répartis en trois familles :
-      jalons (première séance, 7 jours, 30 jours), performance (10 réponses de
-      suite, 5 réponses < 2 s), et maîtrise (premier fait en boîte 4, premier en
-      boîte 5, un badge par table + un badge « génie de la multiplication » quand tout
-      est en boîte 5). Une fois toutes les tables maîtrisées, une série de
-      badges dédiés à la division vient s'ajouter à la collection. Chaque
-      vignette est cliquable et ouvre une fiche qui explique la condition de
-      déblocage. Pour les badges verrouillés, une barre de progression montre
-      où en est l'enfant — les icônes seules ne sont pas auto-portantes pour
-      qui découvre la gamification.`,
+    body: `
+      <p>Des badges pour marquer le chemin parcouru.</p>
+      <ul class="guide-list">
+        <li><strong>Jalons</strong> : première séance, 7 jours, 30 jours.</li>
+        <li><strong>Performance</strong> : 10 bonnes réponses de suite, 5 réponses en moins de 2 s.</li>
+        <li><strong>Maîtrise</strong> : un badge par table, puis « Génie de la multiplication ». La division, la conjugaison ajoutent les leurs.</li>
+      </ul>
+      <p>Chaque badge s'ouvre sur sa condition et, s'il est encore verrouillé, sur une barre de progression.</p>
+    `,
     shots: [
       { file: '11-badges', caption: 'Collection de badges — obtenus et à débloquer.' },
       { file: '11-badges-detail', caption: 'En cliquant sur un badge verrouillé, on découvre la condition et la progression.' },
@@ -1274,15 +1263,15 @@ const SECTIONS_FR = [
   {
     id: 'rules',
     title: 'Les règles ×1 et ×10',
-    description: `Deux règles que l'app met en avant dès le début pour
-      alléger la charge mnésique : multiplier par 1 (le nombre ne change pas)
-      et multiplier par 10 (les chiffres glissent d'une place vers la gauche,
-      un 0 prend la place des unités). Ces tables ne font donc pas partie
-      des 36 faits appris.
-      Une troisième règle « bonus » ×11 (il suffit de répéter le chiffre :
-      3×11 = 33, 7×11 = 77…) apparaît plus tard, quand toutes les tables
-      de 2 à 9 sont maîtrisées — signalée par une pastille « Nouveau »
-      discrète sur le bouton Règles.`,
+    body: `
+      <p>Deux règles données d'emblée, pour ne pas avoir à les apprendre par cœur :</p>
+      <ul class="guide-list">
+        <li><strong>× 1</strong> : le nombre ne change pas.</li>
+        <li><strong>× 10</strong> : les chiffres glissent d'un rang vers la gauche, un 0 prend la place des unités.</li>
+        <li><strong>× 11</strong>, en bonus une fois les tables de 2 à 9 maîtrisées : on répète le chiffre (3 × 11 = 33). Une pastille « Nouveau » le signale.</li>
+      </ul>
+      <p>Ces tables ne font donc pas partie des 36 faits à apprendre.</p>
+    `,
     shots: [
       { file: '12-rules', caption: 'Règles pour ×1 et ×10.' },
     ],
@@ -1290,32 +1279,26 @@ const SECTIONS_FR = [
   {
     id: 'parent',
     title: 'Espace parent',
-    description: `Accessible depuis l'accueil via l'engrenage, après une
-      petite multiplication (un opérande entre 11 et 19, l'autre entre 3
-      et 9) pour confirmer qu'un adulte est derrière l'écran. L'accueil de
-      l'espace parent répond d'abord à la question du jour — la séance
-      est-elle faite ? — avec les 14 derniers jours, le nombre de séances et
-      les séries. Vient ensuite le point de la semaine, en phrases : les jours
-      pratiqués, la réussite et la rapidité, les faits qui ont progressé,
-      chacun comparé à la semaine d'avant quand la comparaison est juste
-      (pas à travers un changement de niveau, par exemple). Suit une carte par
-      matière : le niveau en cours et sa barre de maîtrise (maîtrisées, en
-      bonne voie, à consolider, pas encore vues), les niveaux déjà passés
-      cochés tant qu'ils restent maîtrisés. Puis les trois faits sur lesquels
-      l'enfant bute le plus en ce moment, toutes matières confondues, avec une
-      idée pour l'aider à la maison — souvent l'astuce que la séance lui
-      enseigne déjà. Une carte ouvre la page de sa matière : maîtrise
-      boîte par boîte et grille Leitner, niveau par niveau, évolution de la
-      réussite ou de la rapidité, faits à retravailler et historique des
-      séances. En bas de
-      l'accueil, les réglages, une ligne chacun : le suivi à distance
-      (partager la progression de chaque enfant de l'appareil, ou suivre un
-      enfant qui pratique ailleurs), les profils et la sauvegarde (ajouter un
-      enfant, changer d'appareil, exporter ou importer une sauvegarde,
-      supprimer un profil — voir « Plusieurs enfants » ci-dessous), le rappel
-      quotidien, la langue, et l'aide (guide, avis, nouveautés,
-      confidentialité). Chaque ligne ouvre sa page, sauf le rappel et la
-      langue, qui se règlent sur place.`,
+    body: `
+      <p>On y entre par l'engrenage de l'accueil, après une petite
+      multiplication qui vérifie qu'un adulte est derrière l'écran. De haut en
+      bas :</p>
+      <ul class="guide-list">
+        <li><strong>La journée.</strong> La séance est-elle faite ? Les 14
+        derniers jours, les séances, les séries.</li>
+        <li><strong>La semaine.</strong> Jours pratiqués, réussite, rapidité,
+        faits qui ont progressé, comparés à la semaine d'avant.</li>
+        <li><strong>Une carte par matière.</strong> Le niveau en cours et sa
+        barre de maîtrise. Un clic ouvre la page de la matière : boîtes, grille
+        Leitner, évolution, historique des séances.</li>
+        <li><strong>À retravailler.</strong> Les trois faits qui résistent le
+        plus, avec une idée pour aider à la maison.</li>
+        <li><strong>Les réglages.</strong> Suivi à distance, profils et
+        sauvegarde, rappel quotidien, langue, aide.</li>
+      </ul>
+      <p>Une question, un souci, une idée ? Le bouton « Envoyer un avis », en
+      haut à droite.</p>
+    `,
     shots: [
       { file: '13-parent-dashboard', caption: 'L\'accueil de l\'espace parent commence par la journée.' },
       { file: '13e-parent-week', caption: 'Le point de la semaine, en phrases, puis une carte par matière.' },
@@ -1326,18 +1309,15 @@ const SECTIONS_FR = [
   {
     id: 'profils',
     title: 'Plusieurs enfants',
-    description: `Une tablette pour toute la fratrie : chaque enfant a son
-      propre profil — progression, badges, série et images mystère totalement
-      séparés. On ajoute un enfant depuis l'espace parent (« Ajouter un
-      enfant », page « Profils et sauvegarde ») ou directement depuis l'écran
-      de choix du joueur. Dès deux profils, l'app demande « Qui joue ? » à l'ouverture,
-      et un bouton dédié en haut de l'accueil permet de changer de joueur à
-      tout moment. Avec un seul profil, rien ne change : pas d'écran ni de
-      bouton en plus. Dans l'espace parent, un sélecteur en haut de l'accueil
-      montre la progression de chaque enfant de l'appareil, et de ceux suivis
-      à distance, sans changer de joueur. La page « Profils et sauvegarde »
-      sauvegarde le profil actif (changer d'appareil, exporter ou importer une
-      sauvegarde) et le supprime, après confirmation.`,
+    body: `
+      <p>Une tablette pour toute la fratrie : chaque enfant a son profil, sa progression, ses badges, sa série et ses images.</p>
+      <ul class="guide-list">
+        <li><strong>Ajouter un enfant</strong> : depuis l'espace parent (« Profils et sauvegarde ») ou l'écran « Qui joue ? ».</li>
+        <li><strong>Dès deux profils</strong>, l'app demande « Qui joue ? » à l'ouverture, et un bouton en haut de l'accueil change de joueur. Avec un seul, rien ne change.</li>
+        <li><strong>Dans l'espace parent</strong>, une pastille par enfant, y compris ceux suivis à distance, sans changer de joueur.</li>
+        <li><strong>« Profils et sauvegarde »</strong> : changer d'appareil, exporter ou importer une sauvegarde, supprimer un profil.</li>
+      </ul>
+    `,
     shots: [
       { file: '19-profile-select', caption: '« Qui joue ? » — l\'écran de choix affiché à l\'ouverture dès deux profils.' },
       { file: '20-home-multi', caption: 'Le bouton « changer de joueur » apparaît en haut de l\'accueil, à côté de l\'engrenage.' },
@@ -1424,16 +1404,17 @@ const SECTIONS_EN = [
   {
     id: 'home',
     title: 'Home screen',
-    description: `The daily hub. The mascot is a steady companion — it
-      welcomes the child at every session, reacts to correct answers,
-      encourages after a mistake, and never judges. The flame shows the
-      current streak. The big button starts the day's session, and the bottom
-      bar opens progress, badges and the ×1 / ×10 rules. The gear icon opens
-      the parent area, after a short multiplication gate to keep curious
-      fingers out. When all the tables are mastered, level 2 (division)
-      unlocks — with no second button and no new tile: the “My picture”
-      tile becomes “My pictures” and the day's session switches to division
-      (see level 2 below).`,
+    body: `
+      <p>Where every day starts.</p>
+      <ul class="guide-list">
+        <li><strong>The mascot</strong> welcomes the child, cheers correct answers, encourages after a mistake. It never judges.</li>
+        <li><strong>The flame</strong> counts days in a row.</li>
+        <li><strong>The big button</strong> starts the day's session.</li>
+        <li><strong>The bottom bar</strong> opens the mystery picture, the badges and the ×1 / ×10 rules.</li>
+        <li><strong>The gear</strong> opens the parent area, behind a small multiplication.</li>
+      </ul>
+      <p>Once all the tables are mastered, the day's session moves on to division by itself: no new button.</p>
+    `,
     shots: [
       { file: '05-home', caption: 'Home screen with the mascot and the 5-day streak.' },
     ],
@@ -1441,17 +1422,15 @@ const SECTIONS_EN = [
   {
     id: 'session',
     title: 'The session',
-    description: `A session has 12 to 15 questions. When a new fact appears,
-      it is introduced in three steps: a grid of dots showing the
-      multiplication as repeated addition, the commutativity property
-      (3×5 = 5×3, except for squares), and a derivation trick suited to the
-      fact (for example “× 9 = × 10 minus one”). Then come the questions.
-      The child can answer with the keypad or with their voice — a button
-      below the keypad switches mode mid-session, and the choice is remembered
-      for later sessions. A quick correct answer earns a golden star. After a
-      mistake, the correct answer is shown with the grid of dots and — while
-      the fact is still early in learning — the derivation trick is recalled.
-      The fact is asked again a little later in the session.`,
+    body: `
+      <p>12 to 15 questions, a few minutes.</p>
+      <ul class="guide-list">
+        <li><strong>A new fact</strong> is first shown in three steps: a grid of dots (repeated addition), swapping the factors (3×5 = 5×3), then a trick (“× 9 is × 10 minus one”).</li>
+        <li><strong>Answers</strong> with the keypad or by voice. A button below the keypad switches mode, and the choice is remembered.</li>
+        <li><strong>Quick correct answer</strong>: a golden star.</li>
+        <li><strong>Mistake</strong>: the right answer, the grid of dots, the trick if the fact is recent. The question comes back a little later.</li>
+      </ul>
+    `,
     shots: [
       { file: '06-session-intro', caption: 'Introducing a new fact — step 1: grid of dots and repeated addition.' },
       { file: '06b-session-intro-strategy', caption: 'Introduction — step 3: a derivation trick to memorize the fact.' },
@@ -1490,19 +1469,16 @@ const SECTIONS_EN = [
   {
     id: 'division',
     title: 'Level 2 — division',
-    description: `Once the child has mastered all their tables (the “Times
-      tables genius” badge), a level unlocks: reviewing the same facts, but
-      as divisions (“56 ÷ 7 = ?”), with its own mystery picture — the tables
-      picture stays earned. The “My picture” tile becomes “My pictures”:
-      you switch between the multiplication picture and the division one. There
-      is still a single “Let's go” button: the day's session becomes
-      division, and the few tables due for maintenance are slipped in along the
-      way (× and ÷ in the same session). Divisions arrive gradually (not all at
-      once), in the same carefully designed order as the tables — from easiest
-      to hardest — and the app explicitly teaches the key trick: for 56 ÷ 7,
-      you look for “7 times what makes 56?”. Everything else — Leitner boxes,
-      the picture revealing itself, encouragement without judgment — works
-      exactly like multiplication.`,
+    body: `
+      <p>Once all the tables are mastered (the “Times tables genius” badge), the same facts come back the other way round: “56 ÷ 7 = ?”.</p>
+      <ul class="guide-list">
+        <li><strong>The trick</strong> is taught: for 56 ÷ 7, look for “7 times what makes 56?”.</li>
+        <li><strong>Step by step</strong>: divisions arrive in the same order as the tables, easiest first.</li>
+        <li><strong>One session</strong>: it switches to division, and slips in a few tables to maintain.</li>
+        <li><strong>A new mystery picture</strong>. “My picture” becomes “My pictures”; the tables picture stays earned.</li>
+      </ul>
+      <p>Everything else (Leitner boxes, encouragement) works as for the tables.</p>
+    `,
     shots: [
       { file: '15-division-home', caption: 'Once the tables are mastered, “My picture” becomes “My pictures” (multiplications + divisions).' },
       { file: '13b-parent-dashboard-division', caption: 'In the parent area, the Math card moves on to division; multiplication, mastered, stays checked off.' },
@@ -1514,19 +1490,15 @@ const SECTIONS_EN = [
   {
     id: 'remainder',
     title: 'Level 3 — division with remainders',
-    description: `Once every division is mastered (all eight "Dividing by N"
-      badges), a third level unlocks: division when it doesn't come out even
-      ("45 ÷ 7 = 6 r 3") — the skill expected at the end of grade 3 and
-      formalized with long division the following year. The app explicitly
-      teaches the bounding trick: find the multiple just below, without going
-      over — what's missing to get there is the remainder. Answers come in two
-      steps: "How many times?" then "What's left over?" (always single-digit
-      answers), and the number to divide changes on every review so the child
-      genuinely redoes the reasoning. Sometimes it does come out even — the
-      remainder is zero, and spotting that is part of the skill! A third
-      mystery picture reveals itself, and both the times tables and the
-      divisions quietly keep being maintained within the same daily session.
-      As always: none of this is visible before it is unlocked.`,
+    body: `
+      <p>Once every division is mastered, division that doesn't come out even: “45 ÷ 7 = 6 r 3”, the skill expected at the end of grade 3.</p>
+      <ul class="guide-list">
+        <li><strong>The trick</strong>: find the multiple just below, without going over. What's missing is the remainder.</li>
+        <li><strong>Two steps</strong>: “How many times?”, then “What's left over?”.</li>
+        <li><strong>Never the same sum</strong>: the number to divide changes on every review. Sometimes the remainder is zero: up to the child to spot it.</li>
+        <li><strong>A third mystery picture</strong>. Tables and divisions keep being maintained in the same session.</li>
+      </ul>
+    `,
     shots: [
       { file: '21-remainder-intro', caption: 'Introducing a division with remainder: the full rows, and the dots that "don\'t fit" — the remainder.' },
       { file: '22-remainder-question', caption: 'Answering in two steps: the validated quotient settles into the formula, then "What\'s left over?".' },
@@ -1537,15 +1509,15 @@ const SECTIONS_EN = [
   {
     id: 'badges',
     title: 'The badges',
-    description: `Eighteen badges for the tables, across three families:
-      milestones (first session, 7 days, 30 days), performance (10 answers in
-      a row, 5 answers under 2 s), and mastery (first fact in box 4, first in
-      box 5, one badge per table + a “times tables genius” badge when
-      everything is in box 5). Once all the tables are mastered, a set of
-      badges dedicated to division joins the collection. Each thumbnail is
-      clickable and opens a card explaining the unlock condition. For locked
-      badges, a progress bar shows where the child stands — the icons alone
-      aren't self-explanatory for anyone new to the gamification.`,
+    body: `
+      <p>Badges to mark the way.</p>
+      <ul class="guide-list">
+        <li><strong>Milestones</strong>: first session, 7 days, 30 days.</li>
+        <li><strong>Performance</strong>: 10 correct answers in a row, 5 answers under 2 s.</li>
+        <li><strong>Mastery</strong>: one badge per table, then “Times tables genius”. Division adds its own.</li>
+      </ul>
+      <p>Each badge opens on its condition and, while still locked, a progress bar.</p>
+    `,
     shots: [
       { file: '11-badges', caption: 'Badge collection — earned and still to unlock.' },
       { file: '11-badges-detail', caption: 'Tapping a locked badge reveals the condition and the progress.' },
@@ -1554,13 +1526,15 @@ const SECTIONS_EN = [
   {
     id: 'rules',
     title: 'The ×1 and ×10 rules',
-    description: `Two rules the app highlights from the start to lighten the
-      memory load: multiplying by 1 (the number doesn't change) and
-      multiplying by 10 (the digits slide one place to the left, a 0 takes the
-      place of the ones). These tables are therefore not part of the 36 facts
-      to learn. A third “bonus” rule, ×11 (just repeat the digit: 3×11 = 33,
-      7×11 = 77…), appears later, once all the tables from 2 to 9 are mastered
-      — signaled by a discreet “New” dot on the Rules button.`,
+    body: `
+      <p>Two rules given up front, so they don't have to be learned by heart:</p>
+      <ul class="guide-list">
+        <li><strong>× 1</strong>: the number doesn't change.</li>
+        <li><strong>× 10</strong>: the digits slide one place to the left, a 0 takes the ones place.</li>
+        <li><strong>× 11</strong>, a bonus once tables 2 to 9 are mastered: repeat the digit (3 × 11 = 33). A “New” dot flags it.</li>
+      </ul>
+      <p>These tables are therefore not among the 36 facts to learn.</p>
+    `,
     shots: [
       { file: '12-rules', caption: 'Rules for ×1 and ×10.' },
     ],
@@ -1568,29 +1542,26 @@ const SECTIONS_EN = [
   {
     id: 'parent',
     title: 'Parent area',
-    description: `Reachable from the home screen via the gear, after a small
-      multiplication (one operand between 11 and 19, the other between 3 and 9)
-      to confirm an adult is behind the screen. The parent area's overview
-      first answers the question of the day — has today's session been done?
-      — with the last 14 days, the number of sessions and the streaks. Next
-      comes the week at a glance, in sentences: days practised, accuracy and
-      speed, facts that moved up, each compared with the week before when the
-      comparison is fair (not across a level change, for instance). Then comes
-      one card per subject: the current level and its mastery bar (mastered,
-      on track, still shaky, not seen yet), with the levels already completed
-      checked off as long as they stay mastered. Then the three facts the
-      child is struggling with most right now, across subjects, with an idea
-      to help at home — often the very trick the session teaches. A card
-      opens its subject's page: mastery box by box and the Leitner grid, level
-      by level, the accuracy or speed trend, the facts that need practice and
-      the session history. At the bottom of the overview are the settings, one
-      row each:
-      remote follow (share the progress of each child on this device, or
-      follow a child practising elsewhere), profiles and backup (add a child,
-      move to another device, export or import a backup, delete a profile —
-      see “Several children” below), the daily reminder, the language, and
-      help (guide, feedback, what's new, privacy). Each row opens its own
-      page, except the reminder and the language, which are set right there.`,
+    body: `
+      <p>Open it from the gear on the home screen, after a small
+      multiplication that checks an adult is behind the screen. From top to
+      bottom:</p>
+      <ul class="guide-list">
+        <li><strong>Today.</strong> Has the session been done? The last 14
+        days, sessions, streaks.</li>
+        <li><strong>The week.</strong> Days practised, accuracy, speed, facts
+        that moved up, compared with the week before.</li>
+        <li><strong>One card per subject.</strong> The current level and its
+        mastery bar. Tap it for the subject's page: boxes, Leitner grid,
+        trends, session history.</li>
+        <li><strong>Needs practice.</strong> The three toughest facts right
+        now, with an idea to help at home.</li>
+        <li><strong>Settings.</strong> Remote follow, profiles and backup,
+        daily reminder, language, help.</li>
+      </ul>
+      <p>A question, a problem, an idea? The “Send feedback” button, top
+      right.</p>
+    `,
     shots: [
       { file: '13-parent-dashboard', caption: 'The parent area overview starts with the day.' },
       { file: '13e-parent-week', caption: 'The week at a glance, in sentences, then one card per subject.' },
@@ -1601,18 +1572,15 @@ const SECTIONS_EN = [
   {
     id: 'profils',
     title: 'Several children',
-    description: `One tablet for the whole family: each child has their own
-      profile — progress, badges, streak and mystery pictures fully separate.
-      You add a child from the parent area (“Add a child”, on the “Profiles
-      and backup” page) or straight from the player-selection screen. With two or more profiles,
-      the app asks “Who's playing?” on launch, and a dedicated button at the
-      top of the home screen lets you switch player at any time. With a single
-      profile, nothing changes: no extra screen or button. In the parent area,
-      a selector at the top of the overview shows each child's progress,
-      whether on this device or followed remotely, without switching player.
-      The “Profiles and backup” page backs up the active profile (move to
-      another device, export or import a backup) and deletes it, after
-      confirmation.`,
+    body: `
+      <p>One tablet for the whole family: each child has their own profile, progress, badges, streak and pictures.</p>
+      <ul class="guide-list">
+        <li><strong>Add a child</strong>: from the parent area (“Profiles and backup”) or the “Who's playing?” screen.</li>
+        <li><strong>With two or more profiles</strong>, the app asks “Who's playing?” on launch, and a button at the top of the home screen switches player. With one, nothing changes.</li>
+        <li><strong>In the parent area</strong>, one chip per child, including those followed remotely, without switching player.</li>
+        <li><strong>“Profiles and backup”</strong>: move to another device, export or import a backup, delete a profile.</li>
+      </ul>
+    `,
     shots: [
       { file: '19-profile-select', caption: '“Who\'s playing?” — the selection screen shown on launch with two or more profiles.' },
       { file: '20-home-multi', caption: 'The “switch player” button appears at the top of the home screen, next to the gear.' },
@@ -1907,6 +1875,16 @@ async function buildHtml({ generatedAt, lang }) {
     font-size: 12px;
     font-style: italic;
   }
+  ul.guide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  ul.guide-list li { padding: 8px 0; border-top: 1px solid var(--line); }
+  ul.guide-list li:first-child { border-top: 0; }
+  ul.guide-list strong { color: var(--ink); }
   .principles-footer {
     font-size: 14px;
     color: var(--ink-soft);

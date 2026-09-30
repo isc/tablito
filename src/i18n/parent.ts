@@ -184,7 +184,6 @@ interface ParentDashboardStrings {
   userGuide: string;
   guideSubtitle: string;
   sendFeedback: string;
-  feedbackSubtitle: string;
   shareTablito: string;
   shareSubtitle: string;
   linkCopied: string;
@@ -368,11 +367,10 @@ const parentDashboardFr: ParentDashboardStrings = {
   deleteProfileHint:
     'Efface sa progression, ses badges et ses images de cet appareil. Pensez à exporter une sauvegarde avant. Pour repartir de zéro, supprimez puis recréez le profil.',
   helpTitle: 'Aide et infos',
-  helpRowSubtitle: 'Guide, avis, nouveautés, confidentialité',
+  helpRowSubtitle: 'Guide, nouveautés, confidentialité',
   userGuide: 'Guide utilisateur',
   guideSubtitle: 'Le fonctionnement de Tablito, écran par écran',
   sendFeedback: 'Envoyer un avis',
-  feedbackSubtitle: 'Une question, une idée, un souci\u00a0?',
   shareTablito: 'Partager Tablito',
   shareSubtitle: "Envoyez le lien de l'app à un autre parent.",
   linkCopied: 'Lien copié ✓',
@@ -551,11 +549,10 @@ const parentDashboardEn: ParentDashboardStrings = {
   deleteProfileHint:
     'Erases their progress, badges and pictures from this device. Remember to export a backup first. To start over, delete and recreate the profile.',
   helpTitle: 'Help and info',
-  helpRowSubtitle: 'Guide, feedback, what’s new, privacy',
+  helpRowSubtitle: 'Guide, what’s new, privacy',
   userGuide: 'User guide',
   guideSubtitle: 'How Tablito works, screen by screen',
   sendFeedback: 'Send feedback',
-  feedbackSubtitle: 'A question, an idea, a problem?',
   shareTablito: 'Share Tablito',
   shareSubtitle: 'Send the app link to another parent.',
   linkCopied: 'Link copied ✓',
