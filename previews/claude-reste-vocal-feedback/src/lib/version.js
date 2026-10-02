@@ -1,3 +1,3 @@
-const t="20260930211729";export{t as APP_VERSION};
+const t="20261002184458";export{t as APP_VERSION};
 
 //# sourceMappingURL=version.js.map
