@@ -35,7 +35,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + "20261002184225"
+const CACHE = 'tablito-' + "20261002184748"
 const BASE = "/"
 const ASSETS = [
   "/favicon.svg",
@@ -169,6 +169,7 @@ const ASSETS = [
   "/src/lib/parseFrenchNumber.js",
   "/src/lib/parseSpelledLetters.js",
   "/src/lib/parseSpokenNumber.js",
+  "/src/lib/parseSpokenRemainder.js",
   "/src/lib/phoneticDict.js",
   "/src/lib/placement.js",
   "/src/lib/push.js",
@@ -218,7 +219,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/"],"splash":["/splash/"],"landing":["/video/","/img/hero-poster"],"qrscan":["/vendor/qr-scanner/"],"phonetic":["/phonetic/"],"qrgen":["/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"9722d24e1026","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_VERSIONS = {"audio":"e6a6dad5117a","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
