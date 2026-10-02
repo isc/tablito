@@ -15,6 +15,11 @@ describe('parseSpokenQuotientAndRemainder (fr)', () => {
     ['six, reste rien', 6, 0],
     ['six reste zéro', 6, 0],
     ['neuf il en reste un', 9, 1],
+    ['ça fait 4 reste 0', 4, 0],
+    ['ça fait 4 restes 0', 4, 0],
+    // Phrase fusionnée par le recognizer, marqueur avalé.
+    ['ça fait 40', 4, 0],
+    ['63', 6, 3],
   ])('« %s » → %i, reste %i', (input, quotient, remainder) => {
     expect(parse(input)).toEqual({ quotient, remainder });
   });

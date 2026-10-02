@@ -27,7 +27,7 @@ interface RemainderGrammar {
 
 const GRAMMAR: Record<Lang, RemainderGrammar> = {
   fr: {
-    marker: /(?:^|\s)(?:et\s+)?(?:il\s+)?(?:en\s+)?rest(?:e|ent)(?=\s|$)/,
+    marker: /(?:^|\s)(?:et\s+)?(?:il\s+)?(?:en\s+)?rest(?:e|es|ent)?(?=\s|$)/,
     zero: /(?:^|\s)(?:rien|aucun|pile|(?:ca\s+)?tombe\s+juste)(?=\s|$)/,
   },
   en: {
@@ -71,7 +71,13 @@ export function parseSpokenQuotientAndRemainder(
   }
 
   const quotient = parseSpokenAnswer(s, lang);
-  return quotient === null ? null : { quotient, remainder: null };
+  if (quotient === null) return null;
+  // Au niveau 3, quotient et reste n'ont qu'un chiffre (tables de 2 à 9). Un
+  // nombre à deux chiffres est donc une phrase que le recognizer a fusionnée,
+  // marqueur avalé : « quatre reste zéro » transcrit « 40 » (vécu sur Chrome
+  // Android, même famille que « huit huit » → 88).
+  if (quotient >= 10 && quotient <= 99) return { quotient: Math.floor(quotient / 10), remainder: quotient % 10 };
+  return { quotient, remainder: null };
 }
 
 /** Le reste (étape 2) : un nombre, ou 0 dit en mots. */
