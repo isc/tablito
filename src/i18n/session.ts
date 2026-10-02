@@ -95,6 +95,9 @@ interface FeedbackOverlayStrings {
   remAnswer: (quotient: number, remainder: number) => string;
   // Eyebrow de la grille (niveau 3) : « 7 × 6 + 3 » (ou « 7 × 6 » si reste 0).
   remEyebrow: (divisor: number, quotient: number, remainder: number) => string;
+  // Niveau 3, bon quotient mais mauvais reste : seul l'écart est ré-expliqué,
+  // « 7 × 6 = 42 : il manque 3 pour arriver à 45 ».
+  remGap: (divisor: number, quotient: number, remainder: number) => string;
 }
 
 const feedbackFr: FeedbackOverlayStrings = {
@@ -115,6 +118,12 @@ const feedbackFr: FeedbackOverlayStrings = {
     remainder === 0 ? `${quotient}, reste 0` : `${quotient}, reste ${remainder}`,
   remEyebrow: (divisor, quotient, remainder) =>
     remainder === 0 ? `${divisor} × ${quotient}` : `${divisor} × ${quotient} + ${remainder}`,
+  remGap: (divisor, quotient, remainder) => {
+    const product = divisor * quotient;
+    return remainder === 0
+      ? `${divisor} × ${quotient} = ${product} : ça tombe juste, il ne reste rien.`
+      : `${divisor} × ${quotient} = ${product} : il manque ${remainder} pour arriver à ${product + remainder}.`;
+  },
 };
 
 const feedbackEn: FeedbackOverlayStrings = {
@@ -134,6 +143,12 @@ const feedbackEn: FeedbackOverlayStrings = {
   remAnswer: (quotient, remainder) => `${quotient} r ${remainder}`,
   remEyebrow: (divisor, quotient, remainder) =>
     remainder === 0 ? `${divisor} × ${quotient}` : `${divisor} × ${quotient} + ${remainder}`,
+  remGap: (divisor, quotient, remainder) => {
+    const product = divisor * quotient;
+    return remainder === 0
+      ? `${divisor} × ${quotient} = ${product}: it goes in exactly, nothing is left.`
+      : `${divisor} × ${quotient} = ${product}: ${remainder} more to get to ${product + remainder}.`;
+  },
 };
 
 export const feedbackOverlayStrings = { fr: feedbackFr, en: feedbackEn };

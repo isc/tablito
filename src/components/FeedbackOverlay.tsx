@@ -7,10 +7,10 @@ import RemainderStrategyHint from './RemainderStrategyHint';
 import { getStrategy } from '../lib/strategies';
 import { getDivisionStrategy } from '../lib/divisionStrategies';
 import { getRemainderStrategy } from '../lib/remainderStrategies';
+import type { SessionItem } from '../types';
 import { pickRandom } from '../lib/utils';
 import { itemDisplay } from '../lib/sessionItemView';
 import { useFeedbackOverlayStrings } from '../i18n/session';
-import type { SessionItem } from '../types';
 
 /**
  * Durée d'affichage d'un feedback ACCEPTÉ avant enchaînement automatique :
@@ -30,8 +30,9 @@ interface FeedbackOverlayProps {
   // niveau 3, c'est le QUOTIENT saisi.
   submittedValue: number;
   // Niveau 3 uniquement : reste saisi, ou null si la question s'est arrêtée à
-  // un quotient faux — le feedback cible alors l'encadrement, pas l'écart
-  // (specs §12.5).
+  // un quotient faux. Le feedback vise l'étape ratée (specs §12.5) : un
+  // quotient faux ré-affiche l'encadrement, rangées qui se remplissent ; un
+  // bon quotient avec un mauvais reste ne ré-explique que l'écart.
   submittedRemainder?: number | null;
   onDismiss: () => void;
 }
@@ -76,10 +77,15 @@ export default function FeedbackOverlay({
     );
   }
 
+  // Niveau 3, bon quotient : l'erreur est sur le reste seul. L'encadrement est
+  // acquis, seul l'écart est ré-expliqué — à toute boîte, comme la grille :
+  // c'est le détail de la réponse, pas une astuce.
+  const remainderMissed = isRem && submittedRemainder != null;
+
   // Astuce affichée uniquement en début d'apprentissage (boîte ≤ 2) ; la grille
   // de points montre toujours le fait multiplicatif sous-jacent.
   let strategyHint = null;
-  if (item.fact.box <= 2) {
+  if (!remainderMissed && item.fact.box <= 2) {
     if (item.kind === 'rem') {
       strategyHint = <RemainderStrategyHint strategy={getRemainderStrategy(item)} variant="feedback" />;
     } else if (item.kind === 'div') {
@@ -93,7 +99,7 @@ export default function FeedbackOverlay({
   // Réponse saisie : composée « quotient, reste » quand la question niveau 3 a
   // atteint l'étape 2 (bon quotient, mauvais reste) ; quotient seul sinon.
   const submittedText =
-    isRem && submittedRemainder != null
+    remainderMissed
       ? t.remAnswer(submittedValue, submittedRemainder)
       : String(submittedValue);
 
@@ -115,6 +121,9 @@ export default function FeedbackOverlay({
         <div className="feedback-answer">
           {left} {op} {right} = <b>{answerText}</b>
         </div>
+        {remainderMissed && (
+          <div className="feedback-rem-gap">{t.remGap(item.fact.divisor, item.fact.quotient, item.remainder)}</div>
+        )}
         {strategyHint}
         <div className="feedback-dotgrid">
           <div className="feedback-dotgrid-eyebrow">{gridEyebrow}</div>
@@ -122,7 +131,7 @@ export default function FeedbackOverlay({
             a={gridA}
             b={gridB}
             remainderDots={isRem ? item.remainder : 0}
-            animated={false}
+            animated={isRem && !remainderMissed}
             bare
           />
         </div>

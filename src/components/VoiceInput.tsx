@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import NumPad from './NumPad';
 import { parseSpokenAnswer, speechRecognitionLang } from '../lib/parseSpokenNumber';
+import { parseSpokenQuotientAndRemainder } from '../lib/parseSpokenRemainder';
+import type { Lang } from '../i18n/lang';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useLatestRef } from '../hooks/useLatestRef';
 import { isAndroid } from '../lib/install';
@@ -20,6 +22,15 @@ interface VoiceInputProps {
   // matches it (fast path for correct answers, immune to TTS echo since the
   // echo would say the operands, not the product).
   expectedValue?: number;
+  // Lecture d'un nombre seul (défaut : parseSpokenAnswer). Le reste du niveau 3
+  // accepte aussi « rien », « ça tombe juste ».
+  parseNumber?: Parse<number>;
+  // Niveau 3, étape du quotient (specs §12.5) : l'enfant peut donner le reste
+  // dans la même phrase (« six, reste trois »), qui part alors par
+  // `pair.onSubmit`. Le quotient juste dit seul n'est plus validé à la volée :
+  // il couperait la phrase avant le reste — et sur Android, la relance
+  // « Et il reste combien ? » fermerait le micro dessus.
+  pair?: { expectedRemainder: number; onSubmit: (quotient: number, remainder: number) => void };
 }
 
 const MAX_PARSE_FAILS_BEFORE_KEYPAD = 3;
@@ -47,14 +58,11 @@ const TRAILING_FINAL_TIMEOUT_MS = 5000;
 // on-device + annulation d'écho, ding à chaque toggle), on garde au contraire
 // le micro ouvert toute la séance et on filtre l'écho par fenêtre de grâce.
 
-function pickBestNumber(
-  primary: string,
-  alternatives: string[],
-  lang: 'fr' | 'en',
-): number | null {
-  const candidates = [primary, ...alternatives];
-  for (const c of candidates) {
-    const n = parseSpokenAnswer(c, lang);
+type Parse<T> = (input: string, lang: Lang) => T | null;
+
+function pickBest<T>(primary: string, alternatives: string[], lang: Lang, parse: Parse<T>): T | null {
+  for (const c of [primary, ...alternatives]) {
+    const n = parse(c, lang);
     if (n !== null) return n;
   }
   return null;
@@ -66,6 +74,8 @@ export default function VoiceInput({
   isSpeaking = false,
   questionToken,
   expectedValue,
+  parseNumber = parseSpokenAnswer,
+  pair,
 }: VoiceInputProps) {
   const [showKeypad, setShowKeypad] = useState(false);
   const [, setParseFails] = useState(0);
@@ -82,6 +92,8 @@ export default function VoiceInput({
   const langRef = useLatestRef(lang);
   const disabledRef = useLatestRef(disabled);
   const expectedRef = useLatestRef(expectedValue);
+  const pairRef = useLatestRef(pair);
+  const parseNumberRef = useLatestRef(parseNumber);
   const [prevQuestionToken, setPrevQuestionToken] = useState(questionToken);
   const lastSpeakEndRef = useRef<number>(0);
   const lastSubmitAtRef = useRef<number>(0);
@@ -117,10 +129,22 @@ export default function VoiceInput({
     }
   }, []);
 
+  const markSubmit = useCallback((value: number) => {
+    setParseFails(0);
+    lastSubmitAtRef.current = Date.now();
+    lastSubmittedValueRef.current = value;
+  }, []);
+
   const handleFinal = useCallback(
     (transcript: string, alternatives: string[]) => {
       const expected = expectedRef.current;
-      const best = pickBestNumber(transcript, alternatives, langRef.current);
+      const pairTarget = pairRef.current;
+      const spoken = pairTarget
+        ? pickBest(transcript, alternatives, langRef.current, parseSpokenQuotientAndRemainder)
+        : null;
+      const best = pairTarget
+        ? spoken?.quotient ?? null
+        : pickBest(transcript, alternatives, langRef.current, parseNumberRef.current);
       const sinceSpeakEndMs = Date.now() - lastSpeakEndRef.current;
       // Drop the trailing final from a fast-path-submitted utterance. With
       // continuous=false, exactly one final follows the interim that triggered
@@ -164,11 +188,13 @@ export default function VoiceInput({
         voiceLog('drop:grace', `best=${bestEffective} sinceTTS=${sinceSpeakEndMs}ms`);
         return;
       }
-      if (bestEffective !== null) {
+      if (pairTarget && spoken?.remainder != null) {
+        voiceLog('submit:final-pair', `${spoken.quotient} r ${spoken.remainder}`);
+        markSubmit(spoken.quotient);
+        pairTarget.onSubmit(spoken.quotient, spoken.remainder);
+      } else if (bestEffective !== null) {
         voiceLog('submit:final', String(bestEffective));
-        setParseFails(0);
-        lastSubmitAtRef.current = Date.now();
-        lastSubmittedValueRef.current = bestEffective;
+        markSubmit(bestEffective);
         onSubmit(bestEffective);
       } else {
         voiceLog('parse-fail');
@@ -186,16 +212,45 @@ export default function VoiceInput({
       isEchoOfLastSubmit,
       pauseMicDuringTTS,
       clearTrailingFinal,
+      markSubmit,
       disabledRef,
       expectedRef,
+      pairRef,
+      parseNumberRef,
       langRef,
     ],
   );
 
+  // Soumission à la volée : le final de la même phrase arrivera ensuite, et
+  // doit être jeté (cf. expectTrailingFinalRef).
+  const markInterimSubmit = useCallback((value: number) => {
+    markSubmit(value);
+    expectTrailingFinalRef.current = true;
+    if (trailingTimeoutRef.current) clearTimeout(trailingTimeoutRef.current);
+    trailingTimeoutRef.current = setTimeout(() => {
+      expectTrailingFinalRef.current = false;
+      trailingTimeoutRef.current = null;
+    }, TRAILING_FINAL_TIMEOUT_MS);
+  }, [markSubmit]);
+
   const handleInterim = useCallback(
     (text: string) => {
-      const parsed = parseSpokenAnswer(text, langRef.current);
       const expected = expectedRef.current;
+      const pairTarget = pairRef.current;
+      if (pairTarget) {
+        // Seule la phrase complète et juste part à la volée ; un quotient seul
+        // attend le final, le temps que l'enfant ajoute le reste.
+        const spoken = parseSpokenQuotientAndRemainder(text, langRef.current);
+        if (
+          !spoken || disabledRef.current || isEchoOfLastSubmit(spoken.quotient)
+          || spoken.quotient !== expected || spoken.remainder !== pairTarget.expectedRemainder
+        ) return;
+        voiceLog('submit:interim-fast-path-pair', `${spoken.quotient} r ${spoken.remainder}`);
+        markInterimSubmit(spoken.quotient);
+        pairTarget.onSubmit(spoken.quotient, spoken.remainder);
+        return;
+      }
+      const parsed = parseNumberRef.current(text, langRef.current);
       if (isEchoOfLastSubmit(parsed)) return;
       // We deliberately don't display interim transcripts to the user:
       // showing "40" while they're still saying "quarante-deux" → 42 is
@@ -204,19 +259,11 @@ export default function VoiceInput({
       if (expected === undefined || disabledRef.current) return;
       if (parsed === expected) {
         voiceLog('submit:interim-fast-path', String(expected));
-        setParseFails(0);
-        lastSubmitAtRef.current = Date.now();
-        lastSubmittedValueRef.current = expected;
-        expectTrailingFinalRef.current = true;
-        if (trailingTimeoutRef.current) clearTimeout(trailingTimeoutRef.current);
-        trailingTimeoutRef.current = setTimeout(() => {
-          expectTrailingFinalRef.current = false;
-          trailingTimeoutRef.current = null;
-        }, TRAILING_FINAL_TIMEOUT_MS);
+        markInterimSubmit(expected);
         onSubmit(expected);
       }
     },
-    [onSubmit, isEchoOfLastSubmit, disabledRef, expectedRef, langRef],
+    [onSubmit, isEchoOfLastSubmit, markInterimSubmit, disabledRef, expectedRef, pairRef, parseNumberRef, langRef],
   );
 
   const { start, abort, isListening, error, isSupported } = useSpeechRecognition({
