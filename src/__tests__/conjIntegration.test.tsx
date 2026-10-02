@@ -9,6 +9,7 @@ import ParentSubjectDetail from '../components/ParentSubjectDetail';
 import ConjPlacementScreen from '../screens/ConjPlacementScreen';
 import '../screens/ProgressScreen';
 import '../screens/BadgesScreen';
+import '../screens/RulesScreen';
 import { LangProvider } from '../i18n/LangProvider';
 import { applyLang } from '../i18n/lang';
 import { MAX_FRAGILE } from '../lib/leitner';
@@ -262,6 +263,73 @@ describe('Accueil multi-matières (spec §9)', () => {
   it('les badges restent masqués tant que la matière n’a jamais été ouverte', () => {
     const p = createNewProfile('Zoé');
     expect(visibleBadgeDefinitions(p).some((d) => d.id.startsWith('conj-'))).toBe(false);
+  });
+});
+
+describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', () => {
+  async function openRules(): Promise<void> {
+    fireEvent.click(button(/^(Règles|Rules)/)!);
+    await flush();
+  }
+
+  const sectionTitles = () =>
+    Array.from(document.querySelectorAll('.rules-section-title')).map((h) => h.textContent);
+
+  it('matière ouverte : les règles rencontrées, après celles des maths', async () => {
+    // Du présent, dont « nous mangeons », et un imparfait — aucun futur.
+    const met = ['pres-g1-je', 'pres-g1-nous', 'imp-il'];
+    const p = conjReadyProfile();
+    p.conjFacts = createInitialConjFacts().map((f) => (met.includes(f.key) ? { ...f, introduced: true } : f));
+    saveProfile(p);
+    renderApp();
+    await openRules();
+
+    expect(sectionTitles()).toEqual(['Maths', 'Conjugaison']);
+    expect(text()).toContain('Multiplier par 10');
+    const conjCards = Array.from(document.querySelectorAll('.rule-card-conj .rule-card-heading'));
+    expect(conjCards.map((h) => h.textContent)).toEqual([
+      'Chaque personne a sa marque',
+      'L’imparfait se fabrique avec « nous »',
+      'Le piège du g et du c',
+    ]);
+    // Le futur n'a pas encore été abordé : sa règle attend son premier fait.
+    expect(text()).not.toContain('Le futur se fabrique');
+  });
+
+  it('matière ouverte mais aucun fait encore rencontré : l’écran d’avant', async () => {
+    const p = conjReadyProfile();
+    p.conjFacts = createInitialConjFacts();
+    saveProfile(p);
+    renderApp();
+    await openRules();
+
+    expect(text()).toContain('Multiplier par 10');
+    expect(sectionTitles()).toEqual([]);
+    expect(document.querySelector('.rule-card-conj')).toBeNull();
+  });
+
+  it('matière jamais ouverte : rien de la conjugaison', async () => {
+    const p = createNewProfile('Zoé');
+    p.hasSeenRulesIntro = true;
+    saveProfile(p);
+    renderApp();
+    await openRules();
+
+    expect(text()).toContain('Multiplier par 10');
+    expect(sectionTitles()).toEqual([]);
+    expect(document.querySelector('.rule-card-conj')).toBeNull();
+  });
+
+  it('en anglais : les seules règles de maths, même pour un profil qui a joué la matière', async () => {
+    saveProfile(conjReadyProfile());
+    applyLang('en');
+    renderApp();
+    await openRules();
+
+    expect(text()).toContain('Multiply by 10');
+    expect(sectionTitles()).toEqual([]);
+    expect(document.querySelector('.rule-card-conj')).toBeNull();
+    expect(text()).not.toMatch(/Conjugaison|Conjugation/);
   });
 });
 

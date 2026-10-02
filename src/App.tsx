@@ -18,6 +18,7 @@ import { composeDailySession } from './lib/dailyComposer';
 import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
 import { createInitialConjFacts } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
+import { metConjRules } from './lib/conjugationStrategies';
 import { factsOf, processAnswer } from './lib/leitner';
 import {
   checkBadges,
@@ -1233,8 +1234,15 @@ export default function App({
         />
       )}
 
+      {/* Les règles de conjugaison suivent la matière : en français, une fois
+          ouverte (comme ses onglets d'images et de badges), puis au fil des
+          faits rencontrés — calculées ici, seulement quand l'écran s'affiche. */}
       {screen === 'rules' && (
-        <RulesScreen onBack={goBack} showRule11={rule11Unlocked} />
+        <RulesScreen
+          onBack={goBack}
+          showRule11={rule11Unlocked}
+          conjRules={conjVisible ? metConjRules(profile?.conjFacts ?? []) : undefined}
+        />
       )}
 
       {/* `watchPairing` compte, y compris quand il vaut 'error' : un parent sans

@@ -63,12 +63,20 @@
   animation: slideUp 0.4s ease both;
 }
 
-.rule-card:nth-child(3) {
+/* nth-of-type, pas nth-child : les titres de section (h2), présents quand la
+   conjugaison ajoute ses règles, ne décalent pas la cascade des cartes. */
+.rule-card:nth-of-type(3) {
   animation-delay: 0.1s;
 }
 
-.rule-card:nth-child(4) {
+.rule-card:nth-of-type(n + 4) {
   animation-delay: 0.2s;
+}
+
+/* Titre de section (Maths / Conjugaison) : la typographie d'un eyebrow, qui
+   le porte ; la marge seule sépare les deux sections. */
+.rules-section-title {
+  margin-top: 6px;
 }
 
 .rule-card-head {
@@ -105,6 +113,18 @@
 .rule-card-honey .rule-card-badge {
   background: var(--honey-soft);
   color: var(--honey-ink, var(--honey));
+}
+
+/* Règle de conjugaison : la vignette porte la marque de la règle dans les
+   couleurs de la forme segmentée (radical bleu, terminaison grenat, cf.
+   ConjForm.css), sur le lavis des terminaisons. */
+.rule-card-conj .rule-card-badge {
+  background: var(--conj-mark-soft);
+  color: var(--ink);
+}
+
+.rule-card-conj .rule-card-badge b {
+  font-weight: inherit;
 }
 
 .rule-card-eyebrow {
@@ -252,6 +272,18 @@
 
 .rule-card-honey .rule-example-highlight {
   color: var(--honey-ink);
+}
+
+/* Les lignes d'une règle de conjugaison : une idée par ligne, comme dans
+   l'astuce de la séance. */
+.rule-card-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.5;
 }
 
 .rule-card-tip {

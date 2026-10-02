@@ -1,13 +1,20 @@
 import BackChevron from '../components/BackChevron';
+import { renderConjHintLine } from '../components/conjHintLine';
 import { useRulesStrings } from '../i18n/home';
+import type { ConjStrategy } from '../lib/conjugationStrategies';
 
 interface RulesScreenProps {
   onBack: () => void;
   showRule11?: boolean;
+  // Règles de conjugaison déjà rencontrées (cf. metConjRules), vides en anglais
+  // et tant que la matière n'a pas été ouverte : l'écran reste alors celui des
+  // seules règles de maths, sans titres de section.
+  conjRules?: readonly ConjStrategy[];
 }
 
-export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenProps) {
+export default function RulesScreen({ onBack, showRule11 = false, conjRules = [] }: RulesScreenProps) {
   const t = useRulesStrings();
+  const hasConj = conjRules.length > 0;
   return (
     <div className="rules-screen">
       <div className="rules-header">
@@ -21,6 +28,8 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
         <div className="rules-intro">
           {t.intro}
         </div>
+
+        {hasConj && <h2 className="eyebrow rules-section-title">{t.sectionMaths}</h2>}
 
         {/* Règle ×1 */}
         <div className="rule-card rule-card-indigo">
@@ -119,6 +128,30 @@ export default function RulesScreen({ onBack, showRule11 = false }: RulesScreenP
               {t.rule11Tip}
             </div>
           </div>
+        )}
+
+        {/* Règles de conjugaison (§15.3) : les textes mêmes des astuces de la
+            séance, jamais une réécriture — l'enfant retrouve ici, mot pour mot,
+            la règle vue à l'introduction d'un fait ou à une correction. */}
+        {hasConj && (
+          <>
+            <h2 className="eyebrow rules-section-title">{t.sectionConj}</h2>
+            {conjRules.map((rule) => (
+              <div key={rule.title} className="rule-card rule-card-conj">
+                <div className="rule-card-head">
+                  <div className="rule-card-badge" aria-hidden>
+                    {renderConjHintLine(rule.badge)}
+                  </div>
+                  <div className="rule-card-heading">{rule.title}</div>
+                </div>
+                <div className="rule-card-lines">
+                  {rule.lines.map((line, i) => (
+                    <div key={i}>{renderConjHintLine(line)}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
         )}
       </div>
     </div>

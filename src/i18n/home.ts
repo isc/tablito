@@ -118,6 +118,11 @@ interface RulesStrings {
   back: string;
   title: string;
   intro: string;
+  // Titres de section, affichés seulement quand la conjugaison ajoute ses
+  // règles à celles des maths — donc jamais en anglais (matière fr-only) : les
+  // entrées `en` gardent la table totale sans jamais être rendues.
+  sectionMaths: string;
+  sectionConj: string;
   ruleNumber: (n: number) => string;
   bonusRule: string;
   multiplyBy: (n: number) => string;
@@ -133,6 +138,8 @@ const rulesFr: RulesStrings = {
   back: 'Retour',
   title: 'Mes règles',
   intro: 'Tes raccourcis à connaître par cœur. Après, ce sera facile\u00a0!',
+  sectionMaths: 'Maths',
+  sectionConj: 'Conjugaison',
   ruleNumber: (n) => `Règle n°${n}`,
   bonusRule: 'Règle bonus',
   multiplyBy: (n) => `Multiplier par ${n}`,
@@ -160,6 +167,8 @@ const rulesEn: RulesStrings = {
   back: 'Back',
   title: 'My rules',
   intro: 'Your shortcuts to know by heart. After that, it will be easy!',
+  sectionMaths: 'Maths',
+  sectionConj: 'Conjugation',
   ruleNumber: (n) => `Rule #${n}`,
   bonusRule: 'Bonus rule',
   multiplyBy: (n) => `Multiply by ${n}`,
