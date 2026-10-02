@@ -1107,11 +1107,16 @@ const SECTIONS_FR = [
   {
     id: 'welcome',
     title: 'Bienvenue',
-    description: `À la toute première ouverture, Tablito déroule un parcours
-      d'accueil en quatre étapes : une salutation de la mascotte, la saisie du
-      prénom, une présentation du test de positionnement, puis le test lui-même
-      (15 questions bien réparties). Le résultat sert à placer les faits déjà
-      connus directement dans les boîtes supérieures du système de Leitner.`,
+    body: `
+      <p>À la toute première ouverture, un accueil en quatre étapes :</p>
+      <ul class="guide-list">
+        <li><strong>La mascotte</strong> se présente.</li>
+        <li><strong>Le prénom</strong> de l'enfant.</li>
+        <li><strong>L'annonce</strong> du test de positionnement.</li>
+        <li><strong>Le test</strong> : 15 questions bien réparties.</li>
+      </ul>
+      <p>Les faits déjà connus démarrent directement dans les boîtes hautes de Leitner.</p>
+    `,
     shots: [
       { file: '01-welcome-intro', caption: 'La mascotte se présente à l\'enfant.' },
       { file: '02-welcome-name', caption: 'Saisie du prénom.' },
@@ -1161,12 +1166,15 @@ const SECTIONS_FR = [
   {
     id: 'recap',
     title: 'Bilan de séance',
-    description: `À la fin d'une séance, l'écran de bilan affiche les
-      éventuels nouveaux faits, invite à aller voir l'image mystère (avec
-      une mention spéciale quand elle a changé) et déclenche les confettis
-      si une table est entièrement maîtrisée, si l'image mystère est
-      complétée, ou pour un nouveau badge. La progression globale est
-      affichée via une barre « X faits connus sur 36 ».`,
+    body: `
+      <p>À la fin de chaque séance :</p>
+      <ul class="guide-list">
+        <li><strong>Les nouveaux faits</strong> du jour, s'il y en a.</li>
+        <li><strong>La progression</strong> : une barre « X faits connus sur 36 ».</li>
+        <li><strong>L'image mystère</strong> à aller voir, avec une mention quand elle a changé.</li>
+        <li><strong>Des confettis</strong> pour une table maîtrisée, une image complète ou un nouveau badge.</li>
+      </ul>
+    `,
     shots: [
       { file: '14-recap', caption: 'Bilan d\'une séance avec barre de progression.' },
     ],
@@ -1174,13 +1182,15 @@ const SECTIONS_FR = [
   {
     id: 'progress',
     title: 'Mon image mystère',
-    description: `Une grille 8×8 (tables 2 à 9) où chaque case est un
-      fragment d'une image cachée. Plus l'enfant maîtrise un fait, plus
-      son fragment gagne en finesse — silhouette floue, aplat, couleurs,
-      ombres, détails complets, en miroir des 5 boîtes Leitner. Un fait
-      oublié voit son fragment se re-flouter un peu, sans notion d'échec.
-      Quand les 36 faits sont maîtrisés, l'image est entièrement révélée.
-      Les totaux « découverts / maîtrisés / total » sont affichés en haut.`,
+    body: `
+      <p>Une grille 8×8 (tables 2 à 9) : chaque case est un morceau d'une image cachée.</p>
+      <ul class="guide-list">
+        <li><strong>Plus un fait est maîtrisé</strong>, plus sa case se précise : silhouette floue, aplat, couleurs, ombres, détails. Une étape par boîte de Leitner.</li>
+        <li><strong>Un fait oublié</strong> se re-floute un peu, sans notion d'échec.</li>
+        <li><strong>Les 36 faits maîtrisés</strong> : l'image est entièrement révélée.</li>
+      </ul>
+      <p>En haut, les totaux découverts / maîtrisés / total.</p>
+    `,
     shots: [
       { file: '10-progress', caption: 'Image mystère qui se révèle au fur et à mesure des progrès.' },
     ],
@@ -1389,11 +1399,16 @@ const SECTIONS_EN = [
   {
     id: 'welcome',
     title: 'Welcome',
-    description: `On the very first launch, Tablito runs a four-step welcome
-      flow: a greeting from the mascot, entering the child's name, an
-      introduction to the placement test, then the test itself (15 well-spread
-      questions). The result is used to place already-known facts directly in
-      the higher Leitner boxes.`,
+    body: `
+      <p>On the very first launch, a four-step welcome:</p>
+      <ul class="guide-list">
+        <li><strong>The mascot</strong> introduces itself.</li>
+        <li><strong>The child's name.</strong></li>
+        <li><strong>An introduction</strong> to the placement test.</li>
+        <li><strong>The test</strong>: 15 well-spread questions.</li>
+      </ul>
+      <p>Facts already known start straight in the higher Leitner boxes.</p>
+    `,
     shots: [
       { file: '01-welcome-intro', caption: 'The mascot introduces itself to the child.' },
       { file: '02-welcome-name', caption: 'Entering the name.' },
@@ -1443,11 +1458,15 @@ const SECTIONS_EN = [
   {
     id: 'recap',
     title: 'Session recap',
-    description: `At the end of a session, the recap screen shows any new
-      facts, invites the child to go see the mystery picture (with a special
-      mention when it has changed), and triggers confetti when a table is
-      fully mastered, when the mystery picture is completed, or for a new
-      badge. Overall progress is shown with a “X facts known out of 36” bar.`,
+    body: `
+      <p>At the end of every session:</p>
+      <ul class="guide-list">
+        <li><strong>The day's new facts</strong>, if any.</li>
+        <li><strong>Progress</strong>: a “X facts known out of 36” bar.</li>
+        <li><strong>The mystery picture</strong> to go and see, with a mention when it has changed.</li>
+        <li><strong>Confetti</strong> for a mastered table, a completed picture or a new badge.</li>
+      </ul>
+    `,
     shots: [
       { file: '14-recap', caption: 'Recap of a session with a progress bar.' },
     ],
@@ -1455,13 +1474,15 @@ const SECTIONS_EN = [
   {
     id: 'progress',
     title: 'My mystery picture',
-    description: `An 8×8 grid (tables 2 to 9) where each cell is a fragment of
-      a hidden picture. The better the child knows a fact, the sharper its
-      fragment gets — blurry silhouette, flat color, colors, shadows, full
-      detail, mirroring the 5 Leitner boxes. A forgotten fact sees its
-      fragment blur a little again, with no notion of failure. When all 36
-      facts are mastered, the picture is fully revealed. The
-      “discovered / mastered / total” counts are shown at the top.`,
+    body: `
+      <p>An 8×8 grid (tables 2 to 9): each cell is a piece of a hidden picture.</p>
+      <ul class="guide-list">
+        <li><strong>The better a fact is known</strong>, the sharper its cell: blurry silhouette, flat color, colors, shadows, details. One step per Leitner box.</li>
+        <li><strong>A forgotten fact</strong> blurs a little again, with no notion of failure.</li>
+        <li><strong>All 36 facts mastered</strong>: the picture is fully revealed.</li>
+      </ul>
+      <p>At the top, the discovered / mastered / total counts.</p>
+    `,
     shots: [
       { file: '10-progress', caption: 'The mystery picture revealing itself as progress is made.' },
     ],
