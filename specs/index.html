@@ -377,7 +377,7 @@
   <ul>
     <li>Un succès fait monter le fait d'une boîte.</li>
     <li>Un échec renvoie le fait en boîte 1.</li>
-    <li>Un fait est considéré « acquis » quand il atteint la boîte 5 et y est confirmé.</li>
+    <li>Un fait est considéré « maîtrisé » dès la boîte 4 (<code>MASTERY_BOX</code>) ; la boîte 5 marque la consolidation (table complétée, badge « Génie »).</li>
     <li>Le temps de réponse est enregistré. Un succès lent (au-delà du seuil mode-dépendant — cf. §3.3) ne fait pas monter de boîte — l'objectif est le rappel automatique, pas le calcul mental.</li>
   </ul>
 
@@ -394,12 +394,12 @@
   <blockquote class="note">
     <p><strong>Note sur la métrique :</strong> Dotan &amp; Zviran-Ginat utilisent une métrique différente dans leur étude : le nombre de paires de chiffres communes entre deux faits (opérandes et chiffres du résultat confondus, positions ignorées). Leur métrique est continue et ne distingue pas le rôle du chiffre (opérande vs. résultat). Notre métrique catégorielle (forte/moyenne/nulle) est plus conservatrice — elle classe comme « similarité forte » tout partage d'opérande, même quand la métrique du papier donnerait un score de 0 (ex : 8×7=56 et 8×3=24 ne partagent qu'un seul chiffre, donc 0 paires, mais partagent l'opérande 8). Ce choix est aligné avec la littérature plus large sur les erreurs de récupération en multiplication (Campbell, 1987), qui identifie le partage d'opérande comme la première source de confusion.</p>
   </blockquote>
-  <p><strong>Règle de séance :</strong> Dans une séance donnée, deux faits ayant une similarité forte ne sont jamais présentés dans la même série de questions. Deux <strong>introductions</strong> de faits similaires sont espacées d'au moins 48h — l'interférence vise l'apprentissage de paires similaires (Dotan &amp; Zviran-Ginat 2022), pas la révision active. Une fois un fait appris (en boîte ≥ 2 et revu régulièrement), le revoir ne bloque pas l'introduction d'un fait similaire.</p>
+  <p><strong>Règle de séance :</strong> Deux faits ayant une similarité forte ne sont pas présentés dans la même série tant que le pool de faits dus le permet — la contrainte est relâchée plutôt que de livrer une séance trop courte — et jamais côte à côte quand c'est évitable. Deux <strong>introductions</strong> de faits similaires sont espacées d'au moins 48h — l'interférence vise l'apprentissage de paires similaires (Dotan &amp; Zviran-Ginat 2022), pas la révision active. L'espacement joue entre séances : les deux introductions d'une même séance ne sont pas comparées entre elles, et le démarrage canonique pose ensemble 2×2 et 2×3 (§3.1). Le blocage ne dépend que de la date d'introduction (<code>introducedAt</code>, moins de 2 jours) et joue pour toute similarité, forte ou moyenne ; passé ce délai, ou pour un fait inféré au placement (sans date d'introduction), le fait ne bloque plus rien.</p>
 
   <h3 id="principes-interleaving"><span class="num">1.3</span>Entrelacement (Interleaving)</h3>
   <p class="source"><strong>Source :</strong> Rohrer &amp; Taylor (2007), Rohrer, Dedrick &amp; Burgess (2014)</p>
   <p>Au sein d'une séance, les questions alternent entre différentes tables plutôt que de travailler une seule table en bloc. L'entrelacement force la discrimination active et améliore les performances d'environ 30% par rapport à la pratique bloquée.</p>
-  <p><strong>Implémentation :</strong> Chaque séance pioche dans les faits éligibles (selon l'algorithme de répétition espacée) et les mélange. Jamais deux questions consécutives de la même table.</p>
+  <p><strong>Implémentation :</strong> Chaque séance pioche dans les faits éligibles (selon l'algorithme de répétition espacée) et les mélange. On évite autant que possible deux questions consécutives de la même table (entrelacement glouton, au mieux : les introductions ouvrent la séance, et une question sans place libre est posée quand même).</p>
 
   <h3 id="principes-comprehension"><span class="num">1.4</span>Compréhension conceptuelle avant mémorisation</h3>
   <p class="source"><strong>Source :</strong> Cowan et al. (2011), Brendefur et al. (2015)</p>
@@ -415,16 +415,16 @@
     <tbody>
       <tr><td>Framework UI</td><td>Preact 10 (ESM vendoré dans <code>vendor/preact/</code> ; le code importe <code>react</code>/<code>react-dom</code>, l'import map redirige vers <code>preact/compat</code>)</td><td>Interactivité riche pour une empreinte minimale (~4 KB)</td></tr>
       <tr><td>Build</td><td><strong>Nobuild</strong> : ESM natif + import map, esbuild pour la seule transformation <code>.tsx</code>→<code>.js</code>, pas de bundler. <code>tsc -b</code> vérifie les types (noEmit)</td><td>Démarrage instantané en dev, pipeline de build minimal</td></tr>
-      <tr><td>Stockage</td><td>localStorage pour <strong>toutes les données d'apprentissage</strong> + export/import JSON</td><td>Persistance locale, aucun compte, aucune donnée enfant en ligne</td></tr>
+      <tr><td>Stockage</td><td>localStorage pour <strong>toutes les données d'apprentissage</strong> + export/import JSON</td><td>Persistance locale, aucun compte, aucune donnée enfant en ligne en clair</td></tr>
       <tr><td>Animations</td><td>CSS transitions + keyframes (pas de bibliothèque d'animation)</td><td>Feedback visuel motivant, zéro dépendance</td></tr>
-      <tr><td>Avis &amp; rappels</td><td>Supabase (PostgREST appelé directement via <code>fetch</code>, sans SDK) — tables <code>feedback</code> (avis, §5.2) et <code>push_subscriptions</code> (rappels, §8.1)</td><td>Deux usages annexes sans serveur applicatif à maintenir</td></tr>
+      <tr><td>Avis &amp; rappels</td><td>Supabase (PostgREST appelé directement via <code>fetch</code>, sans SDK) — tables <code>feedback</code> (avis, §5.2), <code>push_subscriptions</code> (rappels, §8.1), <code>transfers</code> (changement d'appareil, §5.2) et <code>watches</code> (suivi à distance, §14)</td><td>Quatre usages annexes sans serveur applicatif à maintenir</td></tr>
       <tr><td>Notifications push</td><td>Web Push API + clés VAPID ; envoi par un cron GitHub Actions (paquet <code>web-push</code>), pas de serveur permanent</td><td>Rappel quotidien sans backend dédié (cf. §8.1)</td></tr>
       <tr><td>PWA / offline</td><td>Service Worker maison (cache-first sur les navigations), <code>manifest.json</code>, fontes self-hostées précachées</td><td>Installable, cold launch instantané, fonctionne 100 % hors-ligne</td></tr>
       <tr><td>Hébergement</td><td>GitHub Pages (repo <code>isc/tablito</code>, <code>BASE=/</code>)</td><td>Gratuit, simple</td></tr>
     </tbody>
   </table>
   <blockquote class="note">
-    <p>L'app reste <strong>sans backend pour le parcours d'apprentissage</strong> : aucune donnée de l'enfant (profil, progression, historique) ne quitte l'appareil. Supabase ne porte que deux flux annexes et optionnels — les avis envoyés depuis l'espace parent et les abonnements aux rappels push — décrits en §5.2 et §8.1.</p>
+    <p>L'app reste <strong>sans backend pour le parcours d'apprentissage</strong> : la progression vit sur l'appareil. Supabase porte quatre flux annexes et optionnels : les avis de l'espace parent (§5.2, avec en option un instantané du profil, prénom retiré), les abonnements aux rappels push (§8.1), le transfert de profil entre appareils (§5.2) et le suivi à distance par un parent (§14). Pour ces deux derniers, le profil ne quitte l'appareil que chiffré côté client (AES-GCM, clé dans le fragment d'URL) : le serveur ne voit qu'un blob opaque.</p>
   </blockquote>
 
   <h3 id="archi-data"><span class="num">2.2</span>Structure des données</h3>
@@ -437,6 +437,7 @@
   nextDue: string;     // ISO date de prochaine révision
   history: Attempt[];  // historique des tentatives
   introduced: boolean; // le fait a-t-il été présenté conceptuellement ?
+  introducedAt?: string; // date de l'écran d'intro réel (règle 48 h, §1.2)
 }
 
 interface Attempt {
@@ -463,14 +464,15 @@ interface UserProfile {
   hasSeenRulesIntro: boolean;       // intro des règles ×1 / ×10 déjà jouée (§3.1)
   hasSeenRule11: boolean;           // pastille « Nouveau » de la règle ×11 éteinte (§2.3)
   mysteryTheme: MysteryTheme;       // image mystère tirée à la création du profil (§5.1)
+  // + champs des niveaux 2-3 et de la conjugaison (§11, §12, §15), optionnels
+  //   et complétés au chargement par normalizeProfile
 }
 
 interface Badge {
   id: string;
-  name: string;
-  description: string;
   earnedDate: string;
   icon: string;
+  // nom et description résolus par id, dans la langue de l'interface
 }</code></pre>
 
   <h3 id="archi-inventaire"><span class="num">2.3</span>Inventaire des faits</h3>
@@ -509,9 +511,9 @@ interface Badge {
 
   <h3 id="parcours-premier"><span class="num">3.1</span>Premier lancement</h3>
   <ol>
-    <li>Écran d'accueil avec le personnage mascotte (voir §4)</li>
-    <li>Saisie du prénom → « Salut Zoé ! »</li>
-    <li>Explication ludique : « Je suis [Mascotte]. On va apprendre les multiplications ensemble, 5 minutes par jour ! »</li>
+    <li>Écran « Bonjour ! » : la mascotte se présente (« Je suis Piou, ton petit copain d'apprentissage. On va apprendre les tables de multiplication ensemble ! », voir §4), avec un lien « Déjà une progression ? L'importer » (scan d'un QR de transfert ou texte collé, §5.2)</li>
+    <li>Saisie du prénom</li>
+    <li>« Salut Zoé ! » et annonce du test de positionnement (bouton « Passer le test »)</li>
     <li>
       Test de positionnement rapide (optionnel) : jusqu'à 15 faits ordonnés par difficulté progressive (facile → difficile, suivant grossièrement le curriculum : tables 2/3/5 petits → grands, nines, carrés, dérivés), pas de timer visible → détermine quels faits sont déjà connus pour démarrer à la bonne boîte. Un bouton <strong>« Je ne sais pas »</strong> permet de passer une question sans forcer une réponse au hasard, ce qui évite de polluer le diagnostic avec des bonnes réponses devinées. Une voix d'intro (<code>placement-intro</code>) annonce l'option au démarrage du test.
       <p><strong>Arrêt sur 3 ratés consécutifs.</strong> Quand l'enfant rate (mauvaise réponse <em>ou</em> « Je ne sais pas ») 3 questions d'affilée, le test s'arrête : combiné à l'ordre progressif, ça évite d'épuiser un enfant qui ne maîtrise que les tables faciles sur les ×7/×8/×9 inconnus. Le diagnostic se base sur les questions effectivement posées ; les faits non testés se comportent comme les non dominés (introduits via le curriculum naturel).</p>
@@ -520,20 +522,21 @@ interface Badge {
       <p><strong>Un fait testé directement et raté n'est jamais récupéré par la dominance.</strong> Si l'enfant rate <code>4×7</code> mais réussit <code>5×8</code>, on n'introduit pas <code>4×7</code> en boîte 3 sous prétexte que <code>5×8</code> domine — l'enfant vient explicitement de dire qu'il ne le connaît pas. Sans cette exclusion, le fait sortirait en bonus review sans son écran d'intro pédagogique (grille de points + astuce).</p>
     </li>
     <li>Introduction des règles ×1 et ×10 (écran <code>RulesIntroScreen</code>) — affiché une fois, juste après le test de positionnement. Trois étapes : accueil (« Deux règles toutes simples »), règle ×1 avec exemples, règle ×10 avec visuel du « glisse-nombre » (animation : un chiffre glisse de la colonne des unités vers celle des dizaines, un 0 apparaît aux unités). Le passage est persisté via <code>UserProfile.hasSeenRulesIntro</code> pour ne pas le rejouer.</li>
-    <li>Première séance avec les 2 premiers faits (les plus simples : 2×2 et 2×3). Le plafond de 2 nouveaux faits par séance (§3.4bis) s'applique dès la première séance — 2×4 et 2×5 sont introduits aux séances suivantes quand 2×2 et 2×3 sont en boîte 2+.</li>
+    <li>Première séance avec les 2 premiers faits (les plus simples : 2×2 et 2×3). Le plafond de 2 nouveaux faits par séance (§3.4bis) s'applique dès la première séance. Les séances suivantes introduisent 2 nouveaux faits tant qu'au plus 3 faits sont en boîte 1 (§3.4bis) ; l'espacement de 48 h (§1.2) fait passer à une autre table le lendemain, les ×2 suivants revenant après 48 h.</li>
   </ol>
   <p><strong>Rappel contextuel de la règle ×10 dans l'intro des faits ×9 :</strong></p>
   <p>La stratégie des faits ×9 étant « n × 9 = n × 10 − n » (voir §4 et <code>lib/strategies.ts</code>), le composant <code>StrategyHint</code> affiche un rappel discret de la règle ×10 sous l'astuce quand la variante est <code>intro</code> et que la stratégie est <code>near-ten</code>. Cela réactive la règle au seul moment de la session où elle est effectivement mobilisée — puisque les faits ×1 et ×10 eux-mêmes ne sont jamais posés en question.</p>
 
   <h3 id="parcours-seance"><span class="num">3.2</span>Séance quotidienne (5 minutes)</h3>
   <p><strong>Structure d'une séance :</strong></p>
-<pre><code>[Accueil]          → Personnage + rappel de la streak + badge du jour si applicable
+<pre><code>[Accueil]          → Personnage + flamme de série (gels en réserve)
     ↓
 [Intro]            → Si nouveaux faits à introduire (max 2 par séance) :
                      affichage visuel (grille de points), explication,
                      puis première question immédiate
     ↓
-[Pratique]         → Jusqu'à 12-15 questions (mix de révisions dues + faits récents)
+[Pratique]         → 12-15 questions (mix de révisions dues + faits récents),
+                     + reprises (erreurs, re-test des intros), 20 questions au plus
                      Entrelacement automatique, pas de chrono visible
                      Feedback immédiat après chaque réponse
                      Note : si moins de faits sont disponibles, la séance est
@@ -561,7 +564,7 @@ interface Badge {
       <ul>
         <li><strong>Correct + assez rapide (&lt; 5s en clavier, &lt; 3s en voix) :</strong> Animation joyeuse, son positif, étoile dorée rayonnante, montée de boîte</li>
         <li><strong>Correct + lent (au-delà du seuil du mode) :</strong> « Bravo ! » + étoile dorée seule (sans rayons), pas de montée de boîte (le retour est positif côté enfant ; la lenteur n'est jamais verbalisée — cf. §7.2 sur le feedback orienté progrès et l'absence de chrono visible)</li>
-        <li><strong>Incorrect :</strong> Pas de son négatif, la bonne réponse s'affiche avec la grille de points, puis re-pose la question 2-3 questions plus tard dans la même séance</li>
+        <li><strong>Incorrect :</strong> un son grave et doux (jamais de buzzer), la bonne réponse s'affiche avec la grille de points, puis re-pose la question 2-3 questions plus tard dans la même séance</li>
       </ul>
     </li>
   </ol>
@@ -605,7 +608,7 @@ interface Badge {
     <li><strong>Squares</strong> (n × n) — anchors mémorables, appui pour les voisins (×6, ×7, ×8)</li>
     <li><strong>Derived</strong> — le reste (3×4, 3×6, 3×7, 3×8, 4×6, 4×7, 4×8, 6×7, 6×8, 7×8)</li>
   </ol>
-  <p>Implémenté dans <code>factStage()</code> (<code>src/lib/sessionComposer.ts</code>).</p>
+  <p>Implémenté dans <code>vanDeWalleStage()</code> (<code>src/lib/leitner.ts</code>), partagé avec la division.</p>
 
   <h4>Stratégies utilisées (par ordre de priorité quand plusieurs s'appliquent)</h4>
   <table>
@@ -638,7 +641,6 @@ interface Badge {
   <p><strong>Ce qui est affiché :</strong></p>
   <ul>
     <li><strong>Message chaleureux constant</strong> — identique quel que soit le résultat de la séance. L'enfant a fait sa séance, c'est l'essentiel.</li>
-    <li><strong>Nouveaux faits</strong> — nombre de faits introduits dans la séance</li>
     <li><strong>Invitation à l'image mystère</strong> — bouton vers l'écran de progression (§5.1). Libellé neutre <em>« Voir mon image »</em> par défaut ; libellé valorisant <em>« Ton image a changé ! Viens la voir »</em> uniquement quand au moins un fait a réellement monté de boîte dans la séance (comparaison boîte initiale → boîte finale, pas un simple compteur de bonnes réponses). Le nombre exact de faits promus n'est pas affiché : la métaphore visuelle suffit, et chiffrer la progression risquerait de réintroduire un signal ego-involving.</li>
     <li><strong>Progression globale</strong> — avancement vers la maîtrise complète (ex : « Tu connais 18 faits sur 36 » ou jauge de progression)</li>
     <li><strong>Badges éventuels</strong> — récompenses orientées effort et maîtrise</li>
@@ -655,7 +657,7 @@ interface Badge {
 
   <h3 id="parcours-audio"><span class="num">3.6</span>Audio (text-to-speech)</h3>
   <p>L'application lit à voix haute les étapes-clés d'une séance — canal auditif supplémentaire, utile aux lecteurs hésitants et aux enfants qui automatisent mieux à l'oral.</p>
-  <p><strong>Fichiers pré-générés</strong> (voix française <em>Marie – Curious</em>, Mistral Voxtral TTS) stockés dans <code>public/audio/tts/</code> :</p>
+  <p><strong>Fichiers pré-générés</strong> (Mistral Voxtral TTS, une voix par langue — française <em>Marie – Curious</em>, anglaise dédiée) stockés par langue dans <code>public/audio/tts/&lt;lang&gt;/</code>. Pour les tables :</p>
   <table>
     <thead><tr><th>Clé</th><th>Contenu</th><th>Nombre</th></tr></thead>
     <tbody>
@@ -663,16 +665,17 @@ interface Badge {
       <tr><td><code>intro-A-B</code></td><td>« Nouveau ! A fois B, c'est B + B + … = P »</td><td>36</td></tr>
       <tr><td><code>comm-A-B</code></td><td>« B fois A, c'est pareil ! C'est aussi P »</td><td>28</td></tr>
       <tr><td><code>strategy-A-B</code></td><td>Astuce de dérivation parlée (cf. §3.4bis)</td><td>27</td></tr>
-      <tr><td><code>welcome-*</code>, <code>recap-done</code></td><td>Phrases statiques du parcours de bienvenue et du récap</td><td>4</td></tr>
+      <tr><td><code>welcome-*</code>, <code>placement-intro</code>, <code>rules-intro-*</code>, <code>recap-done</code></td><td>Phrases statiques de l'accueil, du test, des règles et du récap</td><td>8</td></tr>
     </tbody>
   </table>
+  <p>La division, la division avec reste et la conjugaison ont leurs propres clés (§11, §12, §15).</p>
   <p>Génération : <code>MISTRAL_API_KEY=… node scripts/generate-tts.mjs</code> (idempotent — skip les fichiers déjà présents). Les mêmes fichiers sont servis offline via le precache de la PWA.</p>
 
   <h3 id="parcours-voix"><span class="num">3.6bis</span>Entrée vocale (mode optionnel)</h3>
   <p>En complément du pavé numérique, un mode vocal permet à l'enfant de répondre à voix haute (Web Speech API, <code>SpeechRecognition</code>). Utile pour les enfants qui ont déjà automatisé le fait mais sont ralentis par la manipulation tactile, ou pour soulager la charge motrice sur une longue séance.</p>
-  <p><strong>Activation :</strong> toggle dans la barre supérieure de l'écran d'accueil (icône micro ↔ clavier). Le toggle n'apparaît que si <code>SpeechRecognition</code> est supportée par le navigateur. Le choix est persisté dans <code>localStorage</code> pour survivre aux rechargements.</p>
+  <p><strong>Activation :</strong> bouton « 🎤 Utiliser le micro » sous le pavé pendant la séance, et « Utiliser le clavier » pour revenir. Le bouton n'apparaît que si <code>SpeechRecognition</code> est supportée par le navigateur. Le choix est persisté dans <code>localStorage</code> pour survivre aux rechargements.</p>
   <p><strong>Seuil de temps ajusté :</strong> en mode vocal, le seuil unique de §3.3 (étoile rayonnante + montée de boîte) passe de 5 s à 3 s. Cela aligne le seuil sur les mesures d'automatisation à l'oral dans la littérature en retirant le surcoût moteur du pavé numérique.</p>
-  <p><strong>Robustesse :</strong> le module <code>parseFrenchAnswer</code> normalise les réponses parlées (nombres en lettres, variations régionales — « soixante-douze », « septante-deux ») et filtre l'écho du TTS quand la question est énoncée juste avant la réponse.</p>
+  <p><strong>Robustesse :</strong> <code>parseSpokenAnswer</code> (parseur français ou anglais selon la langue) normalise les réponses parlées (nombres en lettres — « soixante-douze », « quatre-vingt-un », « vin » → « vingt », « ça fait… ») et filtre l'écho du TTS quand la question est énoncée juste avant la réponse.</p>
 </section>
 
 <section class="chapter" id="gamification">
@@ -683,8 +686,8 @@ interface Badge {
   <p><strong>Rôles :</strong></p>
   <ul>
     <li>Présence sur l'écran d'accueil (animations d'idle)</li>
-    <li>Feedback immédiat pendant la séance : réactions joyeuses aux bonnes réponses, encouragements neutres et positifs aux erreurs (<strong>jamais de moue, jamais de déception</strong>)</li>
-    <li>Ritualisation : bienvenue en début de séance, « à demain ! » en fin</li>
+    <li>Présence hors séance : accueil, récap (humeur joyeuse), écrans d'introduction — <strong>jamais de moue, jamais de déception</strong>. Pendant la séance, le feedback passe par l'étoile, la grille de points et les astuces, sans la mascotte.</li>
+    <li>Ritualisation : « Salut {prénom} ! » sur l'accueil, « À demain ! » en fin de séance</li>
     <li>Identité visuelle de l'app (icône, écran de lancement)</li>
   </ul>
   <p><strong>Principe :</strong> la mascotte n'évolue pas, ne « grandit » pas, n'a pas de niveau. Elle est le même visage familier à chaque séance, du premier jour au dernier fait maîtrisé. Ce choix évite :</p>
@@ -704,14 +707,14 @@ interface Badge {
       <tr><td>Régularité</td><td>7 jours consécutifs</td><td>🔥</td></tr>
       <tr><td>Machine</td><td>10 réponses correctes d'affilée dans une séance</td><td>⚡</td></tr>
       <tr><td>Exploration</td><td>Avoir vu tous les faits au moins une fois</td><td>🗺️</td></tr>
-      <tr><td>Table de [N]</td><td>Maîtriser tous les faits d'une table</td><td>⭐</td></tr>
+      <tr><td>Table de [N]</td><td>Maîtriser tous les faits d'une table</td><td>×N (médaillon texte)</td></tr>
       <tr><td>Génie de la multiplication</td><td>Toutes les multiplications en boîte 5</td><td>🏆</td></tr>
       <tr><td>Véloce</td><td>5 étoiles dorées d'affilée</td><td>🚀</td></tr>
       <tr><td>Persévérance</td><td>Revenir après 3+ jours d'absence</td><td>💪</td></tr>
       <tr><td>Flamme éternelle</td><td>30 jours consécutifs</td><td>🌟</td></tr>
     </tbody>
   </table>
-  <p>Le <strong>niveau 2</strong> (§11) ajoute un jeu de badges symétrique pour la division (Première division maîtrisée, Divisions par N, Maître de la division), <strong>masqué</strong> tant que le niveau n'est pas débloqué — détaillé en §11.5. Le <strong>niveau 3</strong> (§12) ajoute de même son propre jeu pour la division avec reste — détaillé en §12.6.</p>
+  <p>Le <strong>niveau 2</strong> (§11) ajoute un jeu de badges symétrique pour la division (Première division maîtrisée, Divisions par N, Maître de la division), <strong>masqué</strong> tant que le niveau n'est pas débloqué — détaillé en §11.5. Le <strong>niveau 3</strong> (§12) ajoute de même son propre jeu pour la division avec reste — détaillé en §12.6. La <strong>conjugaison</strong> (§15) a aussi le sien : un badge par temps, qui ouvre le temps suivant, et un par verbe irrégulier — détaillé en §15.8.</p>
   <p>Les deux badges <em>Première case révélée</em> et <em>Première multiplication maîtrisée</em> jalonnent la zone intermédiaire, entre les badges du tout début (Premier pas, Machine, Exploration) et la maîtrise complète d'une table : ils se déclenchent au moment précis où l'image mystère §5.1 change visiblement de finesse pour la 1ère fois.</p>
   <p>Sur l'écran <em>Badges</em>, <strong>chaque vignette est cliquable</strong> et ouvre une modale qui explicite le badge :</p>
   <ul>
@@ -723,8 +726,8 @@ interface Badge {
   <h3 id="gam-streak"><span class="num">4.3</span>Streak (série de jours)</h3>
   <ul>
     <li>Compteur de jours consécutifs affiché sur l'écran d'accueil</li>
-    <li>Animation de flamme qui grandit avec la streak</li>
-    <li>Si l'enfant manque un jour sans gel disponible : message bienveillant (« Tu m'as manqué ! On s'y remet ? »), pas de punition, la streak repart de 1 mais les progrès sur les faits sont conservés</li>
+    <li>Flamme fixe à côté du compteur, grisée quand la série est interrompue ; un tap ouvre le détail de la série et des gels</li>
+    <li>Si l'enfant manque un jour sans gel disponible : la pastille affiche « On s'y remet ? » (série à 0), pas de punition ; la série repart de 1 à la séance suivante, et les progrès sur les faits sont conservés</li>
   </ul>
 
   <h4>Gels de série</h4>
@@ -732,15 +735,15 @@ interface Badge {
   <ul>
     <li><strong>Acquisition :</strong> 1 gel gagné automatiquement tous les 7 jours <strong>joués</strong> d'affilée. Un jour sauvé par un gel ne compte pas : après un gel consommé, le décompte repart du jour de retour, et il faut rejouer 7 jours d'affilée pour en gagner un nouveau (sinon la série franchissait un palier grâce au trou, et le récap annonçait « gel utilisé » et « gel gagné » à la même séance). Plafond : <strong>2 gels en réserve</strong> — au-delà, les paliers supplémentaires ne donnent rien (le feature reste borné et lisible).</li>
     <li><strong>Couverture :</strong> 1 gel = <strong>1 jour d'absence</strong>. Au-delà de 2 jours manqués, la série casse même avec plusieurs gels en réserve. Choix pédagogique : encourager le retour rapide plutôt que la longue interruption.</li>
-    <li><strong>Consommation :</strong> automatique et silencieuse à la première séance qui suit un jour manqué. Quand un gel est disponible, la pill d'accueil affiche un ❄️ et reste active (« série protégée ») le jour de l'absence pour éviter à l'enfant de croire sa série perdue. Le récap de la séance célèbre l'événement (« Ton gel a sauvé ta série ! »).</li>
-    <li><strong>Reset :</strong> quand la série tombe vraiment à 1, les gels en réserve sont <strong>conservés</strong> — l'enfant ne perd pas son acquis.</li>
+    <li><strong>Consommation :</strong> automatique, au jour manqué lui-même (dès le chargement de l'app), pour que la réserve affichée soit toujours à jour. La pastille d'accueil porte ❄️ (et leur nombre) tant qu'il reste des gels, et annonce « série protégée » le lendemain d'une absence couverte, pour éviter à l'enfant de croire sa série perdue. Le récap de la séance suivante célèbre l'événement (« Ton gel a sauvé ta série ! »).</li>
+    <li><strong>Reset :</strong> les gels se consomment un par jour manqué jusqu'à épuisement ; si l'absence dépasse la réserve, la série casse et la réserve est vide. Une série cassée ne débite plus rien ensuite.</li>
   </ul>
 
   <h3 id="gam-table"><span class="num">4.4</span>Célébration de table complète</h3>
   <p>Quand tous les faits d'une table passent en boîte 4+ :</p>
   <ul>
     <li>Animation spéciale (feu d'artifice, confettis)</li>
-    <li>La ligne et la colonne correspondantes s'illuminent brièvement sur l'image mystère</li>
+    <li>Une carte dédiée dans le récap (« Table de N maîtrisée ! »), avec une courte mélodie et des confettis</li>
     <li>Badge spécifique</li>
   </ul>
 </section>
@@ -764,10 +767,10 @@ interface Badge {
   </table>
   <p>À mesure que les faits progressent, la scène globale se compose. Un fait qui redescend de boîte (oubli) fait redescendre sa case d'un cran en finesse — pas d'échec, juste la brume qui revient. Ce comportement est le miroir visuel strict de l'algorithme Leitner (§1.1).</p>
   <p><strong>Commutativité visible :</strong> comme (a,b) et (b,a) sont un seul et même fait (§1.2), les deux cases miroir se révèlent <strong>en synchrone</strong>. Elles affichent des fragments différents de l'image globale, mais évoluent toujours ensemble à chaque maîtrise ou oubli. Ce parallélisme visuel renforce pédagogiquement le principe de commutativité.</p>
-  <p><strong>Fin de parcours :</strong> quand les 36 faits sont en boîte 5, l'image est entièrement révélée. Une <strong>brève animation</strong> (un clin d'œil, un léger mouvement) marque la complétion, sans pop-up ni célébration envahissante. L'image reste ensuite affichée comme témoin de la réussite ; pendant la phase de maintenance (révisions tous les 21 jours), si un fait retombe, sa case se re-floute en miroir de l'algo et se re-révèle à la révision suivante réussie.</p>
+  <p><strong>Fin de parcours :</strong> quand les huit tables sont maîtrisées (boîte 4+), le récap annonce le déblocage de la division (§11), avec mélodie et confettis ; le badge « Génie » (36 faits en boîte 5, image entièrement révélée) arrive ensuite, comme un badge ordinaire. L'image reste ensuite affichée comme témoin de la réussite ; pendant la phase de maintenance (révisions tous les 21 jours), si un fait retombe, sa case se re-floute en miroir de l'algo et se re-révèle à la révision suivante réussie.</p>
   <p><strong>Interaction :</strong> en tapant sur une case, l'enfant voit le fait sous-jacent et la grille de points associée.</p>
-  <p><strong>Choix de l'image :</strong> une scène riche, non genrée, sans texte, au style cohérent sur toute la grille. L'image a une valeur symbolique forte — c'est <strong>l'image de la réussite</strong>, pas une vignette interchangeable dans une collection. Production envisagée : une image vectorielle maître, dont les 5 niveaux de finesse sont générés algorithmiquement (flou progressif + simplification des chemins), ou un pixel-art avec résolutions croissantes par case.</p>
-  <p><strong>Périmètre v1 :</strong> chaque profil démarre avec <strong>une seule image</strong> pour l'ensemble du parcours, tirée aléatoirement d'un petit pool de thèmes visuels à la création du profil (actuellement <code>market</code> et <code>ocean</code> — voir <code>MYSTERY_POOL</code> dans <code>src/types.ts</code> ; un thème <code>village</code> est réservé au guide utilisateur pour ne pas spoiler les thèmes réels). L'image suit l'enfant du premier jour au dernier fait maîtrisé — pas de rotation, pas d'album à collectionner. L'objectif de l'app est d'apprendre les tables ; une fois l'image révélée, l'app a rempli son rôle. Si le périmètre s'étend un jour à d'autres matières (divisions, conjugaisons…), chaque matière pourra avoir sa propre image dédiée.</p>
+  <p><strong>Choix de l'image :</strong> une scène riche, non genrée, sans texte, au style cohérent sur toute la grille. L'image a une valeur symbolique forte — c'est <strong>l'image de la réussite</strong>, pas une vignette interchangeable dans une collection. Production : un master raster carré par thème, dont les 5 niveaux sont dérivés par <code>scripts/generate-mystery-levels.mjs</code> (flou, désaturation, postérisation) et servis en <code>public/mystery/&lt;thème&gt;/level-{1..5}.png</code>.</p>
+  <p><strong>Périmètre :</strong> les tables ont <strong>une seule image</strong>, tirée à la création du profil ; chaque niveau suivant (division, division avec reste) et chaque matière (conjugaison) a la sienne, tirée à son ouverture. Toutes viennent d'un pool de thèmes (onze aujourd'hui, voir <code>MYSTERY_POOL</code> dans <code>src/types.ts</code> ; un thème <code>village</code> est réservé au guide utilisateur pour ne pas spoiler les thèmes réels), chacune distincte des autres pour ne jamais re-flouter une image conquise. L'écran « Mes images » les présente en onglets. Pas de rotation ni d'album au-delà.</p>
 
   <h3 id="prog-parent"><span class="num">5.2</span>Vue parent : tableau de bord</h3>
   <p>Accessible depuis l'écran d'accueil via l'icône engrenage. Un tap ouvre une <strong>multiplication-gate</strong> : un petit modal qui demande de résoudre une multiplication à deux opérandes — un entre 11 et 19, l'autre entre 3 et 9 (ex : <code>14 × 7</code>). Trivial pour un adulte, hors de portée d'un enfant qui travaille encore les tables 2-9. Le dashboard s'ouvre sur bonne réponse ; une mauvaise réponse génère une nouvelle question sans verrouillage ni compteur d'essais.</p>
@@ -837,10 +840,11 @@ interface Badge {
 
   <h3 id="algo-priorite"><span class="num">6.1</span>Priorité de sélection pour une séance</h3>
   <p>À chaque séance, l'algorithme compose la liste de questions ainsi :</p>
-<pre><code>1. Faits en boîte 1 dont nextDue ≤ maintenant        (priorité haute)
-2. Faits en boîte 2-3 dont nextDue ≤ maintenant       (priorité moyenne)
-3. Faits en boîte 4-5 dont nextDue ≤ maintenant       (priorité basse)
-4. Nouveaux faits à introduire (max 2)                 (si rien d'urgent)</code></pre>
+<pre><code>1. Nouveaux faits à introduire (max 2)                (choisis en premier, en tête de séance)
+2. Faits en boîte 1 dont nextDue ≤ maintenant        (priorité haute)
+3. Faits en boîte 2-3 dont nextDue ≤ maintenant       (priorité moyenne)
+4. Faits en boîte 4-5 dont nextDue ≤ maintenant       (priorité basse)</code></pre>
+  <p>Les introductions sont choisies <strong>avant</strong> les révisions, tant que l'enfant ne porte pas plus de 3 faits fragiles (boîte 1, §3.4bis) : sinon les révisions satureraient le budget et affameraient les derniers faits. Les révisions dues se partagent le reste du budget.</p>
 
   <h3 id="algo-contraintes"><span class="num">6.2</span>Contraintes de composition</h3>
   <ul>
@@ -886,7 +890,7 @@ interface Badge {
       <tr><td>Parent</td><td>Dashboard détaillé (accès protégé)</td></tr>
     </tbody>
   </table>
-  <p>Écrans secondaires accessibles depuis l'accueil ou l'espace parent : <strong>Règles</strong> (×1, ×10 et règle bonus ×11, §2.3), <strong>Progression</strong> (image mystère), <strong>Badges</strong>, et — côté parent — <strong>Confidentialité</strong> et <strong>Nouveautés</strong> (§5.2). Ces écrans sont chargés à la demande (lazy-loading) pour préserver la fluidité de la boucle quotidienne.</p>
+  <p>Écrans secondaires accessibles depuis l'accueil ou l'espace parent : <strong>Règles</strong> (×1, ×10 et règle bonus ×11, §2.3), <strong>Progression</strong> (image mystère), <strong>Badges</strong>, et — côté parent — <strong>Confidentialité</strong> et <strong>Nouveautés</strong> (§5.2). Ces écrans sont chargés à la demande (lazy-loading), sauf <strong>Progression</strong>, chargée d'emblée : l'image mystère est la récompense tapée depuis le récap en fin de séance, elle ne doit pas dépendre d'un téléchargement à ce moment-là.</p>
 
   <h3 id="ui-principes"><span class="num">7.2</span>Principes d'interface</h3>
   <ul>
@@ -905,7 +909,8 @@ interface Badge {
     <li>Réponse correcte : son court et joyeux (type xylophone montant)</li>
     <li>Réponse incorrecte : son neutre et doux (pas de buzzer)</li>
     <li>Badge obtenu : fanfare courte</li>
-    <li>Image mystère complétée (tous les faits en boîte 5) : mélodie de complétion</li>
+    <li>Jalon de parcours (déblocage du niveau 2, puis du niveau 3, puis image des restes complète) : mélodie de complétion</li>
+    <li>Table complétée : mélodie plus courte</li>
   </ul>
 </section>
 
@@ -915,13 +920,13 @@ interface Badge {
     <li><strong>Service Worker</strong> pour le fonctionnement offline complet</li>
     <li><strong>manifest.json</strong> pour l'installation sur l'écran d'accueil</li>
     <li>Icône d'app avec la mascotte</li>
-    <li>Toutes les données d'apprentissage en localStorage — l'app se joue 100 % hors-ligne ; les seuls échanges réseau (avis, abonnements push) sont annexes et optionnels</li>
-    <li>Export/import JSON pour la sauvegarde, et transfert direct entre appareils par QR code (§7)</li>
+    <li>Toutes les données d'apprentissage en localStorage — l'app se joue 100 % hors-ligne ; les seuls échanges réseau (avis, abonnements push, transfert par QR code, suivi à distance — ces deux derniers chiffrés côté client) sont annexes et optionnels</li>
+    <li>Export/import JSON pour la sauvegarde, et transfert direct entre appareils par QR code (§5.2)</li>
   </ul>
 
   <h3 id="pwa-rappel"><span class="num">8.1</span>Rappel quotidien (notification push)</h3>
-  <p><strong>Activation :</strong> opt-in via un toggle « Rappel quotidien » dans l'espace parent. À l'activation, l'app demande la permission de notification puis enregistre la subscription push (endpoint + clés) dans une table Supabase <code>push_subscriptions</code>. Désactivable à tout moment depuis le même toggle (supprime la subscription locale et la ligne en base).</p>
-  <p><strong>Comportement :</strong> une notification par jour à <strong>18 h, heure locale de l'appareil</strong>, invitant l'enfant à réviser. <em>Anti-nag</em> : aucun rappel les jours où la séance est déjà faite (l'app marque la date de dernière séance dans la subscription). Un seul envoi par jour est garanti, même si le planificateur est décalé (dédoublonnage par date locale).</p>
+  <p><strong>Activation :</strong> opt-in via un toggle « Rappel quotidien » dans l'espace parent. À l'activation, l'app demande la permission de notification puis enregistre la subscription push (endpoint + clés) dans une table Supabase <code>push_subscriptions</code>. Désactivable à tout moment depuis le même toggle. La subscription porte aussi le recap hebdomadaire (§14.2) : elle et sa ligne en base ne sont supprimées que lorsque les deux préférences sont désactivées.</p>
+  <p><strong>Comportement :</strong> une notification par jour à partir de <strong>18 h, heure locale de l'appareil</strong> (premier passage du cron horaire entre 18 h et 23 h), invitant l'enfant à réviser. <em>Anti-nag</em> : aucun rappel les jours où la séance est déjà faite (l'app marque la date de dernière séance dans la subscription). Un seul envoi par jour est garanti, même si le planificateur est décalé (dédoublonnage par date locale).</p>
   <p><strong>Envoi :</strong> aucun serveur permanent. Un cron GitHub Actions (horaire) lit les subscriptions, signe avec la clé VAPID privée (secret du dépôt) et pousse via le service de notification du navigateur. La clé VAPID privée n'est jamais exposée côté client ; les endpoints morts (désinstallation, permission révoquée) sont purgés automatiquement à l'envoi.</p>
   <p><strong>Confidentialité :</strong> la table n'est jamais lisible côté client (aucune policy de lecture) ; l'endpoint, une URL opaque non devinable, sert de clé pour mettre à jour ou supprimer sa propre subscription. Aucune donnée nominative (pas de prénom) ; le message de rappel est générique. La seule donnée d'usage stockée est la date de la dernière séance (pour l'anti-nag), rattachée à l'endpoint et non à une identité.</p>
   <p><strong>iOS :</strong> le push web n'est disponible que si Tablito est installé sur l'écran d'accueil (iOS 16.4+). Sinon, le toggle affiche une invite à installer l'app d'abord.</p>
@@ -931,7 +936,7 @@ interface Badge {
   <h2><span class="num">9</span>Périmètre — Ce que l'application ne fait PAS</h2>
   <ul>
     <li>Pas d'addition ni de soustraction (côté maths, le périmètre reste le seul champ multiplicatif)</li>
-    <li>Pas de comptes utilisateurs ni d'authentification ; aucune donnée d'apprentissage envoyée à un serveur (le seul stockage distant concerne les avis et les abonnements push, anonymes — §5.2, §8.1)</li>
+    <li>Pas de comptes utilisateurs ni d'authentification ; aucune donnée d'apprentissage envoyée en clair à un serveur : le transfert par QR code (§5.2) et le suivi à distance (§14) déposent un instantané gzippé puis chiffré côté client, illisible pour le serveur ; les autres stockages distants (avis, abonnements push) sont anonymes (§5.2, §8.1)</li>
     <li>Pas de classement entre enfants (pas de compétition)</li>
     <li>Pas de mode examen chronométré</li>
     <li>Pas de récompenses payantes</li>
@@ -988,7 +993,7 @@ interface Badge {
   <p><strong>Relever le plafond quand la fondation s'effrite&nbsp;: tenté, mesuré, écarté.</strong> Ça <em>dégrade</em> la fondation (9,4 faits sous la maîtrise contre 6,6) tout en amputant le niveau actif de 3 questions par séance. La raison est contre-intuitive et mérite d'être retenue&nbsp;: une fois les faits fragiles servis, les slots supplémentaires vont à des faits déjà maîtrisés, où une révision n'offre aucun gain possible — on est déjà en haut — mais 20&nbsp;% de chances de faire retomber le fait en boîte 1. <strong>Au-delà du fragile, réviser plus est un risque net.</strong> Le budget n'était pas le problème&nbsp;; le tirage l'était.</p>
   <p><strong>Rythme d'introduction.</strong> Les divisions sont introduites au <strong>même rythme que les tables</strong> (§3.4bis) : <strong>2 nouvelles par séance maximum</strong>, dans l'ordre canonique (doubles → ×5 → ×9 → carrés → dérivés, appliqué au couple diviseur/quotient), et seulement si <strong>au plus 3 divisions déjà introduites sont en boîte 1</strong> (plafond du §3.4bis) — avec la même <strong>exception de phase finale</strong>, soit ici les <strong>12 dernières divisions sur 64</strong>. La condition « le fait multiplicatif parent est en boîte 4+ » est conservée comme <strong>filet de sécurité per-fait</strong> : on n'introduit la division d'un fait que lorsque ce fait précis est solide. Le seuil est <strong>exactement celui de l'ouverture du niveau</strong> (badges « Table de N » = boîte 4+, cf. <code>isDivisionUnlocked</code>) — et c'est délibéré. Exiger la boîte 5 <em>par fait</em> alors que le niveau s'ouvre à la boîte 4 créait deux incohérences : (1) un profil ouvrant la division avec toutes ses tables en boîte 4 mais aucune encore en boîte 5 se retrouvait avec <strong>zéro fait introductible</strong> ; (2) un fait qui régresse et se coince en boîte 4 <strong>gelait indéfiniment</strong> l'introduction de ses divisions — vécu en prod : 56÷7 et 56÷8 jamais introduits parce que leur parent 7×8 (le fait le plus dur) stagnait en boîte 4 pendant que les 62 autres divisions étaient déjà maîtrisées. Aligner sur la boîte 4 supprime les deux. Effet de bord bénéfique conservé : l'enfant commence à diviser par les faits qu'il connaît déjà bien.</p>
   <p>Le timing colle au curriculum : à la fin du CE2 (l'âge de l'utilisatrice cible), les programmes français attendent <em>à la fois</em> la connaissance des tables de 2 à 9 <em>et</em> l'obtention du quotient et du reste d'une division euclidienne par un nombre à un chiffre. La division n'est donc pas en avance — elle est attendue la même année. Common Core enseigne d'ailleurs multiplication et division ensemble dès le grade 3 via la relation d'inversion.</p>
-  <p><strong>Une seule séance par jour, un seul bouton.</strong> Le déblocage ne fait <em>pas</em> apparaître un second bouton : l'accueil garde son unique « C'est parti ! ». Une fois les tables maîtrisées (boîte 4+), leur image est quasi complète (§5.1 ; elle se parachève à mesure que les derniers faits passent en boîte 5) et elles ne demandent plus que de la <strong>maintenance</strong> (révisions tous les 21 jours, ou re-ancrage d'un fait retombé). La séance du jour est donc <strong>la division</strong>, dans laquelle on <strong>intègre</strong> les quelques faits de tables réellement dus ce jour-là (plafonnés à 6 par séance pour ne pas noyer la division ; × et ÷ entrelacés dans la même séance) plutôt que de leur consacrer une séance entière. Ainsi la division progresse chaque jour, la maintenance des tables n'est jamais en retard, et l'enfant ne peut pas esquiver la division (plus difficile) en re-jouant des tables acquises.</p>
+  <p><strong>Une seule séance par jour, un seul bouton.</strong> Le déblocage ne fait <em>pas</em> apparaître un second bouton : la séance de maths du jour reste un seul bouton « C'est parti ! » (une seule tuile « Maths » quand la conjugaison est proposée, §15). Une fois les tables maîtrisées (boîte 4+), leur image est quasi complète (§5.1 ; elle se parachève à mesure que les derniers faits passent en boîte 5) et elles ne demandent plus que de la <strong>maintenance</strong> (révisions tous les 21 jours, ou re-ancrage d'un fait retombé). La séance du jour est donc <strong>la division</strong>, dans laquelle on <strong>intègre</strong> les quelques faits de tables réellement dus ce jour-là (plafonnés à 6 par séance pour ne pas noyer la division ; × et ÷ entrelacés dans la même séance) plutôt que de leur consacrer une séance entière. Ainsi la division progresse chaque jour, la maintenance des tables n'est jamais en retard, et l'enfant ne peut pas esquiver la division (plus difficile) en re-jouant des tables acquises.</p>
   <p><strong>Plancher de longueur.</strong> Les tout premiers jours du niveau 2, la division est <em>maigre</em> : le rythme d'intro est de 2 faits/séance et seuls les faits dont le parent est en boîte 4+ sont éligibles — il n'y a donc presque rien à réviser, et peu de tables sont dues. Sans filet, la séance tomberait à 2-5 questions. On applique donc le <strong>même plancher qu'en multiplication-only et en division pure</strong> (§6.2) : sous ~12 questions, on complète par des <strong>révisions bonus</strong> (sans toucher au calendrier Leitner) — divisions introduites d'abord, puis tables (réserve inépuisable, toutes introduites au déblocage). Ce padding bonus est distinct du plafond d'entretien (≤ 6 faits <em>dus</em>) : il ne se déclenche que faute de contenu, et se résorbe de lui-même à mesure que la division grossit.</p>
   <blockquote class="note">
     <p>Pourquoi <em>intégrer</em> plutôt qu'<em>alterner</em> ? Les faits passent en boîte 5 à des jours différents, donc leurs révisions (à +21 j) deviennent dues <strong>en continu</strong> (~2 faits/jour pour 36 faits). Un modèle « jour tables <em>ou</em> jour division » aurait donc fait des tables presque tous les jours, chacune une séance d'1 vraie révision noyée dans du bonus — étouffant la division. L'intégration résout ça.</p>
@@ -1013,7 +1018,7 @@ interface Badge {
   <p><strong>La symétrie miroir disparaît</strong>, et c'est <em>fidèle</em> : là où les deux cases (a,b) et (b,a) se révélaient en synchrone pour matérialiser la commutativité (§5.1), elles évoluent désormais indépendamment — une case peut être nette pendant que sa miroir reste floue. Le visuel enseigne ainsi que 56÷7 et 56÷8 sont deux questions distinctes. Ce n'est pas un compromis sur le support, c'est une représentation correcte de la non-commutativité.</p>
   <p>L'image de division est <strong>une image propre, distincte</strong> de celle de la multiplication : cette dernière reste affichée, complète, comme témoin de la réussite (§5.1) — on ne la re-floute jamais. Conséquence : à grille identique, l'image de division demande <strong>64 maîtrises indépendantes</strong> (contre 36 en multiplication, où maîtriser un fait dévoilait deux cases d'un coup), soit un parcours sensiblement plus long — exactement l'effet recherché pour prolonger l'engagement au-delà de la complétion.</p>
   <p><strong>Accès.</strong> Pas de nouvelle tuile sur l'accueil : la division <em>est</em> une image, pas une fonction. La tuile « Mon image » devient simplement « Mes images » au déblocage, et l'écran de progression propose un sélecteur entre l'image des multiplications et celle des divisions, <strong>ouvert par défaut sur la division</strong> (l'image des tables est déjà complète).</p>
-  <p><strong>Badges.</strong> Le niveau 2 ajoute un jeu de badges symétrique à celui de la multiplication (§4.2), <strong>masqué tant que le niveau n'est pas débloqué</strong> (même logique que la révélation différée de la règle ×11, §2.3) : <em>Première division maîtrisée</em> (🥈, première division en boîte 5), huit badges <em>Divisions par N</em> (➗, n = 2..9, toutes les divisions par n en boîte 4-5) et <em>Maître de la division</em> (🎓, les 64 divisions en boîte 5).</p>
+  <p><strong>Badges.</strong> Le niveau 2 ajoute un jeu de badges symétrique à celui de la multiplication (§4.2), <strong>masqué tant que le niveau n'est pas débloqué</strong> (même logique que la révélation différée de la règle ×11, §2.3) : <em>Première division maîtrisée</em> (🥈, première division en boîte 5), huit badges <em>Divisions par N</em> (médaillon « ÷N », n = 2..9, toutes les divisions par n en boîte 4-5) et <em>Maître de la division</em> (🎓, les 64 divisions en boîte 5).</p>
 
   <h3 id="division-algo"><span class="num">11.6</span>Adaptations de l'algorithme</h3>
   <p class="source"><strong>Sources :</strong> Campbell (1997), Curtis, Huebner &amp; LeFevre (2016)</p>
@@ -1054,7 +1059,7 @@ interface Badge {
 
   <h3 id="reste-declenchement"><span class="num">12.3</span>Déclenchement</h3>
   <p>Même logique que le niveau 2 (§11.3), translatée d'un niveau : le niveau 3 se débloque à l'obtention des <strong>8 badges « Divisions par N »</strong> (toutes les divisions par n en boîte 4+). Critère fondé sur des badges, donc <strong>permanent</strong>. « Maître de la division » (boîte 5 sur les 64 divisions) n'est pas exigé — même raisonnement qu'en §11.3 pour « Génie de la multiplication » : exiger la boîte 5 partout imposerait un long palier de grind sans contenu nouveau, alors que le passage 4→5 se poursuit naturellement via l'entretien intégré aux séances du niveau 3, où « Maître de la division » devient un trophée décroché en route. Le déblocage est annoncé par une carte dédiée dans le récap (« Tu débloques la division avec reste ! »).</p>
-  <p><strong>Rythme d'introduction.</strong> Identique aux niveaux précédents : <strong>2 nouvelles cases par séance maximum</strong>, dans l'ordre canonique (doubles → ×5 → ×9 → carrés → dérivés, appliqué au couple diviseur/quotient), et seulement si au plus 3 cases déjà introduites sont en boîte 1 (plafond du §3.4bis, exception de phase finale comprise). <strong>Filet de sécurité per-case</strong> : la case (d, q) n'est introduite que si la division exacte parente — la case (d, q) de la grille du niveau 2, soit d×q ÷ d — est en boîte 5. Les coordonnées coïncident exactement d'une grille à l'autre : chaque zone s'ouvre quand son point d'ancrage est parfaitement solide.</p>
+  <p><strong>Rythme d'introduction.</strong> Identique aux niveaux précédents : <strong>2 nouvelles cases par séance maximum</strong>, dans l'ordre canonique (doubles → ×5 → ×9 → carrés → dérivés, appliqué au couple diviseur/quotient), et seulement si au plus 3 cases déjà introduites sont en boîte 1 (plafond du §3.4bis, exception de phase finale comprise). <strong>Filet de sécurité per-case</strong> : la case (d, q) n'est introduite que si la division exacte parente — la case (d, q) de la grille du niveau 2, soit d×q ÷ d — est en boîte 4+ — même seuil que l'ouverture du niveau (badges « Divisions par N »), et même raison qu'au §11.3 : exiger la boîte 5 laisserait un profil fraîchement débloqué sans aucune zone introductible. Les coordonnées coïncident exactement d'une grille à l'autre : chaque zone s'ouvre quand son point d'ancrage est solide.</p>
   <p><strong>Une seule séance par jour, un seul bouton.</strong> Comme au niveau 2 (§11.3) : pas de second bouton, la séance du jour devient la division avec reste, et les révisions de <strong>maintenance des niveaux 1 et 2</strong> (tables et divisions exactes dues) y sont intégrées, entrelacées avec les nouvelles questions. Le plafond d'entretien de 6 faits dus par séance absorbe le régime de croisière : 36 tables et 64 divisions revues tous les 21 jours produisent en moyenne (36 + 64) / 21 ≈ 5 révisions dues par jour. Le <strong>plancher de longueur</strong> (~12 questions, complétées par des révisions bonus sans effet Leitner) s'applique à l'identique pendant les premiers jours où le niveau est maigre.</p>
 
   <h3 id="reste-strategie"><span class="num">12.4</span>Stratégie « cherche le multiple juste en dessous »</h3>
@@ -1064,14 +1069,14 @@ interface Badge {
     <p>« 45 ÷ 7, c'est : <strong>7 fois combien</strong> font <em>presque</em> 45, sans dépasser ? » — <code>7 × ☐ ≤ 45</code>. On trouve 7 × 6 = 42, et de 42 à 45 il y a 3. Donc 45 ÷ 7 = <strong>6, reste 3</strong>.</p>
   </blockquote>
   <p><strong>Appui visuel : le groupement.</strong> Là où le niveau 2 montrait le <em>partage</em> (modèle partitif : « on partage 56 en 7 lots égaux »), le niveau 3 montre le <em>groupement</em> (modèle quotitif) : des rangées de 7 points se remplissent une à une (7, 14, 21… 42), on s'arrête avant de dépasser 45, et les 3 points qui ne forment pas une rangée complète restent isolés, mis en évidence : <strong>le reste, c'est ce qui ne rentre pas</strong>. Les deux modèles de la division sont ainsi couverts sur l'ensemble du parcours — la complémentarité recommandée par la littérature didactique (Van de Walle).</p>
-  <p>Le feedback de conclusion affiche l'<strong>égalité euclidienne</strong> en ligne — « 45 = 7 × 6 + 3 » — la forme exacte que l'enfant retrouvera en CM1. Comme aux niveaux précédents, l'astuce est affichée à l'introduction et en cas d'erreur pour les cases en boîte ≤ 2, et énoncée à voix haute (nouvelles clés TTS par case).</p>
+  <p>Le feedback de conclusion affiche l'<strong>égalité euclidienne</strong> en ligne — « 45 = 7 × 6 + 3 » — la forme exacte que l'enfant retrouvera en CM1. Comme aux niveaux précédents, l'astuce est affichée à l'introduction et en cas d'erreur pour les cases en boîte ≤ 2, et énoncée à voix haute (une clé TTS par case à l'introduction ; en cas d'erreur, une astuce générique, le dividende variant d'une fois à l'autre).</p>
 
   <h3 id="reste-saisie"><span class="num">12.5</span>Saisie en deux temps</h3>
   <p>C'est le principal coût UX nouveau du niveau : une question appelle <strong>deux réponses</strong>. Le flux reste sur un seul écran :</p>
   <ol>
     <li>La question s'affiche (« 45 ÷ 7 = ? ») et est énoncée à voix haute.</li>
-    <li>Premier champ, mis en évidence : le <strong>quotient</strong> (« Combien de fois ? »). Un chiffre, validation automatique.</li>
-    <li>Second champ : le <strong>reste</strong> (« Il reste combien ? »). Un chiffre (0 inclus), validation automatique.</li>
+    <li>Premier champ, mis en évidence : le <strong>quotient</strong> (« Combien de fois ? »). Un chiffre, validé par OK.</li>
+    <li>Second champ : le <strong>reste</strong> (« Il reste combien ? »). Un chiffre (0 inclus), validé par OK.</li>
   </ol>
   <p><strong>Mode vocal :</strong> l'enfant énonce « six, reste trois » (variantes parsées : « six et il reste trois », « six reste trois ») ; un quotient seul est accepté et déclenche une relance douce (« et il reste ? »). Le cas « ça tombe juste » accepte « six » suivi de « rien » / « zéro » / « ça tombe juste ».</p>
   <p><strong>Feedback ciblé par étape :</strong> une erreur de <em>quotient</em> ré-affiche l'encadrement complet (les rangées qui se remplissent) ; un bon quotient avec une erreur de <em>reste</em> ne ré-explique que l'écart (42 → 45). Dans les deux cas la case redescend en boîte 1 — l'état Leitner est porté par la case, pas par l'étape — mais l'explication vise l'endroit précis où l'enfant a buté.</p>
@@ -1084,7 +1089,7 @@ interface Badge {
   <h3 id="reste-algo"><span class="num">12.7</span>Adaptations de l'algorithme</h3>
   <p>Le moteur (Leitner, entrelacement, composition de séance) se réutilise tel quel, comme au niveau 2 (§11.6). Trois ajustements :</p>
   <ul>
-    <li><strong>Anti-interférence :</strong> les paires confusibles sont les cases de <strong>même diviseur à quotients adjacents</strong> — (7, 6) et (7, 7) se touchent à un point près (48 ÷ 7 contre 49 ÷ 7). Elles ne figurent jamais dans la même série, et leurs introductions sont espacées de 48h (règle §1.2 inchangée).</li>
+    <li><strong>Anti-interférence :</strong> les paires confusibles sont les cases de <strong>même diviseur à quotients adjacents</strong> — (7, 6) et (7, 7) se touchent à un point près (48 ÷ 7 contre 49 ÷ 7). Elles ne figurent jamais côte à côte dans une série (pas plus que deux questions au même dividende tiré), et deux zones de même diviseur ne sont jamais introduites dans la même séance.</li>
     <li><strong>Seuils de vitesse :</strong> deux saisies et un geste en deux temps — le seuil passe à <strong>8 s au clavier, 6 s en voix</strong> (contre 6 s / 4 s au niveau 2), mesuré de l'affichage de la question à la validation du reste.</li>
     <li><strong>Bienveillance accrue :</strong> encore plus d'erreurs et de lenteur attendues qu'au niveau 2 ; le feedback ciblé par étape (§12.5) évite de faire porter à l'enfant une erreur globale quand seul le reste a échappé.</li>
   </ul>
@@ -1110,7 +1115,7 @@ interface Badge {
   <h3 id="profils-stockage"><span class="num">13.2</span>Stockage et migration</h3>
   <p>Chaque profil vit sous sa propre clé localStorage (<code>multiplix-profile:&lt;id&gt;</code>) ; un index léger (<code>multiplix-profiles</code>) liste les profils (id, prénom) et le profil actif. L'ancien schéma mono-clé (<code>multiplix-profile</code>) est migré automatiquement et silencieusement au premier lancement : le profil existant devient le premier profil de l'index, rien n'est perdu.</p>
   <p>L'export/import de sauvegarde reste par-profil : l'export produit le JSON du profil actif (format inchangé, compatible avec les sauvegardes antérieures) ; l'import depuis l'écran d'accueil crée un <em>nouveau</em> profil (jamais d'écrasement d'un autre enfant), tandis que l'import depuis l'espace parent — un fichier <code>.json</code> choisi dans la page « Profils et sauvegarde », après confirmation — restaure le profil actif.</p>
-  <p>Le <strong>transfert par QR code</strong> (§7) est lui aussi par-profil : le profil reçu devient un nouveau profil actif sur l'appareil de destination — sauf si le même enfant (prénom + date de début identiques) y existe déjà, auquel cas son profil est mis à jour au lieu d'être dupliqué (cas du re-transfert). Pendant la récupération, l'app affiche « Récupération de la progression… » (pas d'écran vide entre le scan et l'arrivée) ; l'import réussi est confirmé par une bannière « bien arrivée ✓ », un transfert échoué (lien expiré ou déjà servi) par une bannière d'erreur.</p>
+  <p>Le <strong>transfert par QR code</strong> (§5.2) est lui aussi par-profil : le profil reçu devient un nouveau profil actif sur l'appareil de destination — sauf si le même enfant (prénom + date de début identiques) y existe déjà, auquel cas son profil est mis à jour au lieu d'être dupliqué (cas du re-transfert). Pendant la récupération, l'app affiche « Récupération de la progression… » (pas d'écran vide entre le scan et l'arrivée) ; l'import réussi est confirmé par une bannière « bien arrivée ✓ », un transfert échoué (lien expiré ou déjà servi) par une bannière d'erreur.</p>
 </section>
 
 <section class="chapter" id="suivi">
@@ -1129,21 +1134,21 @@ interface Badge {
   </ul>
 
   <h3 id="suivi-recap"><span class="num">14.2</span>Recap hebdomadaire</h3>
-  <p>Un miroir consultable ne sert que si le parent pense à le regarder. Un interrupteur facultatif, « Recap du dimanche » dans les réglages de l'espace parent, envoie une notification <strong>le dimanche soir</strong> sur l'appareil du parent — au plus une par semaine. Il n'apparaît que si l'appareil suit au moins un enfant&nbsp;: sans suivi, il n'y a aucun recap à annoncer.</p>
+  <p>Un miroir consultable ne sert que si le parent pense à le regarder. Un interrupteur facultatif, « Recap du dimanche » dans les réglages de l'espace parent, envoie une notification <strong>le dimanche soir</strong> sur l'appareil du parent (ou le lundi soir en rattrapage si l'envoi du dimanche a sauté) — au plus une par semaine. Il n'apparaît que si l'appareil suit au moins un enfant&nbsp;: sans suivi, il n'y a aucun recap à annoncer.</p>
   <p>Cette notification est <strong>indépendante du rappel quotidien</strong> (§8.1), et c'est le point important&nbsp;: les deux ne s'adressent pas à la même personne. Le rappel pousse l'enfant à faire sa séance, sur son appareil&nbsp;; le recap prévient le parent, sur le sien. Vouloir l'un sans l'autre est le cas normal, d'où deux préférences distinctes portées par la même souscription push. Quand les deux tombent le même soir, le recap prime — un appareil ne reçoit jamais deux notifications dans la même soirée.</p>
   <p>Le message est <strong>générique et sans aucun chiffre</strong>&nbsp;: l'instantané étant chiffré de bout en bout, le serveur qui envoie la notification ne connaît ni le prénom de l'enfant ni sa progression. Le clic ouvre l'espace parent sur l'enfant suivi, qui déchiffre localement et affiche le contenu réel — à commencer par le point de la semaine (§5.2). C'est ce qui permet d'avoir un signal poussé sans rien concéder sur la confidentialité — là où un e-mail aurait imposé de composer le contenu côté serveur, donc de l'y exposer en clair.</p>
 
   <h3 id="suivi-modele"><span class="num">14.3</span>Modèle et garanties</h3>
-  <p>Après chaque séance, l'appareil de l'enfant dépose un instantané de son profil, <strong>gzippé puis chiffré côté client</strong> (AES-GCM, clé aléatoire), sous un code de 96 bits. C'est la primitive du transfert (§7) : la clé de déchiffrement voyage dans le fragment d'URL du QR, jamais transmise au serveur, qui ne voit donc passer qu'un blob opaque.</p>
+  <p>Après chaque séance, l'appareil de l'enfant dépose un instantané de son profil, <strong>gzippé puis chiffré côté client</strong> (AES-GCM, clé aléatoire), sous un code de 96 bits. C'est la primitive du transfert (§5.2) : la clé de déchiffrement voyage dans le fragment d'URL du QR, jamais transmise au serveur, qui ne voit donc passer qu'un blob opaque.</p>
   <p>Deux différences avec un transfert, qui justifient une table distincte : le dépôt est <strong>durable</strong> (rafraîchi à chaque séance au lieu d'être consommé) et la lecture est <strong>non consommante</strong>. Le code est donc une capacité permanente jusqu'à révocation — garde-fous : entropie inénumérable, clé jamais exposée au serveur (un dump de la base ne donne rien de lisible), révocation explicite, et purge automatique d'un suivi que plus aucune séance n'a rafraîchi depuis 6 mois.</p>
   <p>Le profil suivi n'est <strong>jamais installé</strong> sur l'appareil du parent : il ne vit qu'en mémoire, le temps de l'afficher. Installé, il se mêlerait aux profils locaux (« Qui joue ? »), et une séance faite par erreur dessus divergerait de l'appareil de l'enfant, que le dépôt suivant écraserait. Seule exception, à l'initiative explicite du parent : il peut être joint à un avis depuis l'onglet qui l'affiche (§8, case « Joindre l'historique détaillé »).</p>
-  <p>Conséquence assumée sur les sections propres à l'appareil : sauvegarde, transfert, rappel quotidien et suppression de profil disparaissent quand la source affichée est un enfant distant — elles parleraient d'une progression qu'on n'a pas en main.</p>
+  <p>Les réglages propres à l'appareil (profils et sauvegarde, rappel quotidien) dépendent de l'appareil et non de l'enfant affiché : ils n'apparaissent que s'il existe un profil local, et restent visibles même quand on consulte un enfant à distance.</p>
 </section>
 
 <section class="chapter" id="conjugaison">
   <h2><span class="num">15</span>Conjugaison — une seconde matière</h2>
   <blockquote class="note">
-    <p><strong>Statut : spécifié, implémentation en cours.</strong> Ce chapitre décrit le comportement cible de la matière. Il est publié avant sa mise en ligne complète : certains détails (calibrages de seuils, inventaire final) sont susceptibles de bouger au contact de l'usage réel.</p>
+    <p><strong>Statut : en ligne</strong> (en français). Certains réglages — seuils de rapidité, reconnaissance vocale — restent à calibrer au contact de l'usage réel (§15.11).</p>
   </blockquote>
   <p>Les niveaux 2 et 3 (§11, §12) prolongent le même objet mathématique par de nouvelles portes d'entrée. La <strong>conjugaison</strong> est autre chose : une <strong>matière</strong> à part entière, qui vient à côté des maths et non par-dessus. L'objectif n'est pas d'enseigner la conjugaison — elle s'apprend en classe — mais de <strong>réactiver et d'automatiser</strong> des formes déjà rencontrées, pour qu'elles restent disponibles quand l'enfant écrit vraiment. Accessoirement, et ce n'est pas un objectif secondaire : remplacer le sentiment diffus d'« avoir tout oublié pendant les vacances » par une maîtrise visible.</p>
   <p>Ce que la matière <strong>réutilise tel quel</strong> : le moteur Leitner et ses intervalles (§1.1), la règle d'anti-interférence (§1.2), l'entrelacement (§1.3), la composition de séance et ses garde-fous (§6), le récap non <em>ego-involving</em> (§3.5), l'audio pré-généré (§3.6), les multi-profils (§13), le suivi à distance (§14) et la PWA hors-ligne (§8). Ce qu'elle apporte en propre : son inventaire, sa question type, son clavier, son image mystère et ses badges.</p>
@@ -1320,7 +1325,7 @@ interface Badge {
   <p>La reconnaissance de noms de lettres français isolés, en voix d'enfant, est fragile : « s » revient transcrit « esse », « ès » ou « ace », « n » revient « haine » ou « aine », « t » revient « thé ». Le mécanisme de robustesse est l'<strong>appariement en espace phonémique</strong> : on ne compare <em>jamais</em> le transcript à la cible en orthographe, on projette les deux en phonèmes et on compare là — ce qui rend inoffensive toute transcription homophone, y compris celles qu'on n'a pas anticipées. Deux briques :</p>
   <ul>
     <li>une <strong>table maison des noms de lettres</strong> : pour chaque lettre du périmètre (l'alphabet, plus <em>é</em> et <em>ê</em>), les orthographes plausibles et la prononciation de son nom. Aucun nom, aucune prononciation ne sert deux lettres — sans quoi l'appariement devrait deviner ;</li>
-    <li>un <strong>dictionnaire de prononciation</strong> français, qui projette n'importe quel mot transcrit sur ses phonèmes. Le vocabulaire du mode est <em>fermé</em> — une trentaine de noms de lettres, 111 formes verbales — et le dictionnaire est donc élagué à ce qui peut apparier : d'un fichier source de 6 Mo, il reste <strong>381 entrées, 4 Ko</strong>. Un mot qui ne sonne comme aucune cible ne pourrait de toute façon jamais apparier : le jeter ne perd rien. Il n'est téléchargé que si le mode est actif, et son échec de chargement dégrade l'appariement au lieu de casser le mode.</li>
+    <li>un <strong>dictionnaire de prononciation</strong> français, qui projette n'importe quel mot transcrit sur ses phonèmes. Le vocabulaire du mode est <em>fermé</em> — une trentaine de noms de lettres, 111 formes verbales — et le dictionnaire est donc élagué à ce qui peut apparier : d'un fichier source de 6 Mo, il reste <strong>381 entrées, 5 Ko</strong>. Un mot qui ne sonne comme aucune cible ne pourrait de toute façon jamais apparier : le jeter ne perd rien. Il n'est téléchargé que si le mode est actif, et son échec de chargement dégrade l'appariement au lieu de casser le mode.</li>
   </ul>
   <p>La <strong>forme dite avant l'épellation</strong> est appariée par le même mécanisme, en tolérant tout : l'homophonie <em>chante / chantes / chantent</em> est ici une qualité, puisque la discrimination orthographique se joue dans l'épellation. Cet appariement ne valide rien — il sert à reconnaître la forme pour ne pas compter ses syllabes comme des lettres.</p>
 
@@ -1333,7 +1338,7 @@ interface Badge {
   </ul>
   <p>Le corollaire est que le mode vocal ne peut pas juger une réponse plus courte que la bonne : l'enfant qui épelle « o, n » pour <code>ons</code> s'entend redemander, puis passe au clavier. C'est le prix assumé de la règle — un doute sur la reconnaissance se résout toujours du côté de l'enfant, et son erreur, si c'en est une, sera comptée au clavier.</p>
   <p>Les conséquences sont graduées, et jamais <em>ego-involving</em> (§3.5) : re-demande neutre parlée (« je n'ai pas bien entendu »), invite à épeler quand la forme a été dite sans son épellation (« maintenant, épelle ! »), et <strong>bascule automatique au clavier après deux ratés</strong> sur la même question, annoncée comme un changement d'outil et non comme un échec. Ces deux relances sont <em>parlées</em> : en vocal, l'enfant n'a pas forcément les yeux sur l'écran, et une relance muette serait une relance perdue.</p>
-  <p>L'<strong>écho de la synthèse</strong> est jeté d'un bloc : pendant la lecture d'un énoncé et la seconde qui suit, rien n'est retenu. Les phrases porteuses contiennent « à l'école », « aux billes » — dont les mots sonnent exactement comme les lettres <em>a</em> et <em>o</em> —, donc un écho haut-parleur→micro pourrait fabriquer une réponse plausible, et une réponse plausible nuit bien plus qu'un silence. Le prix est qu'un enfant qui répond <em>par-dessus</em> l'énoncé doit répéter une fois.</p>
+  <p>L'<strong>écho de la synthèse</strong> est jeté d'un bloc : pendant la lecture d'un énoncé et environ une seconde après, rien n'est retenu. Les phrases porteuses contiennent « à l'école », « aux billes » — dont les mots sonnent exactement comme les lettres <em>a</em> et <em>o</em> —, donc un écho haut-parleur→micro pourrait fabriquer une réponse plausible, et une réponse plausible nuit bien plus qu'un silence. Le prix est qu'un enfant qui répond <em>par-dessus</em> l'énoncé doit répéter une fois.</p>
 
   <h4>Écho visuel et correction</h4>
   <p>Les lettres reconnues remplissent l'ardoise du clavier <strong>au fur et à mesure</strong>, pendant que l'enfant parle. Le clavier reste sous la main en permanence : dès qu'elle y touche, le micro se coupe et c'est elle qui valide — plus aucune soumission automatique ne peut lui passer devant. L'ardoise ne montre pas de cases en attente : la longueur de la réponse ne se dévoile pas plus en vocal qu'au clavier (§15.5).</p>
