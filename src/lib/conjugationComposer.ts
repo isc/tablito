@@ -118,11 +118,7 @@ export function unlockedConjTenses(badges: Badge[]): ConjTense[] {
   return unlocked;
 }
 
-/**
- * Tout ce que la composition lit d'un profil. Restreint EXPRÈS à ces deux
- * champs : c'est le contrat que l'appelant peut mémoïser, sans recomposer la
- * séance de conjugaison à chaque réponse d'une séance de maths.
- */
+/** Tout ce que la composition lit d'un profil. */
 export type ConjProfile = Pick<UserProfile, 'conjFacts' | 'badges'>;
 
 // --- Ordre d'introduction à l'intérieur d'un temps --------------------------

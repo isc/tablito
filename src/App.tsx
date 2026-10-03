@@ -509,16 +509,20 @@ export default function App({
   // Niveau de la séance du jour — composeDailySession branche lui-même sur le
   // niveau actif, on n'a besoin du mode que pour le récap et l'image cible.
   const sessionMode: 'mult' | 'div' | 'rem' = profile ? activeLevel(profile) : 'mult';
+  // Les séances du jour ne se composent que sur l'accueil, seul écran à les
+  // lire (état des tuiles, séance que lance chacune) : en séance, où chaque
+  // réponse change `profile`, ce serait du travail jeté.
+  const onHome = screen === 'home';
   // « Fait aujourd'hui » se compte PAR MATIÈRE : faire ses maths ne ferme pas
   // la conjugaison du jour, et réciproquement (spec Verbito §7.2). C'est
   // `lastSessionDate` — inchangé, toutes matières confondues — qui reste
   // l'ancre de la flamme de série, partagée.
   const sessionDone = !!profile && profile.lastMathSessionDate === today;
   const pendingItems = useMemo<SessionItem[]>(() => {
-    if (!profile || sessionDone) return [];
+    if (!onHome || !profile || sessionDone) return [];
     if (divisionUnlocked) return composeDailySession(profile, today);
     return composeSession(profile, today).map((q): SessionItem => ({ kind: 'mult', ...q }));
-  }, [profile, sessionDone, divisionUnlocked, today]);
+  }, [onHome, profile, sessionDone, divisionUnlocked, today]);
   const hasSessionAvailable = pendingItems.length > 0;
 
   // === Matière conjugaison (spec Verbito) ===
@@ -530,17 +534,10 @@ export default function App({
   // Tant que le test de placement n'a pas été passé, la « séance du jour » de
   // la matière EST ce test (il enchaîne ensuite sur la première séance, §6.1).
   const conjNeedsPlacement = !!profile && conjAvailable && profile.hasDoneConjPlacement !== true;
-  // Dépendances restreintes à ce que la composition LIT (cf. `ConjProfile`) :
-  // sur `profile` entier, chaque réponse d'une séance de maths recomposait la
-  // séance de conjugaison du jour.
-  const conjFacts = profile?.conjFacts;
-  const badges = profile?.badges;
   const conjPendingItems = useMemo<ConjSessionItem[]>(() => {
-    if (!conjFacts || !badges || !conjAvailable || conjSessionDone || conjNeedsPlacement) return [];
-    return composeConjSession({ conjFacts, badges }, today).map(
-      (q): ConjSessionItem => ({ kind: 'conj', ...q }),
-    );
-  }, [conjFacts, badges, conjAvailable, conjSessionDone, conjNeedsPlacement, today]);
+    if (!onHome || !profile || !conjAvailable || conjSessionDone || conjNeedsPlacement) return [];
+    return composeConjSession(profile, today).map((q): ConjSessionItem => ({ kind: 'conj', ...q }));
+  }, [onHome, profile, conjAvailable, conjSessionDone, conjNeedsPlacement, today]);
   const hasConjSessionAvailable =
     conjAvailable && !conjSessionDone && (conjNeedsPlacement || conjPendingItems.length > 0);
   // Matière ouverte au moins une fois : c'est ce qui allume ses onglets
@@ -1238,7 +1235,7 @@ export default function App({
         <RulesScreen
           onBack={goBack}
           showRule11={rule11Unlocked}
-          conjRules={conjVisible ? metConjRules(conjFacts ?? []) : undefined}
+          conjRules={conjVisible ? metConjRules(profile?.conjFacts ?? []) : undefined}
         />
       )}
 
