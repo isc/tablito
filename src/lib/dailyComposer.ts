@@ -1,9 +1,14 @@
-import type { UserProfile, SessionItem } from '../types';
+import type {
+  UserProfile,
+  SessionItem,
+  DivisionSessionQuestion,
+  RemainderSessionQuestion,
+} from '../types';
 import { remainderDividend } from '../types';
 import { isDue, pickBonusReviewFacts, prioritizeByBoxLevel } from './leitner';
-import { composeDivisionSession, divisionConflict } from './divisionComposer';
-import { composeRemainderSession } from './remainderComposer';
-import { randomDisplayOrder } from './sessionComposer';
+import { selectDivisionQuestions, divisionConflict } from './divisionComposer';
+import { selectRemainderQuestions } from './remainderComposer';
+import { randomDisplayOrder, MIN_QUESTIONS } from './sessionComposer';
 import { getFactKey } from './facts';
 import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey, drawRemainder } from './remainderFacts';
@@ -11,11 +16,6 @@ import { isRemainderUnlocked } from './badges';
 import { computeSimilarity } from './similarity';
 import { interleaveOrder } from './utils';
 
-// Cible haute d'une séance (cf. sessionComposer / specs §6).
-const TARGET_QUESTIONS = 15;
-// Plancher de longueur, identique à sessionComposer (mult-only) et
-// composeDivisionSession : sous ce seuil, on complète par des révisions bonus.
-const MIN_QUESTIONS = 12;
 // Plafond de faits des niveaux précédents en entretien par séance : on ne noie
 // pas le niveau actif (le vrai apprentissage) sous la maintenance. Les faits
 // dus au-delà sont repris la séance suivante — sans danger en boîte 5. Au
@@ -150,6 +150,11 @@ function remCrossConflict(
  * MIN_QUESTIONS par des révisions bonus (sans toucher au Leitner, cf.
  * pickBonusReviewFacts) : niveau actif d'abord, puis niveaux précédents
  * (réserve inépuisable). Le filet se résorbe quand le niveau grossit.
+ *
+ * L'entretien est retenu en premier (il ne dépend pas du niveau actif), et la
+ * sélection du niveau actif compte ses places : budget de révisions, fallback
+ * de dividende et plancher voient la séance entière. Comptés sur la seule part
+ * du niveau actif, ils gonflaient la séance de bonus (specs §11.3).
  */
 export function composeDailySession(profile: UserProfile, now: string): SessionItem[] {
   const today = now.slice(0, 10);
@@ -160,13 +165,6 @@ export function composeDailySession(profile: UserProfile, now: string): SessionI
 
 // Niveau 2 actif : division + entretien des tables (specs §11.6).
 function composeDivisionDaily(profile: UserProfile, today: string): SessionItem[] {
-  const divItems: SessionItem[] = composeDivisionSession(profile, today).map((q) => ({
-    kind: 'div',
-    ...q,
-  }));
-  const intros = divItems.filter((i) => i.isIntroduction);
-  const reviews = divItems.filter((i) => !i.isIntroduction);
-
   // Faits de tables dus aujourd'hui → révisions d'entretien (jamais des intros :
   // post-déblocage les tables sont toutes introduites et maîtrisées).
   // Les plus fragiles d'abord, comme partout ailleurs (§6.1) : ce qui déborde
@@ -180,19 +178,14 @@ function composeDivisionDaily(profile: UserProfile, today: string): SessionItem[
     .slice(0, MAX_MAINTENANCE)
     .map((fact) => multItem(fact));
 
-  return assemble(profile, intros, reviews, maintenance);
+  const { intros, due } = selectDivisionQuestions(profile, today, maintenance.length);
+  const asItem = (q: DivisionSessionQuestion): SessionItem => ({ kind: 'div', ...q });
+  return assemble(profile, intros.map(asItem), due.map(asItem), maintenance);
 }
 
 // Niveau 3 actif : division avec reste + entretien des tables ET des divisions
 // exactes, plafonnés ensemble (specs §12.3).
 function composeRemainderDaily(profile: UserProfile, today: string): SessionItem[] {
-  const remItems: SessionItem[] = composeRemainderSession(profile, today).map((q) => ({
-    kind: 'rem',
-    ...q,
-  }));
-  const intros = remItems.filter((i) => i.isIntroduction);
-  const reviews = remItems.filter((i) => !i.isIntroduction);
-
   const divisionFacts = profile.divisionFacts ?? [];
   const dueMult = profile.facts.filter((f) => f.introduced && isDue(f, today));
   const dueDiv = divisionFacts.filter((f) => f.introduced && isDue(f, today));
@@ -206,34 +199,25 @@ function composeRemainderDaily(profile: UserProfile, today: string): SessionItem
     .slice(0, MAX_MAINTENANCE)
     .map((x) => x.item);
 
-  return assemble(profile, intros, reviews, maintenance);
+  const { intros, due } = selectRemainderQuestions(profile, today, maintenance.length);
+  const asItem = (q: RemainderSessionQuestion): SessionItem => ({ kind: 'rem', ...q });
+  return assemble(profile, intros.map(asItem), due.map(asItem), maintenance);
 }
 
-// Tronc commun : l'entretien remplace des révisions du niveau actif pour viser
-// ~TARGET sans gonfler la séance (intros gardées en priorité), puis padding
-// bonus sous le plancher, puis entrelacement.
-//
-// `reviews` arrive dans l'ordre de priorité du composeur du niveau actif
-// (révisions dues les plus fragiles d'abord, puis bonus) : la coupe garde
-// donc les plus fragiles.
+// Tronc commun : révisions dues du niveau actif, entretien, puis padding bonus
+// sous le plancher — l'ordre de préférence de l'entrelacement, fait d'un seul
+// tenant à la suite de la dernière intro (specs §1.3).
 function assemble(
   profile: UserProfile,
   intros: SessionItem[],
-  reviews: SessionItem[],
+  due: SessionItem[],
   maintenance: SessionItem[],
 ): SessionItem[] {
-  const reviewBudget = Math.max(0, TARGET_QUESTIONS - intros.length - maintenance.length);
-  const core: SessionItem[] = [...reviews.slice(0, reviewBudget), ...maintenance];
-
+  const core = [...due, ...maintenance];
   const deficit = MIN_QUESTIONS - (intros.length + core.length);
   if (deficit > 0) {
     core.push(...bonusPadding(profile, [...intros, ...core], deficit));
   }
-
-  // Révisions dues (niveau actif puis entretien) devant les bonus, par un tri
-  // stable, puis un seul entrelacement à la suite de la dernière intro (specs
-  // §1.3).
-  core.sort((a, b) => Number(a.isBonusReview) - Number(b.isBonusReview));
   return [...intros, ...interleaveOrder(core, itemConflict, intros.at(-1))];
 }
 
