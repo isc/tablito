@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Relancée par la preview sur le commit de MP3 qu'elle pousse sur la branche
+  # d'une PR : un push du GITHUB_TOKEN ne déclenche pas `pull_request`.
+  workflow_dispatch:
 
 jobs:
   test:
