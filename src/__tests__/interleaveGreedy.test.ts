@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { interleaveGreedy } from '../lib/utils';
 
 // Entrelacement (specs §1.3) : l'ordre glouton d'abord, retour sur les choix
@@ -72,15 +72,11 @@ describe('interleaveGreedy', () => {
     // dernière place le révèle. Sans budget, il faudrait essayer les 15! ordres
     // des autres avant de conclure.
     const items = [...Array.from({ length: 15 }, (_, i) => `p${i}:x`), 'z:z'];
-    let calls = 0;
-    const conflicts = (a: string, b: string) => {
-      calls++;
-      return a === 'z:z' || b === 'z:z' || samePerson(a, b);
-    };
+    const conflicts = vi.fn((a: string, b: string) => a === 'z:z' || b === 'z:z' || samePerson(a, b));
 
     const order = interleaveGreedy(items, conflicts, 'q:x');
 
     expect([...order].sort()).toEqual([...items].sort());
-    expect(calls).toBeLessThanOrEqual((items.length + 1) * items.length);
+    expect(conflicts.mock.calls.length).toBeLessThanOrEqual((items.length + 1) * items.length);
   }, 2_000);
 });
