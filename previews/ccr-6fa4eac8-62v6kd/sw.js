@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261003113325"
+const VERSION = "20261003121439"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/previews/ccr-6fa4eac8-62v6kd/"
 const ASSETS = [
@@ -63,6 +63,8 @@ const ASSETS = [
   "/previews/ccr-6fa4eac8-62v6kd/src/components/ConjForm.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/components/ConjMysteryImage.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/components/ConjProgressGrid.js",
+  "/previews/ccr-6fa4eac8-62v6kd/src/components/ConjRuleListenButton.js",
+  "/previews/ccr-6fa4eac8-62v6kd/src/components/ConjRuleVisual.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/components/ConjVoiceInput.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/components/DivisionMysteryImage.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/components/DivisionProgressGrid.js",
@@ -153,6 +155,7 @@ const ASSETS = [
   "/previews/ccr-6fa4eac8-62v6kd/src/lib/conjugationFacts.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/lib/conjugationInterference.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/lib/conjugationPlacement.js",
+  "/previews/ccr-6fa4eac8-62v6kd/src/lib/conjugationRules.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/lib/conjugationStrategies.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/lib/dailyComposer.js",
   "/previews/ccr-6fa4eac8-62v6kd/src/lib/debugTools.js",
@@ -221,7 +224,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/previews/ccr-6fa4eac8-62v6kd/audio/"],"media":["/previews/ccr-6fa4eac8-62v6kd/mystery/"],"splash":["/previews/ccr-6fa4eac8-62v6kd/splash/"],"landing":["/previews/ccr-6fa4eac8-62v6kd/video/","/previews/ccr-6fa4eac8-62v6kd/img/hero-poster"],"qrscan":["/previews/ccr-6fa4eac8-62v6kd/vendor/qr-scanner/"],"phonetic":["/previews/ccr-6fa4eac8-62v6kd/phonetic/"],"qrgen":["/previews/ccr-6fa4eac8-62v6kd/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"e6a6dad5117a","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_VERSIONS = {"audio":"b98220b90770","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
