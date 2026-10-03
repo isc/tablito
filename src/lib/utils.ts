@@ -69,14 +69,14 @@ export function firstFreeSlot<T>(
 }
 
 /**
- * Budget de la recherche d'un ordre sans conflit (cf. interleaveGreedy), en
+ * Budget de la recherche d'un ordre sans conflit (cf. interleaveOrder), en
  * éléments posés. Quand aucun ordre sans conflit n'existe, c'est lui qui arrête
  * la recherche : sans lui, prouver qu'il n'y en a pas peut demander d'en
- * essayer des millions. Calibré sur les entrelacements réels des composeurs
- * (profils aléatoires, toutes matières) : à 5 000, les conflits évitables
- * deviennent rares (aucun sur ~15 000 entrelacements, 0,02 à 0,2 % sur une
- * simulation de 400 jours de séances ; 2 000 en laissait ~1 % en
- * conjugaison), pour ~1 ms au pire et ~15 µs en moyenne par entrelacement.
+ * essayer des millions. Calibré sur des séances simulées (60 enfants, 400
+ * jours, toutes matières), ordonnées d'un seul tenant : à 5 000, un conflit
+ * évitable ne reste que dans moins de 1 % des séances de multiplication et
+ * ~0,1 % en conjugaison (aucun en séance quotidienne), pour ~1,5 ms au pire
+ * et ~15 µs en moyenne par séance. Le quadrupler n'en retire qu'un sur deux.
  */
 const INTERLEAVE_SEARCH_BUDGET = 5000;
 
@@ -84,21 +84,32 @@ const INTERLEAVE_SEARCH_BUDGET = 5000;
  * Réordonne `items` pour éviter, autant que possible, deux éléments adjacents
  * en conflit. Partagé par l'entrelacement des séances de toutes les matières.
  *
- * Recherche en profondeur, l'ordre glouton d'abord : premier élément au hasard,
- * puis à chaque place le premier candidat qui ne heurte pas le précédent — la
- * première branche explorée EST l'ordre glouton, et c'est lui qu'on obtient
- * quand il n'a pas d'impasse. En cas d'impasse (tout ce qui reste heurte le
- * dernier posé), on revient sur les choix précédents au lieu d'accoler deux
- * voisins en conflit. Au-delà de `INTERLEAVE_SEARCH_BUDGET` éléments posés, ou
- * quand aucun ordre sans conflit n'existe, on garde l'ordre glouton réparé
- * (cf. greedyWithRepair) : best effort.
+ * L'ordre de `items` est un ordre de PRÉFÉRENCE : un élément ne passe devant un
+ * autre que pour éviter un conflit. Les séances y mettent leurs révisions dues,
+ * les plus fragiles d'abord, puis leurs révisions bonus, et ordonnent tout d'un
+ * seul appel : un bonus ne passe devant une révision due que pour séparer deux
+ * questions en conflit.
+ *
+ * Recherche en profondeur, l'ordre glouton d'abord : à chaque place, le premier
+ * candidat qui ne heurte pas le précédent — la première branche explorée EST
+ * l'ordre glouton, et c'est lui qu'on obtient quand il n'a pas d'impasse. En
+ * cas d'impasse (tout ce qui reste heurte le dernier posé), on revient sur les
+ * choix précédents au lieu d'accoler deux voisins en conflit. Au-delà de
+ * `INTERLEAVE_SEARCH_BUDGET` éléments posés, ou quand aucun ordre sans conflit
+ * n'existe, on garde l'ordre glouton réparé (cf. greedyWithRepair) : best
+ * effort.
+ *
+ * Aucun tirage au sort ici : la variété vient des composeurs, qui mélangent les
+ * faits de même priorité (prioritizeByBoxLevel, pickBonusReviewFacts). Le
+ * premier élément était tiré au hasard dans toute la liste : une fois
+ * révisions et bonus ordonnés ensemble, la séance s'ouvrait souvent sur un
+ * bonus.
  *
  * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
- * (la dernière introduction du jour, par exemple) : il contraint alors le
- * premier tirage, sans quoi la jonction entre deux blocs échapperait à
- * l'entrelacement.
+ * (la dernière introduction du jour) : il contraint alors le premier élément,
+ * sans quoi la jonction avec les introductions échapperait à l'entrelacement.
  */
-export function interleaveGreedy<T>(
+export function interleaveOrder<T>(
   items: T[],
   conflicts: (a: T, b: T) => boolean,
   after?: T,
@@ -107,9 +118,6 @@ export function interleaveGreedy<T>(
   if (items.length === 1 && after === undefined) return items;
 
   const n = items.length;
-  // Le premier tirage du glouton : au hasard sans `after`, sinon le premier
-  // élément qui ne le heurte pas (le parcours dans l'ordre s'en charge).
-  const start = after === undefined ? Math.floor(Math.random() * n) : 0;
   // `after`, quand il y en a un, est le nœud `n` : la recherche le traite comme
   // un élément déjà posé, devant la liste.
   const head = after === undefined ? undefined : n;
@@ -129,8 +137,7 @@ export function interleaveGreedy<T>(
   let budget = INTERLEAVE_SEARCH_BUDGET;
   const search = (prev: number | undefined): boolean => {
     if (order.length === n) return true;
-    for (let k = 0; k < n; k++) {
-      const i = order.length === 0 ? (start + k) % n : k;
+    for (let i = 0; i < n; i++) {
       if (used[i] || (prev !== undefined && clash(prev, i))) continue;
       if (--budget < 0) return false;
       used[i] = true;
@@ -145,30 +152,28 @@ export function interleaveGreedy<T>(
 
   // Sans ordre sans conflit : l'ordre glouton réparé, sur les indices pour
   // réutiliser les conflits déjà évalués.
-  const picked = search(head) ? order : greedyWithRepair(n, clash, head, start);
+  const picked = search(head) ? order : greedyWithRepair(n, clash, head);
   return picked.map((i) => items[i]);
 }
 
 /**
- * L'ordre glouton réparé, sur les indices `0..n-1` : `start` en tête s'il n'y a
- * pas de `head`, puis à chaque place le premier candidat qui ne heurte pas le
- * précédent (`head` compris). En cas d'impasse, le premier restant se glisse
- * plus tôt, entre deux voisins déjà posés qu'il ne heurte ni l'un ni l'autre ;
- * à défaut seulement, il est posé en fin de liste. Repli de interleaveGreedy
- * quand aucun ordre sans conflit n'a été trouvé.
+ * L'ordre glouton réparé, sur les indices `0..n-1` : à chaque place le premier
+ * candidat qui ne heurte pas le précédent (`head` compris). En cas d'impasse,
+ * le premier restant se glisse plus tôt, entre deux voisins déjà posés qu'il ne
+ * heurte ni l'un ni l'autre ; à défaut seulement, il est posé en fin de liste.
+ * Repli de interleaveOrder quand aucun ordre sans conflit n'a été trouvé.
  */
 function greedyWithRepair(
   n: number,
   conflicts: (a: number, b: number) => boolean,
   head: number | undefined,
-  start: number,
 ): number[] {
   const remaining = Array.from({ length: n }, (_, i) => i);
-  const result = head === undefined ? remaining.splice(start, 1) : [];
+  const result: number[] = [];
 
   while (remaining.length > 0) {
-    const prev = result.length > 0 ? result[result.length - 1] : head!;
-    const next = remaining.findIndex((i) => !conflicts(prev, i));
+    const prev = result.length > 0 ? result[result.length - 1] : head;
+    const next = remaining.findIndex((i) => prev === undefined || !conflicts(prev, i));
     if (next !== -1) {
       result.push(remaining.splice(next, 1)[0]);
       continue;
@@ -201,7 +206,7 @@ export const MAX_SESSION_QUESTIONS = 20;
  * `gaps` liste les écarts autorisés par la spec (« 2 à 3 questions plus tard »,
  * §3.3 et §15.6), par ordre de préférence. On retient le premier créneau qui
  * n'accole pas la reprise à une AUTRE reprise ; à défaut le premier écart de la
- * liste (best-effort, comme `interleaveGreedy`).
+ * liste (best-effort, comme `interleaveOrder`).
  *
  * Sans ce choix, deux re-poses déclenchées coup sur coup — les deux intros du
  * jour en conjugaison — se replaçaient au même écart et revenaient collées

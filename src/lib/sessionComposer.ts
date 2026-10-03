@@ -8,7 +8,7 @@ import {
 } from './leitner';
 import { getFactKey } from './facts';
 import { computeSimilarity } from './similarity';
-import { daysBetween, interleaveGreedy } from './utils';
+import { daysBetween, interleaveOrder } from './utils';
 
 // Target range: 12-15 questions (~5 min at ~20-30s per question with feedback).
 // MIN_QUESTIONS is a soft target, not an absolute floor: if fewer distinct facts
@@ -153,19 +153,16 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
     isBonusReview: false,
   }));
 
-  // Combine: intro questions are placed at the front, then interleave the rest.
-  // The spec says intro happens before practice, so intro questions come first.
-  const allReview = interleaveGreedy(reviewQuestions, isAdjacentConflict);
-  const result = [...introQuestions, ...allReview];
-
   // Padding par bonus reviews (feedback normal, sans toucher au Leitner :
   // le calendrier de répétition espacée est préservé — cf. pickBonusReviewFacts).
-  if (result.length < MIN_QUESTIONS) {
-    const sessionFactKeys = new Set(result.map((q) => getFactKey(q.fact.a, q.fact.b)));
-    const bonusQuestions: SessionQuestion[] = pickBonusReviewFacts(
+  const planned = [...introQuestions, ...reviewQuestions];
+  let bonusQuestions: SessionQuestion[] = [];
+  if (planned.length < MIN_QUESTIONS) {
+    const sessionFactKeys = new Set(planned.map((q) => getFactKey(q.fact.a, q.fact.b)));
+    bonusQuestions = pickBonusReviewFacts(
       facts,
       (f) => sessionFactKeys.has(getFactKey(f.a, f.b)),
-      MIN_QUESTIONS - result.length,
+      MIN_QUESTIONS - planned.length,
     ).map((fact) => ({
       fact,
       ...randomDisplayOrder(fact),
@@ -173,8 +170,20 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
       isRetry: false,
       isBonusReview: true,
     }));
-    result.push(...interleaveGreedy(bonusQuestions, isAdjacentConflict));
   }
 
-  return result;
+  // Intros en tête : la spec place l'introduction avant la pratique. Tout le
+  // reste est ordonné d'un seul tenant, à la suite de la dernière intro. Par
+  // blocs (révisions, puis bonus), les jonctions échappaient à l'entrelacement,
+  // et un bloc seul n'a parfois aucun ordre sans conflit (trois révisions de la
+  // table de 2) quand les bonus suffiraient à séparer ses questions. Révisions
+  // dues d'abord : un bonus ne passe devant que pour en séparer deux.
+  return [
+    ...introQuestions,
+    ...interleaveOrder(
+      [...reviewQuestions, ...bonusQuestions],
+      isAdjacentConflict,
+      introQuestions.at(-1),
+    ),
+  ];
 }

@@ -1,5 +1,4 @@
 import type { UserProfile, RemainderFact, RemainderSessionQuestion } from '../types';
-import { remainderDividend } from '../types';
 import {
   isDue,
   shouldIntroduceNew,
@@ -14,30 +13,11 @@ import {
   introRemainder,
   drawRemainder,
 } from './remainderFacts';
-import { interleaveGreedy } from './utils';
 
 // Mêmes bornes que les niveaux 1 et 2 (cf. sessionComposer.ts, specs §6).
 const MIN_QUESTIONS = 12;
 const MAX_QUESTIONS = 15;
 const MAX_NEW_FACTS = 2;
-
-/**
- * Deux questions de division avec reste en conflit si elles ne doivent pas
- * être adjacentes (specs §12.7) :
- * - même diviseur → même « table », et couvre les zones à quotients adjacents
- *   ((7,6) et (7,7) se touchent à un point près : 48÷7 contre 49÷7) ;
- * - même dividende TIRÉ (45÷7 vs 45÷6) → deux lectures du même nombre,
- *   hautement confusibles dans la même série.
- */
-function questionConflict(a: RemainderSessionQuestion, b: RemainderSessionQuestion): boolean {
-  return (
-    a.fact.divisor === b.fact.divisor || remainderDividend(a) === remainderDividend(b)
-  );
-}
-
-function interleave(questions: RemainderSessionQuestion[]): RemainderSessionQuestion[] {
-  return interleaveGreedy(questions, questionConflict);
-}
 
 function makeQuestion(
   fact: RemainderFact,
@@ -70,9 +50,14 @@ function reviewQuestion(fact: RemainderFact, flags: Partial<RemainderSessionQues
  *   boîte 4+), et même assouplissement que le niveau 2 vis-à-vis du « boîte 5 »
  *   des specs : sinon un profil fraîchement débloqué (tout en boîte 4, rien en
  *   boîte 5) n'aurait AUCUNE zone introductible.
- * - Anti-interférence : jamais deux zones de même diviseur adjacentes, jamais
- *   deux dividendes tirés identiques adjacents (§12.7).
+ * - Anti-interférence : jamais deux zones de même diviseur introduites
+ *   ensemble (§12.7).
  * - Pas de variation d'ordre : la question est toujours « dividende ÷ diviseur ».
+ *
+ * Renvoie la séance dans l'ordre de PRIORITÉ, pas encore entrelacée, comme
+ * composeDivisionSession : composeDailySession y ajoute l'entretien et ordonne
+ * la séance entière (jamais deux zones de même diviseur ni deux dividendes
+ * tirés identiques adjacents, §12.7).
  *
  * Renvoie une liste vide si aucune zone n'est encore éligible.
  */
@@ -121,7 +106,7 @@ export function composeRemainderSession(
     makeQuestion(fact, introRemainder(fact.divisor), { isIntroduction: true }),
   );
 
-  const result = [...introQuestions, ...interleave(reviewQuestions)];
+  const result = [...introQuestions, ...reviewQuestions];
 
   // Padding par révisions bonus (pas de modification Leitner — cf. §6.2).
   if (result.length < MIN_QUESTIONS) {
@@ -133,7 +118,7 @@ export function composeRemainderSession(
       (f) => usedKeys.has(getRemainderFactKey(f.divisor, f.quotient)),
       MIN_QUESTIONS - result.length,
     ).map((fact) => reviewQuestion(fact, { isBonusReview: true }));
-    result.push(...interleave(bonus));
+    result.push(...bonus);
   }
 
   return result;

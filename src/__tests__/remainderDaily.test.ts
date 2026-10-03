@@ -82,7 +82,7 @@ describe('composeDailySession — niveau 3 actif (specs §12.3)', () => {
     expect(session.some((i) => i.isBonusReview)).toBe(true);
   });
 
-  // NB : l'entrelacement anti-interférence est best-effort (interleaveGreedy,
+  // NB : l'entrelacement anti-interférence est best-effort (interleaveOrder,
   // « quand c'est possible » §6.2) — pas d'assertion d'adjacence stricte ici ;
   // le conflit même-diviseur est couvert par les tests d'intro du composer.
 });

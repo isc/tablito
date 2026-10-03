@@ -129,6 +129,31 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     expect(reviews.length).toBeGreaterThan(0);
   });
 
+  it('renvoie la séance dans l’ordre de priorité : intros, révisions dues des plus fragiles aux plus solides, bonus', () => {
+    // composeDailySession, seul appelant, coupe dans cet ordre quand
+    // l'entretien prend des places, puis ordonne la séance entière.
+    const p = withMastered('all');
+    const boxes = [5, 3, 1, 5, 3, 5] as const;
+    const seen = new Set<number>();
+    let due = 0;
+    let bonus = 0;
+    p.divisionFacts = p.divisionFacts!.map((f) => {
+      if (seen.has(f.dividend)) return f; // un fait par dividende
+      seen.add(f.dividend);
+      if (due < boxes.length) return { ...f, introduced: true, box: boxes[due++], nextDue: '' };
+      if (bonus++ < 8) return { ...f, introduced: true, box: 2 as const, nextDue: '2026-12-31' };
+      return f;
+    });
+
+    const session = composeDivisionSession(p, NOW);
+
+    const kinds = session.map((q) => (q.isIntroduction ? 'intro' : q.isBonusReview ? 'bonus' : 'due'));
+    expect(kinds).toEqual([...Array(2).fill('intro'), ...Array(6).fill('due'), ...Array(4).fill('bonus')]);
+    expect(session.filter((q) => kinds[session.indexOf(q)] === 'due').map((q) => q.fact.box)).toEqual([
+      1, 3, 3, 5, 5, 5,
+    ]);
+  });
+
   it('chaque question respecte dividend = divisor × quotient (pas de flip)', () => {
     const p = withMastered([[2, 2], [3, 3], [4, 4]]);
     const session = composeDivisionSession(p, NOW);
