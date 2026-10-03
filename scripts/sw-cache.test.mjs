@@ -25,9 +25,12 @@ const SHELL_CACHE = `tablito-${VERSION}`;
 const AUDIO_CACHE = `tablito-audio-${LAZY_VERSIONS.audio}`;
 const MEDIA_CACHE = `tablito-media-${LAZY_VERSIONS.media}`;
 
+const ORIGIN = 'https://tablito.app';
+const href = (req) => new URL(typeof req === 'string' ? req : req.url, ORIGIN).href;
+
 class FakeCache {
   constructor() { this.entries = new Map(); }
-  async put(req, res) { this.entries.set(req.url, res); }
+  async put(req, res) { this.entries.set(href(req), res); }
   async add(url) { this.entries.set(new URL(url, 'https://tablito.app').href, { body: url }); }
   async match(req) { return this.entries.get(req.url) ?? null; }
 }
@@ -50,7 +53,7 @@ class FakeCaches {
 }
 
 // Charge sw.js avec ses marqueurs substitués (ce que fait scripts/build.mjs).
-async function loadSW(existingCaches = []) {
+async function loadSW(existingCaches = [], network = {}) {
   const src = (await fs.readFile(SW_SRC, 'utf8'))
     .replaceAll('__VERSION__', JSON.stringify(VERSION))
     .replaceAll('__BASE__', JSON.stringify('/'))
@@ -58,12 +61,38 @@ async function loadSW(existingCaches = []) {
     .replaceAll('__LAZY_GROUPS__', JSON.stringify(LAZY_GROUPS))
     .replaceAll('__LAZY_VERSIONS__', JSON.stringify(LAZY_VERSIONS))
     .replaceAll('__STANDALONE_DOCS__', JSON.stringify(STANDALONE_DOCS));
-  return runSW(src, existingCaches);
+  return runSW(src, existingCaches, network);
+}
+
+// Réponse minimale : `body` est l'URL réellement demandée au réseau, pour que
+// les tests voient d'où vient ce qui a été mis en cache.
+class FakeResponse {
+  constructor(body, init = {}) {
+    this.body = body;
+    this.status = init.status ?? 200;
+    this.ok = this.status >= 200 && this.status < 300;
+    this.type = 'basic';
+  }
+  clone() { return new FakeResponse(this.body, this); }
+}
+
+// Le réseau vu du SW : par défaut, il rend la copie à jour. `stale` simule le
+// cache HTTP du navigateur et le CDN de GitHub Pages juste après un
+// déploiement : ils rendent encore l'ANCIENNE copie d'une URL déjà servie —
+// seule une URL jamais vue (la version en paramètre) part chercher la nouvelle.
+// `status` force le code de toutes les réponses (un 404, par exemple).
+function makeFetch(fetched, { stale = false, status = 200 } = {}) {
+  return async (req) => {
+    const url = href(req);
+    fetched.push(url);
+    const fresh = !stale || new URL(url).searchParams.has('v');
+    return new FakeResponse(fresh ? url : `ancienne copie de ${url}`, { status });
+  };
 }
 
 // Exécute le source d'un SW et renvoie les handlers qu'il enregistre, plus le
 // CacheStorage qu'ils manipulent.
-function runSW(src, existingCaches) {
+function runSW(src, existingCaches, network = {}) {
   const handlers = {};
   const self = {
     addEventListener: (type, fn) => { handlers[type] = fn; },
@@ -74,12 +103,13 @@ function runSW(src, existingCaches) {
   };
   const caches = new FakeCaches(existingCaches);
   const fetched = [];
-  const fetchImpl = async (req) => {
-    fetched.push(req.url);
-    return { ok: true, type: 'basic', clone: () => ({ body: req.url }) };
-  };
 
-  new Function('self', 'caches', 'fetch', src)(self, caches, fetchImpl);
+  new Function('self', 'caches', 'fetch', 'Response', src)(
+    self,
+    caches,
+    makeFetch(fetched, network),
+    FakeResponse,
+  );
   return { handlers, caches, fetched };
 }
 
@@ -182,9 +212,37 @@ describe('documents autonomes', () => {
   it("sert l'index.html précaché pour une navigation de l'app", async () => {
     const { handlers, fetched } = await loadSW();
     await lifecycle(handlers, 'install');
+    const afterInstall = fetched.length;
 
-    await expect(navigate(handlers, '/quelque-chose')).resolves.toEqual({ body: '/index.html' });
-    expect(fetched).toEqual([]); // cold launch : rien ne part sur le réseau
+    const page = await navigate(handlers, '/quelque-chose');
+    expect(page.body).toBe(`${ORIGIN}/index.html?v=${VERSION}`);
+    expect(fetched).toHaveLength(afterInstall); // cold launch : rien ne part sur le réseau
+  });
+});
+
+// Régression du 03/10/2026 : un appareil mis à jour dans les minutes qui
+// suivaient un déploiement restait figé sur la version d'avant. Le nouveau SW
+// s'installait, mais son précache passait par le cache HTTP et le CDN (tout est
+// servi en max-age=600), qui rendaient encore les anciennes copies — rangées
+// sous le nom du NOUVEAU cache. Le SW étant à jour, plus rien ne les revérifiait
+// jusqu'au déploiement suivant.
+describe('précache', () => {
+  it("relit chaque fichier hors cache, version dans l'URL, et le range sous son URL propre", async () => {
+    const { handlers, caches, fetched } = await loadSW([], { stale: true });
+
+    await lifecycle(handlers, 'install');
+
+    expect(fetched).toEqual([`${ORIGIN}/index.html?v=${VERSION}`]);
+    const page = await (await caches.open(SHELL_CACHE)).match({ url: `${ORIGIN}/index.html` });
+    expect(page.body).toBe(`${ORIGIN}/index.html?v=${VERSION}`);
+  });
+
+  it("ne range pas une réponse en erreur, et l'install aboutit quand même", async () => {
+    const { handlers, caches } = await loadSW([], { status: 404 });
+
+    await lifecycle(handlers, 'install');
+
+    expect((await caches.open(SHELL_CACHE)).entries.size).toBe(0);
   });
 });
 
@@ -212,7 +270,8 @@ describe('précache du build', () => {
   afterAll(() => fs.rm(out, { recursive: true, force: true }));
 
   it("précache le module d'enregistrement du SW, importé au démarrage de l'app", async () => {
-    await expect(sw.caches.match('/pwa-register.js')).resolves.toEqual({ body: '/pwa-register.js' });
+    const cached = await sw.caches.match('/pwa-register.js');
+    expect(cached?.body).toBe(`${ORIGIN}/pwa-register.js?v=${VERSION}`);
   });
 
   it('précache chaque fichier shell de dist/', async () => {
