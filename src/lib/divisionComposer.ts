@@ -14,6 +14,16 @@ export function divisionConflict(a: DivisionFact, b: DivisionFact): boolean {
   return a.dividend === b.dividend || a.divisor === b.divisor;
 }
 
+/**
+ * Règle du dividende (§11.6) : le fait peut-il entrer dans la séance à côté de
+ * TOUTES ces divisions ? 56÷7 et 56÷8, hautement confusibles, ne s'y croisent
+ * pas. Même filtre pour les révisions dues et les bonus ; deux intros
+ * s'écartent déjà par divisionConflict, plus strict.
+ */
+export function divisionCoexistsWithAll(fact: DivisionFact, others: DivisionFact[]): boolean {
+  return others.every((other) => other.dividend !== fact.dividend);
+}
+
 function makeQuestion(
   fact: DivisionFact,
   flags: Partial<DivisionSessionQuestion> = {},
@@ -34,9 +44,12 @@ function makeQuestion(
  * - Introduction GATÉE sur la solidité multiplicative : un fait de division
  *   n'est introduit que si son parent multiplicatif est en boîte 4+ (§11.3),
  *   même seuil que l'ouverture du niveau (isDivisionUnlocked).
- * - Anti-interférence renforcée : jamais deux faits de même dividende
- *   introduits ensemble, ni retenus ensemble tant que la séance atteint son
- *   plancher sans eux (§11.6).
+ * - Anti-interférence renforcée (§11.6) : jamais deux faits de même dividende
+ *   introduits ensemble, ni une révision due au dividende d'une intro du jour.
+ *   L'intro passe d'abord (§6.1) et la révision attend la séance suivante :
+ *   sauter l'intro à la place doublait le temps d'introduire les 64 divisions.
+ *   Entre révisions, la règle ne cède que si la séance n'atteindrait son
+ *   plancher qu'avec des bonus.
  * - Pas de variation d'ordre : la division n'est pas commutative (§11.2).
  *
  * `maintenanceCount` : places déjà prises par l'entretien, comptées dans le
@@ -94,19 +107,22 @@ export function selectDivisionQuestions(
   const reviewBudget = MAX_QUESTIONS - taken;
 
   const dueFacts = divisionFacts.filter((f) => f.introduced && isDue(f, today));
-  const prioritized = prioritizeByBoxLevel(dueFacts);
+  // Une révision au dividende d'une intro du jour attend la séance suivante,
+  // même sous le plancher : c'est à l'apprentissage que l'interférence pèse
+  // (§1.2), et un bonus prend sa place.
+  const prioritized = prioritizeByBoxLevel(dueFacts).filter((f) =>
+    divisionCoexistsWithAll(f, newFacts),
+  );
 
   const selected: DivisionFact[] = [];
   for (const fact of prioritized) {
     if (selected.length >= reviewBudget) break;
-    // Évite d'embarquer deux orientations du même dividende dans la séance.
-    if (!selected.some((s) => s.dividend === fact.dividend)) {
-      selected.push(fact);
-    }
+    if (divisionCoexistsWithAll(fact, selected)) selected.push(fact);
   }
 
-  // Fallback : relâche la contrainte de dividende plutôt que livrer une séance
-  // trop courte quand le pool dû ne suffit pas, entretien compris.
+  // Fallback : entre révisions, la règle cède quand la séance, entretien
+  // compris, n'atteindrait son plancher qu'avec des bonus. Une révision due,
+  // qui fait avancer le Leitner, vaut mieux qu'un bonus de remplissage.
   if (selected.length + taken < MIN_QUESTIONS) {
     for (const fact of prioritized) {
       if (selected.length >= reviewBudget) break;

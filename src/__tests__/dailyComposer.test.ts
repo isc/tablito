@@ -1,9 +1,10 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import type { UserProfile, BoxLevel } from '../types';
+import type { UserProfile, SessionItem } from '../types';
 import { createNewProfile } from '../lib/storage';
 import { composeDailySession, MAX_MAINTENANCE } from '../lib/dailyComposer';
 import { getDivisionFactKey } from '../lib/divisionFacts';
+import { withDueDivisions, withOneDivisionPerDividend } from './helpers/divisionProfiles';
 
 const NOW = '2026-06-02';
 
@@ -42,22 +43,6 @@ function matureDivisionProfile(): UserProfile {
 // Les `n` premières tables deviennent dues : l'entretien du jour.
 function withDueTables(p: UserProfile, n: number): UserProfile {
   p.facts = p.facts.map((f, i) => (i < n ? { ...f, nextDue: NOW } : f));
-  return p;
-}
-
-// Introduit une division par dividende, une par état (boîte, échéance) : sans
-// deux faits de même dividende, la règle du dividende ne joue pas.
-function withOneDivisionPerDividend(
-  p: UserProfile,
-  states: { box: BoxLevel; nextDue: string }[],
-): UserProfile {
-  const seen = new Set<number>();
-  p.divisionFacts = p.divisionFacts!.map((f) => {
-    if (seen.size >= states.length || seen.has(f.dividend)) return f;
-    const state = states[seen.size];
-    seen.add(f.dividend);
-    return { ...f, ...state, introduced: true, lastSeen: '2026-01-01' };
-  });
   return p;
 }
 
@@ -209,13 +194,9 @@ describe('composeDailySession (séance mixte §11.6)', () => {
     // 7 divisions dues sur 5 dividendes (12÷3 et 12÷4, 15÷3 et 15÷5) et 6
     // tables dues : 2 intros + 5 + 6 = 13, la règle du dividende (§11.6) n'a
     // pas à être relâchée.
-    const p = withDueTables(masteredProfile(), MAX_MAINTENANCE);
-    const due = new Set(['12/3', '12/4', '15/3', '15/5', '16/4', '18/6', '35/7']);
-    p.divisionFacts = p.divisionFacts!.map((f) =>
-      due.has(getDivisionFactKey(f.dividend, f.divisor))
-        ? { ...f, introduced: true, box: 3 as const, lastSeen: '2026-01-01', nextDue: NOW }
-        : f,
-    );
+    const p = withDueDivisions(withDueTables(masteredProfile(), MAX_MAINTENANCE), [
+      '12/3', '12/4', '15/3', '15/5', '16/4', '18/6', '35/7',
+    ]);
 
     const session = composeDailySession(p, NOW);
 
@@ -226,5 +207,57 @@ describe('composeDailySession (séance mixte §11.6)', () => {
     );
     expect(dividends).toHaveLength(5);
     expect(new Set(dividends).size).toBe(5);
+  });
+
+  // La règle du dividende (§11.6) ne comparait que les révisions dues entre
+  // elles : une intro pouvait côtoyer une révision de même dividende, et un
+  // bonus prendre celui de n'importe quelle division de la séance. Seul
+  // l'entrelacement les séparait.
+  describe('aucune division de la séance ne partage son dividende', () => {
+    // Division bien entamée : tout est introduit sauf 56÷8, l'intro du jour, et
+    // rien n'est dû hors `due`. Le reste attend en boîte 5, réserve de bonus,
+    // sauf `weak`, en boîte 2 : les premiers bonus tirés.
+    function withIntro56(due: string[], weak: string[] = []): UserProfile {
+      const p = masteredProfile();
+      p.divisionFacts = p.divisionFacts!.map((f) => {
+        const key = getDivisionFactKey(f.dividend, f.divisor);
+        if (key === '56/8') return f;
+        const dueToday = due.includes(key);
+        return {
+          ...f,
+          introduced: true,
+          box: dueToday ? 3 : weak.includes(key) ? 2 : 5,
+          lastSeen: '2026-01-01',
+          nextDue: dueToday ? NOW : '2099-12-31',
+        };
+      });
+      return p;
+    }
+    const dividendsOf = (session: SessionItem[]) =>
+      session.flatMap((i) => (i.kind === 'div' ? [i.fact.dividend] : []));
+
+    it("reporte la révision due au dividende de l'intro, même quand la séance est maigre", () => {
+      // 1 intro + 2 révisions : les bonus comblent le plancher, 56÷7 attend la
+      // séance suivante plutôt que de côtoyer 56÷8 le jour où il est enseigné.
+      const session = composeDailySession(withIntro56(['56/7', '12/3']), NOW);
+
+      expect(session).toHaveLength(12);
+      expect(session[0]).toMatchObject({ kind: 'div', isIntroduction: true, fact: { dividend: 56 } });
+      const dividends = dividendsOf(session);
+      expect(new Set(dividends).size).toBe(dividends.length);
+      expect(dividends).toContain(12);
+    });
+
+    it.each([
+      ["de l'intro du jour", [], ['56/7']],
+      ["d'une révision due", ['12/3'], ['12/4']],
+      ["d'un autre bonus", [], ['24/4', '24/6']],
+    ])('ne tire aucun bonus au dividende %s', (_, due, weak) => {
+      const session = composeDailySession(withIntro56(due, weak), NOW);
+
+      expect(session).toHaveLength(12);
+      const dividends = dividendsOf(session);
+      expect(new Set(dividends).size).toBe(dividends.length);
+    });
   });
 });
