@@ -4,12 +4,16 @@ interface StrategyHintShellProps {
   title: string;
   // Lignes du corps : du texte, ou un nœud riche (ex : la case à facteur
   // manquant de la division). Multiplication passe simplement des strings.
-  lines: ReactNode[];
+  lines?: ReactNode[];
+  // Corps libre sous les lignes (ex : la règle de conjugaison en images).
+  children?: ReactNode;
   variant: 'feedback' | 'intro';
   // En-tête de la carte feedback (« L'astuce du ×9 », « L'astuce »).
   eyebrow?: string;
   // Rappel additionnel affiché en intro (ex : la règle ×10 pour les ×9).
   recall?: string;
+  // Bouton en bout d'en-tête (ex : « Écouter » des règles de conjugaison).
+  action?: ReactNode;
 }
 
 function BulbIcon() {
@@ -31,10 +35,22 @@ function BulbIcon() {
  * DivisionStrategyHint. Chaque variante d'opération fournit son titre, ses
  * lignes, et ses éléments spécifiques (eyebrow, recall).
  */
-export default function StrategyHintShell({ title, lines, variant, eyebrow, recall }: StrategyHintShellProps) {
-  const lineEls = lines.map((line, i) => (
-    <div key={i} className="strategy-hint-line">{line}</div>
-  ));
+export default function StrategyHintShell({
+  title,
+  lines,
+  children,
+  variant,
+  eyebrow,
+  recall,
+  action,
+}: StrategyHintShellProps) {
+  const lineEls = lines && (
+    <div className="strategy-hint-lines">
+      {lines.map((line, i) => (
+        <div key={i} className="strategy-hint-line">{line}</div>
+      ))}
+    </div>
+  );
 
   if (variant === 'intro') {
     return (
@@ -44,8 +60,10 @@ export default function StrategyHintShell({ title, lines, variant, eyebrow, reca
             <BulbIcon />
           </div>
           <div className="strategy-hint-title">{title}</div>
+          {action}
         </div>
-        <div className="strategy-hint-lines">{lineEls}</div>
+        {lineEls}
+        {children}
         {recall && <div className="strategy-hint-recall">{recall}</div>}
       </div>
     );
@@ -53,9 +71,15 @@ export default function StrategyHintShell({ title, lines, variant, eyebrow, reca
 
   return (
     <div className="strategy-hint feedback">
-      <div className="strategy-hint-eyebrow">{eyebrow}</div>
-      <div className="strategy-hint-body">{title}</div>
-      <div className="strategy-hint-lines">{lineEls}</div>
+      <div className="strategy-hint-top">
+        <div>
+          <div className="strategy-hint-eyebrow">{eyebrow}</div>
+          <div className="strategy-hint-body">{title}</div>
+        </div>
+        {action}
+      </div>
+      {lineEls}
+      {children}
     </div>
   );
 }

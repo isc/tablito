@@ -1,21 +1,21 @@
-import type { UserProfile, SessionItem } from '../types';
+import type {
+  UserProfile,
+  SessionItem,
+  DivisionSessionQuestion,
+  RemainderSessionQuestion,
+} from '../types';
 import { remainderDividend } from '../types';
 import { isDue, pickBonusReviewFacts, prioritizeByBoxLevel } from './leitner';
-import { composeDivisionSession } from './divisionComposer';
-import { composeRemainderSession } from './remainderComposer';
-import { randomDisplayOrder } from './sessionComposer';
+import { selectDivisionQuestions, divisionConflict } from './divisionComposer';
+import { selectRemainderQuestions } from './remainderComposer';
+import { randomDisplayOrder, MIN_QUESTIONS } from './sessionComposer';
 import { getFactKey } from './facts';
 import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey, drawRemainder } from './remainderFacts';
 import { isRemainderUnlocked } from './badges';
 import { computeSimilarity } from './similarity';
-import { interleaveGreedy } from './utils';
+import { interleaveOrder } from './utils';
 
-// Cible haute d'une séance (cf. sessionComposer / specs §6).
-const TARGET_QUESTIONS = 15;
-// Plancher de longueur, identique à sessionComposer (mult-only) et
-// composeDivisionSession : sous ce seuil, on complète par des révisions bonus.
-const MIN_QUESTIONS = 12;
 // Plafond de faits des niveaux précédents en entretien par séance : on ne noie
 // pas le niveau actif (le vrai apprentissage) sous la maintenance. Les faits
 // dus au-delà sont repris la séance suivante — sans danger en boîte 5. Au
@@ -76,15 +76,16 @@ function itemTable(item: SessionItem): number {
 
 // Deux éléments à ne pas rendre adjacents. Même type : règles de chaque piste
 // (dividende/diviseur partagés en ÷ et reste, table partagée / forte similarité
-// en ×). Entre types : un élément du niveau 3 est en conflit avec la division
-// de même diviseur ou de même dividende (45÷7 juste à côté de 42÷7 ou de 45÷9
-// serait confusible) et avec la multiplication ancre de sa zone (7×6 juste
-// avant la zone (7,6) soufflerait l'encadrement). × vs ÷ exacts : pas de
-// conflit (inchangé, specs §11.6).
+// en ×). En reste (§12.7), le même diviseur couvre aussi les zones à quotients
+// adjacents ((7,6) et (7,7) se touchent à un point près : 48÷7 contre 49÷7), et
+// le même dividende TIRÉ (45÷7 vs 45÷6) donne deux lectures du même nombre,
+// hautement confusibles dans la même série. Entre types : un élément du niveau
+// 3 est en conflit avec la division de même diviseur ou de même dividende (45÷7
+// juste à côté de 42÷7 ou de 45÷9 serait confusible) et avec la multiplication
+// ancre de sa zone (7×6 juste avant la zone (7,6) soufflerait l'encadrement).
+// × vs ÷ exacts : pas de conflit (inchangé, specs §11.6).
 function itemConflict(a: SessionItem, b: SessionItem): boolean {
-  if (a.kind === 'div' && b.kind === 'div') {
-    return a.fact.dividend === b.fact.dividend || a.fact.divisor === b.fact.divisor;
-  }
+  if (a.kind === 'div' && b.kind === 'div') return divisionConflict(a.fact, b.fact);
   if (a.kind === 'mult' && b.kind === 'mult') {
     return itemTable(a) === itemTable(b) || computeSimilarity(a.fact, b.fact) === 'strong';
   }
@@ -140,7 +141,8 @@ function remCrossConflict(
  * la maintenance n'est jamais en retard. Tous types entrelacés.
  *
  * Les intros du niveau actif passent en tête (comme en multiplication) ; le
- * reste (révisions + entretien + éventuel padding bonus) est entrelacé.
+ * reste (révisions + entretien + éventuel padding bonus) est entrelacé d'un
+ * seul tenant, à la suite de la dernière intro.
  *
  * Plancher de longueur : les premiers jours post-déblocage, peu de faits du
  * niveau actif sont introduits (rythme 2/séance) et peu d'entretien est dû —
@@ -148,6 +150,11 @@ function remCrossConflict(
  * MIN_QUESTIONS par des révisions bonus (sans toucher au Leitner, cf.
  * pickBonusReviewFacts) : niveau actif d'abord, puis niveaux précédents
  * (réserve inépuisable). Le filet se résorbe quand le niveau grossit.
+ *
+ * L'entretien est retenu en premier (il ne dépend pas du niveau actif), et la
+ * sélection du niveau actif compte ses places : budget de révisions, fallback
+ * de dividende et plancher voient la séance entière. Comptés sur la seule part
+ * du niveau actif, ils gonflaient la séance de bonus (specs §11.3).
  */
 export function composeDailySession(profile: UserProfile, now: string): SessionItem[] {
   const today = now.slice(0, 10);
@@ -158,13 +165,6 @@ export function composeDailySession(profile: UserProfile, now: string): SessionI
 
 // Niveau 2 actif : division + entretien des tables (specs §11.6).
 function composeDivisionDaily(profile: UserProfile, today: string): SessionItem[] {
-  const divItems: SessionItem[] = composeDivisionSession(profile, today).map((q) => ({
-    kind: 'div',
-    ...q,
-  }));
-  const intros = divItems.filter((i) => i.isIntroduction);
-  const reviews = divItems.filter((i) => !i.isIntroduction);
-
   // Faits de tables dus aujourd'hui → révisions d'entretien (jamais des intros :
   // post-déblocage les tables sont toutes introduites et maîtrisées).
   // Les plus fragiles d'abord, comme partout ailleurs (§6.1) : ce qui déborde
@@ -178,19 +178,14 @@ function composeDivisionDaily(profile: UserProfile, today: string): SessionItem[
     .slice(0, MAX_MAINTENANCE)
     .map((fact) => multItem(fact));
 
-  return assemble(profile, intros, reviews, maintenance);
+  const { intros, due } = selectDivisionQuestions(profile, today, maintenance.length);
+  const asItem = (q: DivisionSessionQuestion): SessionItem => ({ kind: 'div', ...q });
+  return assemble(profile, intros.map(asItem), due.map(asItem), maintenance);
 }
 
 // Niveau 3 actif : division avec reste + entretien des tables ET des divisions
 // exactes, plafonnés ensemble (specs §12.3).
 function composeRemainderDaily(profile: UserProfile, today: string): SessionItem[] {
-  const remItems: SessionItem[] = composeRemainderSession(profile, today).map((q) => ({
-    kind: 'rem',
-    ...q,
-  }));
-  const intros = remItems.filter((i) => i.isIntroduction);
-  const reviews = remItems.filter((i) => !i.isIntroduction);
-
   const divisionFacts = profile.divisionFacts ?? [];
   const dueMult = profile.facts.filter((f) => f.introduced && isDue(f, today));
   const dueDiv = divisionFacts.filter((f) => f.introduced && isDue(f, today));
@@ -204,27 +199,26 @@ function composeRemainderDaily(profile: UserProfile, today: string): SessionItem
     .slice(0, MAX_MAINTENANCE)
     .map((x) => x.item);
 
-  return assemble(profile, intros, reviews, maintenance);
+  const { intros, due } = selectRemainderQuestions(profile, today, maintenance.length);
+  const asItem = (q: RemainderSessionQuestion): SessionItem => ({ kind: 'rem', ...q });
+  return assemble(profile, intros.map(asItem), due.map(asItem), maintenance);
 }
 
-// Tronc commun : l'entretien remplace des révisions du niveau actif pour viser
-// ~TARGET sans gonfler la séance (intros gardées en priorité), puis padding
-// bonus sous le plancher, puis entrelacement.
+// Tronc commun : révisions dues du niveau actif, entretien, puis padding bonus
+// sous le plancher — l'ordre de préférence de l'entrelacement, fait d'un seul
+// tenant à la suite de la dernière intro (specs §1.3).
 function assemble(
   profile: UserProfile,
   intros: SessionItem[],
-  reviews: SessionItem[],
+  due: SessionItem[],
   maintenance: SessionItem[],
 ): SessionItem[] {
-  const reviewBudget = Math.max(0, TARGET_QUESTIONS - intros.length - maintenance.length);
-  const core: SessionItem[] = [...reviews.slice(0, reviewBudget), ...maintenance];
-
+  const core = [...due, ...maintenance];
   const deficit = MIN_QUESTIONS - (intros.length + core.length);
   if (deficit > 0) {
     core.push(...bonusPadding(profile, [...intros, ...core], deficit));
   }
-
-  return [...intros, ...interleaveGreedy(core, itemConflict)];
+  return [...intros, ...interleaveOrder(core, itemConflict, intros.at(-1))];
 }
 
 // Révisions bonus pour combler une séance courte : niveau le plus récent

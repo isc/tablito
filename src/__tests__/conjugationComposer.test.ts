@@ -80,9 +80,9 @@ describe('anti-interférence, y compris sur le chemin des révisions bonus (§3.
     }
   });
 
-  it('entrelace aussi les JONCTIONS de blocs, pas seulement l’intérieur', () => {
+  it('entrelace aussi les JONCTIONS, pas seulement l’intérieur', () => {
     // Assez de faits pour que la séance ait des révisions dues ET du padding
-    // bonus : la jonction entre les deux blocs échappait au contrôle.
+    // bonus : ordonnés en deux blocs, leur jonction échappait au contrôle.
     const states: Record<string, { box: BoxLevel; due?: boolean }> = {};
     for (const [i, key] of [
       'pres-g1-je',
@@ -104,7 +104,7 @@ describe('anti-interférence, y compris sur le chemin des révisions bonus (§3.
 
     const questions = composeConjSession(profile, TODAY);
     expect(questions.length).toBeGreaterThanOrEqual(12);
-    // Best effort comme partout (interleaveGreedy), mais ici la solution
+    // Best effort comme partout (interleaveOrder), mais ici la solution
     // existe : aucune paire adjacente ne doit partager verbe ou personne.
     // Exception assumée : deux INTROS de suite, que l'ordre canonique prend au
     // même verbe (« je suis » puis « tu es ») — c'est le geste d'enseignement,

@@ -3,8 +3,12 @@ import { describe, it, expect } from 'vitest';
 import type { UserProfile } from '../types';
 import { DIVISION_FAST_THRESHOLD_MS } from '../types';
 import { createNewProfile } from '../lib/storage';
-import { createInitialDivisionFacts, parentMultiplicationKey } from '../lib/divisionFacts';
-import { composeDivisionSession } from '../lib/divisionComposer';
+import {
+  createInitialDivisionFacts,
+  getDivisionFactKey,
+  parentMultiplicationKey,
+} from '../lib/divisionFacts';
+import { selectDivisionQuestions } from '../lib/divisionComposer';
 import { processAnswer, isDue, MAX_FRAGILE } from '../lib/leitner';
 import { getFactKey } from '../lib/facts';
 
@@ -23,54 +27,54 @@ function withMastered(masteredPairs: [number, number][] | 'all', box: 4 | 5 = 5)
 
 const NOW = '2026-06-02';
 
-describe('composeDivisionSession — gating sur la maîtrise multiplicative', () => {
+// Sélection du jour, `maintenance` places d'entretien déjà prises.
+const select = (p: UserProfile, maintenance = 0) => selectDivisionQuestions(p, NOW, maintenance);
+
+describe('selectDivisionQuestions — gating sur la maîtrise multiplicative', () => {
   it('ne propose rien si aucune table multiplicative n\'est maîtrisée', () => {
     const p = createNewProfile('Zoé');
-    expect(composeDivisionSession(p, NOW)).toEqual([]);
+    expect(select(p)).toEqual({ intros: [], due: [] });
   });
 
   it('rend éligible un fait de division dès que son parent est en boîte 5', () => {
     const p = withMastered([[2, 2]]); // parent de 4÷2=2
-    const session = composeDivisionSession(p, NOW);
-    expect(session).toHaveLength(1);
-    expect(session[0].isIntroduction).toBe(true);
-    expect(session[0].fact.dividend).toBe(4);
-    expect(session[0].fact.divisor).toBe(2);
+    const { intros, due } = select(p);
+    expect(due).toEqual([]);
+    expect(intros).toHaveLength(1);
+    expect(intros[0].isIntroduction).toBe(true);
+    expect(intros[0].fact.dividend).toBe(4);
+    expect(intros[0].fact.divisor).toBe(2);
   });
 
   it('rend éligible un fait de division dès que son parent est en boîte 4', () => {
     // Aligné sur l'ouverture du niveau (badges Table = boîte 4+) : un parent
     // en boîte 4, pas encore en boîte 5, débloque déjà sa division.
     const p = withMastered([[2, 2]], 4); // parent de 4÷2=2, en boîte 4
-    const session = composeDivisionSession(p, NOW);
-    expect(session).toHaveLength(1);
-    expect(session[0].isIntroduction).toBe(true);
-    expect(session[0].fact.dividend).toBe(4);
+    const { intros } = select(p);
+    expect(intros).toHaveLength(1);
+    expect(intros[0].fact.dividend).toBe(4);
   });
 
   it('n\'introduit jamais ensemble les deux orientations d\'un même dividende (§11.6)', () => {
     // Seul 7×8 maîtrisé → 56÷7 et 56÷8 éligibles, mais même dividende.
     const p = withMastered([[7, 8]]);
-    const session = composeDivisionSession(p, NOW);
-    expect(session).toHaveLength(1); // un seul des deux, l'autre est en conflit
-    expect(session[0].fact.dividend).toBe(56);
+    const { intros } = select(p);
+    expect(intros).toHaveLength(1); // un seul des deux, l'autre est en conflit
+    expect(intros[0].fact.dividend).toBe(56);
   });
 
   it('plafonne à 2 nouveaux faits par séance', () => {
     // 3 parents carrés maîtrisés → 3 faits éligibles, dividendes distincts.
     const p = withMastered([[2, 2], [3, 3], [4, 4]]);
-    const session = composeDivisionSession(p, NOW);
-    const intros = session.filter((q) => q.isIntroduction);
-    expect(intros.length).toBe(2);
+    expect(select(p).intros).toHaveLength(2);
   });
 
   it('tout fait introduit a bien un parent multiplicatif prêt (boîte 4+)', () => {
     const p = withMastered([[2, 2], [3, 3]], 4);
-    const session = composeDivisionSession(p, NOW);
     const parentReadyKeys = new Set(
       p.facts.filter((f) => f.box >= 4).map((f) => getFactKey(f.a, f.b)),
     );
-    for (const q of session) {
+    for (const q of select(p).intros) {
       expect(parentReadyKeys.has(parentMultiplicationKey(q.fact))).toBe(true);
     }
   });
@@ -83,8 +87,7 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     p.divisionFacts = p.divisionFacts!.map((f, i) =>
       i <= MAX_FRAGILE ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
     );
-    const session = composeDivisionSession(p, NOW);
-    expect(session.filter((q) => q.isIntroduction)).toHaveLength(0);
+    expect(select(p).intros).toHaveLength(0);
   });
 
   it('continue d\'introduire tant que la pile fragile tient dans le plafond', () => {
@@ -92,8 +95,7 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     p.divisionFacts = p.divisionFacts!.map((f, i) =>
       i < MAX_FRAGILE ? { ...f, introduced: true, box: 1 as const, nextDue: '2026-12-31' } : f,
     );
-    const session = composeDivisionSession(p, NOW);
-    expect(session.filter((q) => q.isIntroduction).length).toBeGreaterThan(0);
+    expect(select(p).intros.length).toBeGreaterThan(0);
   });
 
   it('reprend les intros en fin de parcours même avec un fait coincé en boîte 1', () => {
@@ -114,8 +116,7 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
           }
         : f,
     );
-    const session = composeDivisionSession(p, NOW);
-    expect(session.filter((q) => q.isIntroduction).length).toBeGreaterThan(0);
+    expect(select(p).intros.length).toBeGreaterThan(0);
   });
 
   it('inclut les faits de division déjà introduits et dus en révision', () => {
@@ -124,15 +125,53 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
     p.divisionFacts = p.divisionFacts!.map((f, i) =>
       i < 5 ? { ...f, introduced: true, box: 2 as const, nextDue: '' } : f,
     );
-    const session = composeDivisionSession(p, NOW);
-    const reviews = session.filter((q) => !q.isIntroduction);
-    expect(reviews.length).toBeGreaterThan(0);
+    expect(select(p).due.length).toBeGreaterThan(0);
+  });
+
+  it('renvoie intros et révisions dues des plus fragiles aux plus solides, sans bonus', () => {
+    // 2 + 6 < 12 et 8 divisions introduites non dues seraient disponibles : le
+    // plancher reste l'affaire de composeDailySession.
+    const p = withMastered('all');
+    const boxes = [5, 3, 1, 5, 3, 5] as const;
+    const seen = new Set<number>();
+    let due = 0;
+    let bonus = 0;
+    p.divisionFacts = p.divisionFacts!.map((f) => {
+      if (seen.has(f.dividend)) return f; // un fait par dividende
+      seen.add(f.dividend);
+      if (due < boxes.length) return { ...f, introduced: true, box: boxes[due++], nextDue: '' };
+      if (bonus++ < 8) return { ...f, introduced: true, box: 2 as const, nextDue: '2026-12-31' };
+      return f;
+    });
+
+    const selection = select(p);
+
+    expect(selection.intros).toHaveLength(2);
+    expect(selection.due.map((q) => q.fact.box)).toEqual([1, 3, 3, 5, 5, 5]);
+  });
+
+  it("ne relâche la règle du dividende que si la séance, entretien compris, resterait sous le plancher", () => {
+    // 2 intros + 7 divisions dues sur 5 dividendes (12÷3 et 12÷4, 15÷3 et 15÷5).
+    const p = withMastered('all');
+    const dueKeys = new Set(['12/3', '12/4', '15/3', '15/5', '16/4', '18/6', '35/7']);
+    p.divisionFacts = p.divisionFacts!.map((f) =>
+      dueKeys.has(getDivisionFactKey(f.dividend, f.divisor))
+        ? { ...f, introduced: true, box: 3 as const, nextDue: '' }
+        : f,
+    );
+    const dividends = (maintenance: number) => select(p, maintenance).due.map((q) => q.fact.dividend);
+
+    // 2 + 5 + 5 places d'entretien = 12 : plancher atteint, un fait par dividende.
+    expect(dividends(5)).toHaveLength(5);
+    expect(new Set(dividends(5)).size).toBe(5);
+    // Une place d'entretien de moins, la séance tomberait à 11 : règle relâchée.
+    expect(dividends(4)).toHaveLength(7);
   });
 
   it('chaque question respecte dividend = divisor × quotient (pas de flip)', () => {
     const p = withMastered([[2, 2], [3, 3], [4, 4]]);
-    const session = composeDivisionSession(p, NOW);
-    for (const q of session) {
+    const { intros, due } = select(p);
+    for (const q of [...intros, ...due]) {
       expect(q.fact.dividend).toBe(q.fact.divisor * q.fact.quotient);
     }
   });

@@ -13,8 +13,10 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Feedback d'erreur : carte honeySoft avec bord honey. */
+/* Feedback d'erreur : carte honeySoft avec bord honey. Les lignes d'une règle
+   de conjugaison (ConjRuleVisual.css) y passent en blanc. */
 .strategy-hint.feedback {
+  --conj-rule-cell: var(--paper);
   background: var(--honey-soft);
   border: 1.5px solid var(--honey);
   padding: 14px 16px;
@@ -46,6 +48,12 @@
   font-weight: 800;
   color: var(--ink);
   line-height: 1.3;
+}
+
+.strategy-hint-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .strategy-hint-eyebrow {

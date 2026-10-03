@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import type { UserProfile } from '../types';
+import type { UserProfile, BoxLevel } from '../types';
 import { createNewProfile } from '../lib/storage';
 import { composeDailySession, MAX_MAINTENANCE } from '../lib/dailyComposer';
+import { getDivisionFactKey } from '../lib/divisionFacts';
 
 const NOW = '2026-06-02';
 
@@ -23,8 +24,8 @@ function masteredProfile(): UserProfile {
 }
 
 // Division déjà bien entamée : tous les faits de division introduits et dus →
-// composeDivisionSession produit à lui seul une séance pleine. Représente le
-// régime de croisière du niveau 2.
+// la division remplit à elle seule une séance pleine. Représente le régime de
+// croisière du niveau 2.
 function matureDivisionProfile(): UserProfile {
   const p = masteredProfile();
   p.divisionFacts = (p.divisionFacts ?? []).map((f) => ({
@@ -38,6 +39,28 @@ function matureDivisionProfile(): UserProfile {
   return p;
 }
 
+// Les `n` premières tables deviennent dues : l'entretien du jour.
+function withDueTables(p: UserProfile, n: number): UserProfile {
+  p.facts = p.facts.map((f, i) => (i < n ? { ...f, nextDue: NOW } : f));
+  return p;
+}
+
+// Introduit une division par dividende, une par état (boîte, échéance) : sans
+// deux faits de même dividende, la règle du dividende ne joue pas.
+function withOneDivisionPerDividend(
+  p: UserProfile,
+  states: { box: BoxLevel; nextDue: string }[],
+): UserProfile {
+  const seen = new Set<number>();
+  p.divisionFacts = p.divisionFacts!.map((f) => {
+    if (seen.size >= states.length || seen.has(f.dividend)) return f;
+    const state = states[seen.size];
+    seen.add(f.dividend);
+    return { ...f, ...state, introduced: true, lastSeen: '2026-01-01' };
+  });
+  return p;
+}
+
 describe('composeDailySession (séance mixte §11.6)', () => {
   it('division mature + aucune table due → séance 100% division, pleine', () => {
     const session = composeDailySession(matureDivisionProfile(), NOW);
@@ -46,10 +69,7 @@ describe('composeDailySession (séance mixte §11.6)', () => {
   });
 
   it('des tables dues → entretien mélangé à la division', () => {
-    const p = matureDivisionProfile();
-    // 3 faits multiplicatifs dus aujourd'hui.
-    p.facts = p.facts.map((f, i) => (i < 3 ? { ...f, nextDue: NOW } : f));
-    const session = composeDailySession(p, NOW);
+    const session = composeDailySession(withDueTables(matureDivisionProfile(), 3), NOW);
     const mult = session.filter((i) => i.kind === 'mult');
     const div = session.filter((i) => i.kind === 'div');
     expect(mult.length).toBeGreaterThan(0);
@@ -116,6 +136,25 @@ describe('composeDailySession (séance mixte §11.6)', () => {
     });
   });
 
+  it("coupe les révisions de division par priorité quand l'entretien leur prend des places", () => {
+    // 14 divisions dues (4 en boîte 1, 4 en boîte 3, 6 en boîte 5) et 6 tables
+    // dues : l'entretien prend 6 des 15 places, il en reste 9 pour la division.
+    // Elles vont aux plus fragiles. Coupée dans l'ordre de la séance, la
+    // sélection pouvait écarter une révision plus fragile qu'une autre gardée.
+    const boxes = [1, 1, 1, 1, 3, 3, 3, 3, 5, 5, 5, 5, 5, 5] as const;
+    const p = withOneDivisionPerDividend(
+      withDueTables(masteredProfile(), MAX_MAINTENANCE),
+      boxes.map((box) => ({ box, nextDue: NOW })),
+    );
+
+    const session = composeDailySession(p, NOW);
+
+    const div = session.filter((i) => i.kind === 'div');
+    expect(div.every((i) => !i.isIntroduction && !i.isBonusReview)).toBe(true);
+    expect(div.map((i) => i.fact.box).sort()).toEqual([1, 1, 1, 1, 3, 3, 3, 3, 5]);
+    expect(session.filter((i) => i.kind === 'mult')).toHaveLength(MAX_MAINTENANCE);
+  });
+
   it('PLANCHER — 1ère séance post-déblocage atteint le minimum malgré peu de division', () => {
     // Déblocage frais : aucune division introduite, aucune table due → sans
     // filet la séance tomberait à ~2 questions. Le padding bonus la remplit.
@@ -129,9 +168,63 @@ describe('composeDailySession (séance mixte §11.6)', () => {
   });
 
   it('PLANCHER — quelques tables dues mais division thin → toujours rempli au minimum', () => {
-    const p = masteredProfile();
-    p.facts = p.facts.map((f, i) => (i < 3 ? { ...f, nextDue: NOW } : f));
-    const session = composeDailySession(p, NOW);
+    const session = composeDailySession(withDueTables(masteredProfile(), 3), NOW);
     expect(session.length).toBeGreaterThanOrEqual(12);
+  });
+
+  // Premières semaines du niveau 2 : `due` divisions dues, une réserve de 12
+  // divisions introduites non dues pour le bonus, des intros possibles (toutes
+  // les tables sont prêtes) et `maintenance` tables dues.
+  function earlyDivisionProfile(due: number, maintenance: number): UserProfile {
+    const state = (nextDue: string) => ({ box: 3 as const, nextDue });
+    return withOneDivisionPerDividend(withDueTables(masteredProfile(), maintenance), [
+      ...Array.from({ length: due }, () => state(NOW)),
+      ...Array.from({ length: 12 }, () => state('2099-12-31')),
+    ]);
+  }
+
+  // Le plancher se compte sur la séance entière, entretien compris (§11.3).
+  it.each([
+    // [divisions dues, tables dues, bonus attendus, longueur attendue]
+    [3, 6, 1, 12],
+    [3, 3, 4, 12],
+    [4, 6, 0, 12],
+    [3, 0, 7, 12],
+    // 15 − 2 intros − 6 tables : 7 divisions retenues sur 9.
+    [9, 6, 0, 15],
+  ])(
+    'PLANCHER — 2 intros + %i divisions + %i tables dues → %i bonus, %i questions',
+    (due, maintenance, bonus, length) => {
+      const session = composeDailySession(earlyDivisionProfile(due, maintenance), NOW);
+      expect(session).toHaveLength(length);
+      expect(session.filter((i) => i.isIntroduction)).toHaveLength(2);
+      // Le bonus puise d'abord dans le niveau actif.
+      const bonusItems = session.filter((i) => i.isBonusReview);
+      expect(bonusItems).toHaveLength(bonus);
+      expect(bonusItems.every((i) => i.kind === 'div')).toBe(true);
+    },
+  );
+
+  it('ne garde pas deux divisions de même dividende quand la séance atteint le plancher sans elles', () => {
+    // 7 divisions dues sur 5 dividendes (12÷3 et 12÷4, 15÷3 et 15÷5) et 6
+    // tables dues : 2 intros + 5 + 6 = 13, la règle du dividende (§11.6) n'a
+    // pas à être relâchée.
+    const p = withDueTables(masteredProfile(), MAX_MAINTENANCE);
+    const due = new Set(['12/3', '12/4', '15/3', '15/5', '16/4', '18/6', '35/7']);
+    p.divisionFacts = p.divisionFacts!.map((f) =>
+      due.has(getDivisionFactKey(f.dividend, f.divisor))
+        ? { ...f, introduced: true, box: 3 as const, lastSeen: '2026-01-01', nextDue: NOW }
+        : f,
+    );
+
+    const session = composeDailySession(p, NOW);
+
+    expect(session).toHaveLength(13);
+    expect(session.some((i) => i.isBonusReview)).toBe(false);
+    const dividends = session.flatMap((i) =>
+      i.kind === 'div' && !i.isIntroduction ? [i.fact.dividend] : [],
+    );
+    expect(dividends).toHaveLength(5);
+    expect(new Set(dividends).size).toBe(5);
   });
 });

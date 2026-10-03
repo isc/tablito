@@ -9,7 +9,7 @@ import type { ConjFact, ConjFactKind, ConjPerson, ConjTense } from '../types';
 //   futur                6 terminaisons + 6 radicaux irréguliers           → 12
 //
 // Deux systèmes cohabitent (Pinker 1999, spec §2.1) : les RÈGLES productives
-// (terminaisons, marques de personne — cf. conjugationStrategies.ts) et les
+// (terminaisons, marques de personne — cf. conjugationRules.ts) et les
 // FORMES stockées (les irréguliers fréquents). Les deux sont des faits Leitner,
 // mais ils ne se tapent pas pareil (§4.2) : terminaison seule quand le radical
 // est régulier et affiché, forme entière quand c'est la forme elle-même qui est

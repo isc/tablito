@@ -33,7 +33,7 @@ import {
   conjFactsInterfere,
   isConjContrastPair,
 } from './conjugationInterference';
-import { daysBetween, firstFreeSlot, interleaveGreedy } from './utils';
+import { daysBetween, firstFreeSlot, interleaveOrder } from './utils';
 
 // === Séance de conjugaison (spec Verbito §5, §6.2) ===
 //
@@ -118,11 +118,7 @@ export function unlockedConjTenses(badges: Badge[]): ConjTense[] {
   return unlocked;
 }
 
-/**
- * Tout ce que la composition lit d'un profil. Restreint EXPRÈS à ces deux
- * champs : c'est le contrat que l'appelant peut mémoïser, sans recomposer la
- * séance de conjugaison à chaque réponse d'une séance de maths.
- */
+/** Tout ce que la composition lit d'un profil. */
 export type ConjProfile = Pick<UserProfile, 'conjFacts' | 'badges'>;
 
 // --- Ordre d'introduction à l'intérieur d'un temps --------------------------
@@ -227,13 +223,6 @@ export function conjQuestionConflict(a: ConjSessionQuestion, b: ConjSessionQuest
  */
 function conjCoexistsWithAll(fact: ConjFact, ...groups: ConjFact[][]): boolean {
   return groups.every((group) => group.every((other) => canConjCoexist(other, fact)));
-}
-
-function interleave(
-  questions: ConjSessionQuestion[],
-  after?: ConjSessionQuestion,
-): ConjSessionQuestion[] {
-  return interleaveGreedy(questions, conjQuestionConflict, after);
 }
 
 /**
@@ -344,10 +333,9 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   // Intro : toujours la 1ʳᵉ porteuse (déterministe — l'écran d'introduction et
   // son MP3 sont pré-générés, comme `introRemainder` au niveau 3).
   const intros = newFacts.map((fact) => makeQuestion(fact, 0, { isIntroduction: true }));
-  // Chaque bloc est entrelacé EN TENANT COMPTE de la question qui le précède :
-  // entrelacer les blocs isolément laissait leurs jonctions hors contrôle, et
-  // deux questions consécutives pouvaient y partager le verbe ou la personne
-  // (§5.1), voire être en interférence.
+  // Révisions dues puis bonus, entrelacés d'un seul tenant à la suite de la
+  // dernière intro (specs §1.3) : aucune jonction n'échappe à la règle du
+  // verbe et de la personne (§5.1) ni à l'anti-interférence.
   //
   // La paire de contraste, quand la séance la contient, reste hors de
   // l'entrelacement : elle est posée d'un bloc ensuite (placeContrastPair).
@@ -361,9 +349,10 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   const hasPair = pair.every(Boolean);
   const outsidePair = (q: ConjSessionQuestion) => !hasPair || !pair.includes(q);
 
-  const reviews = interleave(reviewQuestions.filter(outsidePair), intros.at(-1));
-  const bonus = interleave(bonusQuestions.filter(outsidePair), reviews.at(-1) ?? intros.at(-1));
-  const questions = [...intros, ...reviews, ...bonus];
+  const questions = [
+    ...intros,
+    ...interleaveOrder(all.filter(outsidePair), conjQuestionConflict, intros.at(-1)),
+  ];
   if (!hasPair) return questions;
   // Le fait dû d'abord, son partenaire de contraste juste après.
   const unit = (pair as ConjSessionQuestion[]).sort((a, b) => Number(a.isBonusReview) - Number(b.isBonusReview));

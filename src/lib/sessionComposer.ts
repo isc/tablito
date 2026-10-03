@@ -8,15 +8,17 @@ import {
 } from './leitner';
 import { getFactKey } from './facts';
 import { computeSimilarity } from './similarity';
-import { daysBetween, interleaveGreedy } from './utils';
+import { daysBetween, interleaveOrder } from './utils';
 
 // Target range: 12-15 questions (~5 min at ~20-30s per question with feedback).
 // MIN_QUESTIONS is a soft target, not an absolute floor: if fewer distinct facts
 // are available, the session is shorter rather than repeating facts (massed
 // practice is counterproductive — Cepeda et al. 2008). See specs §6.2.
-const MIN_QUESTIONS = 12;
-const MAX_QUESTIONS = 15;
-const MAX_NEW_FACTS = 2;
+// Shared by every math composer: the daily session's floor and the division's
+// dividend fallback must test the same value.
+export const MIN_QUESTIONS = 12;
+export const MAX_QUESTIONS = 15;
+export const MAX_NEW_FACTS = 2;
 
 /**
  * Returns a random display order for a fact (a*b or b*a).
@@ -153,28 +155,36 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
     isBonusReview: false,
   }));
 
-  // Combine: intro questions are placed at the front, then interleave the rest.
-  // The spec says intro happens before practice, so intro questions come first.
-  const allReview = interleaveGreedy(reviewQuestions, isAdjacentConflict);
-  const result = [...introQuestions, ...allReview];
-
   // Padding par bonus reviews (feedback normal, sans toucher au Leitner :
   // le calendrier de répétition espacée est préservé — cf. pickBonusReviewFacts).
-  if (result.length < MIN_QUESTIONS) {
-    const sessionFactKeys = new Set(result.map((q) => getFactKey(q.fact.a, q.fact.b)));
-    const bonusQuestions: SessionQuestion[] = pickBonusReviewFacts(
-      facts,
-      (f) => sessionFactKeys.has(getFactKey(f.a, f.b)),
-      MIN_QUESTIONS - result.length,
-    ).map((fact) => ({
-      fact,
-      ...randomDisplayOrder(fact),
-      isIntroduction: false,
-      isRetry: false,
-      isBonusReview: true,
-    }));
-    result.push(...interleaveGreedy(bonusQuestions, isAdjacentConflict));
+  const planned = [...introQuestions, ...reviewQuestions];
+  const bonusQuestions: SessionQuestion[] = [];
+  if (planned.length < MIN_QUESTIONS) {
+    const sessionFactKeys = new Set(planned.map((q) => getFactKey(q.fact.a, q.fact.b)));
+    bonusQuestions.push(
+      ...pickBonusReviewFacts(
+        facts,
+        (f) => sessionFactKeys.has(getFactKey(f.a, f.b)),
+        MIN_QUESTIONS - planned.length,
+      ).map((fact) => ({
+        fact,
+        ...randomDisplayOrder(fact),
+        isIntroduction: false,
+        isRetry: false,
+        isBonusReview: true,
+      })),
+    );
   }
 
-  return result;
+  // Intros en tête (l'introduction précède la pratique), puis tout le reste
+  // d'un seul tenant, révisions dues avant bonus, à la suite de la dernière
+  // intro (specs §1.3).
+  return [
+    ...introQuestions,
+    ...interleaveOrder(
+      [...reviewQuestions, ...bonusQuestions],
+      isAdjacentConflict,
+      introQuestions.at(-1),
+    ),
+  ];
 }

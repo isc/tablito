@@ -80,12 +80,14 @@
   animation: conjLightUp 0.45s ease both;
 }
 
-.conj-form-subject.is-lit {
+.conj-form-subject.is-lit,
+.conj-rule-pronoun {
   background: var(--honey-soft);
   box-shadow: 0 1px 0 var(--honey);
 }
 
-.conj-form-mark.is-lit {
+.conj-form-mark.is-lit,
+.conj-hint-mark.is-lit {
   background: var(--conj-mark-soft);
   box-shadow: 0 1px 0 var(--conj-mark);
 }
@@ -102,7 +104,7 @@
 }
 
 /* Terminaisons et radicaux mis en évidence DANS le texte des astuces (mini-
-   balisage de conjugationStrategies, rendu par renderConjHintLine) : mêmes
+   balisage de conjugationRules, rendu par renderConjHintLine) : mêmes
    couleurs que la forme segmentée, pour que l'astuce et la forme se lisent
    comme un seul système. */
 .conj-hint-mark {
@@ -113,6 +115,20 @@
 .conj-hint-stem {
   color: var(--conj-stem);
   font-weight: 600;
+}
+
+/* `^ais^` : la terminaison qu'on ajoute, dans la pastille de la forme
+   segmentée illuminée (couleurs partagées avec .conj-form-mark.is-lit). */
+.conj-hint-mark.is-lit {
+  border-radius: 6px;
+  padding: 0 0.1em;
+}
+
+/* `~ons~` : les lettres qu'on enlève. */
+.conj-hint-struck {
+  color: var(--ink-muted);
+  font-weight: 600;
+  text-decoration-thickness: 2px;
 }
 
 /* Le trait de la terminaison à compléter. Largeur FIXE : elle ne doit jamais

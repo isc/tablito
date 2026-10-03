@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import type { UserProfile } from '../types';
 import { BADGE_IDS, remainderDividend } from '../types';
 import { createNewProfile } from '../lib/storage';
-import { composeDailySession } from '../lib/dailyComposer';
+import { composeDailySession, MAX_MAINTENANCE } from '../lib/dailyComposer';
 import { createInitialRemainderFacts, introRemainder, drawRemainder } from '../lib/remainderFacts';
 import { getRemainderFactKey, parentDivisionKey } from '../lib/remainderFacts';
 
@@ -82,7 +82,36 @@ describe('composeDailySession — niveau 3 actif (specs §12.3)', () => {
     expect(session.some((i) => i.isBonusReview)).toBe(true);
   });
 
-  // NB : l'entrelacement anti-interférence est best-effort (interleaveGreedy,
+  it("PLANCHER — compté sur la séance entière : l'entretien réduit d'autant le bonus", () => {
+    // 2 intros + 3 zones dues + 6 tables dues = 11 : un seul bonus (§12.3).
+    const p = level3Profile();
+    p.facts = p.facts.map((f, i) => (i < MAX_MAINTENANCE ? { ...f, nextDue: NOW } : f));
+    // Zones des diviseurs 6 à 9 introduites (réserve de bonus), dont 3 dues ;
+    // celles des diviseurs 2 à 5 restent à introduire.
+    let due = 0;
+    p.remainderFacts = p.remainderFacts!.map((f) =>
+      f.divisor < 6
+        ? f
+        : {
+            ...f,
+            introduced: true,
+            box: 3 as const,
+            lastSeen: '2026-07-01',
+            nextDue: due++ < 3 ? NOW : '2099-12-31',
+          },
+    );
+
+    const session = composeDailySession(p, NOW);
+
+    expect(session).toHaveLength(12);
+    expect(session.filter((i) => i.isIntroduction)).toHaveLength(2);
+    const bonus = session.filter((i) => i.isBonusReview);
+    expect(bonus).toHaveLength(1);
+    // Le bonus puise d'abord dans le niveau actif.
+    expect(bonus[0].kind).toBe('rem');
+  });
+
+  // NB : l'entrelacement anti-interférence est best-effort (interleaveOrder,
   // « quand c'est possible » §6.2) — pas d'assertion d'adjacence stricte ici ;
   // le conflit même-diviseur est couvert par les tests d'intro du composer.
 });

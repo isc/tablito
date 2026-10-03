@@ -118,7 +118,7 @@ interface RulesStrings {
   back: string;
   title: string;
   intro: string;
-  // Titres de section, affichés seulement quand la conjugaison ajoute ses
+  // Onglets, affichés seulement quand la conjugaison ajoute ses
   // règles à celles des maths — donc jamais en anglais (matière fr-only) : les
   // entrées `en` gardent la table totale sans jamais être rendues.
   sectionMaths: string;

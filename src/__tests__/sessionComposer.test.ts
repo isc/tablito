@@ -9,6 +9,7 @@ import {
   type PlacementResult,
 } from '../lib/placement';
 import { createNewProfile } from '../lib/storage';
+import { computeSimilarity } from '../lib/similarity';
 import type { MultiFact, UserProfile, BoxLevel } from '../types';
 
 const TODAY = '2026-05-01';
@@ -191,10 +192,45 @@ describe('composeSession — introduction des derniers faits', () => {
   });
 });
 
+describe('composeSession — ordre de la séance', () => {
+  it('ordonne révisions dues et bonus ensemble : les bonus séparent les révisions d’une même table', () => {
+    // Quatre faits ratés de la table de 2 (boîte 1, dus), en conflit deux à
+    // deux : ordonnés à part des bonus, ils s'enchaînaient. Trois carrés pas
+    // encore dus, qui ne heurtent rien, les séparent. Avec plus de trois faits
+    // fragiles, la séance n'introduit rien de neuf (§3.4bis).
+    const facts = createInitialFacts();
+    for (const b of [3, 4, 5, 6]) introduce(facts, 2, b, 1, '2026-04-01', '2026-04-30');
+    for (const n of [7, 8, 9]) introduce(facts, n, n, 3, '2026-04-01', '2026-04-30');
+
+    const session = composeSession(profileWith(facts), TODAY);
+
+    // Les révisions dues d'abord : un bonus ne passe devant que pour en séparer deux.
+    expect(session.map((q) => q.isBonusReview)).toEqual([false, true, false, true, false, true, false]);
+    for (let i = 1; i < session.length; i++) {
+      expect(computeSimilarity(session[i - 1].fact, session[i].fact)).not.toBe('strong');
+    }
+  });
+
+  it('la première révision ne heurte pas la dernière intro', () => {
+    // Intros du jour : 2×2 puis 2×3, les doubles d'abord. Des deux révisions
+    // dues, 3×7 partage le 3 de la dernière intro : c'est 5×8 qui la suit.
+    const facts = createInitialFacts();
+    introduce(facts, 3, 7, 2, '2026-04-01', '2026-04-29');
+    introduce(facts, 5, 8, 2, '2026-04-01', '2026-04-29');
+
+    const session = composeSession(profileWith(facts), TODAY);
+
+    expect(session.map((q) => getFactKey(q.fact.a, q.fact.b))).toEqual(
+      [[2, 2], [2, 3], [5, 8], [3, 7]].map(([a, b]) => getFactKey(a, b)),
+    );
+    expect(session.map((q) => q.isIntroduction)).toEqual([true, true, false, false]);
+  });
+});
+
 describe('composeSession — bonus reviews', () => {
   // Math.random seedé : générateur LCG simple, déterministe et reproductible.
   // composeSession utilise random() pour l'ordre d'affichage, le shuffle des
-  // bonus, et l'index de départ d'interleave.
+  // faits de même priorité et celui des bonus.
   let seed = 0;
   beforeEach(() => {
     seed = 1;
