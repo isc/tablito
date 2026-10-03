@@ -1,23 +1,8 @@
 import type { UserProfile, RemainderFact, RemainderSessionQuestion } from '../types';
-import {
-  isDue,
-  shouldIntroduceNew,
-  vanDeWalleStage,
-  prioritizeByBoxLevel,
-  pickBonusReviewFacts,
-} from './leitner';
+import { isDue, shouldIntroduceNew, vanDeWalleStage, prioritizeByBoxLevel } from './leitner';
 import { getDivisionFactKey } from './divisionFacts';
-import {
-  getRemainderFactKey,
-  parentDivisionKey,
-  introRemainder,
-  drawRemainder,
-} from './remainderFacts';
-
-// Mêmes bornes que les niveaux 1 et 2 (cf. sessionComposer.ts, specs §6).
-const MIN_QUESTIONS = 12;
-const MAX_QUESTIONS = 15;
-const MAX_NEW_FACTS = 2;
+import { parentDivisionKey, introRemainder, drawRemainder } from './remainderFacts';
+import { MAX_QUESTIONS, MAX_NEW_FACTS } from './sessionComposer';
 
 function makeQuestion(
   fact: RemainderFact,
@@ -34,15 +19,9 @@ function makeQuestion(
   };
 }
 
-// Révision : reste tiré au sort (0..d-1). Intro : reste canonique de la zone
-// (les MP3 d'intro sont pré-générés et doivent coller aux nombres affichés).
-function reviewQuestion(fact: RemainderFact, flags: Partial<RemainderSessionQuestion> = {}) {
-  return makeQuestion(fact, drawRemainder(fact.divisor), flags);
-}
-
 /**
- * Compose une séance de division avec reste (12-15 questions), miroir de
- * composeDivisionSession adapté au niveau 3 (specs §12) :
+ * Sélectionne la part « division avec reste » de la séance quotidienne, miroir
+ * de selectDivisionQuestions adapté au niveau 3 (specs §12) :
  *
  * - Introduction GATÉE sur la solidité du niveau 2 : une zone n'est introduite
  *   que si sa division exacte parente est en boîte 4+ — même seuil que
@@ -54,16 +33,17 @@ function reviewQuestion(fact: RemainderFact, flags: Partial<RemainderSessionQues
  *   ensemble (§12.7).
  * - Pas de variation d'ordre : la question est toujours « dividende ÷ diviseur ».
  *
- * Renvoie la séance dans l'ordre de PRIORITÉ, non entrelacée, comme
- * composeDivisionSession : composeDailySession y ajoute l'entretien et ordonne
- * la séance entière.
+ * Comme selectDivisionQuestions : `maintenanceCount` (places déjà prises par
+ * l'entretien) compte dans le budget de révisions, et la sélection revient
+ * dans l'ordre de PRIORITÉ, sans padding (cf. composeDailySession).
  *
- * Renvoie une liste vide si aucune zone n'est encore éligible.
+ * Renvoie des listes vides si aucune zone n'est encore éligible.
  */
-export function composeRemainderSession(
+export function selectRemainderQuestions(
   profile: UserProfile,
   now: string,
-): RemainderSessionQuestion[] {
+  maintenanceCount: number,
+): { intros: RemainderSessionQuestion[]; due: RemainderSessionQuestion[] } {
   const remainderFacts = profile.remainderFacts ?? [];
   const today = now.slice(0, 10);
 
@@ -94,31 +74,17 @@ export function composeRemainderSession(
     }
   }
 
-  const reviewBudget = MAX_QUESTIONS - newFacts.length;
+  const reviewBudget = Math.max(0, MAX_QUESTIONS - newFacts.length - maintenanceCount);
 
   const dueFacts = remainderFacts.filter((f) => f.introduced && isDue(f, today));
-  const prioritized = prioritizeByBoxLevel(dueFacts);
-  const selected = prioritized.slice(0, reviewBudget);
+  const selected = prioritizeByBoxLevel(dueFacts).slice(0, reviewBudget);
 
-  const reviewQuestions = selected.map((fact) => reviewQuestion(fact));
-  const introQuestions = newFacts.map((fact) =>
-    makeQuestion(fact, introRemainder(fact.divisor), { isIntroduction: true }),
-  );
-
-  const result = [...introQuestions, ...reviewQuestions];
-
-  // Padding par révisions bonus (pas de modification Leitner — cf. §6.2).
-  if (result.length < MIN_QUESTIONS) {
-    const usedKeys = new Set(
-      result.map((q) => getRemainderFactKey(q.fact.divisor, q.fact.quotient)),
-    );
-    const bonus = pickBonusReviewFacts(
-      remainderFacts,
-      (f) => usedKeys.has(getRemainderFactKey(f.divisor, f.quotient)),
-      MIN_QUESTIONS - result.length,
-    ).map((fact) => reviewQuestion(fact, { isBonusReview: true }));
-    result.push(...bonus);
-  }
-
-  return result;
+  // Révision : reste tiré au sort (0..d-1). Intro : reste canonique de la zone
+  // (les MP3 d'intro sont pré-générés et doivent coller aux nombres affichés).
+  return {
+    intros: newFacts.map((fact) =>
+      makeQuestion(fact, introRemainder(fact.divisor), { isIntroduction: true }),
+    ),
+    due: selected.map((fact) => makeQuestion(fact, drawRemainder(fact.divisor))),
+  };
 }

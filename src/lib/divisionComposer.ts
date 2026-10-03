@@ -1,18 +1,8 @@
 import type { UserProfile, DivisionFact, DivisionSessionQuestion } from '../types';
-import {
-  isDue,
-  shouldIntroduceNew,
-  vanDeWalleStage,
-  prioritizeByBoxLevel,
-  pickBonusReviewFacts,
-} from './leitner';
+import { isDue, shouldIntroduceNew, vanDeWalleStage, prioritizeByBoxLevel } from './leitner';
 import { getFactKey } from './facts';
-import { getDivisionFactKey, parentMultiplicationKey } from './divisionFacts';
-
-// Mêmes bornes que la multiplication (cf. sessionComposer.ts, specs §6).
-const MIN_QUESTIONS = 12;
-const MAX_QUESTIONS = 15;
-const MAX_NEW_FACTS = 2;
+import { parentMultiplicationKey } from './divisionFacts';
+import { MIN_QUESTIONS, MAX_QUESTIONS, MAX_NEW_FACTS } from './sessionComposer';
 
 /**
  * Deux faits de division en conflit : jamais introduits ensemble, jamais
@@ -38,28 +28,32 @@ function makeQuestion(
 }
 
 /**
- * Compose une séance de division (12-15 questions), miroir de composeSession
- * adapté au niveau 2 (specs §11) :
+ * Sélectionne la part division de la séance quotidienne, miroir de
+ * composeSession adapté au niveau 2 (specs §11) :
  *
  * - Introduction GATÉE sur la solidité multiplicative : un fait de division
  *   n'est introduit que si son parent multiplicatif est en boîte 4+ (§11.3),
  *   même seuil que l'ouverture du niveau (isDivisionUnlocked).
  * - Anti-interférence renforcée : jamais deux faits de même dividende
- *   introduits ensemble, ni retenus ensemble tant que le pool dû le permet
- *   (§11.6).
+ *   introduits ensemble, ni retenus ensemble tant que la séance atteint son
+ *   plancher sans eux (§11.6).
  * - Pas de variation d'ordre : la division n'est pas commutative (§11.2).
  *
- * Renvoie la séance dans l'ordre de PRIORITÉ, non entrelacée : intros,
- * révisions dues (les plus fragiles d'abord, §6.1), puis bonus. L'appelant,
- * composeDailySession, y ajoute l'entretien et ordonne la séance entière.
+ * `maintenanceCount` : places déjà prises par l'entretien, comptées dans le
+ * budget de révisions et le fallback de dividende (cf. composeDailySession).
  *
- * Renvoie une liste vide si aucun fait de division n'est encore éligible
+ * Renvoie les intros et les révisions dues dans l'ordre de PRIORITÉ (les plus
+ * fragiles d'abord, §6.1), non entrelacées et sans padding :
+ * composeDailySession complète sous le plancher et ordonne la séance entière.
+ *
+ * Renvoie des listes vides si aucun fait de division n'est encore éligible
  * (niveau pas encore débloqué / aucune table maîtrisée).
  */
-export function composeDivisionSession(
+export function selectDivisionQuestions(
   profile: UserProfile,
   now: string,
-): DivisionSessionQuestion[] {
+  maintenanceCount: number,
+): { intros: DivisionSessionQuestion[]; due: DivisionSessionQuestion[] } {
   const divisionFacts = profile.divisionFacts ?? [];
   const today = now.slice(0, 10);
 
@@ -95,7 +89,9 @@ export function composeDivisionSession(
     }
   }
 
-  const reviewBudget = MAX_QUESTIONS - newFacts.length;
+  // Places déjà prises : les intros du jour et l'entretien.
+  const taken = newFacts.length + maintenanceCount;
+  const reviewBudget = MAX_QUESTIONS - taken;
 
   const dueFacts = divisionFacts.filter((f) => f.introduced && isDue(f, today));
   const prioritized = prioritizeByBoxLevel(dueFacts);
@@ -110,32 +106,16 @@ export function composeDivisionSession(
   }
 
   // Fallback : relâche la contrainte de dividende plutôt que livrer une séance
-  // trop courte quand le pool dû ne suffit pas.
-  if (selected.length + newFacts.length < MIN_QUESTIONS) {
+  // trop courte quand le pool dû ne suffit pas, entretien compris.
+  if (selected.length + taken < MIN_QUESTIONS) {
     for (const fact of prioritized) {
       if (selected.length >= reviewBudget) break;
       if (!selected.includes(fact)) selected.push(fact);
     }
   }
 
-  const reviewQuestions = selected.map((fact) => makeQuestion(fact));
-  const introQuestions = newFacts.map((fact) => makeQuestion(fact, { isIntroduction: true }));
-
-  const result = [...introQuestions, ...reviewQuestions];
-
-  // Padding par révisions bonus (pas de modification Leitner — cf. §6.2 /
-  // pickBonusReviewFacts).
-  if (result.length < MIN_QUESTIONS) {
-    const usedKeys = new Set(
-      result.map((q) => getDivisionFactKey(q.fact.dividend, q.fact.divisor)),
-    );
-    const bonus = pickBonusReviewFacts(
-      divisionFacts,
-      (f) => usedKeys.has(getDivisionFactKey(f.dividend, f.divisor)),
-      MIN_QUESTIONS - result.length,
-    ).map((fact) => makeQuestion(fact, { isBonusReview: true }));
-    result.push(...bonus);
-  }
-
-  return result;
+  return {
+    intros: newFacts.map((fact) => makeQuestion(fact, { isIntroduction: true })),
+    due: selected.map((fact) => makeQuestion(fact)),
+  };
 }

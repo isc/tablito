@@ -14,9 +14,11 @@ import { daysBetween, interleaveOrder } from './utils';
 // MIN_QUESTIONS is a soft target, not an absolute floor: if fewer distinct facts
 // are available, the session is shorter rather than repeating facts (massed
 // practice is counterproductive — Cepeda et al. 2008). See specs §6.2.
-const MIN_QUESTIONS = 12;
-const MAX_QUESTIONS = 15;
-const MAX_NEW_FACTS = 2;
+// Shared by every math composer: the daily session's floor and the division's
+// dividend fallback must test the same value.
+export const MIN_QUESTIONS = 12;
+export const MAX_QUESTIONS = 15;
+export const MAX_NEW_FACTS = 2;
 
 /**
  * Returns a random display order for a fact (a*b or b*a).
