@@ -168,8 +168,9 @@ Les voix sont pré-générées via `scripts/generate-tts.mjs` (Mistral Voxtral) 
 
 **Comment générer** (la clé API n'est jamais en clair dans le repo) :
 
+- **Par défaut, rien à faire : la preview d'une PR génère les MP3 manquants.** Le job `tts` de `preview.yml` lance le script (secret `MISTRAL_API_KEY`), donne les nouveaux fichiers au build de la preview — qui a donc déjà le son — et les commite sur la branche de la PR (commit `assets(tts): MP3 générés par la preview`), puis relance la CI sur ce commit (un push du `GITHUB_TOKEN` ne déclenche aucun workflow). La fusion emporte les MP3 avec le reste. Sur une PR qui n'ajoute pas de clé, le script ne fait rien. Une PR venue d'un fork n'a pas le secret : pas de génération, la preview reste muette sur les clés nouvelles. **Après un tel commit, `git pull` la branche avant de pousser à nouveau**, sinon le push est refusé.
 - **Depuis une session avec la clé en env local** : `node scripts/generate-tts.mjs` puis `git add public/audio/tts && git commit && git push`.
-- **Depuis CI / session remote sans la clé** : déclencher le workflow dédié qui utilise le secret repo `MISTRAL_API_KEY` et commit les MP3s sur `main` :
+- **Depuis CI / session remote sans la clé, hors PR** (rattrapage sur main) : déclencher le workflow dédié qui utilise le secret repo `MISTRAL_API_KEY` et commit les MP3s sur `main` :
   ```bash
   gh workflow run generate-tts.yml
   gh run watch  # suivre l'exécution
