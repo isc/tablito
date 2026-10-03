@@ -1,3 +1,3 @@
-import{jsx as i}from"preact/jsx-runtime";function c(t){const s=t.split(/(\*[^*]+\*|_[^_]+_)/);return s.length===1?t:s.map((e,n)=>e.startsWith("*")&&e.endsWith("*")?i("b",{className:"conj-hint-mark",children:e.slice(1,-1)},n):e.startsWith("_")&&e.endsWith("_")?i("b",{className:"conj-hint-stem",children:e.slice(1,-1)},n):e)}export{c as renderConjHintLine};
+import{jsx as n}from"preact/jsx-runtime";function a(s){const c=s.split(/(\*[^*]+\*|_[^_]+_|\^[^^]+\^|~[^~]+~)/);return c.length===1?s:c.map((r,e)=>{if(e%2===0)return r;const t=r.slice(1,-1);switch(r[0]){case"*":return n("b",{className:"conj-hint-mark",children:t},e);case"_":return n("b",{className:"conj-hint-stem",children:t},e);case"^":return n("b",{className:"conj-hint-mark is-lit",children:t},e);default:return n("s",{className:"conj-hint-struck",children:t},e)}})}export{a as renderConjHintLine};
 
 //# sourceMappingURL=conjHintLine.js.map

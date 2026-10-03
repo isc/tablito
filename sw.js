@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261003110057"
+const VERSION = "20261003120518"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -63,6 +63,8 @@ const ASSETS = [
   "/src/components/ConjForm.js",
   "/src/components/ConjMysteryImage.js",
   "/src/components/ConjProgressGrid.js",
+  "/src/components/ConjRuleListenButton.js",
+  "/src/components/ConjRuleVisual.js",
   "/src/components/ConjVoiceInput.js",
   "/src/components/DivisionMysteryImage.js",
   "/src/components/DivisionProgressGrid.js",
@@ -153,6 +155,7 @@ const ASSETS = [
   "/src/lib/conjugationFacts.js",
   "/src/lib/conjugationInterference.js",
   "/src/lib/conjugationPlacement.js",
+  "/src/lib/conjugationRules.js",
   "/src/lib/conjugationStrategies.js",
   "/src/lib/dailyComposer.js",
   "/src/lib/debugTools.js",
