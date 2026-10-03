@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["components/ListenButton.tsx"],
-  "sourcesContent": ["interface ListenButtonProps {\n  onClick: () => void;\n  label: string;\n}\n\n/**\n * Bouton \u00AB \u00C9couter \u00BB d'une r\u00E8gle : l'enfant qui lit encore lentement se fait\n * lire la r\u00E8gle. Ic\u00F4ne seule, libell\u00E9 pour les lecteurs d'\u00E9cran.\n */\nexport default function ListenButton({ onClick, label }: ListenButtonProps) {\n  return (\n    <button type=\"button\" className=\"listen-btn\" onClick={onClick} aria-label={label}>\n      <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\">\n        <path\n          d=\"M11 5 L6 9 H3 V15 H6 L11 19 Z M15.5 8.5 A5 5 0 0 1 15.5 15.5 M18.5 5.5 A9 9 0 0 1 18.5 18.5\"\n          stroke=\"currentColor\"\n          strokeWidth=\"2\"\n          strokeLinecap=\"round\"\n          strokeLinejoin=\"round\"\n        />\n      </svg>\n    </button>\n  );\n}\n"],
-  "mappings": "AAaQ,cAAAA,MAAA,qBAJO,SAARC,EAA8B,CAAE,QAAAC,EAAS,MAAAC,CAAM,EAAsB,CAC1E,OACEH,EAAC,UAAO,KAAK,SAAS,UAAU,aAAa,QAASE,EAAS,aAAYC,EACzE,SAAAH,EAAC,OAAI,MAAM,KAAK,OAAO,KAAK,QAAQ,YAAY,KAAK,OAAO,cAAY,OACtE,SAAAA,EAAC,QACC,EAAE,8FACF,OAAO,eACP,YAAY,IACZ,cAAc,QACd,eAAe,QACjB,EACF,EACF,CAEJ",
-  "names": ["jsx", "ListenButton", "onClick", "label"]
-}
