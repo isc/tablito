@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261003113618"
+const VERSION = "20261003115312"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/previews/claude-hopeful-dirac-ht9spo/"
 const ASSETS = [
@@ -63,6 +63,7 @@ const ASSETS = [
   "/previews/claude-hopeful-dirac-ht9spo/src/components/ConjForm.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/ConjMysteryImage.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/ConjProgressGrid.js",
+  "/previews/claude-hopeful-dirac-ht9spo/src/components/ConjRuleListenButton.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/ConjRuleVisual.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/ConjVoiceInput.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/DivisionMysteryImage.js",
@@ -79,7 +80,6 @@ const ASSETS = [
   "/previews/claude-hopeful-dirac-ht9spo/src/components/LanguageToggle.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/LeitnerGrid.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/LetterKeyboard.js",
-  "/previews/claude-hopeful-dirac-ht9spo/src/components/ListenButton.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/Mascot.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/Modal.js",
   "/previews/claude-hopeful-dirac-ht9spo/src/components/MysteryGrid.js",
