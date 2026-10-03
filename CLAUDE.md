@@ -42,7 +42,9 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   conservée offline.
 - **Service Worker** maison (`scripts/sw.js`) : précache shell +
   lazy-cache média + **cache-first** sur les navigations (cold launch
-  instantané). Un nouveau SW fait `skipWaiting()` + `clients.claim()`
+  instantané). Le précache relit chaque fichier **hors cache** (`?v=<version>`
+  + `no-store`) : via le cache HTTP ou le CDN (max-age=600), un appareil mis à
+  jour juste après un déploiement figeait les anciennes copies. Un nouveau SW fait `skipWaiting()` + `clients.claim()`
   immédiatement (robuste même si le page-side est dégradé) ; c'est le
   **reload** qui est différé par `pwa-register.js`/`setBusy` tant que
   `App` n'est pas sur un écran "safe" (`home` uniquement). Détection

@@ -2,7 +2,8 @@
 //
 // Stratégie :
 //  - install : precache du shell (HTML, JS, CSS, vendor, icônes — pas
-//    les médias lourds qui sont chargés à la demande), puis skipWaiting()
+//    les médias lourds qui sont chargés à la demande), relu frais hors de
+//    tout cache (cf. precache), puis skipWaiting()
 //    pour activer immédiatement. La protection "ne pas reloader pendant
 //    une séance" est gérée page-side (pwa-register.js diffère le reload
 //    tant que `busy=true`).
@@ -35,7 +36,8 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const CACHE = 'tablito-' + __VERSION__
+const VERSION = __VERSION__
+const CACHE = 'tablito-' + VERSION
 const BASE = __BASE__
 const ASSETS = __ASSETS__
 
@@ -69,9 +71,23 @@ function cacheNameFor(pathname) {
 // échoue, et l'appareil reste sans cache pour cette version. On cache donc asset
 // par asset : ce qui passe est gardé, le reste sera lazy-caché à la 1re requête
 // réseau réussie (cf. fetch handler). L'install réussit toujours.
+//
+// Chaque fichier est relu FRAIS : la version dans l'URL (et `no-store`)
+// court-circuite le cache HTTP du navigateur et le CDN de GitHub Pages, qui
+// servent tout en max-age=600. Sans ça, un appareil mis à jour dans les minutes
+// qui suivaient un déploiement rangeait les ANCIENNES copies sous le nom du
+// nouveau cache, et restait figé sur la version d'avant jusqu'au déploiement
+// suivant : son SW étant à jour, plus rien ne revérifiait ces fichiers (vécu le
+// 03/10/2026). La réponse est recopiée pour être rangée et servie sous son URL
+// propre, sans la version.
 function precache() {
   return caches.open(CACHE).then((c) =>
-    Promise.allSettled(ASSETS.map((a) => c.add(a)))
+    Promise.allSettled(ASSETS.map((a) =>
+      fetch(a + '?v=' + VERSION, { cache: 'no-store' }).then((res) => {
+        if (!res.ok) throw new Error(a + ' : ' + res.status)
+        return c.put(a, new Response(res.body, res))
+      })
+    ))
   )
 }
 
