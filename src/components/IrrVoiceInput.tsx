@@ -138,7 +138,7 @@ export default function IrrVoiceInput({
   const handleInterim = useCallback(
     (text: string) => {
       if (disabledRef.current || expectTrailingFinalRef.current) return;
-      const words = [...wordsRef.current, ...irrSpokenWords(text, defRef.current)];
+      const words = [...wordsRef.current, ...irrSpokenWords(text, defRef.current, wordsRef.current)];
       report(words);
       // Validation à la volée d'une réponse JUSTE : pas besoin d'attendre le
       // silence. Une réponse fausse, elle, attend le final.
@@ -163,7 +163,7 @@ export default function IrrVoiceInput({
       const def = defRef.current;
       const candidates = [transcript, ...alternatives].map((c) => [
         ...wordsRef.current,
-        ...irrSpokenWords(c, def),
+        ...irrSpokenWords(c, def, wordsRef.current),
       ]);
       // L'alternative qui donne la bonne réponse l'emporte : la reconnaissance
       // classe souvent « eight » devant « ate ».

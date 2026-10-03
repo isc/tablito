@@ -12,6 +12,8 @@ interface IrrFormsProps {
   activeSlot?: number;
   /** Taille : `large` pour la question et l'introduction. */
   size?: 'large' | 'normal';
+  /** Cases cliquables (saisie au clavier) : le clic choisit la case à remplir. */
+  onSlotClick?: (index: number) => void;
 }
 
 /**
@@ -19,20 +21,33 @@ interface IrrFormsProps {
  * l'infinitif en encre, les formes à produire en couleur. Les deux prétérits
  * de « be » partagent une même place, séparés d'une barre.
  */
-export default function IrrForms({ def, slots, activeSlot, size = 'normal' }: IrrFormsProps) {
+export default function IrrForms({ def, slots, activeSlot, size = 'normal', onSlotClick }: IrrFormsProps) {
   const shown = slots ?? [...def.preterite, def.participle.join(' / ')];
   const n = def.preterite.length;
 
-  const slot = (value: string | null, i: number) => (
-    <span
-      key={i}
-      className={`irr-form irr-form--slot${value === null ? ' is-blank' : ''}${
-        activeSlot === i ? ' is-active' : ''
-      }`}
-    >
-      {value ?? ' '}
-    </span>
-  );
+  const slot = (value: string | null, i: number) => {
+    const className = `irr-form irr-form--slot${value === null ? ' is-blank' : ''}${
+      activeSlot === i ? ' is-active' : ''
+    }`;
+    return onSlotClick ? (
+      <button
+        key={i}
+        type="button"
+        className={`${className} is-clickable`}
+        // Pas de focus au clic souris : Entrée ou espace, ensuite, valident la
+        // case au clavier physique au lieu de re-cliquer ce bouton.
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => onSlotClick(i)}
+        aria-pressed={activeSlot === i}
+      >
+        {value ?? ' '}
+      </button>
+    ) : (
+      <span key={i} className={className}>
+        {value ?? ' '}
+      </span>
+    );
+  };
 
   return (
     <div className={`irr-forms irr-forms--${size}`}>

@@ -213,3 +213,24 @@ describe('placement (specs §16.8)', () => {
     expect(facts.filter((f) => f.introduced)).toHaveLength(1);
   });
 });
+
+describe('réponse dite, appariement au son (specs §16.6)', () => {
+  const answer = (said: string, key: string) => {
+    const def = requireIrrVerbDef(key);
+    return irrSpokenAnswer(irrSpokenWords(said, def), def);
+  };
+
+  it('rattrape les réécritures de la reconnaissance en phrase', () => {
+    expect(answer('go when gone', 'go')).toEqual(['went', 'gone']);
+    expect(answer('go went gun', 'go')).toEqual(['went', 'gone']);
+    expect(answer('sing sang song', 'sing')).toEqual(['sang', 'sung']);
+    expect(answer('teach thought taught', 'teach')).toEqual(['thought', 'taught']);
+  });
+
+  it('ne transforme jamais une forme dite telle quelle', () => {
+    // « thought » pour « bring » : une vraie erreur, qui reste une erreur.
+    expect(answer('bring thought thought', 'bring')).toEqual(['thought', 'thought']);
+    expect(answer('go goed goed', 'go')).toEqual(['goed', 'goed']);
+    expect(answer('sing sung sang', 'sing')).toEqual(['sung', 'sang']);
+  });
+});

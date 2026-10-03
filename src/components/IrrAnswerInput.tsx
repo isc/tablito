@@ -10,6 +10,22 @@ import { irrStrings as t } from '../i18n/irregular';
 
 const STT_SUPPORTED = isSpeechRecognitionSupported();
 
+function withSlot(values: readonly string[], index: number, value: string): string[] {
+  return values.map((v, i) => (i === index ? value : v));
+}
+
+/**
+ * La prochaine case vide après `at` (en reprenant au début), hors `at`
+ * elle-même ; -1 quand toutes les autres sont remplies.
+ */
+function nextBlank(values: readonly string[], at: number): number {
+  for (let k = 1; k < values.length; k++) {
+    const i = (at + k) % values.length;
+    if (values[i] === '') return i;
+  }
+  return -1;
+}
+
 interface IrrAnswerInputProps {
   def: IrrVerbDef;
   onSubmit: (answers: string[], source: 'keypad' | 'voice') => void;
@@ -26,7 +42,8 @@ interface IrrAnswerInputProps {
 /**
  * Saisie d'un verbe irrégulier (specs §16.6) : les cases « go → ___ → ___ »,
  * remplies à la voix (mode par défaut de la matière) ou au clavier, case par
- * case — « Valider » passe du prétérit au participe.
+ * case — « Suivant » (ou espace, Tab) passe du prétérit au participe, et un
+ * clic sur une case la reprend.
  */
 export default function IrrAnswerInput({
   def,
@@ -39,63 +56,94 @@ export default function IrrAnswerInput({
 }: IrrAnswerInputProps) {
   const { inputMode, setInputMode } = useIrrInputMode();
   const slotCount = irrSlotCount(def);
-  // Formes déjà validées au clavier, ou entendues à la voix.
-  const [filled, setFilled] = useState<string[]>([]);
+  const blank = () => Array<string>(slotCount).fill('');
+  // Formes entendues à la voix, dans l'ordre.
+  const [heard, setHeard] = useState<string[]>([]);
+  // Au clavier : le contenu de chaque case ('' = vide) et la case en cours.
+  // L'enfant passe à la suivante en validant (bouton, Entrée, espace, Tab) ou
+  // choisit une case au clic.
+  const [values, setValues] = useState<string[]>(blank);
+  const [active, setActive] = useState(0);
+  // Réponse partie : plus de saisie jusqu'à la question suivante (une seconde
+  // Entrée la renverrait).
+  const [submitted, setSubmitted] = useState(false);
   // Trois ratés de reconnaissance (ou pas de reconnaissance du tout) : cette
   // question passe au clavier, sans toucher au réglage de l'enfant.
   const [voiceGaveUp, setVoiceGaveUp] = useState(false);
-  // Lettres de la case en cours, écrites dans la case elle-même : l'ardoise
-  // du clavier est masquée, une seule place pour la réponse.
-  const [typing, setTyping] = useState('');
   const [prevToken, setPrevToken] = useState(token);
   if (token !== prevToken) {
     setPrevToken(token);
-    setFilled([]);
+    setHeard([]);
+    setValues(blank());
+    setActive(0);
+    setSubmitted(false);
     setVoiceGaveUp(false);
-    setTyping('');
   }
 
   const voice = inputMode === 'voice' && STT_SUPPORTED && !voiceGaveUp;
 
+  // La case en cours s'écrit dans la case elle-même : l'ardoise du clavier
+  // est masquée, une seule place pour la réponse.
+  const handleTyping = useCallback(
+    (value: string) => setValues((prev) => (prev[active] === value ? prev : withSlot(prev, active, value))),
+    [active],
+  );
+
   const handleSlot = useCallback(
     (value: string) => {
-      setTyping('');
-      const next = [...filled, value];
-      setFilled(next);
-      if (next.length >= slotCount) onSubmit(next, 'keypad');
+      const next = withSlot(values, active, value);
+      setValues(next);
+      const i = nextBlank(next, active);
+      if (i >= 0) {
+        setActive(i);
+        return;
+      }
+      setSubmitted(true);
+      onSubmit(next, 'keypad');
     },
-    [filled, slotCount, onSubmit],
+    [values, active, onSubmit],
   );
+
+  const resetKeyboard = () => {
+    setValues(blank());
+    setActive(0);
+  };
 
   const switchToVoice = useCallback(async () => {
     await preflightMicPermission();
     setVoiceGaveUp(false);
-    setFilled([]);
+    setHeard([]);
     setInputMode('voice');
   }, [setInputMode]);
 
-  const slots = Array.from({ length: slotCount }, (_, i) =>
-    filled[i] ?? (!voice && i === filled.length && typing ? typing : null),
-  );
-  const activeSlot = voice ? undefined : Math.min(filled.length, slotCount - 1);
-  const slotLabel = filled.length < def.preterite.length ? t.slotPreterite : t.slotParticiple;
+  const slots = voice
+    ? Array.from({ length: slotCount }, (_, i) => heard[i] ?? null)
+    : values.map((v) => v || null);
+  const activeSlot = voice ? undefined : active;
+  const slotLabel = active < def.preterite.length ? t.slotPreterite : t.slotParticiple;
 
   return (
     <div className="irr-answer">
-      <IrrForms def={def} slots={slots} activeSlot={activeSlot} size="large" />
+      <IrrForms
+        def={def}
+        slots={slots}
+        activeSlot={activeSlot}
+        size="large"
+        onSlotClick={voice || disabled || submitted ? undefined : setActive}
+      />
       {children}
       {voice ? (
         <IrrVoiceInput
           def={def}
           onSubmit={(answers) => onSubmit(answers, 'voice')}
-          onHeard={setFilled}
+          onHeard={setHeard}
           onRecall={onRecall}
           onGiveUp={() => {
             setVoiceGaveUp(true);
-            setFilled([]);
+            resetKeyboard();
           }}
           onUseKeyboard={() => {
-            setFilled([]);
+            resetKeyboard();
             setInputMode('keypad');
           }}
           disabled={disabled}
@@ -106,11 +154,16 @@ export default function IrrAnswerInput({
         <div className="conj-keyboard-area">
           <div className="irr-slot-label">{slotLabel}</div>
           <LetterKeyboard
-            key={`${token}-${filled.length}`}
+            // Re-monté à chaque changement de case, repris sur son contenu.
+            key={`${token}-${active}`}
+            value={values[active]}
             onSubmit={handleSlot}
-            disabled={disabled || filled.length >= slotCount}
+            disabled={disabled || submitted}
             layout="en"
-            onInput={setTyping}
+            onInput={handleTyping}
+            // Une autre case reste vide : on passe à elle.
+            submitLabel={nextBlank(values, active) >= 0 ? t.nextSlot : undefined}
+            submitOnSpace
           />
           {STT_SUPPORTED && (
             <button type="button" className="session-input-switch" onClick={switchToVoice} disabled={disabled}>

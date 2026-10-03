@@ -31,6 +31,7 @@ import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { importTs } from './import-ts.mjs';
+import { mp3DurationSeconds } from './mp3-duration.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TTS_ROOT = join(__dirname, '..', 'public', 'audio', 'tts');
@@ -52,7 +53,31 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // (texte/voix invalide) et échouent tout de suite.
 const MAX_ATTEMPTS = 5;
 
-async function generateAudio(text, voiceId, outputPath) {
+// Une synthèse d'un mot seul ajoute parfois une hésitation (« be… hum ») : le
+// fichier est alors nettement plus long que le mot. Les entrées qui portent un
+// `maxSeconds` sont donc chronométrées, et retentées tant qu'elles le
+// dépassent ; à défaut, on garde la prise la plus courte.
+const MAX_TAKES = 4;
+
+async function generateEntry({ text, maxSeconds }, voiceId, outputPath) {
+  let best = null;
+  for (let take = 1; take <= MAX_TAKES; take++) {
+    const audio = await generateAudio(text, voiceId);
+    if (!audio) return false;
+    const seconds = maxSeconds ? mp3DurationSeconds(audio) : 0;
+    if (!best || seconds < best.seconds) best = { audio, seconds };
+    if (!maxSeconds || seconds <= maxSeconds) break;
+    process.stdout.write(`(${seconds.toFixed(2)} s > ${maxSeconds} s, nouvelle prise) `);
+    await sleep(300);
+  }
+  if (maxSeconds && best.seconds > maxSeconds) {
+    process.stdout.write(`(gardé le plus court : ${best.seconds.toFixed(2)} s) `);
+  }
+  await writeFile(outputPath, best.audio);
+  return true;
+}
+
+async function generateAudio(text, voiceId) {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let response;
     try {
@@ -76,17 +101,16 @@ async function generateAudio(text, voiceId, outputPath) {
         continue;
       }
       console.error(`Network error: ${err}`);
-      return false;
+      return null;
     }
 
     if (response.ok) {
       const data = await response.json();
       if (!data.audio_data) {
         console.error('No audio_data in response');
-        return false;
+        return null;
       }
-      await writeFile(outputPath, Buffer.from(data.audio_data, 'base64'));
-      return true;
+      return Buffer.from(data.audio_data, 'base64');
     }
 
     const transient = response.status === 429 || response.status >= 500;
@@ -97,9 +121,9 @@ async function generateAudio(text, voiceId, outputPath) {
 
     const body = await response.text();
     console.error(`API error: ${response.status} - ${body}`);
-    return false;
+    return null;
   }
-  return false;
+  return null;
 }
 
 // === Français ===
@@ -193,9 +217,16 @@ async function loadConjEntries() {
 // avec la voix anglaise, dans `en/`, et lus en anglais quelle que soit la
 // langue de l'interface (cf. useTTS, préfixe `irr-`). Même raison que la
 // conjugaison pour lire l'inventaire plutôt que de le recopier.
+//
+// Durées maximales relevées sur la première génération : un infinitif seul
+// tient sous 1,2 s, une récitation sous 3 s ; au-delà, c'était une hésitation
+// ajoutée par la synthèse (« be… hum »).
 async function loadIrrEntries() {
   const { allIrrTtsEntries } = await importTs('src/lib/irregularVerbs.ts');
-  return allIrrTtsEntries();
+  return allIrrTtsEntries().map((entry) => ({
+    ...entry,
+    maxSeconds: entry.key.endsWith('-all') ? 3 : 1.2,
+  }));
 }
 
 async function buildEntriesFr() {
@@ -482,7 +513,8 @@ async function generateLang(lang) {
   let skipped = 0;
   let failed = 0;
 
-  for (const { key, text } of entries) {
+  for (const entry of entries) {
+    const { key, text } = entry;
     const filepath = join(dir, `${key}.mp3`);
 
     if (existsSync(filepath)) {
@@ -493,7 +525,7 @@ async function generateLang(lang) {
     const preview = text.length > 60 ? text.slice(0, 57) + '...' : text;
     process.stdout.write(`[${lang}] ${key}: "${preview}"... `);
 
-    const ok = await generateAudio(text, voice, filepath);
+    const ok = await generateEntry(entry, voice, filepath);
     if (ok) {
       console.log('ok');
       success++;

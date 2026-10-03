@@ -59,6 +59,8 @@ export const irrStrings = {
   /** Cases de saisie au clavier. */
   slotPreterite: 'Prétérit',
   slotParticiple: 'Participe',
+  /** Validation d'une case qui n'est pas la dernière. */
+  nextSlot: 'Suivant →',
   /** Feedback. */
   correctMessages: ['Bravo !', 'Super !', 'Génial !', 'Yes!', 'Well done!'],
   wellDone: 'Bravo !',

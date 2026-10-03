@@ -46,6 +46,18 @@
   border-bottom-color: var(--sky);
 }
 
+/* Saisie au clavier : chaque case se choisit au clic. */
+.irr-form--slot.is-clickable {
+  font: inherit;
+  background: none;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
 .irr-arrow,
 .irr-sep {
   color: var(--ink-muted);

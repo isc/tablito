@@ -220,7 +220,7 @@ export function isIrrAccepted(verdict: IrrVerdict): boolean {
 const ALMOST_MIN_LENGTH = 5;
 
 /** Distance d'édition avec transposition (Damerau, version restreinte). */
-function editDistance(a: string, b: string): number {
+export function editDistance(a: string, b: string): number {
   const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
     Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
   );

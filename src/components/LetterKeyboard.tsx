@@ -74,6 +74,16 @@ interface LetterKeyboardProps {
    * l'ardoise du clavier (les cases des verbes irréguliers, specs §16.6).
    */
   onInput?: (value: string) => void;
+  /**
+   * Libellé du bouton de validation (« Valider » par défaut) : « Suivant → »
+   * quand la validation passe à la case suivante (verbes irréguliers).
+   */
+  submitLabel?: string;
+  /**
+   * Espace, virgule et Tab valident aussi, au clavier physique : entre deux
+   * mots, c'est le geste naturel (« was were been »), et Entrée ne se devine pas.
+   */
+  submitOnSpace?: boolean;
 }
 
 export default function LetterKeyboard({
@@ -84,6 +94,8 @@ export default function LetterKeyboard({
   onEdit,
   layout = 'fr',
   onInput,
+  submitLabel = t.submit,
+  submitOnSpace = false,
 }: LetterKeyboardProps) {
   const keys = layout === 'en' ? KEYS_EN : KEYS;
   // `input` est miroré dans `inputRef` pour éviter les closures stales : sous
@@ -133,15 +145,24 @@ export default function LetterKeyboard({
   // Listener clavier physique attaché UNE fois au montage, dispatch via ref
   // (même raison que NumPad : ne pas dé-/réattacher à chaque render).
   const letters = layout === 'en' ? LETTERS_EN : LETTERS;
-  const callbacksRef = useRef({ handleLetter, handleBackspace, handleOk, letters });
+  const callbacksRef = useRef({ handleLetter, handleBackspace, handleOk, letters, submitOnSpace });
   // eslint-disable-next-line react-hooks/refs
-  callbacksRef.current = { handleLetter, handleBackspace, handleOk, letters };
+  callbacksRef.current = { handleLetter, handleBackspace, handleOk, letters, submitOnSpace };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const cb = callbacksRef.current;
       if (e.key === 'Backspace') {
         cb.handleBackspace();
       } else if (e.key === 'Enter') {
+        cb.handleOk();
+      } else if (cb.submitOnSpace && (e.key === ' ' || e.key === ',')) {
+        // Pas de défilement de la page sur la barre d'espace.
+        e.preventDefault();
+        cb.handleOk();
+      } else if (cb.submitOnSpace && e.key === 'Tab' && !e.shiftKey && inputRef.current) {
+        // Tab passe à la case suivante. Saisie vide : Tab garde son rôle de
+        // navigation, le focus n'est jamais piégé.
+        e.preventDefault();
         cb.handleOk();
       } else if (e.key.length === 1) {
         const lower = e.key.toLowerCase();
@@ -189,9 +210,9 @@ export default function LetterKeyboard({
             className="pad-btn letterpad-btn pad-btn-ok letterpad-btn-ok"
             onClick={handleOk}
             disabled={disabled || input.length === 0}
-            aria-label={t.submit}
+            aria-label={submitLabel}
           >
-            {t.submit}
+            {submitLabel}
           </button>
         </div>
       </div>
