@@ -69,13 +69,29 @@ export function firstFreeSlot<T>(
 }
 
 /**
+ * Budget de la recherche d'un ordre sans conflit (cf. interleaveGreedy), en
+ * éléments posés. Quand aucun ordre sans conflit n'existe, c'est lui qui arrête
+ * la recherche : sans lui, prouver qu'il n'y en a pas peut demander d'en
+ * essayer des millions. Calibré sur les entrelacements réels des composeurs
+ * (profils aléatoires, toutes matières) : à 5 000, les conflits évitables
+ * deviennent rares (aucun sur ~15 000 entrelacements, 0,02 à 0,2 % sur une
+ * simulation de 400 jours de séances ; 2 000 en laissait ~1 % en
+ * conjugaison), pour ~1 ms au pire et ~15 µs en moyenne par entrelacement.
+ */
+const INTERLEAVE_SEARCH_BUDGET = 5000;
+
+/**
  * Réordonne `items` pour éviter, autant que possible, deux éléments adjacents
- * en conflit. Greedy : premier élément au hasard, puis on prend le premier
- * candidat non conflictuel. En cas d'impasse — tout ce qui reste heurte le
- * dernier posé —, le premier restant se glisse plus tôt, entre deux voisins
- * déjà posés qu'il ne heurte ni l'un ni l'autre ; à défaut seulement, il est
- * posé en fin de liste (best effort). Partagé par l'entrelacement des séances
- * de toutes les matières.
+ * en conflit. Partagé par l'entrelacement des séances de toutes les matières.
+ *
+ * Recherche en profondeur, l'ordre glouton d'abord : premier élément au hasard,
+ * puis à chaque place le premier candidat qui ne heurte pas le précédent — la
+ * première branche explorée EST l'ordre glouton, et c'est lui qu'on obtient
+ * quand il n'a pas d'impasse. En cas d'impasse (tout ce qui reste heurte le
+ * dernier posé), on revient sur les choix précédents au lieu d'accoler deux
+ * voisins en conflit. Au-delà de `INTERLEAVE_SEARCH_BUDGET` éléments posés, ou
+ * quand aucun ordre sans conflit n'existe, on garde l'ordre glouton réparé
+ * (cf. greedyWithRepair) : best effort.
  *
  * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
  * (la dernière introduction du jour, par exemple) : il contraint alors le
@@ -90,35 +106,78 @@ export function interleaveGreedy<T>(
   if (items.length === 0) return items;
   if (items.length === 1 && after === undefined) return items;
 
-  const remaining = [...items];
-  const result: T[] = [];
+  const n = items.length;
+  // Le premier tirage du glouton : au hasard sans `after`, sinon le premier
+  // élément qui ne le heurte pas (le parcours dans l'ordre s'en charge).
+  const start = after === undefined ? Math.floor(Math.random() * n) : 0;
+  // `after`, quand il y en a un, est le nœud `n` : la recherche le traite comme
+  // un élément déjà posé, devant la liste.
+  const head = after === undefined ? undefined : n;
+  const nodes = after === undefined ? items : [...items, after];
 
-  const firstIdx =
-    after === undefined
-      ? Math.floor(Math.random() * remaining.length)
-      : Math.max(
-          0,
-          remaining.findIndex((item) => !conflicts(after, item)),
-        );
-  result.push(remaining.splice(firstIdx, 1)[0]);
+  // Conflits mémoïsés par paire d'indices : la recherche revisite les mêmes
+  // paires, et un conflit peut coûter cher à évaluer.
+  const known = new Int8Array((n + 1) * n).fill(-1);
+  const clash = (prev: number, next: number): boolean => {
+    const k = prev * n + next;
+    if (known[k] === -1) known[k] = conflicts(nodes[prev], items[next]) ? 1 : 0;
+    return known[k] === 1;
+  };
+
+  const used = new Array<boolean>(n).fill(false);
+  const order: number[] = [];
+  let budget = INTERLEAVE_SEARCH_BUDGET;
+  const search = (prev: number | undefined): boolean => {
+    if (order.length === n) return true;
+    for (let k = 0; k < n; k++) {
+      const i = order.length === 0 ? (start + k) % n : k;
+      if (used[i] || (prev !== undefined && clash(prev, i))) continue;
+      if (--budget < 0) return false;
+      used[i] = true;
+      order.push(i);
+      if (search(i)) return true;
+      used[i] = false;
+      order.pop();
+      if (budget < 0) return false;
+    }
+    return false;
+  };
+
+  // Sans ordre sans conflit : l'ordre glouton réparé, sur les indices pour
+  // réutiliser les conflits déjà évalués.
+  const picked = search(head) ? order : greedyWithRepair(n, clash, head, start);
+  return picked.map((i) => items[i]);
+}
+
+/**
+ * L'ordre glouton réparé, sur les indices `0..n-1` : `start` en tête s'il n'y a
+ * pas de `head`, puis à chaque place le premier candidat qui ne heurte pas le
+ * précédent (`head` compris). En cas d'impasse, le premier restant se glisse
+ * plus tôt, entre deux voisins déjà posés qu'il ne heurte ni l'un ni l'autre ;
+ * à défaut seulement, il est posé en fin de liste. Repli de interleaveGreedy
+ * quand aucun ordre sans conflit n'a été trouvé.
+ */
+function greedyWithRepair(
+  n: number,
+  conflicts: (a: number, b: number) => boolean,
+  head: number | undefined,
+  start: number,
+): number[] {
+  const remaining = Array.from({ length: n }, (_, i) => i);
+  const result = head === undefined ? remaining.splice(start, 1) : [];
 
   while (remaining.length > 0) {
-    const prev = result[result.length - 1];
-    let placed = false;
-    for (let i = 0; i < remaining.length; i++) {
-      if (!conflicts(prev, remaining[i])) {
-        result.push(remaining.splice(i, 1)[0]);
-        placed = true;
-        break;
-      }
+    const prev = result.length > 0 ? result[result.length - 1] : head!;
+    const next = remaining.findIndex((i) => !conflicts(prev, i));
+    if (next !== -1) {
+      result.push(remaining.splice(next, 1)[0]);
+      continue;
     }
-    if (!placed) {
-      // Le glissement ne crée aucun conflit et ne change pas le dernier posé :
-      // la fin de liste, elle, heurte forcément `prev`.
-      const item = remaining.shift()!;
-      const at = firstFreeSlot(result, [item], conflicts, { before: after });
-      result.splice(at === -1 ? result.length : at, 0, item);
-    }
+    // Le glissement ne crée aucun conflit et ne change pas le dernier posé :
+    // la fin de liste, elle, heurte forcément `prev`.
+    const item = remaining.shift()!;
+    const at = firstFreeSlot(result, [item], conflicts, { before: head });
+    result.splice(at === -1 ? result.length : at, 0, item);
   }
 
   return result;
