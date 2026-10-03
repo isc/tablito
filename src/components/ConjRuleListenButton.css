@@ -1,5 +1,5 @@
-/* Bouton « Écouter » d'une règle (ListenButton). Cible de 44 px. */
-.listen-btn {
+/* Bouton « Écouter » d'une règle (ConjRuleListenButton). Cible de 44 px. */
+.conj-rule-listen-btn {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -15,6 +15,6 @@
   cursor: pointer;
 }
 
-.listen-btn:active {
+.conj-rule-listen-btn:active {
   background: var(--cream-deep);
 }

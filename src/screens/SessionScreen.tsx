@@ -13,7 +13,7 @@ import ConjVoiceInput from '../components/ConjVoiceInput';
 import DotGrid from '../components/DotGrid';
 import ConjForm from '../components/ConjForm';
 import ConjRuleVisual from '../components/ConjRuleVisual';
-import ListenButton from '../components/ListenButton';
+import ConjRuleListenButton from '../components/ConjRuleListenButton';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import ConjFeedbackOverlay from '../components/ConjFeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
@@ -34,7 +34,6 @@ import {
   type ConjQuestionView,
 } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
-import { conjRuleTtsKey } from '../lib/conjugationRules';
 import {
   CONJ_RETRY_GAPS,
   conjRetryQuestion,
@@ -906,15 +905,11 @@ export default function SessionScreen({
               {conjIntroStrategy && (
                 <StrategyHintShell
                   title={conjIntroStrategy.title}
-                  lines={[<ConjRuleVisual key="rule" rule={conjIntroStrategy} compact person={cv.person} />]}
                   variant="intro"
-                  action={
-                    <ListenButton
-                      onClick={() => speak(conjRuleTtsKey(conjIntroStrategy))}
-                      label={tc.listenRule}
-                    />
-                  }
-                />
+                  action={<ConjRuleListenButton rule={conjIntroStrategy} onSpeak={speak} />}
+                >
+                  <ConjRuleVisual rule={conjIntroStrategy} compact person={cv.person} />
+                </StrategyHintShell>
               )}
               <button className="btn btn--ink session-intro-btn" onClick={handleConjIntroNext}>
                 {tc.next}

@@ -123,9 +123,6 @@ interface RulesStrings {
   // entrées `en` gardent la table totale sans jamais être rendues.
   sectionMaths: string;
   sectionConj: string;
-  // Règles de conjugaison : bouton « Écouter » et règle écrite repliée.
-  listen: string;
-  readFull: string;
   ruleNumber: (n: number) => string;
   bonusRule: string;
   multiplyBy: (n: number) => string;
@@ -143,8 +140,6 @@ const rulesFr: RulesStrings = {
   intro: 'Tes raccourcis à connaître par cœur. Après, ce sera facile\u00a0!',
   sectionMaths: 'Maths',
   sectionConj: 'Conjugaison',
-  listen: 'Écouter la règle',
-  readFull: 'Lire la règle en entier',
   ruleNumber: (n) => `Règle n°${n}`,
   bonusRule: 'Règle bonus',
   multiplyBy: (n) => `Multiplier par ${n}`,
@@ -174,8 +169,6 @@ const rulesEn: RulesStrings = {
   intro: 'Your shortcuts to know by heart. After that, it will be easy!',
   sectionMaths: 'Maths',
   sectionConj: 'Conjugation',
-  listen: 'Listen to the rule',
-  readFull: 'Read the whole rule',
   ruleNumber: (n) => `Rule #${n}`,
   bonusRule: 'Bonus rule',
   multiplyBy: (n) => `Multiply by ${n}`,

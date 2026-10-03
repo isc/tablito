@@ -5,8 +5,9 @@ import type { ConjPerson } from '../types';
 interface ConjRuleVisualProps {
   rule: ConjStrategy;
   /**
-   * Séance (introduction, correction) : les `rule.core` premiers blocs
-   * seulement — une seule idée à la fois. L'écran « Mes règles » les montre tous.
+   * Séance (introduction, correction) : le cœur de la règle seulement, et le
+   * tableau des marques resserré pour la carte, plus étroite. L'écran « Mes
+   * règles » ajoute les blocs de `rule.more`.
    */
   compact?: boolean;
   /** La personne de la question : sa ligne du tableau des marques s'illumine. */
@@ -21,7 +22,7 @@ function Block({ block, person }: { block: ConjRuleBlock; person?: ConjPerson })
           {block.rows.map((row) => (
             <div
               key={row.pronoun}
-              className={`conj-rule-mark-row${person && row.persons.includes(person) ? ' is-current' : ''}`}
+              className={`conj-rule-mark-row${row.person === person ? ' is-current' : ''}`}
             >
               <span className="conj-rule-pronoun">{row.pronoun}</span>
               <span className="conj-rule-mark">{row.mark}</span>
@@ -48,11 +49,9 @@ function Block({ block, person }: { block: ConjRuleBlock; person?: ConjPerson })
       return (
         <div className="conj-rule-group">
           <div className="conj-rule-label">{block.label}</div>
-          {/* Deux colonnes, singulier à gauche, pluriel à droite : je / nous,
-              tu / vous, il / ils se lisent sur la même ligne. */}
           <div className="conj-rule-table">
-            {[0, 3, 1, 4, 2, 5].map((i) => (
-              <div key={i} className="conj-rule-form">{renderConjHintLine(block.forms[i])}</div>
+            {block.forms.map((form) => (
+              <div key={form} className="conj-rule-form">{renderConjHintLine(form)}</div>
             ))}
           </div>
         </div>
@@ -105,7 +104,7 @@ function Block({ block, person }: { block: ConjRuleBlock; person?: ConjPerson })
  * retrouve exactement ce qu'il a vu.
  */
 export default function ConjRuleVisual({ rule, compact = false, person }: ConjRuleVisualProps) {
-  const blocks = compact ? rule.blocks.slice(0, rule.core) : rule.blocks;
+  const blocks = compact ? rule.blocks : [...rule.blocks, ...(rule.more ?? [])];
   return (
     <div className={`conj-rule-visual${compact ? ' conj-rule-visual--compact' : ''}`}>
       {blocks.map((block, i) => (

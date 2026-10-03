@@ -27,10 +27,8 @@ export function renderConjHintLine(line: string): ReactNode {
         return <b key={i} className="conj-hint-stem">{inner}</b>;
       case '^':
         return <b key={i} className="conj-hint-mark is-lit">{inner}</b>;
-      case '~':
+      default: // '~'
         return <s key={i} className="conj-hint-struck">{inner}</s>;
-      default:
-        return part;
     }
   });
 }

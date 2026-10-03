@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { CONJ_RULES, getConjStrategy, metConjRules } from '../lib/conjugationStrategies';
+import { getConjStrategy, metConjRules } from '../lib/conjugationStrategies';
+import { CONJ_RULES } from '../lib/conjugationRules';
 import { conjFactDefs, requireConjFactDef, resolveConjQuestion } from '../lib/conjugationFacts';
 import type { ConjTense } from '../types';
 

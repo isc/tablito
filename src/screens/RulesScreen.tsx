@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import BackChevron from '../components/BackChevron';
+import ConjRuleListenButton from '../components/ConjRuleListenButton';
 import ConjRuleVisual from '../components/ConjRuleVisual';
-import ListenButton from '../components/ListenButton';
+import ParentSegmented from '../components/ParentSegmented';
 import { renderConjHintLine } from '../components/conjHintLine';
 import { useTTS } from '../hooks/useTTS';
+import { conjStrings } from '../i18n/conjugation';
 import { useRulesStrings } from '../i18n/home';
-import { conjRuleTtsKey, type ConjStrategy } from '../lib/conjugationRules';
+import type { ConjStrategy } from '../lib/conjugationRules';
 
 interface RulesScreenProps {
   onBack: () => void;
@@ -39,20 +41,15 @@ export default function RulesScreen({ onBack, showRule11 = false, conjRules = []
         </div>
 
         {hasConj && (
-          <nav className="rules-tabs" role="tablist">
-            {(['maths', 'conj'] as const).map((id) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                className={`rules-tab${tab === id ? ' is-active' : ''}`}
-                onClick={() => setTab(id)}
-              >
-                {id === 'maths' ? t.sectionMaths : t.sectionConj}
-              </button>
-            ))}
-          </nav>
+          <ParentSegmented
+            label={t.title}
+            options={[
+              { value: 'maths', label: t.sectionMaths },
+              { value: 'conj', label: t.sectionConj },
+            ]}
+            value={tab}
+            onChange={setTab}
+          />
         )}
 
         {!showConj && (
@@ -169,12 +166,12 @@ export default function RulesScreen({ onBack, showRule11 = false, conjRules = []
                   {renderConjHintLine(rule.badge)}
                 </div>
                 <div className="rule-card-heading">{rule.title}</div>
-                <ListenButton onClick={() => speak(conjRuleTtsKey(rule))} label={t.listen} />
+                <ConjRuleListenButton rule={rule} onSpeak={speak} />
               </div>
               <ConjRuleVisual rule={rule} />
               {rule.tip && <div className="rule-card-tip">{rule.tip}</div>}
               <details className="rule-card-details">
-                <summary>{t.readFull}</summary>
+                <summary>{conjStrings.readFullRule}</summary>
                 <div className="rule-card-lines">
                   {rule.lines.map((line, i) => (
                     <div key={i}>{renderConjHintLine(line)}</div>

@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react';
 import ConjForm from './ConjForm';
 import ConjRuleVisual from './ConjRuleVisual';
 import FeedbackStar from './FeedbackStar';
-import ListenButton from './ListenButton';
+import ConjRuleListenButton from './ConjRuleListenButton';
 import StrategyHintShell from './StrategyHintShell';
 import { conjWrittenForm, type ConjQuestionView } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
-import { conjRuleTtsKey } from '../lib/conjugationRules';
 import { pickRandom } from '../lib/utils';
 import { conjStrings as t } from '../i18n/conjugation';
 import { TENSE_NAMES } from '../i18n/tense';
@@ -111,11 +110,12 @@ export default function ConjFeedbackOverlay({
         {strategy && (
           <StrategyHintShell
             title={strategy.title}
-            lines={[<ConjRuleVisual key="rule" rule={strategy} compact person={view.person} />]}
             variant="feedback"
             eyebrow={t.hintEyebrow}
-            action={<ListenButton onClick={() => onSpeak(conjRuleTtsKey(strategy))} label={t.listenRule} />}
-          />
+            action={<ConjRuleListenButton rule={strategy} onSpeak={onSpeak} />}
+          >
+            <ConjRuleVisual rule={strategy} compact person={view.person} />
+          </StrategyHintShell>
         )}
         <button type="button" className="feedback-ok-btn" onClick={onDismiss}>
           {t.gotIt}

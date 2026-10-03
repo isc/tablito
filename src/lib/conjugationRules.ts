@@ -25,18 +25,14 @@ import type { ConjPerson } from '../types';
 
 /** Une ligne du tableau des marques : un pronom, sa marque, un exemple. */
 export interface ConjMarkRow {
-  /** Les personnes que la ligne couvre : la séance illumine celle de la question. */
-  persons: readonly ConjPerson[];
+  /** La personne de la ligne : la séance illumine celle de la question. */
+  person: ConjPerson;
   pronoun: string;
   mark: string;
   example: string;
 }
 
-/**
- * Un bloc visuel de la règle. L'écran « Mes règles » les montre tous ; la séance
- * (introduction d'un fait, correction) les `core` premiers seulement — une
- * seule idée à la fois, jamais un mur de règle.
- */
+/** Un bloc visuel de la règle (cf. `blocks` et `more` de `ConjStrategy`). */
 export type ConjRuleBlock =
   /** Le tableau pronom → marque → exemple. */
   | { kind: 'marks'; rows: readonly ConjMarkRow[] }
@@ -62,10 +58,14 @@ export interface ConjStrategy {
    * des règles de maths : la marque qui la résume.
    */
   badge: string;
-  /** La règle en images : ce que l'enfant regarde (cf. `ConjRuleBlock`). */
+  /**
+   * Le cœur de la règle en images, montré partout : l'astuce de la séance
+   * (introduction d'un fait, correction) n'a que lui — une seule idée à la
+   * fois, jamais un mur de règle.
+   */
   blocks: readonly ConjRuleBlock[];
-  /** Nombre de blocs, en tête de `blocks`, que la séance montre. */
-  core: number;
+  /** Les blocs que l'écran « Mes règles » ajoute sous le cœur. */
+  more?: readonly ConjRuleBlock[];
   /** Mot de la fin sous les blocs, sur l'écran « Mes règles ». */
   tip?: string;
   /**
@@ -98,22 +98,21 @@ export const PERSON_MARKS: ConjStrategy = {
     {
       kind: 'marks',
       rows: [
-        { persons: ['tu'], pronoun: 'tu', mark: 's', example: 'tu chante*s*' },
-        { persons: ['nous'], pronoun: 'nous', mark: 'ons', example: 'nous chant*ons*' },
-        { persons: ['vous'], pronoun: 'vous', mark: 'ez', example: 'vous chant*ez*' },
-        { persons: ['ils'], pronoun: 'ils, elles', mark: 'nt', example: 'ils chante*nt*' },
+        { person: 'tu', pronoun: 'tu', mark: 's', example: 'tu chante*s*' },
+        { person: 'nous', pronoun: 'nous', mark: 'ons', example: 'nous chant*ons*' },
+        { person: 'vous', pronoun: 'vous', mark: 'ez', example: 'vous chant*ez*' },
+        { person: 'ils', pronoun: 'ils, elles', mark: 'nt', example: 'ils chante*nt*' },
       ],
     },
+    // Les rebelles restent dans l'astuce de la séance : elle s'affiche aussi
+    // pour les formes irrégulières du présent, où le tableau seul contredirait
+    // la réponse (vous *êtes*, pas vous *-ez*).
     {
       kind: 'chips',
       label: 'Les 4 rebelles',
       forms: ['vous *êtes*', 'vous *faites*', 'vous *dites*', 'nous *sommes*'],
     },
   ],
-  // Les rebelles restent dans l'astuce de la séance : elle s'affiche aussi pour
-  // les formes irrégulières du présent, où le tableau seul contredirait la
-  // réponse (vous *êtes*, pas vous *-ez*).
-  core: 2,
   tip: 'Au présent, à l’imparfait, au futur : la marque ne bouge presque pas.',
   lines: [
     'Avec tu, ça finit presque toujours par *s* : tu chante*s*, tu va*s*, tu dira*s*.',
@@ -147,6 +146,8 @@ export const IMPARFAIT_RULE: ConjStrategy = {
         { label: 'Choisis la personne, ajoute sa terminaison', form: 'je _chant_^ais^' },
       ],
     },
+  ],
+  more: [
     {
       kind: 'table',
       label: 'Les 6 terminaisons',
@@ -161,7 +162,6 @@ export const IMPARFAIT_RULE: ConjStrategy = {
     },
     { kind: 'note', label: 'Sauf être', form: 'j’_ét_*ais*, nous _ét_*ions*' },
   ],
-  core: 1,
   tip: 'Ça marche pour tous les verbes !',
   lines: [
     'Dis le verbe avec nous, au présent : nous _chant_*ons*.',
@@ -194,6 +194,8 @@ export const FUTUR_RULE: ConjStrategy = {
         { label: 'Choisis la personne, ajoute sa terminaison', form: 'je _chanter_^ai^' },
       ],
     },
+  ],
+  more: [
     {
       kind: 'table',
       label: 'Les 6 terminaisons',
@@ -220,7 +222,6 @@ export const FUTUR_RULE: ConjStrategy = {
       ],
     },
   ],
-  core: 1,
   lines: [
     'Prends le verbe en entier : _chanter_.',
     'Ajoute la terminaison : *ai*, *as*, *a*, *ons*, *ez*, *ont*.',
@@ -253,9 +254,8 @@ export const SON_DOUX_RULE: ConjStrategy = {
         { label: 'Devant i, pas de e', forms: ['nous _mang_*ions*'] },
       ],
     },
-    { kind: 'spotlight', form: 'nous _lan_^ç^*ons*', caption: 'Avec un c : la cédille.' },
   ],
-  core: 2,
+  more: [{ kind: 'spotlight', form: 'nous _lan_^ç^*ons*', caption: 'Avec un c : la cédille.' }],
   lines: [
     'Devant a, o, u, le g et le c changent de son.',
     'Pour garder le son doux, on écrit nous mang*eons*, avec un e.',

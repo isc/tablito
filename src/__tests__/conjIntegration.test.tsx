@@ -278,7 +278,7 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
   /** L'écran d'avant la conjugaison : les seules règles de maths, sans onglets. */
   function expectMathsOnly(rule10Heading: string): void {
     expect(text()).toContain(rule10Heading);
-    expect(textsOf('.rules-tab')).toEqual([]);
+    expect(textsOf('.rules-content > .parent-segmented button')).toEqual([]);
     expect(textsOf('.rule-card-conj')).toEqual([]);
   }
 
@@ -293,7 +293,7 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
 
     // Deux onglets, les maths d'abord : les règles de conjugaison attendent
     // qu'on ouvre le leur.
-    expect(textsOf('.rules-tab')).toEqual(['Maths', 'Conjugaison']);
+    expect(textsOf('.rules-content > .parent-segmented button')).toEqual(['Maths', 'Conjugaison']);
     expect(text()).toContain('Multiplier par 10');
     expect(textsOf('.rule-card-conj')).toEqual([]);
 

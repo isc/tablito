@@ -63,8 +63,8 @@
   animation: slideUp 0.4s ease both;
 }
 
-/* nth-of-type, pas nth-child : les onglets (nav), présents quand la
-   conjugaison ajoute ses règles, ne décalent pas la cascade des cartes. */
+/* Cascade d'apparition des cartes. Les onglets, quand la conjugaison en ajoute,
+   sont un div de plus : la première carte part alors à 0,1 s, sans gêne. */
 .rule-card:nth-of-type(3) {
   animation-delay: 0.1s;
 }
@@ -73,34 +73,11 @@
   animation-delay: 0.2s;
 }
 
-/* Onglets Maths / Conjugaison, présents seulement quand la conjugaison a des
-   règles à montrer. */
-.rules-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  background: var(--cream-deep);
-  border-radius: 14px;
-  padding: 4px;
-}
-
-.rules-tab {
+/* Onglets Maths / Conjugaison (ParentSegmented), présents seulement quand la
+   conjugaison a des règles à montrer : à la taille d'une cible d'enfant. */
+.rules-content > .parent-segmented .parent-segmented-option {
   min-height: 44px;
-  border: 0;
-  border-radius: 11px;
-  background: transparent;
-  font-family: var(--sans);
   font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-soft);
-  cursor: pointer;
-}
-
-.rules-tab.is-active {
-  background: var(--paper);
-  color: var(--ink);
-  font-weight: 800;
-  box-shadow: var(--shadow-sm);
 }
 
 .rule-card-head {

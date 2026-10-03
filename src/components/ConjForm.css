@@ -80,12 +80,14 @@
   animation: conjLightUp 0.45s ease both;
 }
 
-.conj-form-subject.is-lit {
+.conj-form-subject.is-lit,
+.conj-rule-pronoun {
   background: var(--honey-soft);
   box-shadow: 0 1px 0 var(--honey);
 }
 
-.conj-form-mark.is-lit {
+.conj-form-mark.is-lit,
+.conj-hint-mark.is-lit {
   background: var(--conj-mark-soft);
   box-shadow: 0 1px 0 var(--conj-mark);
 }
@@ -116,10 +118,8 @@
 }
 
 /* `^ais^` : la terminaison qu'on ajoute, dans la pastille de la forme
-   segmentée illuminée (.conj-form-mark.is-lit). */
+   segmentée illuminée (couleurs partagées avec .conj-form-mark.is-lit). */
 .conj-hint-mark.is-lit {
-  background: var(--conj-mark-soft);
-  box-shadow: 0 1px 0 var(--conj-mark);
   border-radius: 6px;
   padding: 0 0.1em;
 }

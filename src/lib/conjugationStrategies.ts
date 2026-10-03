@@ -18,8 +18,6 @@ import {
 // leurs blocs visuels) la séance montre pour une question, et lesquelles
 // l'enfant a déjà rencontrées.
 
-export { CONJ_RULES, type ConjStrategy };
-
 /**
  * L'astuce à afficher pour une question donnée (§5.3 : seulement pour les faits
  * en boîte ≤ 2). Une seule règle à la fois — jamais un mur de règles.

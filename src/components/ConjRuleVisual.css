@@ -1,6 +1,8 @@
 /* Une règle de conjugaison en images (ConjRuleVisual) : écran « Mes règles »
    et astuce de la séance. Les formes sont en serif et en grand, comme la forme
-   segmentée de la question : c'est elle que l'enfant doit reconnaître. */
+   segmentée de la question : c'est elle que l'enfant doit reconnaître. Le fond
+   des lignes, `--conj-rule-cell`, est crème par défaut ; la carte qui l'accueille
+   peut le changer (cf. StrategyHint.css). */
 
 .conj-rule-visual {
   display: flex;
@@ -8,13 +10,6 @@
   gap: 14px;
   font-family: var(--sans);
   color: var(--ink);
-  /* Fond des lignes : crème sur la carte blanche des règles, blanc sur la
-     carte honey de la correction (cf. plus bas). */
-  --conj-rule-cell: var(--cream);
-}
-
-.strategy-hint.feedback .conj-rule-visual {
-  --conj-rule-cell: var(--paper);
 }
 
 .conj-rule-form {
@@ -59,7 +54,7 @@
   grid-template-columns: 84px 52px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  background: var(--conj-rule-cell);
+  background: var(--conj-rule-cell, var(--cream));
   border-radius: 14px;
   padding: 8px 12px;
   border: 1.5px solid transparent;
@@ -76,8 +71,6 @@
   font-size: 17px;
   font-weight: 600;
   white-space: nowrap;
-  background: var(--honey-soft);
-  box-shadow: 0 1px 0 var(--honey);
   border-radius: 10px;
   padding: 2px 8px;
 }
@@ -139,7 +132,7 @@
   grid-template-columns: 30px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  background: var(--conj-rule-cell);
+  background: var(--conj-rule-cell, var(--cream));
   border-radius: 14px;
   padding: 10px 12px;
 }
@@ -157,10 +150,13 @@
   justify-content: center;
 }
 
-/* Le temps conjugué : singulier à gauche, pluriel à droite. */
+/* Le temps conjugué : singulier à gauche, pluriel à droite — je / nous,
+   tu / vous, il / ils sur la même ligne, en remplissant colonne par colonne. */
 .conj-rule-table {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
   gap: 4px 10px;
 }
 
@@ -193,7 +189,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: var(--conj-rule-cell);
+  background: var(--conj-rule-cell, var(--cream));
   border-radius: 16px;
   padding: 14px 12px;
   text-align: center;
