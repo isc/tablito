@@ -337,12 +337,9 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   // Intro : toujours la 1ʳᵉ porteuse (déterministe — l'écran d'introduction et
   // son MP3 sont pré-générés, comme `introRemainder` au niveau 3).
   const intros = newFacts.map((fact) => makeQuestion(fact, 0, { isIntroduction: true }));
-  // Révisions dues et bonus sont entrelacés d'un seul tenant, EN TENANT COMPTE
-  // de la dernière intro : par blocs, les jonctions échappaient au contrôle, et
-  // deux questions consécutives pouvaient y partager le verbe ou la personne
-  // (§5.1), voire être en interférence ; un bloc seul n'a parfois même aucun
-  // ordre sans conflit, quand l'autre suffirait à séparer ses questions. Les
-  // révisions dues d'abord : un bonus ne passe devant que pour en séparer deux.
+  // Révisions dues puis bonus, entrelacés d'un seul tenant à la suite de la
+  // dernière intro (specs §1.3) : aucune jonction n'échappe à la règle du
+  // verbe et de la personne (§5.1) ni à l'anti-interférence.
   //
   // La paire de contraste, quand la séance la contient, reste hors de
   // l'entrelacement : elle est posée d'un bloc ensuite (placeContrastPair).

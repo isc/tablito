@@ -156,28 +156,27 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   // Padding par bonus reviews (feedback normal, sans toucher au Leitner :
   // le calendrier de répétition espacée est préservé — cf. pickBonusReviewFacts).
   const planned = [...introQuestions, ...reviewQuestions];
-  let bonusQuestions: SessionQuestion[] = [];
+  const bonusQuestions: SessionQuestion[] = [];
   if (planned.length < MIN_QUESTIONS) {
     const sessionFactKeys = new Set(planned.map((q) => getFactKey(q.fact.a, q.fact.b)));
-    bonusQuestions = pickBonusReviewFacts(
-      facts,
-      (f) => sessionFactKeys.has(getFactKey(f.a, f.b)),
-      MIN_QUESTIONS - planned.length,
-    ).map((fact) => ({
-      fact,
-      ...randomDisplayOrder(fact),
-      isIntroduction: false,
-      isRetry: false,
-      isBonusReview: true,
-    }));
+    bonusQuestions.push(
+      ...pickBonusReviewFacts(
+        facts,
+        (f) => sessionFactKeys.has(getFactKey(f.a, f.b)),
+        MIN_QUESTIONS - planned.length,
+      ).map((fact) => ({
+        fact,
+        ...randomDisplayOrder(fact),
+        isIntroduction: false,
+        isRetry: false,
+        isBonusReview: true,
+      })),
+    );
   }
 
-  // Intros en tête : la spec place l'introduction avant la pratique. Tout le
-  // reste est ordonné d'un seul tenant, à la suite de la dernière intro. Par
-  // blocs (révisions, puis bonus), les jonctions échappaient à l'entrelacement,
-  // et un bloc seul n'a parfois aucun ordre sans conflit (trois révisions de la
-  // table de 2) quand les bonus suffiraient à séparer ses questions. Révisions
-  // dues d'abord : un bonus ne passe devant que pour en séparer deux.
+  // Intros en tête (l'introduction précède la pratique), puis tout le reste
+  // d'un seul tenant, révisions dues avant bonus, à la suite de la dernière
+  // intro (specs §1.3).
   return [
     ...introQuestions,
     ...interleaveOrder(

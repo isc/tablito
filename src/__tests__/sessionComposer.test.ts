@@ -9,6 +9,7 @@ import {
   type PlacementResult,
 } from '../lib/placement';
 import { createNewProfile } from '../lib/storage';
+import { computeSimilarity } from '../lib/similarity';
 import type { MultiFact, UserProfile, BoxLevel } from '../types';
 
 const TODAY = '2026-05-01';
@@ -206,8 +207,7 @@ describe('composeSession — ordre de la séance', () => {
     // Les révisions dues d'abord : un bonus ne passe devant que pour en séparer deux.
     expect(session.map((q) => q.isBonusReview)).toEqual([false, true, false, true, false, true, false]);
     for (let i = 1; i < session.length; i++) {
-      const [prev, next] = [session[i - 1].fact, session[i].fact];
-      expect([prev.a, prev.b].some((n) => n === next.a || n === next.b)).toBe(false);
+      expect(computeSimilarity(session[i - 1].fact, session[i].fact)).not.toBe('strong');
     }
   });
 

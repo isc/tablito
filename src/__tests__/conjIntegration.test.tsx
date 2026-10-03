@@ -73,9 +73,9 @@ const squash = (t: string) => t.replace(/\s+/g, '');
 
 /**
  * Répond à la question affichée, quelle qu'elle soit : l'ordre des révisions
- * bonus est tiré au sort (`interleaveOrder`), donc le coder en dur rendrait le
- * test dépendant d'un tirage. On identifie le fait par la phrase porteuse
- * présente à l'écran, puis on tape SA réponse.
+ * bonus est tiré au sort (`pickBonusReviewFacts`), donc le coder en dur
+ * rendrait le test dépendant d'un tirage. On identifie le fait par la phrase
+ * porteuse présente à l'écran, puis on tape SA réponse.
  */
 function answerCurrentConj(): string {
   const shown = squash(text());

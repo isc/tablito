@@ -15,11 +15,12 @@ const MAX_QUESTIONS = 15;
 const MAX_NEW_FACTS = 2;
 
 /**
- * Deux faits de division en conflit s'ils ne doivent pas être adjacents :
+ * Deux faits de division en conflit : jamais introduits ensemble, jamais
+ * adjacents dans la séance (composeDailySession).
  * - même dividende (56÷7 vs 56÷8) → forte interférence, le cas clé du §11.6 ;
  * - même diviseur → même « table » (règle d'entrelacement).
  */
-function questionConflict(a: DivisionFact, b: DivisionFact): boolean {
+export function divisionConflict(a: DivisionFact, b: DivisionFact): boolean {
   return a.dividend === b.dividend || a.divisor === b.divisor;
 }
 
@@ -48,11 +49,9 @@ function makeQuestion(
  *   (§11.6).
  * - Pas de variation d'ordre : la division n'est pas commutative (§11.2).
  *
- * Renvoie la séance dans l'ordre de PRIORITÉ, pas encore entrelacée : intros,
- * révisions dues (les plus fragiles d'abord, §6.1), puis bonus. Son appelant,
- * composeDailySession, y ajoute l'entretien des tables, retient les révisions
- * dans cet ordre quand l'entretien leur prend des places, et ordonne la séance
- * entière (jamais deux faits de même dividende adjacents).
+ * Renvoie la séance dans l'ordre de PRIORITÉ, non entrelacée : intros,
+ * révisions dues (les plus fragiles d'abord, §6.1), puis bonus. L'appelant,
+ * composeDailySession, y ajoute l'entretien et ordonne la séance entière.
  *
  * Renvoie une liste vide si aucun fait de division n'est encore éligible
  * (niveau pas encore débloqué / aucune table maîtrisée).
@@ -91,7 +90,7 @@ export function composeDivisionSession(
     for (const fact of eligible) {
       if (newFacts.length >= MAX_NEW_FACTS) break;
       // Ne pas introduire ensemble deux faits qui interfèrent.
-      if (newFacts.some((nf) => questionConflict(nf, fact))) continue;
+      if (newFacts.some((nf) => divisionConflict(nf, fact))) continue;
       newFacts.push(fact);
     }
   }

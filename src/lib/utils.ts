@@ -99,11 +99,9 @@ const INTERLEAVE_SEARCH_BUDGET = 5000;
  * n'existe, on garde l'ordre glouton réparé (cf. greedyWithRepair) : best
  * effort.
  *
- * Aucun tirage au sort ici : la variété vient des composeurs, qui mélangent les
- * faits de même priorité (prioritizeByBoxLevel, pickBonusReviewFacts). Le
- * premier élément était tiré au hasard dans toute la liste : une fois
- * révisions et bonus ordonnés ensemble, la séance s'ouvrait souvent sur un
- * bonus.
+ * Aucun tirage au sort ici, il ouvrirait souvent la séance sur un bonus : la
+ * variété vient des composeurs, qui mélangent les faits de même priorité
+ * (prioritizeByBoxLevel, pickBonusReviewFacts).
  *
  * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
  * (la dernière introduction du jour) : il contraint alors le premier élément,
@@ -114,8 +112,7 @@ export function interleaveOrder<T>(
   conflicts: (a: T, b: T) => boolean,
   after?: T,
 ): T[] {
-  if (items.length === 0) return items;
-  if (items.length === 1 && after === undefined) return items;
+  if (items.length <= 1) return items;
 
   const n = items.length;
   // `after`, quand il y en a un, est le nœud `n` : la recherche le traite comme
@@ -172,7 +169,7 @@ function greedyWithRepair(
   const result: number[] = [];
 
   while (remaining.length > 0) {
-    const prev = result.length > 0 ? result[result.length - 1] : head;
+    const prev = result.at(-1) ?? head;
     const next = remaining.findIndex((i) => prev === undefined || !conflicts(prev, i));
     if (next !== -1) {
       result.push(remaining.splice(next, 1)[0]);

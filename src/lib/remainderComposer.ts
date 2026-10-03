@@ -54,10 +54,9 @@ function reviewQuestion(fact: RemainderFact, flags: Partial<RemainderSessionQues
  *   ensemble (§12.7).
  * - Pas de variation d'ordre : la question est toujours « dividende ÷ diviseur ».
  *
- * Renvoie la séance dans l'ordre de PRIORITÉ, pas encore entrelacée, comme
+ * Renvoie la séance dans l'ordre de PRIORITÉ, non entrelacée, comme
  * composeDivisionSession : composeDailySession y ajoute l'entretien et ordonne
- * la séance entière (jamais deux zones de même diviseur ni deux dividendes
- * tirés identiques adjacents, §12.7).
+ * la séance entière.
  *
  * Renvoie une liste vide si aucune zone n'est encore éligible.
  */

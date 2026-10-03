@@ -1,7 +1,7 @@
 import type { UserProfile, SessionItem } from '../types';
 import { remainderDividend } from '../types';
 import { isDue, pickBonusReviewFacts, prioritizeByBoxLevel } from './leitner';
-import { composeDivisionSession } from './divisionComposer';
+import { composeDivisionSession, divisionConflict } from './divisionComposer';
 import { composeRemainderSession } from './remainderComposer';
 import { randomDisplayOrder } from './sessionComposer';
 import { getFactKey } from './facts';
@@ -85,9 +85,7 @@ function itemTable(item: SessionItem): number {
 // ancre de sa zone (7×6 juste avant la zone (7,6) soufflerait l'encadrement).
 // × vs ÷ exacts : pas de conflit (inchangé, specs §11.6).
 function itemConflict(a: SessionItem, b: SessionItem): boolean {
-  if (a.kind === 'div' && b.kind === 'div') {
-    return a.fact.dividend === b.fact.dividend || a.fact.divisor === b.fact.divisor;
-  }
+  if (a.kind === 'div' && b.kind === 'div') return divisionConflict(a.fact, b.fact);
   if (a.kind === 'mult' && b.kind === 'mult') {
     return itemTable(a) === itemTable(b) || computeSimilarity(a.fact, b.fact) === 'strong';
   }
@@ -217,9 +215,7 @@ function composeRemainderDaily(profile: UserProfile, today: string): SessionItem
 //
 // `reviews` arrive dans l'ordre de priorité du composeur du niveau actif
 // (révisions dues les plus fragiles d'abord, puis bonus) : la coupe garde
-// donc les plus fragiles. Coupée dans l'ordre entrelacé, elle gardait les
-// premières questions de la séance, et une révision plus fragile pouvait
-// céder sa place à une moins fragile.
+// donc les plus fragiles.
 function assemble(
   profile: UserProfile,
   intros: SessionItem[],
@@ -234,10 +230,9 @@ function assemble(
     core.push(...bonusPadding(profile, [...intros, ...core], deficit));
   }
 
-  // Un seul entrelacement, à la suite de la dernière intro. Révisions dues
-  // (niveau actif puis entretien) devant les bonus, par un tri stable : c'est
-  // l'ordre de préférence d'interleaveOrder, et un bonus ne passe devant une
-  // révision que pour en séparer deux.
+  // Révisions dues (niveau actif puis entretien) devant les bonus, par un tri
+  // stable, puis un seul entrelacement à la suite de la dernière intro (specs
+  // §1.3).
   core.sort((a, b) => Number(a.isBonusReview) - Number(b.isBonusReview));
   return [...intros, ...interleaveOrder(core, itemConflict, intros.at(-1))];
 }

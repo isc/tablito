@@ -147,10 +147,12 @@ describe('composeDivisionSession — gating sur la maîtrise multiplicative', ()
 
     const session = composeDivisionSession(p, NOW);
 
-    const kinds = session.map((q) => (q.isIntroduction ? 'intro' : q.isBonusReview ? 'bonus' : 'due'));
-    expect(kinds).toEqual([...Array(2).fill('intro'), ...Array(6).fill('due'), ...Array(4).fill('bonus')]);
-    expect(session.filter((q) => kinds[session.indexOf(q)] === 'due').map((q) => q.fact.box)).toEqual([
-      1, 3, 3, 5, 5, 5,
+    expect(
+      session.map((q) => (q.isIntroduction ? 'intro' : q.isBonusReview ? 'bonus' : `due:${q.fact.box}`)),
+    ).toEqual([
+      ...['intro', 'intro'],
+      ...['due:1', 'due:3', 'due:3', 'due:5', 'due:5', 'due:5'],
+      ...['bonus', 'bonus', 'bonus', 'bonus'],
     ]);
   });
 
