@@ -1,0 +1,3 @@
+import{jsx as m}from"preact/jsx-runtime";import{useMemo as c}from"react";import a from"./LeitnerGrid.js";import{useFactCellStrings as d}from"../i18n/progress.js";function f({facts:o}){const e=d(),n=c(()=>{const i=new Map;for(const r of o)i.set(`${r.divisor},${r.quotient}`,r);return i},[o]);return m(a,{operator:"\xF7",cellFor:(i,r)=>{const t=n.get(`${i},${r}`),s=t?t.history.filter(l=>l.correct).length:0;return{box:t?.box??1,introduced:t?.introduced??!1,ariaLabel:e.divLabel(i*r,i),diagonal:!1,modal:{title:t?`${t.dividend} \xF7 ${t.divisor} = ${t.quotient}`:"",correctCount:s,totalAttempts:t?.history.length??0}}}})}export{f as default};
+
+//# sourceMappingURL=DivisionProgressGrid.js.map
