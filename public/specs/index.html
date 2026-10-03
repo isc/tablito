@@ -349,6 +349,7 @@
     <li><a href="#profils">Multi-profils — plusieurs enfants par appareil</a></li>
     <li><a href="#suivi">Suivi à distance — le parent sur son propre appareil</a></li>
     <li><a href="#conjugaison">Conjugaison — une seconde matière</a></li>
+    <li><a href="#irreguliers">Verbes irréguliers anglais — une troisième matière</a></li>
     <li><a href="#evolutions">Évolutions possibles (V2)</a></li>
     <li><a href="#references">Références</a></li>
   </ol>
@@ -1362,21 +1363,153 @@ interface Badge {
   </ul>
 </section>
 
+<section class="chapter" id="irreguliers">
+  <h2><span class="num">16</span>Verbes irréguliers anglais — une troisième matière</h2>
+  <blockquote class="note">
+    <p><strong>Statut : proposition</strong>, non implémentée. Point de départ : une élève de CM1 en école bilingue, avec une enseignante anglophone qui fait le cours uniquement en anglais. En classe, un verbe est donné par semaine et l'interrogation est orale : l'enseignante dit « faites le verbe » et l'enfant récite <em>go, went, gone</em>.</p>
+  </blockquote>
+
+  <h3 id="irr-matiere"><span class="num">16.1</span>Pourquoi cette matière, et pourquoi maintenant</h3>
+  <p>Même statut que la conjugaison (§15) : une <strong>matière</strong> à part, à côté des maths et de la conjugaison, pas un niveau de plus. Tout ce que le §15.1 pose s'applique sans changement : séance propre et facultative, image mystère et badges propres, flamme de série partagée, un seul bouton à l'intérieur de la matière. L'accueil gagne une troisième tuile.</p>
+  <p>C'est probablement la matière qui se prête le mieux au principe de l'app après les tables. Un verbe irrégulier est une <strong>forme stockée</strong> au sens strict (§15.2) : <em>went</em> ne se déduit de rien, il se retrouve en mémoire. Et le couple « infinitif → formes passées » est un appariement de mots, c'est-à-dire exactement le matériau sur lequel l'effet de test et la répétition espacée ont été établis (§16.2).</p>
+  <p><strong>L'objectif est de prendre de l'avance, pas de suivre la classe.</strong> Au rythme d'un verbe par semaine, la liste standard (§16.3) occuperait l'école pendant près de deux ans ; avec deux verbes nouveaux par séance au plus, l'app la couvre en quelques mois. La classe devient alors une révision de ce qui est déjà su. Aucune synchronisation avec la liste de l'enseignante n'est donc prévue : l'app suit un ordre de fréquence, qui est aussi, très probablement, celui de la classe.</p>
+
+  <h3 id="irr-recherche"><span class="num">16.2</span>Ce que dit la recherche</h3>
+  <p class="source"><strong>Sources :</strong> Karpicke &amp; Roediger (2008), Kang (2016), Pinker (1999), Marcus et al. (1992), Bybee &amp; Moder (1983), MacLeod et al. (2010), Ellis (2002)</p>
+
+  <h4>Le terrain le plus solide de l'app</h4>
+  <p>L'expérience de Karpicke &amp; Roediger, qui fonde l'effet de test cité au §1, portait sur des paires de mots d'une langue étrangère (swahili–anglais). Pour les tables, la conjugaison ou la division, l'app <em>transpose</em> ces résultats. Pour des formes verbales d'une langue étrangère, elle les applique presque tels quels. C'est la seule matière où la réserve « extrapolation » des §11.7, §12.8 et §15.11 ne s'applique pas.</p>
+
+  <h4>Les erreurs typiques sont connues</h4>
+  <p>Les enfants qui apprennent l'anglais, langue maternelle ou non, font deux grandes familles d'erreurs sur les irréguliers. La première est la <strong>sur-régularisation</strong> : <em>goed, buyed, bringed</em>, la règle productive du <code>-ed</code> qui écrase la forme stockée (Marcus et al., 1992 ; Pinker, 1999). La seconde est l'<strong>analogie avec la mauvaise famille</strong> : <em>bring → brang</em> sur le modèle de <em>sing → sang</em>. Les irréguliers forment en effet des familles par ressemblance (<em>sing/sang/sung, ring/rang/rung</em>), que les locuteurs étendent spontanément, y compris à des verbes inventés (Bybee &amp; Moder, 1983). Ces familles aident quand on les applique au bon verbe, et trompent quand la ressemblance n'est que de surface. C'est ce qui organise l'inventaire (§16.3) et les interférences (§16.4).</p>
+
+  <h4>Dire à voix haute aide à retenir</h4>
+  <p>L'<em>effet de production</em> (MacLeod et al., 2010) : un mot prononcé à voix haute est mieux retenu qu'un mot lu en silence. Pour une matière dont l'évaluation en classe est orale, c'est un argument de plus pour faire de la voix le mode de réponse principal (§16.6), et pas seulement une alternative au clavier.</p>
+
+  <h4>La fréquence décide de l'ordre</h4>
+  <p>Les verbes irréguliers sont aussi les plus fréquents de la langue (<em>be, have, do, go, say…</em>). L'apprentissage d'une langue seconde est largement porté par la fréquence d'exposition (Ellis, 2002) : commencer par les plus fréquents, c'est commencer par ceux que l'enfant entend et utilise déjà en classe.</p>
+
+  <h3 id="irr-inventaire"><span class="num">16.3</span>L'inventaire : 64 verbes en familles</h3>
+  <p><strong>Un fait = un verbe.</strong> La question donne l'infinitif, l'enfant produit le prétérit <em>et</em> le participe passé : <em>go</em> → <em>went, gone</em>. C'est le geste de la classe, et la récitation en trois temps (<em>go, went, gone</em>) est elle-même un support de mémoire, qu'il vaut mieux ne pas découper. Découper le verbe en deux faits (prétérit seul, participe seul) obligerait à poser la question avec des termes grammaticaux (« <em>past participle?</em> ») qu'on n'utilise pas en CM1, pour un gain de granularité qui ne sert pas ici.</p>
+  <p>64 verbes, soit exactement une grille 8×8 pour l'image mystère : chaque case est un verbe. Liste standard, choisie parmi les irréguliers les plus fréquents, concrets pour un enfant, et regroupée par familles :</p>
+  <table>
+    <thead><tr><th>Famille</th><th>Verbes</th><th>Nb</th></tr></thead>
+    <tbody>
+      <tr><td>Trois fois la même forme</td><td><em>put, cut, let, hit, hurt, read</em> (<em>read</em> : même orthographe, mais se prononce « red » au passé)</td><td>6</td></tr>
+      <tr><td>Passé en <code>-ought</code> / <code>-aught</code></td><td><em>think, bring, buy, fight, teach, catch</em></td><td>6</td></tr>
+      <tr><td><code>i → a → u</code></td><td><em>begin, drink, sing, swim, ring</em></td><td>5</td></tr>
+      <tr><td><code>-ew</code> / <code>-own</code></td><td><em>know, grow, throw, blow, fly, draw</em></td><td>6</td></tr>
+      <tr><td>Le participe revient à l'infinitif</td><td><em>come, run</em></td><td>2</td></tr>
+      <tr><td>Participe en <code>-en</code> / <code>-n</code></td><td><em>take, give, write, speak, fall, break, drive, choose, eat, ride, forget, hide, wake, see</em></td><td>14</td></tr>
+      <tr><td>Deux formes pareilles en <code>-t</code></td><td><em>feel, leave, keep, sleep, lose, send, build, spend</em></td><td>8</td></tr>
+      <tr><td>Deux formes pareilles en <code>-d</code></td><td><em>have, say, make, hear, tell, sell, hold, stand, find</em></td><td>9</td></tr>
+      <tr><td>Deux formes pareilles, la voyelle change</td><td><em>meet, sit, win, get</em></td><td>4</td></tr>
+      <tr><td>Uniques</td><td><em>be, do, go, wear</em></td><td>4</td></tr>
+      <tr><td><strong>Total v1</strong></td><td></td><td><strong>64</strong></td></tr>
+    </tbody>
+  </table>
+  <p><strong>Formes acceptées.</strong> <em>be</em> attend ses deux prétérits, dans n'importe quel ordre : <em>was, were, been</em>. <em>get</em> accepte <em>got</em> (britannique) comme <em>gotten</em> (américain) au participe. Aucun autre doublet n'est accepté dans la v1, faute de verbe concerné dans la liste (<em>learnt/learned</em>, <em>dreamt/dreamed</em> sont hors périmètre).</p>
+  <p><strong>Ordre d'introduction : la fréquence</strong>, à commencer par <em>be, have, do, go, say, get, make</em>, sous réserve des interférences du §16.4. Il n'y a pas de temps à débloquer comme en conjugaison : la matière est une liste unique.</p>
+
+  <h4>Les familles sont des astuces, pas des règles</h4>
+  <p>Contrairement aux terminaisons de la conjugaison, aucune famille ne permet de <em>fabriquer</em> une forme : savoir que <em>sing</em> donne <em>sang</em> ne dit pas que <em>bring</em> donne <em>brought</em>. Une famille se présente donc comme une <strong>analogie avec un verbe déjà su</strong>, à la manière des stratégies de dérivation des tables (§3.4bis) : « comme <em>sing → sang → sung</em> ». Elle s'affiche à l'introduction d'un verbe dont un membre de la famille est déjà acquis, et à la correction pour les verbes en boîte ≤ 2. Deux familles ont en plus un repère qui leur est propre :</p>
+  <ul>
+    <li><code>i → a → u</code> : le <em>a</em> vient avant le <em>u</em>, comme dans l'alphabet. Le prétérit d'abord, le participe ensuite.</li>
+    <li><code>-aught</code> / <code>-ought</code> : les deux verbes en <em>-ch</em> (<em>teach, catch</em>) prennent <code>-aught</code>, tous les autres <code>-ought</code>.</li>
+  </ul>
+  <p>Comme les règles de la conjugaison, les familles rejoignent l'écran <strong>Règles</strong> sous un titre propre, chacune avec le premier verbe rencontré qui la représente, et jamais avant.</p>
+
+  <h3 id="irr-interference"><span class="num">16.4</span>Interférences à gérer</h3>
+  <p>La règle du §1.2 s'applique : deux faits en interférence ne cohabitent pas dans une même série tant qu'ils ne sont pas consolidés (boîte ≥ 3), et leurs introductions sont espacées d'au moins 48 h. La difficulté propre à la matière est de distinguer deux sortes de ressemblance :</p>
+  <ul>
+    <li><strong>Même famille, même schéma</strong> (<em>sing</em> et <em>ring</em>) : la ressemblance <em>aide</em>, puisque le schéma est le bon. Pas d'interférence. Au contraire, un membre déjà acquis sert d'appui à l'introduction du suivant.</li>
+    <li><strong>Infinitifs qui se ressemblent, schémas différents</strong> : la ressemblance <em>trompe</em>. Ce sont les vraies paires à risque, à espacer :
+      <ul>
+        <li><em>bring</em> / <em>sing, ring</em> (le fameux <em>brang</em>) ;</li>
+        <li><em>think</em> / <em>drink</em> (<em>thank</em>, <em>thunk</em>) ;</li>
+        <li><em>win</em> / <em>swim</em> (<em>won</em> contre <em>swam</em>) ;</li>
+        <li><em>fall</em> / <em>feel</em> (<em>fell</em> contre <em>felt</em>, la confusion la plus classique de toute la liste) ;</li>
+        <li><em>buy</em> / <em>bring</em> (<em>bought</em> contre <em>brought</em>).</li>
+      </ul>
+    </li>
+    <li><strong>La famille <code>-ought</code> / <code>-aught</code></strong> est un cas à part : ses six passés riment tous à l'oral (<em>bought, brought, thought, fought, taught, caught</em>). Ce qui distingue les verbes, c'est la correspondance infinitif → passé, et rien dans le son ne l'aide. On la traite comme les quatre monosyllabes en <em>-ont</em> du §15.4 : introductions espacées, et l'air de famille présenté une fois chaque verbe su séparément, jamais avant.</li>
+  </ul>
+  <p>Le double régime du §15.4 s'applique aussi : séparées pendant l'apprentissage, ces paires sont <strong>délibérément entrelacées</strong> une fois les deux verbes en boîte ≥ 3. C'est ce qui construit la discrimination entre <em>fell</em> et <em>felt</em>.</p>
+
+  <h3 id="irr-question"><span class="num">16.5</span>La question type</h3>
+  <p>Comme en classe, la question est en anglais et ne contient que l'infinitif, affiché en grand et <strong>lu à voix haute par la voix anglaise</strong> :</p>
+  <blockquote class="note">
+    <p>🔊 « <em>go</em> »</p>
+    <p><em>go</em> → ________ → ________</p>
+  </blockquote>
+  <p>Pas de traduction sur la question : la classe se fait en anglais, et la traduction donnerait une étape de plus à lire. La traduction française (<em>aller</em>) apparaît en revanche, en petit, à l'introduction d'un verbe et à sa correction, pour que le sens ne reste jamais flou. Elle est masquée quand l'interface est en anglais.</p>
+  <p>Pas de phrase porteuse dans la v1 (contrairement au §15.5) : l'exercice de la classe est la récitation nue, et c'est elle que l'app automatise. L'emploi du prétérit en contexte est une extension (§16.10).</p>
+  <p><strong>Audio</strong> : deux fichiers par verbe, l'infinitif seul (la question) et la récitation complète « <em>go, went, gone</em> » (introduction et correction), soit 128 MP3. Ils sont générés avec la voix anglaise et <strong>lus en anglais quelle que soit la langue de l'interface</strong>. C'est la seule entorse à la règle « un dossier audio par langue d'interface » de <code>useTTS</code>.</p>
+
+  <h3 id="irr-saisie"><span class="num">16.6</span>Répondre à voix haute, ou au clavier</h3>
+  <p><strong>La voix est le mode principal, dès la v1.</strong> L'interrogation en classe est orale, l'effet de production plaide pour l'oral (§16.2), et en anglais la réponse dite n'a pas le problème d'homophonie qui a imposé l'épellation en conjugaison (§15.10) : <em>went</em> et <em>gone</em> ne se confondent avec aucune autre forme du même verbe. L'enfant dit donc la forme, sans épeler.</p>
+  <ul>
+    <li><strong>Ce qu'elle dit.</strong> L'habitude de la classe est de réciter les trois formes, <em>go, went, gone</em> ; dire seulement <em>went, gone</em> est aussi accepté. Si le premier mot reconnu est l'infinitif, il est retiré avant l'appariement. Réciter les trois formes a un autre avantage : la reconnaissance vocale est plus fiable sur une suite de mots que sur un mot isolé, sans contexte.</li>
+    <li><strong>Homophones.</strong> La reconnaissance renvoie des mots orthographiés, pas des sons : <em>ate</em> peut revenir sous la forme <em>eight</em>, <em>won</em> sous <em>one</em> ou <em>1</em>, <em>threw</em> sous <em>through</em>, <em>knew</em> sous <em>new</em>, <em>blew</em> sous <em>blue</em>, <em>read</em> sous <em>red</em>, <em>rode</em> sous <em>road</em>, <em>caught</em> sous <em>court</em>… Une table d'homophones énumérée, par forme attendue, accepte ces transcriptions. Elle est faite à la main, comme la table des noms de lettres de la conjugaison, parce que la liste est courte et connue.</li>
+    <li><strong>Langue de reconnaissance</strong> : anglais, indépendamment de la langue de l'interface.</li>
+    <li><strong>Seuil de rapidité</strong> : mesuré à l'apparition du <em>prétérit</em> dans la transcription intermédiaire, pas au premier son. L'infinitif récité en tête ne mesure rien, puisqu'il est affiché.</li>
+    <li>Le <strong>clavier reste sous la main</strong>, comme au §15.10 : y toucher coupe le micro.</li>
+  </ul>
+  <p><strong>Au clavier</strong>, l'enfant tape les deux formes, sur le clavier alphabétique de la conjugaison (§15.5) sans <code>é</code> ni <code>ê</code> : 26 touches. Seuil de rapidité : celui du §15.5, à recalibrer. Le clavier teste en plus l'<strong>orthographe</strong>, ce que la voix ne fait pas. Une forme mal écrite mais qui se lirait pareil (<em>thougth</em>, <em>tought</em> pour <em>taught</em>) est un « presque » : acceptée, montrée correctement, jamais promue (§15.5).</p>
+
+  <h4>Verdicts et erreurs</h4>
+  <p>Le fait étant le verbe, une erreur sur l'une des deux formes est une erreur sur le verbe. Le journal de la question garde la réponse donnée, ce qui permet à l'espace parent de distinguer les erreurs récurrentes :</p>
+  <ul>
+    <li><strong>Sur-régularisation</strong> (<em>goed, buyed</em>) ;</li>
+    <li><strong>Mauvaise famille</strong> (<em>brang</em>) ;</li>
+    <li><strong>Inversion</strong> (<em>gone, went</em>) — fréquente dans la famille <code>i → a → u</code> (<em>sung, sang</em>) ;</li>
+    <li><strong>Une seule forme fausse</strong>, l'autre juste.</li>
+  </ul>
+  <p>Le feedback suit le §15.6 : aucun son négatif, les trois formes s'affichent et la récitation complète est rejouée. L'astuce de famille est réaffichée pour les verbes en boîte ≤ 2.</p>
+
+  <h3 id="irr-seance"><span class="num">16.7</span>La séance</h3>
+  <p>Anatomie du §3.2, inchangée : introduction (2 verbes nouveaux au plus), pratique de 12 à 15 questions, récap. Entrelacement : jamais deux questions consécutives de la même famille.</p>
+  <h4>Introduction d'un verbe nouveau</h4>
+  <ol>
+    <li><strong>Écouter</strong> : les trois formes affichées et récitées par la voix anglaise, avec la traduction en petit.</li>
+    <li><strong>La famille</strong>, si un verbe de la même famille est déjà acquis : « comme <em>sing → sang → sung</em> ». Pour un verbe unique ou le premier d'une famille, cette étape est sautée.</li>
+    <li><strong>Copie différée</strong> (§15.2) : les formes s'affichent 4 s, se masquent, l'enfant les dit ou les tape. Une fois masquées, l'écran garde exactement la question (<em>go → ____ → ____</em>).</li>
+    <li><strong>Première question</strong> immédiate.</li>
+    <li><strong>Re-test</strong> 2 à 3 questions plus tard.</li>
+  </ol>
+  <p><strong>Rythme</strong> : deux verbes nouveaux par séance au plus, sous le plafond de la boîte 1 du §3.4bis. Un verbe porte deux formes, donc plus qu'une terminaison de conjugaison : si l'usage montre que deux verbes nouveaux par séance surchargent, on descendra à un.</p>
+
+  <h3 id="irr-placement"><span class="num">16.8</span>Placement</h3>
+  <p>À la première ouverture de la matière, quelques sondes sur les verbes les plus fréquents (ceux que la classe a le plus de chances d'avoir déjà vus), avec le bouton « Je ne sais pas » et un arrêt après 3 échecs consécutifs, comme au §15.7. Mais <strong>pas d'inférence par dominance</strong> : chaque irrégulier est une forme stockée, et savoir <em>went</em> ne dit rien de <em>took</em>. Seuls les verbes réussis sont ensemencés. Le placement accepte la voix comme le clavier : c'est l'oral que la classe a entraîné.</p>
+
+  <h3 id="irr-recompenses"><span class="num">16.9</span>Récompenses</h3>
+  <p><strong>Image mystère</strong> avec son propre pool d'images. 64 verbes pour 64 cases : la grille 8×8 se remplit exactement. <strong>Badges</strong> : un par famille consolidée, plus les badges d'assiduité existants, masqués tant que la matière n'est pas ouverte (§15.8).</p>
+
+  <h3 id="irr-reserves"><span class="num">16.10</span>Limites et extensions</h3>
+  <ul>
+    <li><strong>La voix ne teste pas l'orthographe.</strong> En mode vocal, l'app sait si l'enfant <em>dit</em> <em>brought</em>, pas s'il sait l'écrire. En CM1 et pour une classe à l'oral, c'est le bon compromis ; le clavier reste là pour l'écrit.</li>
+    <li><strong>La reconnaissance d'une voix d'enfant sur des mots isolés reste fragile</strong>, selon l'appareil. La récitation en trois formes et la table d'homophones la rendent tenable ; le clavier reste le chemin garanti, comme au §15.10.</li>
+    <li><strong>Réciter n'est pas employer.</strong> Savoir <em>go, went, gone</em> n'est pas savoir dire <em>Yesterday I went to the park</em>. Extension naturelle : des phrases courtes au prétérit, avec un marqueur de temps (<em>yesterday, last week</em>), sur le modèle des phrases porteuses du §15.5.</li>
+    <li><strong>Au-delà des 64 verbes</strong>, les listes du collège montent à plus de 100 : un second lot pourra s'ajouter, comme un niveau supplémentaire.</li>
+  </ul>
+</section>
+
 <section class="chapter" id="evolutions">
-  <h2><span class="num">16</span>Évolutions possibles (V2)</h2>
+  <h2><span class="num">17</span>Évolutions possibles (V2)</h2>
   <ul>
     <li>Mode défi : séance bonus optionnelle le week-end</li>
   </ul>
 </section>
 
 <section class="chapter" id="references">
-  <h2><span class="num">17</span>Références</h2>
+  <h2><span class="num">18</span>Références</h2>
   <ol class="references">
     <li>Axtell, P. K., McCallum, R. S., Bell, S. M., &amp; Poncy, B. (2009). Developing math automaticity using a classwide fluency building procedure for middle school students: A preliminary study. <em>Psychology in the Schools, 46</em>(6), 526–538.</li>
     <li>Bowers, P. N., Kirby, J. R., &amp; Deacon, S. H. (2010). The effects of morphological instruction on literacy skills: A systematic review of the literature. <em>Review of Educational Research, 80</em>(2), 144–179. <a href="https://doi.org/10.3102/0034654309359353">doi:10.3102/0034654309359353</a></li>
     <li>Brendefur, J., Strother, S., Thiede, K., &amp; Appleton, S. (2015). Developing multiplication fact fluency. <em>Advances in Social Sciences Research Journal, 2</em>(8). <a href="https://doi.org/10.14738/assrj.28.1396">doi:10.14738/assrj.28.1396</a></li>
     <li>Burns, M. K., Kanive, R., &amp; DeGrande, M. (2012). Effect of a computer-delivered math fact intervention as a supplemental intervention for math in third and fourth grades. <em>Remedial and Special Education, 33</em>(3), 184–191. <a href="https://doi.org/10.1177/0741932510381652">doi:10.1177/0741932510381652</a></li>
     <li>Butler, R. (1988). Enhancing and undermining intrinsic motivation: The effects of task-involving and ego-involving evaluation on interest and performance. <em>British Journal of Educational Psychology, 58</em>(1), 1–14. <a href="https://doi.org/10.1111/j.2044-8279.1988.tb00874.x">doi:10.1111/j.2044-8279.1988.tb00874.x</a></li>
+    <li>Bybee, J. L., &amp; Moder, C. L. (1983). Morphological classes as natural categories. <em>Language, 59</em>(2), 251–270.</li>
     <li>Campbell, J. I. D. (1997). On the relation between skilled performance of simple division and multiplication. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition, 23</em>(5), 1140–1159. <a href="https://doi.org/10.1037/0278-7393.23.5.1140">doi:10.1037/0278-7393.23.5.1140</a></li>
     <li>Campbell, J. I. D. (1999). Division by multiplication. <em>Memory &amp; Cognition, 27</em>(5), 791–802. <a href="https://doi.org/10.3758/BF03198532">doi:10.3758/BF03198532</a></li>
     <li>Cepeda, N. J., Vul, E., Rohrer, D., Wixted, J. T., &amp; Pashler, H. (2008). Spacing effects in learning: A temporal ridgeline of optimal retention. <em>Psychological Science, 19</em>(11), 1095–1102. <a href="https://doi.org/10.1111/j.1467-9280.2008.02209.x">doi:10.1111/j.1467-9280.2008.02209.x</a></li>
@@ -1385,12 +1518,15 @@ interface Badge {
     <li>Curtis, E. T., Huebner, M. G., &amp; LeFevre, J.-A. (2016). The relationship between problem size and fixation patterns during addition, subtraction, multiplication, and division. <em>Journal of Numerical Cognition, 2</em>(2), 91–115. <a href="https://doi.org/10.5964/jnc.v2i2.17">doi:10.5964/jnc.v2i2.17</a></li>
     <li>De Brauwer, J., &amp; Fias, W. (2009). A longitudinal study of children's performance on simple multiplication and division problems. <em>Developmental Psychology, 45</em>(5), 1480–1496. <a href="https://doi.org/10.1037/a0015465">doi:10.1037/a0015465</a></li>
     <li>Dotan, D., &amp; Zviran-Ginat, S. (2022). Elementary math in elementary school: The effect of interference on learning the multiplication table. <em>Cognitive Research: Principles and Implications, 7</em>, 101. <a href="https://doi.org/10.1186/s41235-022-00451-0">doi:10.1186/s41235-022-00451-0</a></li>
+    <li>Ellis, N. C. (2002). Frequency effects in language processing: A review with implications for theories of implicit and explicit language acquisition. <em>Studies in Second Language Acquisition, 24</em>(2), 143–188.</li>
     <li>Fayol, M., Hupet, M., &amp; Largy, P. (1999). The acquisition of subject-verb agreement in written French: From novices to experts' errors. <em>Reading and Writing, 11</em>(2), 153–174. <a href="https://doi.org/10.1023/A:1008038127807">doi:10.1023/A:1008038127807</a></li>
     <li>Hattie, J., &amp; Timperley, H. (2007). The power of feedback. <em>Review of Educational Research, 77</em>(1), 81–112. <a href="https://doi.org/10.3102/003465430298487">doi:10.3102/003465430298487</a></li>
     <li>Huber, S., Fischer, U., Moeller, K., &amp; Nuerk, H.-C. (2013). On the interrelation of multiplication and division in secondary school children. <em>Frontiers in Psychology, 4</em>, 740. <a href="https://doi.org/10.3389/fpsyg.2013.00740">doi:10.3389/fpsyg.2013.00740</a></li>
     <li>Kang, S. H. K. (2016). Spaced repetition promotes efficient and effective learning. <em>Policy Insights from the Behavioral and Brain Sciences, 3</em>(1), 12–19. <a href="https://doi.org/10.1177/2372732215624708">doi:10.1177/2372732215624708</a></li>
     <li>Karpicke, J. D., &amp; Roediger, H. L. (2008). The critical importance of retrieval for learning. <em>Science, 319</em>(5865), 966–968. <a href="https://doi.org/10.1126/science.1152408">doi:10.1126/science.1152408</a></li>
     <li>LeFevre, J.-A., &amp; Morris, J. (1999). More on the relation between division and multiplication in simple arithmetic: Evidence for mediation of division solutions via multiplication. <em>Memory &amp; Cognition, 27</em>(5), 803–812. <a href="https://doi.org/10.3758/BF03198533">doi:10.3758/BF03198533</a></li>
+    <li>MacLeod, C. M., Gopie, N., Hourihan, K. L., Neary, K. R., &amp; Ozubko, J. D. (2010). The production effect: Delineation of a phenomenon. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition, 36</em>(3), 671–685.</li>
+    <li>Marcus, G. F., Pinker, S., Ullman, M., Hollander, M., Rosen, T. J., &amp; Xu, F. (1992). Overregularization in language acquisition. <em>Monographs of the Society for Research in Child Development, 57</em>(4).</li>
     <li>Mauro, D. G., LeFevre, J.-A., &amp; Morris, J. (2003). Effects of problem format on division and multiplication performance: Division facts are mediated via multiplication-based representations. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition, 29</em>(2), 163–170. <a href="https://doi.org/10.1037/0278-7393.29.2.163">doi:10.1037/0278-7393.29.2.163</a></li>
     <li>Pinker, S. (1999). <em>Words and Rules: The Ingredients of Language</em>. Basic Books.</li>
     <li>Rea, C. P., &amp; Modigliani, V. (1985). The effect of expanded versus massed practice on the retention of multiplication facts and spelling lists. <em>Human Learning, 4</em>, 11–18.</li>
