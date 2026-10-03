@@ -308,11 +308,10 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     // Le futur n'a pas encore été abordé : sa règle attend son premier fait.
     expect(text()).not.toContain('Le futur se fabrique');
     // Chaque règle : ses blocs en entier (l'écran ne coupe pas au cœur de
-    // la séance), un bouton « Écouter », et la règle écrite repliée.
+    // la séance), et un bouton « Écouter ».
     expect(text()).toContain('Les 4 rebelles');
     expect(text()).toContain('Les 6 terminaisons');
     expect(document.querySelectorAll('.rule-card-conj [aria-label="Écouter la règle"]')).toHaveLength(3);
-    expect(document.querySelectorAll('.rule-card-conj details:not([open])')).toHaveLength(3);
   });
 
   it('matière ouverte mais aucun fait encore rencontré : l’écran d’avant', async () => {

@@ -16,7 +16,7 @@ import type { ConjPerson } from '../types';
 // quand la langue d'interface est l'anglais), donc pas de table { fr, en } —
 // contrairement aux stratégies mathématiques de i18n/strategies.ts.
 //
-// Mini-balisage de tous les textes de forme (`badge`, `lines`, et les `form`,
+// Mini-balisage de tous les textes de forme (`badge`, et les `form`,
 // `forms`, `example` des blocs), rendu par `renderConjHintLine`
 // (components/conjHintLine.tsx) dans les couleurs de la forme segmentée :
 //   `*ons*`  terminaison (grenat)        `_chant_`  radical (bleu)
@@ -69,11 +69,6 @@ export interface ConjStrategy {
   /** Mot de la fin sous les blocs, sur l'écran « Mes règles ». */
   tip?: string;
   /**
-   * La règle écrite en entier, phrases courtes, une idée par ligne : dépliable
-   * sous les blocs de l'écran « Mes règles », pour qui veut la lire.
-   */
-  lines: readonly string[];
-  /**
    * Le texte du MP3 `conj-rule-<id>` (bouton « Écouter »). Écrit pour l'oreille :
    * les terminaisons y sont ÉPELÉES (« o, n, s ») — muettes pour la plupart,
    * elles ne s'entendent pas dans la forme lue.
@@ -98,10 +93,12 @@ export const PERSON_MARKS: ConjStrategy = {
     {
       kind: 'marks',
       rows: [
+        // Un exemple par temps, présent, imparfait, futur : c'est ce que dit
+        // le `tip` sous le tableau, la marque ne bouge presque pas.
         { person: 'tu', pronoun: 'tu', mark: 's', example: 'tu chante*s*' },
-        { person: 'nous', pronoun: 'nous', mark: 'ons', example: 'nous chant*ons*' },
-        { person: 'vous', pronoun: 'vous', mark: 'ez', example: 'vous chant*ez*' },
-        { person: 'ils', pronoun: 'ils, elles', mark: 'nt', example: 'ils chante*nt*' },
+        { person: 'nous', pronoun: 'nous', mark: 'ons', example: 'nous éti*ons*' },
+        { person: 'vous', pronoun: 'vous', mark: 'ez', example: 'vous verr*ez*' },
+        { person: 'ils', pronoun: 'ils, elles', mark: 'nt', example: 'ils jouaie*nt*' },
       ],
     },
     // Les rebelles restent dans l'astuce de la séance : elle s'affiche aussi
@@ -114,13 +111,6 @@ export const PERSON_MARKS: ConjStrategy = {
     },
   ],
   tip: 'Au présent, à l’imparfait, au futur : la marque ne bouge presque pas.',
-  lines: [
-    'Avec tu, ça finit presque toujours par *s* : tu chante*s*, tu va*s*, tu dira*s*.',
-    'Avec nous, ça finit par *ons* : nous chant*ons*, nous all*ons*, nous éti*ons*.',
-    'Avec vous, ça finit par *ez* : vous chant*ez*, vous ven*ez*, vous verr*ez*.',
-    'Avec ils et elles, ça finit par *nt* : ils chante*nt*, ils jouaie*nt*, ils viendro*nt*.',
-    'Trois formes n’obéissent pas : vous *êtes*, vous *faites*, vous *dites*. Et une quatrième : nous *sommes*.',
-  ],
   speech:
     'Chaque personne a sa marque. ' +
     'Avec tu, ça finit presque toujours par la lettre s : tu chantes. ' +
@@ -163,13 +153,6 @@ export const IMPARFAIT_RULE: ConjStrategy = {
     { kind: 'note', label: 'Sauf être', form: 'j’_ét_*ais*, nous _ét_*ions*' },
   ],
   tip: 'Ça marche pour tous les verbes !',
-  lines: [
-    'Dis le verbe avec nous, au présent : nous _chant_*ons*.',
-    'Enlève *-ons* : il reste _chant_.',
-    'Ajoute la terminaison : *ais*, *ais*, *ait*, *ions*, *iez*, *aient*.',
-    'Ça donne : je _chant_*ais*, nous _chant_*ions*, ils _chant_*aient*.',
-    'Ça marche pour tous les verbes… sauf être : j’_ét_*ais*, nous _ét_*ions*.',
-  ],
   speech:
     'L’imparfait se fabrique avec nous. ' +
     'Un : dis le verbe avec nous, au présent : nous chantons. ' +
@@ -222,13 +205,6 @@ export const FUTUR_RULE: ConjStrategy = {
       ],
     },
   ],
-  lines: [
-    'Prends le verbe en entier : _chanter_.',
-    'Ajoute la terminaison : *ai*, *as*, *a*, *ons*, *ez*, *ont*.',
-    'Ça donne : je _chanter_*ai*, nous _chanter_*ons*, ils _chanter_*ont*.',
-    'Pour les verbes en -re comme dire, on enlève le e : je _dir_*ai*.',
-    'Six verbes changent de début : être → _ser_, avoir → _aur_, aller → _ir_, faire → _fer_, venir → _viendr_, voir → _verr_.',
-  ],
   speech:
     'Le futur se fabrique avec l’infinitif. ' +
     'Un : prends le verbe en entier : chanter. ' +
@@ -246,7 +222,7 @@ export const SON_DOUX_RULE: ConjStrategy = {
   // les formes ci-dessous (mang*eons*).
   badge: 'g*e*',
   blocks: [
-    { kind: 'spotlight', form: 'nous _mang_^e^*ons*', caption: 'Le e garde le son doux de manger.' },
+    { kind: 'spotlight', form: 'nous _mang_^e^*ons*', caption: 'Devant o, le g deviendrait dur : le e garde le son doux de manger.' },
     {
       kind: 'columns',
       columns: [
@@ -256,13 +232,6 @@ export const SON_DOUX_RULE: ConjStrategy = {
     },
   ],
   more: [{ kind: 'spotlight', form: 'nous _lan_^ç^*ons*', caption: 'Avec un c : la cédille.' }],
-  lines: [
-    'Devant a, o, u, le g et le c changent de son.',
-    'Pour garder le son doux, on écrit nous mang*eons*, avec un e.',
-    'Pareil à l’imparfait : je mang*eais*, ils mang*eaient*.',
-    'Mais devant i, pas besoin du e : nous mang*ions*.',
-    'Avec un c, on met une cédille : nous lan*çons*.',
-  ],
   speech:
     'Le piège du g et du c. ' +
     'Pour garder le son doux de manger, on ajoute un e après le g : nous mangeons, je mangeais. ' +

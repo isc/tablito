@@ -72,8 +72,6 @@ export const conjStrings = {
   hintEyebrow: "L'astuce",
   /** Bouton « Écouter » de l'astuce : le MP3 de la règle (conj-rule-<id>). */
   listenRule: 'Écouter la règle',
-  /** Écran « Mes règles » : la règle écrite en entier, repliée sous les blocs. */
-  readFullRule: 'Lire la règle en entier',
 
   // --- Image mystère de la matière (spec §7.1) ---
   /**

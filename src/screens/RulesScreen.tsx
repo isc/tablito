@@ -5,7 +5,6 @@ import ConjRuleVisual from '../components/ConjRuleVisual';
 import ParentSegmented from '../components/ParentSegmented';
 import { renderConjHintLine } from '../components/conjHintLine';
 import { useTTS } from '../hooks/useTTS';
-import { conjStrings } from '../i18n/conjugation';
 import { useRulesStrings } from '../i18n/home';
 import type { ConjStrategy } from '../lib/conjugationRules';
 
@@ -156,8 +155,7 @@ export default function RulesScreen({ onBack, showRule11 = false, conjRules = []
         )}
 
         {/* Règles de conjugaison (§15.3) : la règle en images, les mêmes blocs
-            que l'astuce de la séance (qui n'en montre que le cœur), puis la
-            règle écrite en entier, repliée, pour qui veut la lire. */}
+            que l'astuce de la séance, qui n'en montre que le cœur. */}
         {showConj &&
           conjRules.map((rule) => (
             <div key={rule.id} className="rule-card rule-card-conj">
@@ -170,14 +168,6 @@ export default function RulesScreen({ onBack, showRule11 = false, conjRules = []
               </div>
               <ConjRuleVisual rule={rule} />
               {rule.tip && <div className="rule-card-tip">{rule.tip}</div>}
-              <details className="rule-card-details">
-                <summary>{conjStrings.readFullRule}</summary>
-                <div className="rule-card-lines">
-                  {rule.lines.map((line, i) => (
-                    <div key={i}>{renderConjHintLine(line)}</div>
-                  ))}
-                </div>
-              </details>
             </div>
           ))}
       </div>

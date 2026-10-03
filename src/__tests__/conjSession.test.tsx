@@ -384,7 +384,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
     // Le cœur de la règle en images (le e de mang·e·ons), pas son mot de la
     // fin sur la cédille, réservé à l'écran « Mes règles ».
     expect(document.querySelector('.strategy-hint .conj-rule-spotlight')?.textContent).toBe(
-      'nous mangeonsLe e garde le son doux de manger.',
+      'nous mangeonsDevant o, le g deviendrait dur : le e garde le son doux de manger.',
     );
     expect(text()).not.toContain('cédille');
     expect(document.querySelector('.strategy-hint [aria-label="Écouter la règle"]')).not.toBeNull();

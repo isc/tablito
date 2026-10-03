@@ -137,27 +137,6 @@
   margin-top: 14px;
 }
 
-/* La règle écrite en entier, repliée sous les blocs. */
-.rule-card-details {
-  margin: 14px -20px -18px;
-  border-top: 1.5px solid var(--line-soft);
-}
-
-.rule-card-details summary {
-  min-height: 44px;
-  padding: 12px 20px;
-  box-sizing: border-box;
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--indigo);
-  cursor: pointer;
-}
-
-.rule-card-details .rule-card-lines {
-  padding: 0 20px 18px;
-}
-
 .rule-card-eyebrow {
   font-family: var(--sans);
   font-size: 11px;
@@ -175,16 +154,11 @@
   letter-spacing: -0.2px;
 }
 
-/* Le corps d'une carte, règle de maths ou de conjugaison : même typographie. */
-.rule-card-message,
-.rule-card-lines {
+.rule-card-message {
   font-family: var(--sans);
   font-size: 14px;
   color: var(--ink);
   line-height: 1.5;
-}
-
-.rule-card-message {
   margin-bottom: 12px;
 }
 
@@ -308,13 +282,6 @@
 
 .rule-card-honey .rule-example-highlight {
   color: var(--honey-ink);
-}
-
-/* La règle de conjugaison écrite en entier (dépliée) : une idée par ligne. */
-.rule-card-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 .rule-card-tip {
