@@ -28,6 +28,8 @@ interface HomeStrings {
   // jamais être rendues.
   subjectMaths: string;
   subjectConj: string;
+  // Verbes irréguliers anglais (specs §16) — jamais rendu en anglais.
+  subjectIrr: string;
   /** État d'une tuile dont la séance du jour est déjà faite. */
   subjectDone: string;
   /** aria-label d'une tuile jouable / déjà faite. */
@@ -58,6 +60,7 @@ const homeFr: HomeStrings = {
   doneForToday: "Bravo, c'est fait pour aujourd'hui\u00a0!",
   subjectMaths: 'Maths',
   subjectConj: 'Conjugaison',
+  subjectIrr: 'Verbes anglais',
   subjectDone: 'Fait\u00a0!',
   subjectStart: (subject) => `${subject} — commencer la séance du jour`,
   subjectDoneLabel: (subject) => `${subject} — c'est fait pour aujourd'hui`,
@@ -85,6 +88,7 @@ const homeEn: HomeStrings = {
   doneForToday: "Nice work, you're done for today!",
   subjectMaths: 'Maths',
   subjectConj: 'Conjugation',
+  subjectIrr: 'English verbs',
   subjectDone: 'Done!',
   subjectStart: (subject) => `${subject} — start today's session`,
   subjectDoneLabel: (subject) => `${subject} — done for today`,
@@ -123,6 +127,7 @@ interface RulesStrings {
   // entrées `en` gardent la table totale sans jamais être rendues.
   sectionMaths: string;
   sectionConj: string;
+  sectionIrr: string;
   ruleNumber: (n: number) => string;
   bonusRule: string;
   multiplyBy: (n: number) => string;
@@ -140,6 +145,7 @@ const rulesFr: RulesStrings = {
   intro: 'Tes raccourcis à connaître par cœur. Après, ce sera facile\u00a0!',
   sectionMaths: 'Maths',
   sectionConj: 'Conjugaison',
+  sectionIrr: 'Verbes anglais',
   ruleNumber: (n) => `Règle n°${n}`,
   bonusRule: 'Règle bonus',
   multiplyBy: (n) => `Multiplier par ${n}`,
@@ -169,6 +175,7 @@ const rulesEn: RulesStrings = {
   intro: 'Your shortcuts to know by heart. After that, it will be easy!',
   sectionMaths: 'Maths',
   sectionConj: 'Conjugation',
+  sectionIrr: 'English verbs',
   ruleNumber: (n) => `Rule #${n}`,
   bonusRule: 'Bonus rule',
   multiplyBy: (n) => `Multiply by ${n}`,

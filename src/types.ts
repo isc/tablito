@@ -117,6 +117,32 @@ export interface ConjFact {
   seen?: number;
 }
 
+// === Matière verbes irréguliers anglais (cf. specs §16) ===
+// Une troisième matière, sur le modèle de la conjugaison : séance, image
+// mystère et badges propres, flamme de série partagée. Proposée dans toute
+// langue d'interface SAUF l'anglais (un enfant anglophone n'apprend pas ses
+// irréguliers en liste, cf. specs §16).
+
+/**
+ * État Leitner d'un verbe irrégulier. Un fait = un VERBE (specs §16.3) : la
+ * question donne l'infinitif, l'enfant produit le prétérit ET le participe.
+ * Comme ConjFact, le fait ne porte que sa clé (l'infinitif) ; formes,
+ * traduction et famille vivent dans l'inventaire statique de
+ * `lib/irregularVerbs.ts`.
+ */
+export interface IrrFact {
+  key: string;         // l'infinitif (« go »), clé stable de l'inventaire
+  box: BoxLevel;
+  lastSeen: string;    // ISO date
+  nextDue: string;     // ISO date
+  history: Attempt[];
+  introduced: boolean;
+  // Date de l'écran d'introduction réel : sert l'espacement 48 h des
+  // introductions de verbes en interférence (specs §16.4). Absent pour les
+  // verbes ensemencés par le placement.
+  introducedAt?: string;
+}
+
 export interface Badge {
   // Un badge persisté ne porte que sa clé de progression (`id`), sa date et son
   // `icon` (affiché tel quel au recap). Le libellé est toujours re-résolu par
@@ -227,6 +253,14 @@ export interface UserProfile {
   // conjugaison, toute séance était une séance de maths).
   lastMathSessionDate?: string | null;
   lastConjSessionDate?: string | null;
+  // === Matière verbes irréguliers anglais (cf. specs §16). Optionnels, même
+  // statut que la conjugaison : `irrFacts` absent = matière jamais ouverte
+  // (les 64 verbes sont ensemencés à la première entrée). ===
+  irrFacts?: IrrFact[];
+  irrMysteryTheme?: MysteryTheme;
+  hasSeenIrrIntro?: boolean;
+  hasDoneIrrPlacement?: boolean;
+  lastIrrSessionDate?: string | null;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -299,6 +333,19 @@ export function conjFastThresholdMs(
   return CONJ_FAST_BASE_MS + CONJ_FAST_PER_CHAR_MS * expected.length;
 }
 
+// Verbes irréguliers — seuil de rapidité (specs §16.6). Au clavier, la
+// formule de la conjugaison (base + coût par lettre à taper, les deux formes
+// comprises). À la voix, le chrono s'arrête à l'apparition du PRÉTÉRIT dans la
+// transcription — l'infinitif récité en tête est affiché, il ne mesure rien —,
+// donc la base seule.
+export function irrFastThresholdMs(
+  expectedLetters: number,
+  inputMode: 'keypad' | 'voice' = 'keypad',
+): number {
+  if (inputMode === 'voice') return CONJ_FAST_BASE_MS;
+  return CONJ_FAST_BASE_MS + CONJ_FAST_PER_CHAR_MS * expectedLetters;
+}
+
 export interface SessionQuestion {
   fact: MultiFact;
   displayA: number;  // peut être inversé pour varier a×b / b×a
@@ -360,7 +407,7 @@ export interface ConjSessionQuestion {
  * conjugaison. Un seul alias plutôt que l'union recopiée à chaque écran qui
  * pilote un sélecteur d'opération (récap, images, espace parent, logs).
  */
-export type FactKind = 'mult' | 'div' | 'rem' | 'conj';
+export type FactKind = 'mult' | 'div' | 'rem' | 'conj' | 'irr';
 
 export type SessionItem =
   | ({ kind: 'mult' } & SessionQuestion)
@@ -380,8 +427,21 @@ export type SessionItem =
 // L'écran de séance, lui, prend `AnySessionItem` et dispatche par `kind`.
 export type ConjSessionItem = { kind: 'conj' } & ConjSessionQuestion;
 
+// Question de verbes irréguliers (specs §16.5) : l'infinitif seul, pas de
+// phrase porteuse — tout se dérive de la clé du fait.
+export interface IrrSessionQuestion {
+  fact: IrrFact;
+  isIntroduction: boolean;
+  isRetry: boolean;
+  isBonusReview: boolean;
+}
+
+// Même raisonnement que `ConjSessionItem` : une matière, jamais mêlée aux
+// questions de maths ni de conjugaison dans une séance.
+export type IrrSessionItem = { kind: 'irr' } & IrrSessionQuestion;
+
 /** Une question de séance, toutes matières confondues. */
-export type AnySessionItem = SessionItem | ConjSessionItem;
+export type AnySessionItem = SessionItem | ConjSessionItem | IrrSessionItem;
 
 // Log par question pour les séances enregistrées depuis l'ajout du champ.
 // Permet de diagnostiquer vitesse et mode après coup, y compris pour les
@@ -402,7 +462,8 @@ export interface SessionQuestionLog {
   // laissait un log de conjugaison passer pour la multiplication 0×0.
   a?: number;
   b?: number;
-  // Matière conjugaison uniquement : clé du fait posé (cf. lib/conjugationFacts).
+  // Conjugaison et verbes irréguliers : clé du fait posé (cf.
+  // lib/conjugationFacts, lib/irregularVerbs).
   factKey?: string;
   correct: boolean;
   responseTimeMs: number;
@@ -488,4 +549,7 @@ export const BADGE_IDS = {
   // — ces préfixes sont là pour les filtres (`id.startsWith(...)`).
   CONJ_TENSE_PREFIX: 'conj-temps-',
   CONJ_VERB_PREFIX: 'conj-verbe-',
+  // Verbes irréguliers anglais (specs §16.9) : un badge par famille
+  // consolidée. Masqués tant que la matière n'a pas été ouverte.
+  IRR_FAMILY_PREFIX: 'irr-famille-',
 } as const;

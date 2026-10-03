@@ -18,6 +18,8 @@ export interface ActivityDay {
   // matière s'afficheraient comme des jours manqués — un reproche pour une
   // matière que l'enfant n'avait pas.
   conj: boolean | null;
+  // Verbes irréguliers anglais (specs §16) : même règle, même `null`.
+  irr: boolean | null;
 }
 
 // Reconstruit la fenêtre (le dernier jour étant `today`) depuis l'historique
@@ -26,13 +28,18 @@ export interface ActivityDay {
 export function buildActivityDays(profile: UserProfile, today: string): ActivityDay[] {
   const mathDays = new Set<string>();
   const conjDays = new Set<string>();
+  const irrDays = new Set<string>();
   let firstConjDate: string | null = null;
+  let firstIrrDate: string | null = null;
   for (const session of profile.sessionHistory) {
     if (session.kind === 'conj') {
       conjDays.add(session.date);
       // L'historique est append-only chronologique : la première rencontrée
       // est la plus ancienne.
       firstConjDate ??= session.date;
+    } else if (session.kind === 'irr') {
+      irrDays.add(session.date);
+      firstIrrDate ??= session.date;
     } else {
       mathDays.add(session.date);
     }
@@ -50,6 +57,7 @@ export function buildActivityDays(profile: UserProfile, today: string): Activity
   // n'est jamais rognée, et un jour où la conjugaison a été faite est
   // forcément postérieur à son ouverture.
   const conjOpenedFrom = firstConjDate ?? profile.lastConjSessionDate ?? today;
+  const irrOpenedFrom = firstIrrDate ?? profile.lastIrrSessionDate ?? today;
 
   const out: ActivityDay[] = [];
   for (let i = ACTIVITY_WINDOW_DAYS - 1; i >= 0; i--) {
@@ -58,6 +66,7 @@ export function buildActivityDays(profile: UserProfile, today: string): Activity
       date,
       math: mathDays.has(date),
       conj: date < conjOpenedFrom ? null : conjDays.has(date),
+      irr: date < irrOpenedFrom ? null : irrDays.has(date),
     });
   }
   return out;

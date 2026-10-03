@@ -43,6 +43,11 @@ interface ParentDashboardStrings {
   activityBothDone: string;
   activityMathPending: string;
   activityConjPending: string;
+  // Verbes irréguliers anglais (specs §16) — et l'état « tout est fait »
+  // quand trois matières sont ouvertes.
+  activityIrrDone: string;
+  activityIrrPending: string;
+  activityAllDone: string;
   activityLastSession: (daysAgo: number) => string;
   activityNoSessionEver: string;
   activityAlt: (days: number) => string;
@@ -57,6 +62,10 @@ interface ParentDashboardStrings {
   // matière est masquée quand la langue d'interface est l'anglais.
   conjugations: string;
   verbForms: string;
+  // Verbes irréguliers anglais (specs §16) : carte et page miroir, mêmes
+  // réserves que la conjugaison (masquée en anglais).
+  irregularVerbs: string;
+  irregularVerbsSub: string;
   // Niveau actif de la carte Maths (les niveaux passés y sont des pastilles).
   currentMult: string;
   currentDiv: string;
@@ -74,6 +83,7 @@ interface ParentDashboardStrings {
   multiplicationsMastered: string;
   remaindersMastered: string;
   conjugationsMastered: string;
+  irregularMastered: string;
   // Barre de maîtrise de l'accueil, en quatre paliers (cf. masteryBuckets).
   masteryBarLabel: (mastered: number, total: number) => string;
   // Répartition par boîte de la page de matière (cf. ParentBoxChart) : nom
@@ -89,14 +99,17 @@ interface ParentDashboardStrings {
   opMultiplication: string;
   opRemainder: string;
   opConjugation: string;
+  opIrregular: string;
   factDivision: string;
   factMultiplication: string;
   factRemainder: string;
   factConjugation: string;
+  factIrregular: string;
   // Tout ce qui se lit par séance vit sous un seul titre de matière, au lieu
   // d'un « Séances de maths uniquement » répété sous chaque section.
   mathSessions: string;
   conjSessions: string;
+  irrSessions: string;
   mathSessionsMixed: string;
   evolution: string;
   accuracy: string;
@@ -202,6 +215,7 @@ interface ParentDashboardStrings {
   multSymbol: string;
   remSymbol: string;
   conjSymbol: string;
+  irrSymbol: string;
   formatDivFact: (dividend: number, divisor: number, quotient: number) => string;
   formatMultFact: (a: number, b: number, product: number) => string;
   // Niveau 3 : une « zone » de dividendes (specs §12.6) — « 42 à 48 ÷ 7 ».
@@ -220,6 +234,9 @@ const parentDashboardFr: ParentDashboardStrings = {
   activityBothDone: 'maths et conjugaison faites',
   activityMathPending: 'Maths pas encore.',
   activityConjPending: 'Conjugaison pas encore.',
+  activityIrrDone: 'verbes anglais faits',
+  activityIrrPending: 'Verbes anglais pas encore.',
+  activityAllDone: 'tout est fait',
   activityLastSession: (daysAgo) => `Dernière séance ${daysAgoLabel(daysAgo, 'fr')}.`,
   activityNoSessionEver: 'Aucune séance pour le moment.',
   activityAlt: (days) => `Activité des ${days} derniers jours`,
@@ -230,6 +247,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   math: 'Maths',
   conjugations: 'Conjugaison',
   verbForms: 'Formes verbales',
+  irregularVerbs: 'Verbes anglais',
+  irregularVerbsSub: 'Verbes irréguliers : prétérit, participe',
   currentMult: 'En cours\u00a0: les multiplications',
   currentDiv: 'En cours\u00a0: les divisions',
   currentRem: 'En cours\u00a0: la division avec reste',
@@ -242,6 +261,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   multiplicationsMastered: 'Multiplications maîtrisées',
   remaindersMastered: 'Divisions avec reste maîtrisées',
   conjugationsMastered: 'Formes verbales maîtrisées',
+  irregularMastered: 'Verbes maîtrisés',
   masteryBarLabel: (mastered, total) => `${mastered} maîtrisées sur ${total}`,
   boxUnseenShort: 'Pas vues',
   boxChartLabel: (counts) =>
@@ -258,12 +278,15 @@ const parentDashboardFr: ParentDashboardStrings = {
   opMultiplication: 'multiplication',
   opRemainder: 'division avec reste',
   opConjugation: 'forme verbale',
+  opIrregular: 'verbe',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
   factRemainder: 'Division avec reste',
   factConjugation: 'Conjugaison',
+  factIrregular: 'Verbe anglais',
   mathSessions: 'Séances de maths',
   conjSessions: 'Séances de conjugaison',
+  irrSessions: 'Séances de verbes anglais',
   mathSessionsMixed: 'Chaque séance mélange les niveaux débloqués.',
   evolution: 'Évolution',
   accuracy: 'Réussite',
@@ -391,6 +414,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   multSymbol: '×',
   remSymbol: '÷ʳ',
   conjSymbol: 'Vb',
+  irrSymbol: 'En',
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,
@@ -409,6 +433,9 @@ const parentDashboardEn: ParentDashboardStrings = {
   activityBothDone: 'math and conjugation done',
   activityMathPending: 'Math not done yet.',
   activityConjPending: 'Conjugation not done yet.',
+  activityIrrDone: 'English verbs done',
+  activityIrrPending: 'English verbs not done yet.',
+  activityAllDone: 'everything done',
   activityLastSession: (daysAgo) => `Last session ${daysAgoLabel(daysAgo, 'en')}.`,
   activityNoSessionEver: 'No session yet.',
   activityAlt: (days) => `Activity over the last ${days} days`,
@@ -419,6 +446,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   math: 'Math',
   conjugations: 'Conjugation',
   verbForms: 'Verb forms',
+  irregularVerbs: 'English verbs',
+  irregularVerbsSub: 'Irregular verbs: past simple, past participle',
   currentMult: 'Working on: multiplication',
   currentDiv: 'Working on: division',
   currentRem: 'Working on: division with remainders',
@@ -431,6 +460,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   multiplicationsMastered: 'Multiplication facts mastered',
   remaindersMastered: 'Remainder facts mastered',
   conjugationsMastered: 'Verb forms mastered',
+  irregularMastered: 'Verbs mastered',
   masteryBarLabel: (mastered, total) => `${mastered} of ${total} mastered`,
   boxUnseenShort: 'Not seen',
   boxChartLabel: (counts) =>
@@ -447,12 +477,15 @@ const parentDashboardEn: ParentDashboardStrings = {
   opMultiplication: 'multiplication',
   opRemainder: 'division-with-remainder',
   opConjugation: 'verb form',
+  opIrregular: 'verb',
   factDivision: 'Division',
   factMultiplication: 'Multiplication',
   factRemainder: 'Division with remainder',
   factConjugation: 'Conjugation',
+  factIrregular: 'English verb',
   mathSessions: 'Math sessions',
   conjSessions: 'Conjugation sessions',
+  irrSessions: 'English verb sessions',
   mathSessionsMixed: 'Each session mixes the unlocked levels.',
   evolution: 'Trend',
   accuracy: 'Accuracy',
@@ -572,6 +605,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   multSymbol: '×',
   remSymbol: '÷ʳ',
   conjSymbol: 'Vb',
+  irrSymbol: 'En',
   formatDivFact: (dividend, divisor, quotient) =>
     `${dividend} ÷ ${divisor} = ${quotient}`,
   formatMultFact: (a, b, product) => `${a} × ${b} = ${product}`,

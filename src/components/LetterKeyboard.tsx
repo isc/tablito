@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { conjStrings as t } from '../i18n/conjugation';
+import { useLatestRef } from '../hooks/useLatestRef';
 
 // Mini-clavier ALPHABÉTIQUE à grosses touches (spec Verbito §4.2). L'AZERTY
 // a été essayé puis abandonné (test en conditions réelles, 17/08/2026) : à
@@ -27,7 +28,12 @@ const KEYS = [
   't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
+// Verbes irréguliers anglais (specs §16.6) : les 26 lettres, sans é ni ê —
+// même ordre alphabétique, même grille de 7 (la dernière rangée en a 5).
+const KEYS_EN = KEYS.filter((k) => k !== 'é' && k !== 'ê');
+
 const LETTERS = new Set(KEYS);
+const LETTERS_EN = new Set(KEYS_EN);
 
 /**
  * Garde-fou de saisie : « regarderons » (11) est la plus longue forme attendue
@@ -61,6 +67,13 @@ interface LetterKeyboardProps {
   value?: string;
   /** L'enfant a pris la main au clavier (touche ou effacement). */
   onEdit?: () => void;
+  /** Jeu de touches : `fr` (avec é, ê) par défaut, `en` pour l'anglais. */
+  layout?: 'fr' | 'en';
+  /**
+   * La saisie en cours, à chaque frappe : pour l'afficher ailleurs que dans
+   * l'ardoise du clavier (les cases des verbes irréguliers, specs §16.6).
+   */
+  onInput?: (value: string) => void;
 }
 
 export default function LetterKeyboard({
@@ -69,16 +82,21 @@ export default function LetterKeyboard({
   prefix = '',
   value,
   onEdit,
+  layout = 'fr',
+  onInput,
 }: LetterKeyboardProps) {
+  const keys = layout === 'en' ? KEYS_EN : KEYS;
   // `input` est miroré dans `inputRef` pour éviter les closures stales : sous
   // Preact, deux pressions rapides peuvent voir la même closure capturée si on
   // dépend de `input` dans les useCallback (cf. NumPad).
   const [input, setInput] = useState('');
   const inputRef = useRef('');
+  const onInputRef = useLatestRef(onInput);
   const setInputBoth = useCallback((next: string) => {
     inputRef.current = next;
     setInput(next);
-  }, []);
+    onInputRef.current?.(next);
+  }, [onInputRef]);
 
   // Pas de reset à la ré-activation : les appelants re-keyent le clavier à
   // chaque question (`answer-<index>`, `copy-<index>-<essai>`, `probe-<index>`),
@@ -114,9 +132,10 @@ export default function LetterKeyboard({
 
   // Listener clavier physique attaché UNE fois au montage, dispatch via ref
   // (même raison que NumPad : ne pas dé-/réattacher à chaque render).
-  const callbacksRef = useRef({ handleLetter, handleBackspace, handleOk });
+  const letters = layout === 'en' ? LETTERS_EN : LETTERS;
+  const callbacksRef = useRef({ handleLetter, handleBackspace, handleOk, letters });
   // eslint-disable-next-line react-hooks/refs
-  callbacksRef.current = { handleLetter, handleBackspace, handleOk };
+  callbacksRef.current = { handleLetter, handleBackspace, handleOk, letters };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const cb = callbacksRef.current;
@@ -126,7 +145,7 @@ export default function LetterKeyboard({
         cb.handleOk();
       } else if (e.key.length === 1) {
         const lower = e.key.toLowerCase();
-        if (LETTERS.has(lower)) cb.handleLetter(lower);
+        if (cb.letters.has(lower)) cb.handleLetter(lower);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -154,7 +173,7 @@ export default function LetterKeyboard({
         {!disabled && <span className="pad-display-cursor" />}
       </div>
       <div className="letterpad-rows">
-        <div className="letterpad-keys">{KEYS.map(key)}</div>
+        <div className="letterpad-keys">{keys.map(key)}</div>
         <div className="letterpad-row--actions">
           <button
             type="button"

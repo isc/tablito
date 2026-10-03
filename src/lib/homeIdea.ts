@@ -2,6 +2,7 @@ import type { ConjTense } from '../types';
 import type { HardFact } from './hardestFacts';
 import { conjFactDef, resolveConjQuestion } from './conjugationFacts';
 import { getConjStrategy } from './conjugationStrategies';
+import { irrVerbDef, type IrrFamily } from './irregularVerbs';
 import { getDivisionStrategy } from './divisionStrategies';
 import { introRemainder } from './remainderFacts';
 import { getRemainderStrategy } from './remainderStrategies';
@@ -25,7 +26,10 @@ export type HomeIdea =
   // Conjugaison (fr-only) : les exceptions à la règle du temps que la séance
   // enseigne — une forme à retenir par cœur, ou un radical qui change.
   | { kind: 'conjIrregular'; label: string; sentence: string }
-  | { kind: 'conjStem'; tense: ConjTense; verb: string; examples: string[] };
+  | { kind: 'conjStem'; tense: ConjTense; verb: string; examples: string[] }
+  // Verbes irréguliers : la récitation, à faire dire à voix haute (specs
+  // §16.2, effet de production), et l'astuce de famille quand il y en a une.
+  | { kind: 'irrRecite'; recitation: string; family: IrrFamily };
 
 export function homeIdea(fact: HardFact): HomeIdea | null {
   switch (fact.kind) {
@@ -45,6 +49,10 @@ export function homeIdea(fact: HardFact): HomeIdea | null {
       // l'enfant a déjà vus.
       const strategy = getRemainderStrategy({ fact, remainder: introRemainder(fact.divisor) });
       return { kind: 'strategy', title: strategy.title, example: strategy.intro };
+    }
+    case 'irr': {
+      const def = irrVerbDef(fact.key);
+      return def ? { kind: 'irrRecite', recitation: fact.label, family: def.family } : null;
     }
     case 'conj': {
       const def = conjFactDef(fact.key);

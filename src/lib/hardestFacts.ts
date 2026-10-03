@@ -3,6 +3,7 @@ import { getFactKey } from './facts';
 import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey } from './remainderFacts';
 import { conjFactDef, requireConjFactDef, resolveConjQuestion } from './conjugationFacts';
+import { irrRecitation, irrVerbDef, requireIrrVerbDef } from './irregularVerbs';
 
 // Fait « difficile » unifié × / ÷ / reste, pour l'espace parent. Le discriminant
 // `kind` porte les champs propres à l'opération. En 'rem', la « difficulté »
@@ -17,7 +18,10 @@ export type HardFact =
   // d'abord — c'est l'erreur récurrente (« chanterais » pour « chanterai »)
   // qu'un parent peut reprendre, pas le seul compte. Vide pour les réponses
   // antérieures à leur enregistrement.
-  | { kind: 'conj'; key: string; box: BoxLevel; errorCount: number; label: string; recentMistakes: ConjWrittenAnswer[] };
+  | { kind: 'conj'; key: string; box: BoxLevel; errorCount: number; label: string; recentMistakes: ConjWrittenAnswer[] }
+  // Verbes irréguliers : même forme que la conjugaison — la récitation
+  // (« go – went – gone ») et les dernières réponses fausses (« goed, goed »).
+  | { kind: 'irr'; key: string; box: BoxLevel; errorCount: number; label: string; recentMistakes: ConjWrittenAnswer[] };
 
 /** Nombre de réponses fausses montrées par forme dans l'espace parent. */
 const CONJ_MISTAKES_SHOWN = 3;
@@ -37,8 +41,9 @@ function countErrorsFromLogs(sessions: SessionResult[]): Map<string, number> {
       // Conjugaison : le fait est identifié par `factKey`, pas par un couple de
       // nombres — `a`/`b` sont absents. Test explicite AVANT le repli 'mult',
       // qui les suppose présents.
-      if (q.kind === 'conj') {
-        if (q.factKey) errors.set(`conj:${q.factKey}`, (errors.get(`conj:${q.factKey}`) ?? 0) + 1);
+      if (q.kind === 'conj' || q.kind === 'irr') {
+        const key = `${q.kind}:${q.factKey}`;
+        if (q.factKey) errors.set(key, (errors.get(key) ?? 0) + 1);
         continue;
       }
       if (q.a === undefined || q.b === undefined) continue;
@@ -55,13 +60,17 @@ function countErrorsFromLogs(sessions: SessionResult[]): Map<string, number> {
   return errors;
 }
 
-// Dernières réponses fausses de conjugaison par fait, depuis les mêmes logs que
-// le compte d'erreurs (fait POSÉ), la plus récente d'abord. Les entrées sans
-// forme écrite (antérieures à son enregistrement) sont ignorées.
-function conjMistakesFromLogs(sessions: SessionResult[]): Map<string, ConjWrittenAnswer[]> {
+// Dernières réponses fausses d'une matière à formes écrites (conjugaison,
+// verbes irréguliers) par fait, depuis les mêmes logs que le compte d'erreurs
+// (fait POSÉ), la plus récente d'abord. Les entrées sans forme écrite
+// (antérieures à son enregistrement) sont ignorées.
+function mistakesFromLogs(
+  sessions: SessionResult[],
+  kind: 'conj' | 'irr',
+): Map<string, ConjWrittenAnswer[]> {
   const mistakes = new Map<string, ConjWrittenAnswer[]>();
   for (const q of sessions.flatMap((s) => s.questions ?? []).reverse()) {
-    if (q.kind !== 'conj' || q.correct || !q.factKey) continue;
+    if (q.kind !== kind || q.correct || !q.factKey) continue;
     if (typeof q.answeredWith !== 'string' || !q.expectedForm) continue;
     let list = mistakes.get(q.factKey);
     if (!list) mistakes.set(q.factKey, (list = []));
@@ -80,12 +89,17 @@ function countErrorsFromHistory(history: Attempt[], cutoff: string | null): numb
   return history.filter((h) => !h.correct && (cutoff === null || h.date >= cutoff)).length;
 }
 
-export type Subject = 'math' | 'conj';
+export type Subject = 'math' | 'conj' | 'irr';
+
+/** Matière d'une séance : ses trois niveaux de maths en sont une seule. */
+export function subjectOf(session: Pick<SessionResult, 'kind'>): Subject {
+  return session.kind === 'conj' || session.kind === 'irr' ? session.kind : 'math';
+}
 
 // Séances d'une matière. Seule définition du partage : l'espace parent s'en
 // sert pour ses graphes et son historique, cette liste pour sa fenêtre.
 export function sessionsOfSubject(history: SessionResult[], subject: Subject): SessionResult[] {
-  return history.filter((s) => (s.kind === 'conj') === (subject === 'conj'));
+  return history.filter((s) => subjectOf(s) === subject);
 }
 
 /** Fenêtre de « difficile en ce moment » de l'espace parent, en séances de la
@@ -127,7 +141,7 @@ export function getHardestFacts(
 
   const errorCount = (key: string, history: Attempt[]): number =>
     logErrors ? (logErrors.get(key) ?? 0) : countErrorsFromHistory(history, cutoff);
-  const conjMistakes = subject === 'conj' ? conjMistakesFromLogs(recent) : null;
+  const mistakes = subject === 'math' ? null : mistakesFromLogs(recent, subject);
 
   // Seule la matière demandée est construite (les autres faits seraient jetés).
   const facts: HardFact[] = [];
@@ -144,7 +158,19 @@ export function getHardestFacts(
         // Résolu plus bas : nommer un fait demande de dériver sa question, et
         // la liste n'en affiche qu'une poignée sur les 63 de la matière.
         label: '',
-        recentMistakes: conjMistakes?.get(f.key) ?? [],
+        recentMistakes: mistakes?.get(f.key) ?? [],
+      });
+    }
+  } else if (subject === 'irr') {
+    for (const f of profile.irrFacts ?? []) {
+      if (!f.introduced || !irrVerbDef(f.key)) continue;
+      facts.push({
+        kind: 'irr',
+        key: f.key,
+        box: f.box,
+        errorCount: errorCount(`irr:${f.key}`, f.history),
+        label: irrRecitation(requireIrrVerbDef(f.key)),
+        recentMistakes: mistakes?.get(f.key) ?? [],
       });
     }
   } else {

@@ -188,6 +188,16 @@ async function loadConjEntries() {
   return allConjCarrierSentences();
 }
 
+// Verbes irréguliers anglais (specs §16.5) : l'infinitif seul (la question) et
+// la récitation complète (introduction, correction), en ANGLAIS — donc générés
+// avec la voix anglaise, dans `en/`, et lus en anglais quelle que soit la
+// langue de l'interface (cf. useTTS, préfixe `irr-`). Même raison que la
+// conjugaison pour lire l'inventaire plutôt que de le recopier.
+async function loadIrrEntries() {
+  const { allIrrTtsEntries } = await importTs('src/lib/irregularVerbs.ts');
+  return allIrrTtsEntries();
+}
+
 async function buildEntriesFr() {
   const entries = [];
 
@@ -335,7 +345,7 @@ async function buildEntriesFr() {
   return entries;
 }
 
-function buildEntriesEn() {
+async function buildEntriesEn() {
   const entries = [];
 
   for (let a = 2; a <= 9; a++) {
@@ -446,6 +456,10 @@ function buildEntriesEn() {
 
   // Pas de `conj-*` ici : voir l'en-tête du fichier — la conjugaison n'existe
   // pas dans l'interface anglaise, donc ses MP3 non plus.
+
+  // Les verbes irréguliers, eux, sont ici bien que la matière soit masquée en
+  // anglais : c'est leur LANGUE, pas celle de l'interface, qui décide.
+  entries.push(...(await loadIrrEntries()));
 
   return entries;
 }

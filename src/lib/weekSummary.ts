@@ -46,6 +46,7 @@ export interface WeekSummary {
   daysVs: Versus | null;
   math: MathWeek | null;
   conj: SubjectWeek | null;
+  irr: SubjectWeek | null;
   /** Faits montés d'une boîte pendant la semaine. */
   promoted: number;
   /** Faits découverts pendant la semaine. */
@@ -101,7 +102,8 @@ export function weekSummary(profile: UserProfile, today: string, subjects: Subje
     subjects.includes(subject) ? sessionsOfSubject(profile.sessionHistory, subject) : [];
   const math = bySubject('math');
   const conj = bySubject('conj');
-  if (math.length + conj.length === 0) return null;
+  const irr = bySubject('irr');
+  if (math.length + conj.length + irr.length === 0) return null;
 
   const start = addDays(today, -(WEEK_DAYS - 1));
   const previousStart = addDays(start, -WEEK_DAYS);
@@ -109,9 +111,10 @@ export function weekSummary(profile: UserProfile, today: string, subjects: Subje
   const weekBefore = (s: SessionResult) => s.date >= previousStart && s.date < start;
   const [mathNow, mathBefore] = [math.filter(thisWeek), math.filter(weekBefore)];
   const [conjNow, conjBefore] = [conj.filter(thisWeek), conj.filter(weekBefore)];
-  const now = [...mathNow, ...conjNow];
+  const [irrNow, irrBefore] = [irr.filter(thisWeek), irr.filter(weekBefore)];
+  const now = [...mathNow, ...conjNow, ...irrNow];
   const days = new Set(now.map((s) => s.date)).size;
-  const previousDays = new Set([...mathBefore, ...conjBefore].map((s) => s.date)).size;
+  const previousDays = new Set([...mathBefore, ...conjBefore, ...irrBefore].map((s) => s.date)).size;
 
   // Une séance de maths porte le niveau en cours (×, ÷ ou avec reste). Un
   // niveau débloqué dans la fenêtre fausserait la comparaison — la division
@@ -123,6 +126,7 @@ export function weekSummary(profile: UserProfile, today: string, subjects: Subje
       ? totals(mathBefore)
       : null;
   const conjTotals = totals(conjNow);
+  const irrTotals = totals(irrNow);
 
   return {
     days,
@@ -142,6 +146,10 @@ export function weekSummary(profile: UserProfile, today: string, subjects: Subje
       conjTotals.questions === 0
         ? null
         : subjectWeek(conjTotals, conjBefore.length > 0 ? totals(conjBefore) : null),
+    irr:
+      irrTotals.questions === 0
+        ? null
+        : subjectWeek(irrTotals, irrBefore.length > 0 ? totals(irrBefore) : null),
     promoted: now.reduce((sum, s) => sum + s.factsPromoted, 0),
     discovered: now.reduce((sum, s) => sum + s.newFactsIntroduced, 0),
   };

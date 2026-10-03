@@ -55,3 +55,51 @@ export function useInputMode(): {
 
   return { inputMode, setInputMode };
 }
+
+// === Verbes irréguliers anglais (specs §16.6) ===
+// Réglage PROPRE à la matière, et voix par défaut : l'interrogation en classe
+// est orale, et dire les formes aide à les retenir. Le clavier reste à un geste
+// (et il est mémorisé si l'enfant le choisit). Le réglage commun ne convient
+// pas : son défaut est le clavier, et la conjugaison comme les maths le
+// gardent.
+export const IRR_INPUT_MODE_STORAGE_KEY = 'multiplix-irr-input-mode';
+
+function readIrrMode(): InputMode {
+  try {
+    return localStorage.getItem(IRR_INPUT_MODE_STORAGE_KEY) === 'keypad' ? 'keypad' : 'voice';
+  } catch {
+    return 'voice';
+  }
+}
+
+export function isIrrVoiceMode(): boolean {
+  return readIrrMode() === 'voice';
+}
+
+let currentIrrMode: InputMode = readIrrMode();
+const irrListeners = new Set<() => void>();
+
+function subscribeIrr(callback: () => void): () => void {
+  irrListeners.add(callback);
+  return () => {
+    irrListeners.delete(callback);
+  };
+}
+
+export function useIrrInputMode(): {
+  inputMode: InputMode;
+  setInputMode: (mode: InputMode) => void;
+} {
+  const inputMode = useSyncExternalStore(subscribeIrr, () => currentIrrMode);
+  const setInputMode = useCallback((mode: InputMode) => {
+    if (currentIrrMode === mode) return;
+    currentIrrMode = mode;
+    try {
+      localStorage.setItem(IRR_INPUT_MODE_STORAGE_KEY, mode);
+    } catch {
+      // ignore
+    }
+    for (const listener of [...irrListeners]) listener();
+  }, []);
+  return { inputMode, setInputMode };
+}

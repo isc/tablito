@@ -44,7 +44,7 @@ export default function ParentWeekCard({ profile, today, subjects }: ParentWeekC
   const week = useMemo(() => weekSummary(profile, today, subjects), [profile, today, subjects]);
   // Rien à résumer tant que l'enfant n'a fait aucune séance : la journée le dit.
   if (!week) return null;
-  const { math, conj, promoted, discovered } = week;
+  const { math, conj, irr, promoted, discovered } = week;
 
   // La comparaison avec la semaine d'avant, quand elle est juste (cf.
   // weekSummary) ; sinon la rangée s'en tient au chiffre de la semaine.
@@ -80,6 +80,13 @@ export default function ParentWeekCard({ profile, today, subjects }: ParentWeekC
               icon={<TargetIcon />}
               main={w.conjAccuracy(t.formatPercent(conj.accuracy))}
               sub={versus(conj.accuracyVs, w.accuracyVsBefore)}
+            />
+          )}
+          {irr && (
+            <Row
+              icon={<TargetIcon />}
+              main={w.irrAccuracy(t.formatPercent(irr.accuracy))}
+              sub={versus(irr.accuracyVs, w.accuracyVsBefore)}
             />
           )}
           {(promoted > 0 || discovered > 0) && (

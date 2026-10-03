@@ -25,6 +25,11 @@ interface ProgressScreenStrings {
   // l'entrée `en` existe pour que la table reste totale — elle n'est jamais
   // rendue : l'onglet est masqué quand la langue d'interface est l'anglais.
   conjugations: string;
+  // Verbes irréguliers anglais (specs §16.9) : même réserve, masqués en anglais.
+  irregularVerbs: string;
+  discoveredIrr: string;
+  masteredIrr: string;
+  legendIrr: string;
   discoveredMult: string;
   discoveredDiv: string;
   discoveredConj: string;
@@ -46,6 +51,11 @@ const progressScreenFr: ProgressScreenStrings = {
   divisions: 'Divisions',
   remainders: 'Avec reste',
   conjugations: 'Conjugaison',
+  irregularVerbs: 'Verbes anglais',
+  discoveredIrr: 'découverts',
+  masteredIrr: 'maîtrisés',
+  legendIrr:
+    "Une case par verbe : chaque verbe que tu connais mieux dévoile un morceau de l'image. Et si un verbe a besoin d'être revu, sa case se brouille à nouveau — pas d'échec, juste la brume qui revient. Continue, et elle se complétera !",
   discoveredMult: 'découverts',
   discoveredDiv: 'découvertes',
   discoveredConj: 'découvertes',
@@ -71,6 +81,11 @@ const progressScreenEn: ProgressScreenStrings = {
   divisions: 'Divisions',
   remainders: 'Remainders',
   conjugations: 'Conjugation',
+  irregularVerbs: 'English verbs',
+  discoveredIrr: 'discovered',
+  masteredIrr: 'mastered',
+  legendIrr:
+    'One square per verb: every verb you know better reveals a piece of the picture. And if a verb needs reviewing, its square blurs again. Keep going, and it will be complete!',
   discoveredMult: 'discovered',
   discoveredDiv: 'discovered',
   discoveredConj: 'discovered',

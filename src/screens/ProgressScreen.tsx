@@ -4,8 +4,9 @@ import MysteryImage from '../components/MysteryImage';
 import DivisionMysteryImage from '../components/DivisionMysteryImage';
 import RemainderMysteryImage from '../components/RemainderMysteryImage';
 import ConjMysteryImage from '../components/ConjMysteryImage';
+import IrrMysteryImage from '../components/IrrMysteryImage';
 import BackChevron from '../components/BackChevron';
-import { isConjVisible, isDivisionUnlocked, isRemainderUnlocked } from '../lib/badges';
+import { isConjVisible, isDivisionUnlocked, isIrrVisible, isRemainderUnlocked } from '../lib/badges';
 import { useLang } from '../i18n/lang';
 import { useProgressScreenStrings } from '../i18n/progress';
 
@@ -37,16 +38,19 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
   const divUnlocked = isDivisionUnlocked(profile);
   const remUnlocked = isRemainderUnlocked(profile);
   const conjVisible = isConjVisible(profile, lang);
+  const irrVisible = isIrrVisible(profile, lang);
   const [view, setView] = useState<ProgressView>(() => {
     if (initialView === 'rem' && !remUnlocked) return 'mult';
     if (initialView === 'div' && !divUnlocked) return 'mult';
     if (initialView === 'conj' && !conjVisible) return 'mult';
+    if (initialView === 'irr' && !irrVisible) return 'mult';
     return initialView;
   });
 
   const divFacts = profile.divisionFacts ?? [];
   const remFacts = profile.remainderFacts ?? [];
   const conjFacts = profile.conjFacts ?? [];
+  const irrFacts = profile.irrFacts ?? [];
 
   // UN descripteur par onglet plutôt que quatre chaînes de ternaires
   // parallèles (faits, deux libellés de compteur, image, légende) : ajouter un
@@ -96,6 +100,18 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
         />
       ),
     }),
+    irr: () => ({
+      facts: irrFacts,
+      discovered: t.discoveredIrr,
+      mastered: t.masteredIrr,
+      legend: t.legendIrr,
+      image: (
+        <IrrMysteryImage
+          facts={irrFacts}
+          theme={profile.irrMysteryTheme ?? profile.mysteryTheme}
+        />
+      ),
+    }),
   };
 
   // L'onglet actif ne peut pas désigner un inventaire fermé : le state part
@@ -103,6 +119,7 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
   // route — mais la garde reste la seule source de la retombée sur 'mult'.
   const active =
     (view === 'conj' && !conjVisible) ||
+    (view === 'irr' && !irrVisible) ||
     (view === 'div' && !divUnlocked) ||
     (view === 'rem' && !remUnlocked)
       ? views.mult()
@@ -121,10 +138,11 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
           { key: 'div' as const, label: t.divisions },
           ...(remUnlocked ? [{ key: 'rem' as const, label: t.remainders }] : []),
         ]
-      : conjVisible
+      : conjVisible || irrVisible
         ? [{ key: 'mult' as const, label: t.multiplications }]
         : []),
     ...(conjVisible ? [{ key: 'conj' as const, label: t.conjugations }] : []),
+    ...(irrVisible ? [{ key: 'irr' as const, label: t.irregularVerbs }] : []),
   ];
 
   return (

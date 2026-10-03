@@ -182,8 +182,9 @@ export function countMastered(facts: { box: BoxLevel }[]): number {
 }
 
 /**
- * Inventaire Leitner d'un niveau de maths ou de la conjugaison, tel que le
- * profil le stocke — vide pour une matière jamais ouverte.
+ * Inventaire Leitner d'un niveau de maths ou d'une matière (conjugaison,
+ * verbes irréguliers), tel que le profil le stocke — vide pour une matière
+ * jamais ouverte.
  */
 export function factsOf(
   profile: UserProfile,
@@ -198,6 +199,8 @@ export function factsOf(
       return profile.remainderFacts ?? [];
     case 'conj':
       return profile.conjFacts ?? [];
+    case 'irr':
+      return profile.irrFacts ?? [];
   }
 }
 

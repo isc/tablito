@@ -29,7 +29,8 @@ interface RecapScreenProps {
   onFinish: () => void;
   onShowProgress: () => void;
   // 'div'/'rem' selon la séance : change le nom affiché et le jalon surveillé
-  // (specs §11, §12). 'conj' = séance de la matière conjugaison. Défaut 'mult'.
+  // (specs §11, §12). 'conj' = séance de la matière conjugaison, 'irr' = des
+  // verbes irréguliers anglais (specs §16). Défaut 'mult'.
   mode?: FactKind;
 }
 
@@ -89,7 +90,9 @@ export default function RecapScreen({
   const hasPlayedRef = useRef(false);
 
   const noun =
-    mode === 'conj'
+    mode === 'irr'
+      ? t.irregularVerbs
+      : mode === 'conj'
       ? t.conjugations
       : mode === 'rem'
         ? t.remainders
@@ -104,11 +107,11 @@ export default function RecapScreen({
   //   « Maître de la division » (toutes les divisions en boîte 5) ;
   // — rem : « Grand maître de la division » (les 64 zones en boîte 5, image
   //   complète — le jalon ultime du parcours).
-  // Aucun jalon en conjugaison : les déblocages de temps y sont « signalés par
+  // Aucun jalon en conjugaison ni en verbes irréguliers : les déblocages de temps y sont « signalés par
   // une pastille discrète, sans modale » (spec Verbito §6.2). Le badge de temps
   // gagné apparaît, lui, dans la liste des nouveaux badges — comme les autres.
   const milestone =
-    mode === 'conj'
+    mode === 'conj' || mode === 'irr'
       ? null
       : mode === 'rem'
       ? newBadges.some((b) => b.id === BADGE_IDS.REM_GENIE)

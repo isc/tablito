@@ -32,6 +32,8 @@ interface Strings {
   // Matière conjugaison : nom affiché dans la jauge « Tu connais X / Y … ».
   // Entrée `en` pour garder la table totale ; jamais rendue (matière fr-only).
   conjugations: string;
+  // Verbes irréguliers anglais (specs §16) — jamais rendu en anglais.
+  irregularVerbs: string;
   newBadgeEyebrow: string;
   seeImage: string;
   finish: string;
@@ -78,6 +80,7 @@ const fr: Strings = {
   divisions: 'divisions',
   remainders: 'divisions avec reste',
   conjugations: 'formes verbales',
+  irregularVerbs: 'verbes anglais',
   newBadgeEyebrow: 'Nouveau badge',
   seeImage: 'Voir mon image →',
   finish: 'À demain !',
@@ -121,6 +124,7 @@ const en: Strings = {
   divisions: 'divisions',
   remainders: 'divisions with remainder',
   conjugations: 'verb forms',
+  irregularVerbs: 'English verbs',
   newBadgeEyebrow: 'New badge',
   seeImage: 'See my picture →',
   finish: 'See you tomorrow!',

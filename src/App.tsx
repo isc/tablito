@@ -7,6 +7,8 @@ import type {
   ConjSessionItem,
   ConjWrittenAnswer,
   FactKind,
+  IrrFact,
+  IrrSessionItem,
   SessionItem,
   SessionResult,
   SessionQuestionLog,
@@ -19,6 +21,14 @@ import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/co
 import { createInitialConjFacts } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
 import { metConjRules } from './lib/conjugationStrategies';
+import {
+  composeIrrSession,
+  isIrrAccepted,
+  metIrrFamilies,
+  type IrrVerdict,
+} from './lib/irregularComposer';
+import { createInitialIrrFacts } from './lib/irregularVerbs';
+import { seedIrrFromPlacement, type IrrPlacementResult } from './lib/irregularPlacement';
 import { factsOf, processAnswer } from './lib/leitner';
 import {
   checkBadges,
@@ -30,6 +40,8 @@ import {
   isRemainderUnlocked,
   isConjAvailable,
   isConjVisible,
+  isIrrAvailable,
+  isIrrVisible,
   activeLevel,
 } from './lib/badges';
 import {
@@ -58,7 +70,7 @@ import { syncLastSession } from './lib/push';
 import { listWatched } from './lib/watchStore';
 import type { WatchPairing } from './lib/watch';
 import type { ParentPage } from './screens/ParentDashboard';
-import { isVoiceMode } from './hooks/useInputMode';
+import { isIrrVoiceMode, isVoiceMode } from './hooks/useInputMode';
 import { useLang } from './i18n/lang';
 import { useAppStrings } from './i18n/app';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
@@ -93,6 +105,8 @@ import ProgressScreen from './screens/ProgressScreen';
 // lettres et l'inventaire des sondes, qu'un utilisateur anglophone ne verra
 // jamais.
 const ConjPlacementScreen = lazy(() => import('./screens/ConjPlacementScreen'));
+// Même profil pour le placement des verbes irréguliers (specs §16.8).
+const IrrPlacementScreen = lazy(() => import('./screens/IrrPlacementScreen'));
 const BadgesScreen     = lazy(() => import('./screens/BadgesScreen'));
 const RulesScreen      = lazy(() => import('./screens/RulesScreen'));
 const ParentDashboard  = lazy(() => import('./screens/ParentDashboard'));
@@ -103,6 +117,7 @@ type Screen =
   | 'rulesIntro'
   | 'home'
   | 'conjPlacement'
+  | 'irrPlacement'
   | 'session'
   | 'recap'
   | 'progress'
@@ -545,6 +560,20 @@ export default function App({
   // découverte — révélation différée, pas de modale (§6.2).
   const conjVisible = !!profile && isConjVisible(profile, lang);
 
+  // === Matière verbes irréguliers anglais (specs §16) ===
+  // Même mécanique que la conjugaison, condition de langue inversée : toute
+  // langue d'interface sauf l'anglais.
+  const irrAvailable = isIrrAvailable(lang);
+  const irrSessionDone = !!profile && profile.lastIrrSessionDate === today;
+  const irrNeedsPlacement = !!profile && irrAvailable && profile.hasDoneIrrPlacement !== true;
+  const irrPendingItems = useMemo<IrrSessionItem[]>(() => {
+    if (!onHome || !profile || !irrAvailable || irrSessionDone || irrNeedsPlacement) return [];
+    return composeIrrSession(profile, today).map((q): IrrSessionItem => ({ kind: 'irr', ...q }));
+  }, [onHome, profile, irrAvailable, irrSessionDone, irrNeedsPlacement, today]);
+  const hasIrrSessionAvailable =
+    irrAvailable && !irrSessionDone && (irrNeedsPlacement || irrPendingItems.length > 0);
+  const irrVisible = !!profile && isIrrVisible(profile, lang);
+
   // Remet à zéro les compteurs de séance.
   const resetSessionTracking = useCallback(() => {
     sessionConsecutiveCorrect.current = 0;
@@ -595,6 +624,66 @@ export default function App({
       setScreen('session');
     },
     [resetSessionTracking],
+  );
+
+  /**
+   * Entre en séance de verbes irréguliers : même porte que la conjugaison,
+   * mais la voix y est le mode par défaut (§16.6), avec son propre réglage.
+   */
+  const enterIrrSession = useCallback(
+    async (items: IrrSessionItem[]) => {
+      if (isIrrVoiceMode()) {
+        await preflightMicPermission();
+      }
+      resetSessionTracking();
+      setSessionItems(items);
+      setScreen('session');
+    },
+    [resetSessionTracking],
+  );
+
+  /**
+   * Séance de verbes irréguliers du jour (specs §16) : à la première entrée,
+   * les 64 verbes sont ensemencés et le placement passe d'abord (§16.8).
+   */
+  const handleStartIrr = useCallback(async () => {
+    if (!profile || !irrAvailable) return;
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const seed = prev.irrFacts ? null : createInitialIrrFacts();
+      if (!seed && prev.hasSeenIrrIntro) return prev;
+      return { ...prev, hasSeenIrrIntro: true, ...(seed ? { irrFacts: seed } : {}) };
+    });
+    if (irrNeedsPlacement) {
+      setScreen('irrPlacement');
+      return;
+    }
+    if (irrPendingItems.length === 0) return;
+    await enterIrrSession(irrPendingItems);
+  }, [profile, irrAvailable, irrNeedsPlacement, irrPendingItems, enterIrrSession]);
+
+  /** Fin du placement des verbes irréguliers : enchaîne sur la première séance. */
+  const handleIrrPlacementComplete = useCallback(
+    async (results: IrrPlacementResult[]) => {
+      if (!profile) return;
+      const now = todayISO();
+      const irrFacts = (profile.irrFacts ?? createInitialIrrFacts()).map((f) => ({ ...f }));
+      seedIrrFromPlacement(irrFacts, results, now);
+      const updated: UserProfile = {
+        ...profile,
+        irrFacts,
+        hasDoneIrrPlacement: true,
+        hasSeenIrrIntro: true,
+      };
+      setProfile(updated);
+      const items = composeIrrSession(updated, now).map((q): IrrSessionItem => ({ kind: 'irr', ...q }));
+      if (items.length === 0) {
+        setScreen('home');
+        return;
+      }
+      await enterIrrSession(items);
+    },
+    [profile, enterIrrSession],
   );
 
   /**
@@ -908,6 +997,73 @@ export default function App({
     [trackPromotion],
   );
 
+  /**
+   * Réponse à une question de verbes irréguliers (specs §16.6). Un fait = un
+   * verbe : seul le verbe posé bouge, jamais un autre par ricochet.
+   */
+  const handleIrrAnswer = useCallback(
+    (
+      item: IrrSessionItem,
+      verdict: IrrVerdict,
+      fast: boolean,
+      timeMs: number,
+      inputMode: 'keypad' | 'voice',
+      { answeredWith, expectedForm }: ConjWrittenAnswer,
+    ) => {
+      const accepted = isIrrAccepted(verdict);
+      sessionQuestionLogs.current.push({
+        kind: 'irr',
+        factKey: item.fact.key,
+        correct: accepted,
+        responseTimeMs: timeMs,
+        answeredWith,
+        expectedForm,
+        isBonusReview: item.isBonusReview,
+        inputMode,
+        fast,
+      });
+
+      if (accepted) {
+        sessionConsecutiveCorrect.current++;
+        sessionMaxConsecutiveCorrect.current = Math.max(
+          sessionMaxConsecutiveCorrect.current,
+          sessionConsecutiveCorrect.current,
+        );
+      } else {
+        sessionConsecutiveCorrect.current = 0;
+      }
+
+      // Révision bonus : feedback et stats seulement, pas de Leitner.
+      if (item.isBonusReview) return;
+
+      const today = todayISO();
+      const key = item.fact.key;
+      // `fast` vient de l'écran, qui seul connaît le verdict : un « presque »
+      // est accepté, pas promu (cf. handleConjAnswer).
+      const fastMs = fast ? Number.POSITIVE_INFINITY : 0;
+      setProfile((prev) => {
+        if (!prev?.irrFacts) return prev;
+        const irrFacts = prev.irrFacts.map((fact): IrrFact => {
+          if (fact.key !== key) return fact;
+          const updated: IrrFact = processAnswer(fact, accepted, timeMs, today, 'keypad', fastMs, {
+            answeredWith,
+            expectedForm,
+          });
+          if (!updated.introduced) {
+            updated.introduced = true;
+            // Date d'intro réelle : l'espacement 48 h des verbes en
+            // interférence (§16.4).
+            updated.introducedAt = today;
+          }
+          trackPromotion(`irr:${key}`, fact.box, updated.box);
+          return updated;
+        });
+        return { ...prev, irrFacts };
+      });
+    },
+    [trackPromotion],
+  );
+
   // Fin de séance — un seul handler pour les deux modes. Le récap suit le type
   // de séance : 'div' quand la division est débloquée (séance mixte div +
   // entretien tables), 'mult' sinon. Les tables « nouvellement complétées » ne
@@ -923,7 +1079,10 @@ export default function App({
       // Une séance ne mélange jamais deux matières (§7.2) : le `kind` de sa
       // première question suffit à dire laquelle.
       const isConj = sessionItems[0]?.kind === 'conj';
-      const mode: FactKind = isConj ? 'conj' : sessionMode;
+      const isIrr = sessionItems[0]?.kind === 'irr';
+      // Matière à part (conjugaison, verbes) : pas de jalon de niveau de maths.
+      const isOtherSubject = isConj || isIrr;
+      const mode: FactKind = isConj ? 'conj' : isIrr ? 'irr' : sessionMode;
       const result: SessionResult = {
         ...partial,
         kind: mode,
@@ -953,7 +1112,11 @@ export default function App({
         // matière, elles, disent seulement quelle tuile de l'accueil est déjà
         // faite aujourd'hui.
         lastSessionDate: today,
-        ...(isConj ? { lastConjSessionDate: today } : { lastMathSessionDate: today }),
+        ...(isConj
+          ? { lastConjSessionDate: today }
+          : isIrr
+            ? { lastIrrSessionDate: today }
+            : { lastMathSessionDate: today }),
         streakFreezes: streakUpdate.streakFreezes,
         freezeProgress: streakUpdate.freezeProgress,
         sessionHistory,
@@ -978,7 +1141,7 @@ export default function App({
       // zones par diviseur en mode rem.
       // Pas de « table complétée » en conjugaison : l'unité de célébration y est
       // le badge de temps ou de verbe, pas une ligne de table.
-      const completedNow = isConj
+      const completedNow = isOtherSubject
         ? []
         : mode === 'rem'
           ? [...getCompletedRemainderTables(updatedProfile.remainderFacts ?? [])].filter(
@@ -996,9 +1159,9 @@ export default function App({
       // basculer cette séance. Les memos `*Unlocked` reflètent l'état d'AVANT
       // la séance, donc mode est encore celui du niveau précédent ici.
       const divisionUnlockedNow =
-        !isConj && !divisionUnlocked && isDivisionUnlocked(updatedProfile);
+        !isOtherSubject && !divisionUnlocked && isDivisionUnlocked(updatedProfile);
       const remainderUnlockedNow =
-        !isConj && !remainderUnlocked && isRemainderUnlocked(updatedProfile);
+        !isOtherSubject && !remainderUnlocked && isRemainderUnlocked(updatedProfile);
 
       setProfile(updatedProfile);
       setSessionResult(result);
@@ -1174,6 +1337,10 @@ export default function App({
           hasConjSessionAvailable={hasConjSessionAvailable}
           conjVisible={conjVisible}
           onStartConj={handleStartConj}
+          irrAvailable={irrAvailable}
+          hasIrrSessionAvailable={hasIrrSessionAvailable}
+          irrVisible={irrVisible}
+          onStartIrr={handleStartIrr}
           onStart={handleStart}
           onShowProgress={() => {
             // Post-déblocage, les images des niveaux passés sont complètes :
@@ -1192,12 +1359,18 @@ export default function App({
         <ConjPlacementScreen onComplete={handleConjPlacementComplete} />
       )}
 
+      {screen === 'irrPlacement' && profile && (
+        <IrrPlacementScreen onComplete={handleIrrPlacementComplete} />
+      )}
+
       {screen === 'session' && profile && sessionItems.length > 0 && (
         <SessionScreen
           questions={sessionItems}
           onComplete={handleSessionComplete}
           onAnswer={handleSessionItemAnswer}
           onConjAnswer={handleConjAnswer}
+          onIrrAnswer={handleIrrAnswer}
+          irrFacts={profile.irrFacts}
         />
       )}
 
@@ -1236,6 +1409,7 @@ export default function App({
           onBack={goBack}
           showRule11={rule11Unlocked}
           conjRules={conjVisible ? metConjRules(profile?.conjFacts ?? []) : undefined}
+          irrFamilies={irrVisible ? metIrrFamilies(profile?.irrFacts ?? []) : undefined}
         />
       )}
 

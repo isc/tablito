@@ -31,6 +31,7 @@ import ProgressGrid from './ProgressGrid';
 import DivisionProgressGrid from './DivisionProgressGrid';
 import RemainderProgressGrid from './RemainderProgressGrid';
 import ConjProgressGrid from './ConjProgressGrid';
+import IrrProgressGrid from './IrrProgressGrid';
 import EvolutionChart from './EvolutionChart';
 import ParentBoxChart from './ParentBoxChart';
 import HardFactList from './ParentHardFacts';
@@ -158,7 +159,7 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
   // Niveau affiché par défaut : le niveau actif, l'objet de l'attention du
   // parent au quotidien (les niveaux passés sont maîtrisés par hypothèse).
   const [level, setLevel] = useState<MathLevel>(() => activeLevel(profile));
-  const kind: FactKind = subject === 'conj' ? 'conj' : level;
+  const kind: FactKind = subject === 'math' ? level : subject;
   const facts = factsOf(profile, kind);
 
   const levelLabel: Record<MathLevel, string> = {
@@ -171,6 +172,7 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
     div: { mastered: t.divisionsMastered, op: t.opDivision },
     rem: { mastered: t.remaindersMastered, op: t.opRemainder },
     conj: { mastered: t.conjugationsMastered, op: t.opConjugation },
+    irr: { mastered: t.irregularMastered, op: t.opIrregular },
   };
   // Chaque grille lit son inventaire typé ; seule celle du niveau affiché est
   // construite.
@@ -184,6 +186,8 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
         return <RemainderProgressGrid facts={profile.remainderFacts ?? []} />;
       case 'conj':
         return <ConjProgressGrid facts={profile.conjFacts ?? []} />;
+      case 'irr':
+        return <IrrProgressGrid facts={profile.irrFacts ?? []} />;
     }
   };
 
@@ -242,7 +246,9 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
 
       {sessions.length > 0 && (
         <div className="parent-section">
-          <h2 className="parent-overline">{subject === 'conj' ? t.conjSessions : t.mathSessions}</h2>
+          <h2 className="parent-overline">
+            {subject === 'conj' ? t.conjSessions : subject === 'irr' ? t.irrSessions : t.mathSessions}
+          </h2>
           {levels.length > 1 && <p className="parent-section-subtitle">{t.mathSessionsMixed}</p>}
         </div>
       )}

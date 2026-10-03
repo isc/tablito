@@ -225,14 +225,14 @@ export default function ParentDashboard({
   // Page d'une matière, sur le profil affiché. Une page ne s'ouvre que depuis
   // une carte de l'accueil, qui n'existe qu'avec un profil affiché ; la clé
   // repart de zéro (niveau actif, bascules) si la source changeait dessous.
-  if ((page === 'math' || page === 'conj') && shown) {
+  if ((page === 'math' || page === 'conj' || page === 'irr') && shown) {
     return (
       <div className="parent-dashboard parent-dashboard--subject">
         <Header
           onBack={onBack}
           backLabel={t.backToOverview}
           eyebrow={shownName}
-          title={page === 'conj' ? t.conjugations : t.math}
+          title={page === 'conj' ? t.conjugations : page === 'irr' ? t.irregularVerbs : t.math}
         >
           {feedbackButton}
         </Header>
