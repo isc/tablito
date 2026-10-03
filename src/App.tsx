@@ -18,6 +18,7 @@ import { composeDailySession } from './lib/dailyComposer';
 import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
 import { createInitialConjFacts } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
+import { metConjRules } from './lib/conjugationStrategies';
 import { factsOf, processAnswer } from './lib/leitner';
 import {
   checkBadges,
@@ -1234,7 +1235,11 @@ export default function App({
       )}
 
       {screen === 'rules' && (
-        <RulesScreen onBack={goBack} showRule11={rule11Unlocked} />
+        <RulesScreen
+          onBack={goBack}
+          showRule11={rule11Unlocked}
+          conjRules={conjVisible ? metConjRules(conjFacts ?? []) : undefined}
+        />
       )}
 
       {/* `watchPairing` compte, y compris quand il vaut 'error' : un parent sans

@@ -399,7 +399,7 @@
   <h3 id="principes-interleaving"><span class="num">1.3</span>Entrelacement (Interleaving)</h3>
   <p class="source"><strong>Source :</strong> Rohrer &amp; Taylor (2007), Rohrer, Dedrick &amp; Burgess (2014)</p>
   <p>Au sein d'une séance, les questions alternent entre différentes tables plutôt que de travailler une seule table en bloc. L'entrelacement force la discrimination active et améliore les performances d'environ 30% par rapport à la pratique bloquée.</p>
-  <p><strong>Implémentation :</strong> Chaque séance pioche dans les faits éligibles (selon l'algorithme de répétition espacée) et les mélange. On évite autant que possible deux questions consécutives de la même table (entrelacement glouton, au mieux : les introductions ouvrent la séance, et une question sans place libre est posée quand même).</p>
+  <p><strong>Implémentation :</strong> Chaque séance pioche dans les faits éligibles (selon l'algorithme de répétition espacée) et les mélange. On évite autant que possible deux questions consécutives de la même table (entrelacement glouton, au mieux : les introductions ouvrent la séance ; une question qui ne trouve plus de place derrière la précédente se glisse plus tôt, entre deux questions qu'elle ne heurte pas, et n'est posée quand même que si aucune place n'existe).</p>
 
   <h3 id="principes-comprehension"><span class="num">1.4</span>Compréhension conceptuelle avant mémorisation</h3>
   <p class="source"><strong>Source :</strong> Cowan et al. (2011), Brendefur et al. (2015)</p>
@@ -890,7 +890,7 @@ interface Badge {
       <tr><td>Parent</td><td>Dashboard détaillé (accès protégé)</td></tr>
     </tbody>
   </table>
-  <p>Écrans secondaires accessibles depuis l'accueil ou l'espace parent : <strong>Règles</strong> (×1, ×10 et règle bonus ×11, §2.3), <strong>Progression</strong> (image mystère), <strong>Badges</strong>, et — côté parent — <strong>Confidentialité</strong> et <strong>Nouveautés</strong> (§5.2). Ces écrans sont chargés à la demande (lazy-loading), sauf <strong>Progression</strong>, chargée d'emblée : l'image mystère est la récompense tapée depuis le récap en fin de séance, elle ne doit pas dépendre d'un téléchargement à ce moment-là.</p>
+  <p>Écrans secondaires accessibles depuis l'accueil ou l'espace parent : <strong>Règles</strong> (×1, ×10 et règle bonus ×11, §2.3 ; règles de la conjugaison, §15.3), <strong>Progression</strong> (image mystère), <strong>Badges</strong>, et — côté parent — <strong>Confidentialité</strong> et <strong>Nouveautés</strong> (§5.2). Ces écrans sont chargés à la demande (lazy-loading), sauf <strong>Progression</strong>, chargée d'emblée : l'image mystère est la récompense tapée depuis le récap en fin de séance, elle ne doit pas dépendre d'un téléchargement à ce moment-là.</p>
 
   <h3 id="ui-principes"><span class="num">7.2</span>Principes d'interface</h3>
   <ul>
@@ -1197,6 +1197,7 @@ interface Badge {
     <li><strong>Le futur se fabrique</strong> : infinitif plus terminaisons — <em>chanter</em> + <code>ai</code> ; pour les verbes en <em>-re</em> comme <em>dire</em>, on retire le <em>e</em> final.</li>
     <li><strong>Les pièges de son</strong> : <em>-geons</em>, <em>-çons</em> — règle annexe, énoncée à l'introduction et rappelée en cas d'erreur.</li>
   </ul>
+  <p>Comme ×1, ×10 et ×11, ces règles se consultent dans l'écran <strong>Règles</strong> (<code>RulesScreen</code>), sous un titre « Conjugaison » qui suit celui des maths. Mêmes textes que l'astuce de la séance (§15.6), jamais une réécriture : l'enfant y retrouve, mot pour mot, la règle vue à l'introduction d'un fait ou à une correction. Chaque règle y apparaît avec le <strong>premier fait qu'elle explique</strong>, qu'il ait été introduit en séance ou ensemencé par le placement (§15.7), cf. <code>metConjRules</code> — jamais la règle d'un temps pas encore abordé. Révélation au fil de la matière, comme la règle ×11 (§2.3), et qui respecte l'interférence du §15.4 : hors placement, la règle du futur (<em>je chanter<strong>ai</strong></em>) n'arrive qu'une fois l'imparfait (<em>je chant<strong>ais</strong></em>) consolidé, puisque c'est son badge qui ouvre le futur. Pas de pastille « Nouveau » sur le bouton Règles : contrairement à ×11, que cet écran est seul à montrer, ces règles sont déjà enseignées en séance. En anglais, ou tant que la matière n'a pas été ouverte, l'écran reste celui des seules règles de maths.</p>
 
   <h4>Les faits Leitner</h4>
   <p>Un fait est un couple (forme, personne) — ou une terminaison, ou un radical irrégulier. Quand <em>je</em> et <em>tu</em> partagent la même forme écrite (<em>je fais / tu fais</em>), les deux personnes sont <strong>fusionnées en un seul fait</strong> dont les questions font varier le pronom : même logique que la fusion des paires commutatives 3×4 / 4×3 (§1.2).</p>

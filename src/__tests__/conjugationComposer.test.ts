@@ -229,20 +229,23 @@ describe('contraste futur -ai / imparfait -ais (§3.4)', () => {
   });
 
   it('la paire posée d’un bloc ne crée aucune jonction en conflit', () => {
-    const session = composeConjSession(
-      profileWith({
-        'fut-je': { box: 3 }, 'imp-je': { box: 3, due: false },
-        'pres-g1-je': { box: 2 }, 'pres-g1-tu': { box: 2 }, 'pres-etre-nous': { box: 2 },
-        'pres-avoir-il': { box: 3 }, 'imp-nous': { box: 4 }, 'fut-tu': { box: 3 },
-      }),
-      TODAY,
-    );
-    const keys = session.map((q) => q.fact.key);
-    expect(adjacent(keys)).toBe(true);
-    for (let k = 1; k < session.length; k++) {
-      const [a, b] = [session[k - 1], session[k]];
-      const isPair = [a.fact.key, b.fact.key].sort().join() === 'fut-je,imp-je';
-      if (!isPair) expect(conjQuestionConflict(a, b), `${a.fact.key} → ${b.fact.key}`).toBe(false);
+    const profile = profileWith({
+      'fut-je': { box: 3 }, 'imp-je': { box: 3, due: false },
+      'pres-g1-je': { box: 2 }, 'pres-g1-tu': { box: 2 }, 'pres-etre-nous': { box: 2 },
+      'pres-avoir-il': { box: 3 }, 'imp-nous': { box: 4 }, 'fut-tu': { box: 3 },
+    });
+    // Plusieurs séances : l'ordre de départ est tiré au sort, et une seule
+    // laissait passer l'impasse de l'entrelacement (pres-etre-nous → imp-nous)
+    // une fois sur six environ — un test instable plutôt qu'un test rouge.
+    for (let run = 0; run < 50; run++) {
+      const session = composeConjSession(profile, TODAY);
+      const keys = session.map((q) => q.fact.key);
+      expect(adjacent(keys)).toBe(true);
+      for (let k = 1; k < session.length; k++) {
+        const [a, b] = [session[k - 1], session[k]];
+        const isPair = [a.fact.key, b.fact.key].sort().join() === 'fut-je,imp-je';
+        if (!isPair) expect(conjQuestionConflict(a, b), `${a.fact.key} → ${b.fact.key}`).toBe(false);
+      }
     }
   });
 

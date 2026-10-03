@@ -44,10 +44,38 @@ export function pickRandom<T>(arr: readonly T[]): T {
 }
 
 /**
+ * Premier créneau de `list`, à partir de `from`, où `block` s'insère sans
+ * heurter ses deux voisins : l'élément qui le précède (`before` devant le
+ * créneau 0) et celui qui le suit. -1 s'il n'y en a aucun. La règle de jonction
+ * des séances (§5.1), écrite une seule fois : l'entrelacement s'en sert dans
+ * ses impasses, la conjugaison pour poser sa paire de contraste d'un bloc.
+ */
+export function firstFreeSlot<T>(
+  list: readonly T[],
+  block: readonly T[],
+  conflicts: (a: T, b: T) => boolean,
+  { from = 0, before }: { from?: number; before?: T } = {},
+): number {
+  const head = block[0];
+  const tail = block[block.length - 1];
+  for (let k = from; k <= list.length; k++) {
+    const prev = k === 0 ? before : list[k - 1];
+    const next = list[k];
+    if ((prev === undefined || !conflicts(prev, head)) && (next === undefined || !conflicts(tail, next))) {
+      return k;
+    }
+  }
+  return -1;
+}
+
+/**
  * Réordonne `items` pour éviter, autant que possible, deux éléments adjacents
  * en conflit. Greedy : premier élément au hasard, puis on prend le premier
- * candidat non conflictuel ; à défaut, le premier restant (best effort).
- * Partagé par l'entrelacement des séances multiplication et division.
+ * candidat non conflictuel. En cas d'impasse — tout ce qui reste heurte le
+ * dernier posé —, le premier restant se glisse plus tôt, entre deux voisins
+ * déjà posés qu'il ne heurte ni l'un ni l'autre ; à défaut seulement, il est
+ * posé en fin de liste (best effort). Partagé par l'entrelacement des séances
+ * de toutes les matières.
  *
  * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
  * (la dernière introduction du jour, par exemple) : il contraint alors le
@@ -85,7 +113,11 @@ export function interleaveGreedy<T>(
       }
     }
     if (!placed) {
-      result.push(remaining.shift()!);
+      // Le glissement ne crée aucun conflit et ne change pas le dernier posé :
+      // la fin de liste, elle, heurte forcément `prev`.
+      const item = remaining.shift()!;
+      const at = firstFreeSlot(result, [item], conflicts, { before: after });
+      result.splice(at === -1 ? result.length : at, 0, item);
     }
   }
 

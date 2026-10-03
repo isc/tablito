@@ -1133,7 +1133,7 @@ const SECTIONS_FR = [
         <li><strong>La mascotte</strong> accueille l'enfant, le félicite, l'encourage après une erreur. Jamais elle ne juge.</li>
         <li><strong>La flamme</strong> compte les jours de suite.</li>
         <li><strong>Le gros bouton</strong> lance la séance du jour.</li>
-        <li><strong>La barre du bas</strong> ouvre l'image mystère, les badges et les règles ×1 / ×10.</li>
+        <li><strong>La barre du bas</strong> ouvre l'image mystère, les badges et les règles (×1, ×10, puis celles de la conjugaison).</li>
         <li><strong>L'engrenage</strong> ouvre l'espace parent, derrière une petite multiplication.</li>
       </ul>
       <p>Quand toutes les tables sont maîtrisées, la séance du jour passe d'elle-même à la division : pas de nouveau bouton.</p>
@@ -1281,6 +1281,7 @@ const SECTIONS_FR = [
         <li><strong>× 11</strong>, en bonus une fois les tables de 2 à 9 maîtrisées : on répète le chiffre (3 × 11 = 33). Une pastille « Nouveau » le signale.</li>
       </ul>
       <p>Ces tables ne font donc pas partie des 36 faits à apprendre.</p>
+      <p>Une fois la conjugaison commencée, ses règles s'y ajoutent au fur et à mesure que l'enfant aborde ce qu'elles expliquent : les marques de personne (nous → -ons, vous → -ez…), la fabrication de l'imparfait et du futur, le piège du g et du c. Ce sont les astuces mêmes que la séance montre.</p>
     `,
     shots: [
       { file: '12-rules', caption: 'Règles pour ×1 et ×10.' },
