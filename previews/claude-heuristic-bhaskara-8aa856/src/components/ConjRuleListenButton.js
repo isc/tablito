@@ -1,0 +1,3 @@
+import{jsx as t}from"preact/jsx-runtime";import{conjStrings as o}from"../i18n/conjugation.js";import{conjRuleTtsKey as r}from"../lib/conjugationRules.js";function i({rule:e,onSpeak:n}){return t("button",{type:"button",className:"conj-rule-listen-btn",onClick:()=>n(r(e)),"aria-label":o.listenRule,children:t("svg",{width:"20",height:"20",viewBox:"0 0 24 24",fill:"none","aria-hidden":"true",children:t("path",{d:"M11 5 L6 9 H3 V15 H6 L11 19 Z M15.5 8.5 A5 5 0 0 1 15.5 15.5 M18.5 5.5 A9 9 0 0 1 18.5 18.5",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"})})})}export{i as default};
+
+//# sourceMappingURL=ConjRuleListenButton.js.map
