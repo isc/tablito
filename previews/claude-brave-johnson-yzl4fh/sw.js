@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261003114242"
+const VERSION = "20261003145351"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/previews/claude-brave-johnson-yzl4fh/"
 const ASSETS = [
@@ -63,6 +63,8 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/components/ConjForm.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/ConjMysteryImage.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/ConjProgressGrid.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/ConjRuleListenButton.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/ConjRuleVisual.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/ConjVoiceInput.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/DivisionMysteryImage.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/DivisionProgressGrid.js",
@@ -75,6 +77,13 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/components/FeedbackOverlay.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/FeedbackStar.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/FlameIcon.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrAnswerInput.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrFeedbackOverlay.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrForms.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrIntro.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrMysteryImage.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrProgressGrid.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrVoiceInput.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/LanguageToggle.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/LeitnerGrid.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/LetterKeyboard.js",
@@ -131,6 +140,7 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/i18n/conjugation.js",
   "/previews/claude-brave-johnson-yzl4fh/src/i18n/home.js",
   "/previews/claude-brave-johnson-yzl4fh/src/i18n/homeIdea.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/i18n/irregular.js",
   "/previews/claude-brave-johnson-yzl4fh/src/i18n/lang.js",
   "/previews/claude-brave-johnson-yzl4fh/src/i18n/language.js",
   "/previews/claude-brave-johnson-yzl4fh/src/i18n/onboarding.js",
@@ -153,6 +163,7 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/lib/conjugationFacts.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/conjugationInterference.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/conjugationPlacement.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/lib/conjugationRules.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/conjugationStrategies.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/dailyComposer.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/debugTools.js",
@@ -164,12 +175,16 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/lib/hardestFacts.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/homeIdea.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/install.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/lib/irregularComposer.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/lib/irregularPlacement.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/lib/irregularVerbs.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/leitner.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/letterNames.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/micPreflight.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/parseEnglishNumber.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/parseFrenchNumber.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/parseSpelledLetters.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/lib/parseSpokenIrregular.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/parseSpokenNumber.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/parseSpokenRemainder.js",
   "/previews/claude-brave-johnson-yzl4fh/src/lib/phoneticDict.js",
@@ -200,6 +215,7 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/screens/ChangelogScreen.js",
   "/previews/claude-brave-johnson-yzl4fh/src/screens/ConjPlacementScreen.js",
   "/previews/claude-brave-johnson-yzl4fh/src/screens/HomeScreen.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/screens/IrrPlacementScreen.js",
   "/previews/claude-brave-johnson-yzl4fh/src/screens/ParentDashboard.js",
   "/previews/claude-brave-johnson-yzl4fh/src/screens/PrivacyScreen.js",
   "/previews/claude-brave-johnson-yzl4fh/src/screens/ProfileSelectScreen.js",
@@ -221,7 +237,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/previews/claude-brave-johnson-yzl4fh/audio/"],"media":["/previews/claude-brave-johnson-yzl4fh/mystery/"],"splash":["/previews/claude-brave-johnson-yzl4fh/splash/"],"landing":["/previews/claude-brave-johnson-yzl4fh/video/","/previews/claude-brave-johnson-yzl4fh/img/hero-poster"],"qrscan":["/previews/claude-brave-johnson-yzl4fh/vendor/qr-scanner/"],"phonetic":["/previews/claude-brave-johnson-yzl4fh/phonetic/"],"qrgen":["/previews/claude-brave-johnson-yzl4fh/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"e6a6dad5117a","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_VERSIONS = {"audio":"b98220b90770","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]

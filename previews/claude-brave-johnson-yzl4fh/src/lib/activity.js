@@ -1,3 +1,3 @@
-import{addDays as l}from"./utils.js";const d=14;function D(o,s){const e=new Set,i=new Set;let a=null;for(const t of o.sessionHistory)t.kind==="conj"?(i.add(t.date),a??=t.date):e.add(t.date);const c=a??o.lastConjSessionDate??s,r=[];for(let t=d-1;t>=0;t--){const n=l(s,-t);r.push({date:n,math:e.has(n),conj:n<c?null:i.has(n)})}return r}export{d as ACTIVITY_WINDOW_DAYS,D as buildActivityDays};
+import{addDays as u}from"./utils.js";const y=14;function m(e,s){const r=new Set,o=new Set,i=new Set;let a=null,l=null;for(const t of e.sessionHistory)t.kind==="conj"?(o.add(t.date),a??=t.date):t.kind==="irr"?(i.add(t.date),l??=t.date):r.add(t.date);const d=a??e.lastConjSessionDate??s,D=l??e.lastIrrSessionDate??s,c=[];for(let t=y-1;t>=0;t--){const n=u(s,-t);c.push({date:n,math:r.has(n),conj:n<d?null:o.has(n),irr:n<D?null:i.has(n)})}return c}export{y as ACTIVITY_WINDOW_DAYS,m as buildActivityDays};
 
 //# sourceMappingURL=activity.js.map
