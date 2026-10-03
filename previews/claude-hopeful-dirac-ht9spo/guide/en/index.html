@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tablito — User guide</title>
+<link rel="icon" href="../../favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Nunito:wght@400;600;700;800&display=swap" />
+<style>
+  :root {
+    --cream: #FBF6EC;
+    --cream-deep: #F3EADB;
+    --paper: #FFFFFF;
+    --ink: #1E1A2E;
+    --ink-soft: #52495F;
+    --ink-muted: #8A8295;
+    --line: #E6DECE;
+    --line-soft: #EFE7D6;
+    --indigo: #4F46BA;
+    --indigo-soft: #E8E6F7;
+    --indigo-ink: #2B2478;
+    --coral: #E8623D;
+    --honey: #D99A1F;
+    --honey-soft: #F7E9C4;
+    --sage: #3F9B7A;
+    --sage-soft: #D9EDE2;
+    --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --sans: 'Nunito', 'SF Pro Text', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    background: var(--cream);
+    color: var(--ink);
+    padding: 56px 24px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  header .eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header h1 {
+    margin: 0 0 10px;
+    font-family: var(--serif);
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--ink);
+  }
+  header h1 em {
+    color: var(--indigo);
+    font-style: italic;
+  }
+  header p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+  header .back-link {
+    display: inline-block;
+    margin-top: 18px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--indigo);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    transition: background 0.15s;
+  }
+  header .back-link:hover { background: var(--cream-deep); }
+  header .header-links {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  header .header-links .back-link { margin-top: 0; }
+  header .lang-switch { color: var(--ink-soft); }
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+  nav.toc {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 22px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  nav.toc .toc-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink-muted);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  nav.toc ul {
+    margin: 0;
+    padding: 0 0 0 4px;
+    columns: 2;
+    list-style: none;
+  }
+  nav.toc li {
+    margin: 6px 0;
+    break-inside: avoid;
+    padding-left: 18px;
+    position: relative;
+  }
+  nav.toc li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--honey);
+  }
+  nav.toc a {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.2px;
+  }
+  nav.toc a:hover { color: var(--indigo); }
+  section.section {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 22px;
+    padding: 36px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 40px;
+    align-items: start;
+  }
+  .section-text { max-width: 55ch; }
+  .section-text h2 {
+    margin: 0 0 14px;
+    font-family: var(--serif);
+    color: var(--ink);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+  .section-text p {
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+    font-size: 15px;
+  }
+  .section-text p:last-child { margin-bottom: 0; }
+  .section.section-full {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .section-full .section-text { max-width: 72ch; margin: 0 auto; }
+  ul.principles {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    display: grid;
+    gap: 12px;
+  }
+  ul.principles li {
+    color: var(--ink);
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  ul.principles li strong {
+    color: var(--indigo);
+    font-weight: 700;
+  }
+  ul.principles .cite {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-muted);
+    font-size: 12px;
+    font-style: italic;
+  }
+  ul.guide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  ul.guide-list li { padding: 8px 0; border-top: 1px solid var(--line); }
+  ul.guide-list li:first-child { border-top: 0; }
+  ul.guide-list strong { color: var(--ink); }
+  .principles-footer {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .principles-footer a { color: var(--indigo); text-decoration: none; font-weight: 700; }
+  .principles-footer a:hover { text-decoration: underline; }
+  .principles-footer code {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.85em;
+  }
+  .shots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    justify-items: center;
+  }
+  .shots-1 { grid-template-columns: minmax(0, 320px); justify-content: center; }
+  figure.shot {
+    margin: 0;
+    background: var(--cream);
+    border: 1.5px solid var(--line);
+    border-radius: 18px;
+    padding: 12px;
+    text-align: center;
+    width: 100%;
+    max-width: 320px;
+  }
+  figure.shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 12px;
+    background: var(--paper);
+  }
+  figure.shot figcaption {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  footer {
+    text-align: center;
+    color: var(--ink-muted);
+    padding: 32px 24px;
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    margin-top: 24px;
+  }
+  footer p { margin: 0 0 8px; }
+  footer p:last-child { margin-bottom: 0; font-size: 12px; color: var(--ink-soft); }
+  footer a { color: var(--indigo); text-decoration: none; font-weight: 700; }
+  footer a:hover { text-decoration: underline; }
+  footer code {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.9em;
+  }
+  @media (max-width: 800px) {
+    section.section { grid-template-columns: 1fr; gap: 24px; padding: 24px; }
+    .shots-1 { justify-self: center; }
+  }
+  @media (max-width: 640px) {
+    nav.toc ul { columns: 1; }
+    header { padding: 36px 20px 28px; }
+    header h1 { font-size: 32px; }
+    main { padding: 20px 16px; }
+    section.section { padding: 20px; border-radius: 18px; }
+    .shots { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">User guide</div>
+  <h1>Tablito<em>.</em></h1>
+  <div class="header-links">
+    <a class="back-link" href="../../">← Back to the app</a>
+    <a class="back-link lang-switch" href="../">Français</a>
+  </div>
+</header>
+<main>
+  <nav class="toc">
+    <div class="toc-label">Contents</div>
+    <ul><li><a href="#principes">The principles</a></li><li><a href="#welcome">Welcome</a></li><li><a href="#home">Home screen</a></li><li><a href="#session">The session</a></li><li><a href="#recap">Session recap</a></li><li><a href="#progress">My mystery picture</a></li><li><a href="#division">Level 2 — division</a></li><li><a href="#remainder">Level 3 — division with remainders</a></li><li><a href="#badges">The badges</a></li><li><a href="#rules">The ×1 and ×10 rules</a></li><li><a href="#parent">Parent area</a></li><li><a href="#profils">Several children</a></li></ul>
+  </nav>
+  
+      <section id="principes" class="section section-full">
+        <div class="section-text">
+          <h2>The principles</h2>
+          <p>Tablito is not just a quiz. Every design choice is grounded in
+      research from cognitive psychology and mathematics education. Five
+      pillars hold the app together:</p>
+      <ul class="principles">
+        <li>
+          <strong>Spaced repetition — the Leitner boxes.</strong> Each fact
+          lives in one of five boxes numbered from 1 (just learned) to 5
+          (firmly anchored). A new fact starts in box 1: it is reviewed the
+          same day. A correct answer moves it up one box and pushes the next
+          review further out: 1 day in box 2, 3 days in box 3, 7 days in box
+          4, 21 days in box 5. A mistake sends it back to box 1, long enough
+          to re-anchor it. The child reviews each fact just before forgetting
+          it, with longer and longer intervals — far more durable than
+          cramming in a single evening.
+          <span class="cite">Kang (2016) ; Cepeda et al. (2008) ; Rea &amp; Modigliani (1985)</span>
+        </li>
+        <li>
+          <strong>Low interference.</strong> Facts that look alike (same
+          operand, close answers) are never introduced in the same week. A
+          session contains only facts dissimilar enough that the child won't
+          confuse them in memory.
+          <span class="cite">Dotan &amp; Zviran-Ginat (2022)</span>
+        </li>
+        <li>
+          <strong>Interleaving.</strong> The tables are mixed within a single
+          session rather than worked through one after another. The child has
+          to reach for the right operation at every question, which solidifies
+          long-term recall.
+          <span class="cite">Rohrer &amp; Taylor (2007) ; Rohrer, Dedrick &amp; Burgess (2014)</span>
+        </li>
+        <li>
+          <strong>Understand before memorizing.</strong> Each new fact is
+          first shown as a grid of dots (repeated addition), then through
+          commutativity (3 × 5 = 5 × 3), and finally with a derivation trick
+          suited to it (× 9 = × 10 − n, × 4 = double-double, × 6 = × 5 + n,
+          etc.). A few anchor facts (doubles, × 5, × 9, squares) support the
+          derived ones. The scaffolding fades away once recall becomes
+          automatic.
+          <span class="cite">Van de Walle via Wichita Public Schools (2014) ; Brendefur et al. (2015)</span>
+        </li>
+        <li>
+          <strong>Progress-oriented feedback, not performance.</strong> No
+          numeric score on the child's side, no stars computed from a success
+          rate: only steady encouragement and a spotlight on the facts
+          learned. The goal is intrinsic motivation and mastery, not the
+          grade. The raw numbers stay available in the parent area.
+          <span class="cite">Butler (1988) ; Hattie &amp; Timperley (2007)</span>
+        </li>
+      </ul>
+      <p class="principles-footer">Details and rationale in the
+      <a href="../../specs/">functional specifications</a> (in French).</p>
+        </div>
+      </section>
+
+      <section id="welcome" class="section">
+        <div class="section-text">
+          <h2>Welcome</h2>
+          <p>On the very first launch, a four-step welcome:</p>
+      <ul class="guide-list">
+        <li><strong>The mascot</strong> introduces itself.</li>
+        <li><strong>The child's name.</strong></li>
+        <li><strong>An introduction</strong> to the placement test.</li>
+        <li><strong>The test</strong>: 15 well-spread questions.</li>
+      </ul>
+      <p>Facts already known start straight in the higher Leitner boxes.</p>
+        </div>
+        <div class="shots shots-4">
+          
+          <figure class="shot">
+            <img src="screenshots/01-welcome-intro.png?v=44045ae2" alt="The mascot introduces itself to the child." width="360" height="760" loading="lazy" />
+            <figcaption>The mascot introduces itself to the child.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/02-welcome-name.png?v=967d5927" alt="Entering the name." width="360" height="760" loading="lazy" />
+            <figcaption>Entering the name.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/03-welcome-ready.png?v=d669c573" alt="Announcing the placement test." width="360" height="760" loading="lazy" />
+            <figcaption>Announcing the placement test.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/04-welcome-test.png?v=c7bce779" alt="Placement test (15 questions)." width="360" height="760" loading="lazy" />
+            <figcaption>Placement test (15 questions).</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="home" class="section">
+        <div class="section-text">
+          <h2>Home screen</h2>
+          <p>Where every day starts.</p>
+      <ul class="guide-list">
+        <li><strong>The mascot</strong> welcomes the child, cheers correct answers, encourages after a mistake. It never judges.</li>
+        <li><strong>The flame</strong> counts days in a row.</li>
+        <li><strong>The big button</strong> starts the day's session.</li>
+        <li><strong>The bottom bar</strong> opens the mystery picture, the badges and the ×1 / ×10 rules.</li>
+        <li><strong>The gear</strong> opens the parent area, behind a small multiplication.</li>
+      </ul>
+      <p>Once all the tables are mastered, the day's session moves on to division by itself: no new button.</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/05-home.png?v=f9203f21" alt="Home screen with the mascot and the 5-day streak." width="360" height="760" loading="lazy" />
+            <figcaption>Home screen with the mascot and the 5-day streak.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="session" class="section">
+        <div class="section-text">
+          <h2>The session</h2>
+          <p>12 to 15 questions, a few minutes.</p>
+      <ul class="guide-list">
+        <li><strong>A new fact</strong> is first shown in three steps: a grid of dots (repeated addition), swapping the factors (3×5 = 5×3), then a trick (“× 9 is × 10 minus one”).</li>
+        <li><strong>Answers</strong> with the keypad or by voice. A button below the keypad switches mode, and the choice is remembered.</li>
+        <li><strong>Quick correct answer</strong>: a golden star.</li>
+        <li><strong>Mistake</strong>: the right answer, the grid of dots, the trick if the fact is recent. The question comes back a little later.</li>
+      </ul>
+        </div>
+        <div class="shots shots-6">
+          
+          <figure class="shot">
+            <img src="screenshots/06-session-intro.png?v=8f9a0988" alt="Introducing a new fact — step 1: grid of dots and repeated addition." width="360" height="760" loading="lazy" />
+            <figcaption>Introducing a new fact — step 1: grid of dots and repeated addition.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/06b-session-intro-strategy.png?v=588124aa" alt="Introduction — step 3: a derivation trick to memorize the fact." width="360" height="760" loading="lazy" />
+            <figcaption>Introduction — step 3: a derivation trick to memorize the fact.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/07-session-question.png?v=5cd9398b" alt="Standard question and keypad." width="360" height="760" loading="lazy" />
+            <figcaption>Standard question and keypad.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/07b-session-voice.png?v=0edbbb82" alt="Voice mode — the child says their answer out loud. Switchable at any time." width="360" height="760" loading="lazy" />
+            <figcaption>Voice mode — the child says their answer out loud. Switchable at any time.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/08-session-feedback-correct.png?v=0386f610" alt="Quick correct answer — golden star." width="360" height="760" loading="lazy" />
+            <figcaption>Quick correct answer — golden star.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/09-session-feedback-incorrect.png?v=d6a74924" alt="Incorrect answer — grid of dots and a reminder of the trick." width="360" height="760" loading="lazy" />
+            <figcaption>Incorrect answer — grid of dots and a reminder of the trick.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="recap" class="section">
+        <div class="section-text">
+          <h2>Session recap</h2>
+          <p>At the end of every session:</p>
+      <ul class="guide-list">
+        <li><strong>The day's new facts</strong>, if any.</li>
+        <li><strong>Progress</strong>: a “X facts known out of 36” bar.</li>
+        <li><strong>The mystery picture</strong> to go and see, with a mention when it has changed.</li>
+        <li><strong>Confetti</strong> for a mastered table, a completed picture or a new badge.</li>
+      </ul>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/14-recap.png?v=828d1944" alt="Recap of a session with a progress bar." width="360" height="760" loading="lazy" />
+            <figcaption>Recap of a session with a progress bar.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="progress" class="section">
+        <div class="section-text">
+          <h2>My mystery picture</h2>
+          <p>An 8×8 grid (tables 2 to 9): each cell is a piece of a hidden picture.</p>
+      <ul class="guide-list">
+        <li><strong>The better a fact is known</strong>, the sharper its cell: blurry silhouette, flat color, colors, shadows, details. One step per Leitner box.</li>
+        <li><strong>A forgotten fact</strong> blurs a little again, with no notion of failure.</li>
+        <li><strong>All 36 facts mastered</strong>: the picture is fully revealed.</li>
+      </ul>
+      <p>At the top, the discovered / mastered / total counts.</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/10-progress.png?v=4813bd4a" alt="The mystery picture revealing itself as progress is made." width="360" height="760" loading="lazy" />
+            <figcaption>The mystery picture revealing itself as progress is made.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="division" class="section">
+        <div class="section-text">
+          <h2>Level 2 — division</h2>
+          <p>Once all the tables are mastered (the “Times tables genius” badge), the same facts come back the other way round: “56 ÷ 7 = ?”.</p>
+      <ul class="guide-list">
+        <li><strong>The trick</strong> is taught: for 56 ÷ 7, look for “7 times what makes 56?”.</li>
+        <li><strong>Step by step</strong>: divisions arrive in the same order as the tables, easiest first.</li>
+        <li><strong>One session</strong>: it switches to division, and slips in a few tables to maintain.</li>
+        <li><strong>A new mystery picture</strong>. “My picture” becomes “My pictures”; the tables picture stays earned.</li>
+      </ul>
+      <p>Everything else (Leitner boxes, encouragement) works as for the tables.</p>
+        </div>
+        <div class="shots shots-5">
+          
+          <figure class="shot">
+            <img src="screenshots/15-division-home.png?v=6d868764" alt="Once the tables are mastered, “My picture” becomes “My pictures” (multiplications + divisions)." width="360" height="760" loading="lazy" />
+            <figcaption>Once the tables are mastered, “My picture” becomes “My pictures” (multiplications + divisions).</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/13b-parent-dashboard-division.png?v=ffbc0ff3" alt="In the parent area, the Math card moves on to division; multiplication, mastered, stays checked off." width="360" height="760" loading="lazy" />
+            <figcaption>In the parent area, the Math card moves on to division; multiplication, mastered, stays checked off.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/16-division-intro.png?v=2ccbefed" alt="Introducing a division: “think of the multiplication”." width="360" height="760" loading="lazy" />
+            <figcaption>Introducing a division: “think of the multiplication”.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/17-division-question.png?v=4dd83be3" alt="Division question on the keypad." width="360" height="760" loading="lazy" />
+            <figcaption>Division question on the keypad.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/18-division-progress.png?v=212a0d30" alt="A mystery picture dedicated to division, distinct from the tables one." width="360" height="760" loading="lazy" />
+            <figcaption>A mystery picture dedicated to division, distinct from the tables one.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="remainder" class="section">
+        <div class="section-text">
+          <h2>Level 3 — division with remainders</h2>
+          <p>Once every division is mastered, division that doesn't come out even: “45 ÷ 7 = 6 r 3”, the skill expected at the end of grade 3.</p>
+      <ul class="guide-list">
+        <li><strong>The trick</strong>: find the multiple just below, without going over. What's missing is the remainder.</li>
+        <li><strong>Two steps</strong>: “How many times?”, then “What's left over?”.</li>
+        <li><strong>Never the same sum</strong>: the number to divide changes on every review. Sometimes the remainder is zero: up to the child to spot it.</li>
+        <li><strong>A third mystery picture</strong>. Tables and divisions keep being maintained in the same session.</li>
+      </ul>
+        </div>
+        <div class="shots shots-4">
+          
+          <figure class="shot">
+            <img src="screenshots/21-remainder-intro.png?v=4509cab7" alt="Introducing a division with remainder: the full rows, and the dots that &quot;don't fit&quot; — the remainder." width="360" height="760" loading="lazy" />
+            <figcaption>Introducing a division with remainder: the full rows, and the dots that "don't fit" — the remainder.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/22-remainder-question.png?v=9b4090a0" alt="Answering in two steps: the validated quotient settles into the formula, then &quot;What's left over?&quot;." width="360" height="760" loading="lazy" />
+            <figcaption>Answering in two steps: the validated quotient settles into the formula, then "What's left over?".</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/23-remainder-progress.png?v=0a62d6a3" alt="A third mystery picture, dedicated to division with remainders." width="360" height="760" loading="lazy" />
+            <figcaption>A third mystery picture, dedicated to division with remainders.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/13c-parent-dashboard-remainder.png?v=ef2d6b48" alt="The parent area's Math page opens on the current level: &quot;Remainders&quot; joins the level selector (mastery and Leitner grid)." width="360" height="760" loading="lazy" />
+            <figcaption>The parent area's Math page opens on the current level: "Remainders" joins the level selector (mastery and Leitner grid).</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="badges" class="section">
+        <div class="section-text">
+          <h2>The badges</h2>
+          <p>Badges to mark the way.</p>
+      <ul class="guide-list">
+        <li><strong>Milestones</strong>: first session, 7 days, 30 days.</li>
+        <li><strong>Performance</strong>: 10 correct answers in a row, 5 answers under 2 s.</li>
+        <li><strong>Mastery</strong>: one badge per table, then “Times tables genius”. Division adds its own.</li>
+      </ul>
+      <p>Each badge opens on its condition and, while still locked, a progress bar.</p>
+        </div>
+        <div class="shots shots-2">
+          
+          <figure class="shot">
+            <img src="screenshots/11-badges.png?v=9af8c8a4" alt="Badge collection — earned and still to unlock." width="360" height="760" loading="lazy" />
+            <figcaption>Badge collection — earned and still to unlock.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/11-badges-detail.png?v=fb39cfc5" alt="Tapping a locked badge reveals the condition and the progress." width="360" height="760" loading="lazy" />
+            <figcaption>Tapping a locked badge reveals the condition and the progress.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="rules" class="section">
+        <div class="section-text">
+          <h2>The ×1 and ×10 rules</h2>
+          <p>Two rules given up front, so they don't have to be learned by heart:</p>
+      <ul class="guide-list">
+        <li><strong>× 1</strong>: the number doesn't change.</li>
+        <li><strong>× 10</strong>: the digits slide one place to the left, a 0 takes the ones place.</li>
+        <li><strong>× 11</strong>, a bonus once tables 2 to 9 are mastered: repeat the digit (3 × 11 = 33). A “New” dot flags it.</li>
+      </ul>
+      <p>These tables are therefore not among the 36 facts to learn.</p>
+        </div>
+        <div class="shots shots-1">
+          
+          <figure class="shot">
+            <img src="screenshots/12-rules.png?v=348f4b0a" alt="Rules for ×1 and ×10." width="360" height="760" loading="lazy" />
+            <figcaption>Rules for ×1 and ×10.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="parent" class="section">
+        <div class="section-text">
+          <h2>Parent area</h2>
+          <p>Open it from the gear on the home screen, after a small
+      multiplication that checks an adult is behind the screen. From top to
+      bottom:</p>
+      <ul class="guide-list">
+        <li><strong>Today.</strong> Has the session been done? The last 14
+        days, sessions, streaks.</li>
+        <li><strong>The week.</strong> Days practised, accuracy, speed, facts
+        that moved up, compared with the week before.</li>
+        <li><strong>One card per subject.</strong> The current level and its
+        mastery bar. Tap it for the subject's page: boxes, Leitner grid,
+        trends, session history.</li>
+        <li><strong>Needs practice.</strong> The three toughest facts right
+        now, with an idea to help at home.</li>
+        <li><strong>Settings.</strong> Remote follow, profiles and backup,
+        daily reminder, language, help.</li>
+      </ul>
+      <p>A question, a problem, an idea? The “Send feedback” button, top
+      right.</p>
+        </div>
+        <div class="shots shots-4">
+          
+          <figure class="shot">
+            <img src="screenshots/13-parent-dashboard.png?v=5747d30f" alt="The parent area overview starts with the day." width="360" height="760" loading="lazy" />
+            <figcaption>The parent area overview starts with the day.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/13e-parent-week.png?v=ba82e7c7" alt="The week at a glance, in sentences, then one card per subject." width="360" height="760" loading="lazy" />
+            <figcaption>The week at a glance, in sentences, then one card per subject.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/13a-parent-math.png?v=e19e5880" alt="The Math page: level mastery box by box, the Leitner grid, then the sessions." width="360" height="760" loading="lazy" />
+            <figcaption>The Math page: level mastery box by box, the Leitner grid, then the sessions.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/13d-parent-settings.png?v=40ef6628" alt="The settings, at the bottom of the overview: one row per setting." width="360" height="760" loading="lazy" />
+            <figcaption>The settings, at the bottom of the overview: one row per setting.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="profils" class="section">
+        <div class="section-text">
+          <h2>Several children</h2>
+          <p>One tablet for the whole family: each child has their own profile, progress, badges, streak and pictures.</p>
+      <ul class="guide-list">
+        <li><strong>Add a child</strong>: from the parent area (“Profiles and backup”) or the “Who's playing?” screen.</li>
+        <li><strong>With two or more profiles</strong>, the app asks “Who's playing?” on launch, and a button at the top of the home screen switches player. With one, nothing changes.</li>
+        <li><strong>In the parent area</strong>, one chip per child, including those followed remotely, without switching player.</li>
+        <li><strong>“Profiles and backup”</strong>: move to another device, export or import a backup, delete a profile.</li>
+      </ul>
+        </div>
+        <div class="shots shots-4">
+          
+          <figure class="shot">
+            <img src="screenshots/19-profile-select.png?v=885f53f2" alt="“Who's playing?” — the selection screen shown on launch with two or more profiles." width="360" height="760" loading="lazy" />
+            <figcaption>“Who's playing?” — the selection screen shown on launch with two or more profiles.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/20-home-multi.png?v=2b9aa99f" alt="The “switch player” button appears at the top of the home screen, next to the gear." width="360" height="760" loading="lazy" />
+            <figcaption>The “switch player” button appears at the top of the home screen, next to the gear.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/20c-parent-children.png?v=336de4b8" alt="In the parent area, one chip per child: see each one's progress without switching player." width="360" height="760" loading="lazy" />
+            <figcaption>In the parent area, one chip per child: see each one's progress without switching player.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="screenshots/20b-parent-profiles.png?v=179b56cb" alt="The “Profiles and backup” page of the parent area: the children on this device, then the active profile's backup." width="360" height="760" loading="lazy" />
+            <figcaption>The “Profiles and backup” page of the parent area: the children on this device, then the active profile's backup.</figcaption>
+          </figure>
+        </div>
+      </section>
+</main>
+<footer>
+  <p>
+    Going further:
+    <a href="../../specs/">functional specifications</a> ·
+    <a href="https://github.com/isc/tablito">source code</a>
+  </p>
+  <p>
+    Guide generated automatically on 2026-10-03.
+  </p>
+</footer>
+</body>
+</html>

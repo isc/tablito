@@ -1,0 +1,3 @@
+import{conjFactDef as i,regularStem as u,resolveConjQuestion as a}from"./conjugationFacts.js";import{CONJ_RULES as r,FUTUR_RULE as c,IMPARFAIT_RULE as p,PERSON_MARKS as s,SON_DOUX_RULE as y}from"./conjugationRules.js";function d(e){return e.def.kind==="ending"&&e.segment[0]!==u(e.verb,e.def.tense)?y:e.def.tense==="imparfait"?p:e.def.tense==="futur"?c:s}function m(e){const n=new Set;for(const t of e){if(!t.introduced)continue;const o=i(t.key);o&&o.carriers.forEach((j,f)=>n.add(d(a(o,f))))}return r.filter(t=>n.has(t))}export{r as CONJ_RULES,d as getConjStrategy,m as metConjRules};
+
+//# sourceMappingURL=conjugationStrategies.js.map
