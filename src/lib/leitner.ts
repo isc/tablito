@@ -176,14 +176,49 @@ export function shouldIntroduceNew(facts: { introduced: boolean; box: BoxLevel }
 // (1ère case quasi-nette de l'image mystère ; cf. badge « Première case »).
 export const MASTERY_BOX: BoxLevel = 4;
 
+/**
+ * Un groupe de faits (un temps, un verbe, une famille de verbes) est-il
+ * maîtrisé ? Non vide, et tous ses faits en boîte ≥ MASTERY_BOX — le critère
+ * des badges de groupe des matières, comme « Table de N » côté maths.
+ */
+export function allMastered(facts: { box: BoxLevel }[]): boolean {
+  return facts.length > 0 && facts.every((f) => f.box >= MASTERY_BOX);
+}
+
+/**
+ * Boîte de départ d'un fait réussi au placement d'une matière, selon sa
+ * vitesse : sous le seuil « rapide », boîte 3 ; sous le double, boîte 2.
+ */
+export function placementBox(timeMs: number, fastMs: number): BoxLevel {
+  if (timeMs < fastMs) return 3;
+  if (timeMs < fastMs * 2) return 2;
+  return 1;
+}
+
+/**
+ * Place un fait démontré au placement : introduit, à la boîte donnée, dû au
+ * prochain intervalle. Aucun `history` : c'est un calibrage, pas une révision.
+ */
+export function placeFact(
+  fact: { introduced: boolean; box: BoxLevel; lastSeen: string; nextDue: string },
+  box: BoxLevel,
+  today: string,
+): void {
+  fact.introduced = true;
+  fact.box = box;
+  fact.lastSeen = today;
+  fact.nextDue = computeNextDue(box, today);
+}
+
 /** Nombre de faits maîtrisés (boîte ≥ MASTERY_BOX), × ou ÷. */
 export function countMastered(facts: { box: BoxLevel }[]): number {
   return facts.filter((f) => f.box >= MASTERY_BOX).length;
 }
 
 /**
- * Inventaire Leitner d'un niveau de maths ou de la conjugaison, tel que le
- * profil le stocke — vide pour une matière jamais ouverte.
+ * Inventaire Leitner d'un niveau de maths ou d'une matière (conjugaison,
+ * verbes irréguliers), tel que le profil le stocke — vide pour une matière
+ * jamais ouverte.
  */
 export function factsOf(
   profile: UserProfile,
@@ -198,6 +233,8 @@ export function factsOf(
       return profile.remainderFacts ?? [];
     case 'conj':
       return profile.conjFacts ?? [];
+    case 'irr':
+      return profile.irrFacts ?? [];
   }
 }
 

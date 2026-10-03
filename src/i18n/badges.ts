@@ -1,6 +1,8 @@
 import { pickStrings, type Lang } from './lang';
 import { TENSE_NAMES, tenseFr } from './tense';
 import type { ConjTense } from '../types';
+import type { IrrFamily } from '../lib/irregularVerbs';
+import { IRR_FAMILY_NAMES } from './irregular';
 
 // Traductions des badges. Les métadonnées non textuelles (id, icône, couleur,
 // logique de progression) vivent dans lib/badges.ts ; ici, uniquement les
@@ -47,6 +49,10 @@ export interface BadgeI18n {
   // conjugaison sont masqués quand la langue d'interface est l'anglais).
   conjTense: (tense: ConjTense) => BadgeText;
   conjVerb: (verb: string) => BadgeText;
+  // Verbes irréguliers anglais (specs §16.9) : un badge par famille. Matière
+  // masquée en anglais, l'entrée `en` n'est là que pour que la table reste
+  // totale.
+  irrFamily: (family: IrrFamily) => BadgeText;
   units: BadgeUnitLabels;
 }
 
@@ -152,6 +158,11 @@ const fr: BadgeI18n = {
     name: `Le verbe « ${verb} »`,
     description: `Maîtriser le verbe ${verb}`,
     conditionText: `Place toutes les formes du verbe « ${verb} » dans la boîte 4 ou 5.`,
+  }),
+  irrFamily: (family) => ({
+    name: IRR_FAMILY_NAMES[family],
+    description: `Maîtriser les verbes anglais « ${IRR_FAMILY_NAMES[family]} »`,
+    conditionText: `Place tous les verbes anglais « ${IRR_FAMILY_NAMES[family]} » dans la boîte 4 ou 5.`,
   }),
   units: {
     session: 'séance',
@@ -261,6 +272,11 @@ const en: BadgeI18n = {
     name: `The verb “${verb}”`,
     description: `Master the verb ${verb}`,
     conditionText: `Move every form of the verb “${verb}” to box 4 or 5.`,
+  }),
+  irrFamily: (family) => ({
+    name: `Irregular verbs: ${family}`,
+    description: `Master the “${family}” irregular verbs`,
+    conditionText: `Move every “${family}” irregular verb to box 4 or 5.`,
   }),
   units: {
     session: 'session',

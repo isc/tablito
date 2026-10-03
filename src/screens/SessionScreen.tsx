@@ -3,6 +3,8 @@ import type {
   AnySessionItem,
   ConjSessionItem,
   ConjWrittenAnswer,
+  IrrFact,
+  IrrSessionItem,
   SessionItem,
   SessionResult,
 } from '../types';
@@ -16,6 +18,9 @@ import ConjRuleVisual from '../components/ConjRuleVisual';
 import ConjRuleListenButton from '../components/ConjRuleListenButton';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import ConjFeedbackOverlay from '../components/ConjFeedbackOverlay';
+import IrrIntro from '../components/IrrIntro';
+import IrrAnswerInput from '../components/IrrAnswerInput';
+import IrrFeedbackOverlay from '../components/IrrFeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
 import StrategyHintShell from '../components/StrategyHintShell';
 import DivisionStrategyHint from '../components/DivisionStrategyHint';
@@ -25,6 +30,8 @@ import {
   DIVISION_FAST_THRESHOLD_MS,
   REMAINDER_FAST_THRESHOLD_MS,
   conjFastThresholdMs,
+  isWordItem,
+  typedFastThresholdMs,
   remainderDividend,
 } from '../types';
 import {
@@ -42,6 +49,23 @@ import {
   type ConjJudgement,
 } from '../lib/conjugationComposer';
 import { conjStrings as tc } from '../i18n/conjugation';
+import { irrStrings as ti } from '../i18n/irregular';
+import {
+  IRR_RETRY_GAPS,
+  irrKnownAnalogy,
+  irrWrittenAnswer,
+  isIrrAccepted,
+  judgeIrrAnswer,
+  type IrrVerdict,
+} from '../lib/irregularComposer';
+import {
+  irrExpectedForms,
+  irrExpectedLetters,
+  irrPromptTtsKey,
+  irrRecitationTtsKey,
+  requireIrrVerbDef,
+  type IrrVerbDef,
+} from '../lib/irregularVerbs';
 import { TENSE_NAMES } from '../i18n/tense';
 import { getStrategy, hasStrategy } from '../lib/strategies';
 import { getDivisionStrategy } from '../lib/divisionStrategies';
@@ -57,7 +81,7 @@ import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock'
 import { normalizedAverageMs } from '../lib/sessionTiming';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
-import { useInputMode } from '../hooks/useInputMode';
+import { useInputMode, useIrrInputMode } from '../hooks/useInputMode';
 import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { preflightMicPermission } from '../lib/micPreflight';
 import { isMultiplicationSlip } from '../lib/divisionStrategies';
@@ -132,6 +156,23 @@ interface SessionScreenProps {
     inputMode: 'keypad' | 'voice',
     written: ConjWrittenAnswer,
   ) => void;
+  /**
+   * Réponse à une question de verbes irréguliers (specs §16.6). Canal séparé,
+   * même raison que la conjugaison : réponse en mots, verdict non booléen.
+   */
+  onIrrAnswer?: (
+    item: IrrSessionItem,
+    verdict: IrrVerdict,
+    fast: boolean,
+    timeMs: number,
+    inputMode: 'keypad' | 'voice',
+    written: ConjWrittenAnswer,
+  ) => void;
+  /**
+   * Verbes irréguliers du profil, à jour : l'analogie de famille de
+   * l'introduction et du feedback ne s'appuie que sur un verbe déjà su.
+   */
+  irrFacts?: IrrFact[];
 }
 
 
@@ -167,7 +208,7 @@ function view(item: SessionItem) {
 }
 
 function itemKey(item: AnySessionItem): string {
-  if (item.kind === 'conj') return item.fact.key;
+  if (isWordItem(item)) return item.fact.key;
   if (item.kind === 'rem') return getRemainderFactKey(item.fact.divisor, item.fact.quotient);
   if (item.kind === 'div') return getDivisionFactKey(item.fact.dividend, item.fact.divisor);
   return getFactKey(item.fact.a, item.fact.b);
@@ -184,6 +225,8 @@ function conjView(item: ConjSessionItem): ConjQuestionView {
 // §4.1) : lire la phrase entière dicterait la réponse au moment où on la
 // demande, et les formes irrégulières n'auraient plus qu'à être transcrites.
 function questionKey(item: AnySessionItem): string {
+  // Verbes irréguliers : l'infinitif seul, lu par la voix anglaise (§16.5).
+  if (item.kind === 'irr') return irrPromptTtsKey(item.fact.key);
   return item.kind === 'conj' ? conjView(item).promptTtsKey : view(item).qKey;
 }
 
@@ -196,6 +239,9 @@ function introKey(item: AnySessionItem): string {
     const cv = conjView(item);
     return cv.sentenceTtsKey ?? cv.promptTtsKey;
   }
+  // Verbes irréguliers : la récitation complète, seul moment avec la
+  // correction où l'audio donne les formes.
+  if (item.kind === 'irr') return irrRecitationTtsKey(item.fact.key);
   if (item.kind === 'rem') return `intror-${item.fact.divisor}-${item.fact.quotient}`;
   if (item.kind === 'div') return `introd-${item.fact.dividend}-${item.fact.divisor}`;
   return `intro-${item.fact.a}-${item.fact.b}`;
@@ -206,6 +252,8 @@ export default function SessionScreen({
   onComplete,
   onAnswer,
   onConjAnswer,
+  onIrrAnswer,
+  irrFacts = [],
 }: SessionScreenProps) {
   const [questions, setQuestions] = useState<AnySessionItem[]>(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -233,6 +281,14 @@ export default function SessionScreen({
     typed: string;
     box: ConjSessionItem['fact']['box'];
   } | null>(null);
+  const [irrFeedback, setIrrFeedback] = useState<{
+    def: IrrVerbDef;
+    verdict: IrrVerdict;
+    fast: boolean;
+    answers: string[];
+    source: 'keypad' | 'voice';
+    box: IrrSessionItem['fact']['box'];
+  } | null>(null);
   // Niveau 3 — saisie en deux temps (specs §12.5) : quotient validé de la
   // question en cours, null tant qu'on est à l'étape 1 (« Combien de fois ? »).
   const [remQuotient, setRemQuotient] = useState<number | null>(null);
@@ -245,6 +301,8 @@ export default function SessionScreen({
   const { playCorrect, playIncorrect } = useSound();
   const { speak, stop: stopSpeech, preload, isSpeaking } = useTTS();
   const { inputMode, setInputMode } = useInputMode();
+  // Verbes irréguliers : réglage propre, voix par défaut (§16.6).
+  const { inputMode: irrInputMode } = useIrrInputMode();
   const t = useSessionStrings();
   useWakeLock(true);
 
@@ -349,13 +407,14 @@ export default function SessionScreen({
   // d'une question à deux réponses court de l'affichage à la validation du
   // reste (specs §12.7).
   useEffect(() => {
-    if (inputMode !== 'voice') return;
+    const mode = currentItem?.kind === 'irr' ? irrInputMode : inputMode;
+    if (mode !== 'voice') return;
     if (showIntro) return;
     if (remQuotient !== null || signSlip) return;
     if (!isSpeaking) {
       questionStartTime.current = startQuestion();
     }
-  }, [isSpeaking, inputMode, showIntro, currentIndex, remQuotient, signSlip]);
+  }, [isSpeaking, inputMode, irrInputMode, currentItem?.kind, showIntro, currentIndex, remQuotient, signSlip]);
 
   // Étape 2 de l'intro conjugaison : le pronom s'illumine à l'arrivée, sa
   // marque une demi-seconde plus tard — l'accord se joue dans cet écart.
@@ -395,9 +454,10 @@ export default function SessionScreen({
     // dite d'une traite) ; `value` est alors le reste.
     (value: number, quotient: number | null = remQuotient) => {
       if (!currentItem || submittingRef.current) return;
-      // Canal numérique : les questions de conjugaison passent par
-      // `handleConjSubmit` (réponse en chaîne, verdict non booléen).
-      if (currentItem.kind === 'conj') return;
+      // Canal numérique : les questions de conjugaison et de verbes passent par
+      // `handleConjSubmit` / `handleIrrSubmit` (réponse en mots, verdict non
+      // booléen).
+      if (isWordItem(currentItem)) return;
 
       // Niveau 3, étape 1 (« Combien de fois ? ») : un quotient JUSTE ne clôt
       // pas la question — on passe à l'étape 2 (« Il reste combien ? ») sans
@@ -498,6 +558,67 @@ export default function SessionScreen({
     setConjFeedback(null);
     moveToNext();
   }, [moveToNext]);
+
+  const handleIrrFeedbackDismiss = useCallback(() => {
+    setIrrFeedback(null);
+    moveToNext();
+  }, [moveToNext]);
+
+  /**
+   * Réponse à une question de verbes irréguliers (specs §16.6). Le seuil de
+   * rapidité suit la surface qui a produit la réponse : à la voix, la latence
+   * de rappel (première forme entendue) et la base seule ; au clavier, la base
+   * plus un coût par lettre.
+   */
+  const handleIrrSubmit = useCallback(
+    (answers: string[], source: 'keypad' | 'voice') => {
+      if (!currentItem || currentItem.kind !== 'irr' || submittingRef.current) return;
+      submittingRef.current = true;
+      setNumpadDisabled(true);
+      stopSpeech();
+
+      const def = requireIrrVerbDef(currentItem.fact.key);
+      const timeMs = activeMsSince(questionStartTime.current);
+      const verdict = judgeIrrAnswer(def, answers, source);
+      const recallMs = source === 'voice' ? conjRecallMs.current : null;
+      const fast =
+        verdict === 'correct'
+        && (recallMs ?? timeMs)
+          < typedFastThresholdMs(irrExpectedLetters(def), recallMs === null ? 'keypad' : 'voice');
+      const accepted = isIrrAccepted(verdict);
+
+      answerTimesMs.current.push(timeMs);
+      if (accepted) correctCount.current++;
+      // Aucun son négatif, comme en conjugaison.
+      if (accepted) playCorrect();
+
+      onIrrAnswer?.(currentItem, verdict, fast, timeMs, source, {
+        answeredWith: irrWrittenAnswer(answers),
+        expectedForm: irrExpectedForms(def).join(', '),
+      });
+
+      // Re-pose 2 à 3 questions plus tard : après une erreur, et après une
+      // introduction (le re-test différé).
+      if (!accepted || currentItem.isIntroduction) {
+        setQuestions((prev) => scheduleRetry(prev, currentIndex, currentItem, IRR_RETRY_GAPS));
+      }
+
+      setResults((prev) => [...prev, { correct: accepted }]);
+      setIrrFeedback({ def, verdict, fast, answers, source, box: currentItem.fact.box });
+    },
+    [currentItem, currentIndex, onIrrAnswer, playCorrect, stopSpeech],
+  );
+
+  /** Fin de l'introduction d'un verbe : la première question suit. */
+  const finishIrrIntro = useCallback(() => {
+    if (!currentItem) return;
+    setShowIntro(false);
+    submittingRef.current = false;
+    setNumpadDisabled(false);
+    questionStartTime.current = startQuestion();
+    conjRecallMs.current = null;
+    speakQuestion(currentItem);
+  }, [currentItem, speakQuestion]);
 
   /**
    * Réponse à une question de conjugaison (spec §4.5, §5.3). L'attribution
@@ -628,8 +749,9 @@ export default function SessionScreen({
 
   const handleIntroNext = useCallback(() => {
     if (!currentItem) return;
-    // L'intro de conjugaison a son propre enchaînement (`handleConjIntroNext`).
-    if (currentItem.kind === 'conj') return;
+    // L'intro de conjugaison a son propre enchaînement (`handleConjIntroNext`),
+    // celle des verbes irréguliers aussi (`IrrIntro`).
+    if (isWordItem(currentItem)) return;
 
     const finish = () => {
       setShowIntro(false);
@@ -673,8 +795,10 @@ export default function SessionScreen({
 
   // Dispatch par matière : `mathItem` est nul sur une question de conjugaison,
   // et toute la dérivation mathématique (opérandes, seuil, clés TTS) avec lui.
-  const mathItem = currentItem.kind === 'conj' ? null : currentItem;
+  const mathItem = isWordItem(currentItem) ? null : currentItem;
   const conjItem = currentItem.kind === 'conj' ? currentItem : null;
+  const irrItem = currentItem.kind === 'irr' ? currentItem : null;
+  const irrDef = irrItem ? requireIrrVerbDef(irrItem.fact.key) : null;
   const v = mathItem ? view(mathItem) : null;
   const cv = conjItem ? conjView(conjItem) : null;
   // Étape de saisie de la question en cours : chaque relance (reste du niveau
@@ -985,6 +1109,44 @@ export default function SessionScreen({
         </div>
       )}
 
+      {/* Introduction — verbes irréguliers (specs §16.7). Re-keyée par
+          question : chaque verbe nouveau repart de l'étape « écouter ». */}
+      {showIntro && irrDef && (
+        <IrrIntro
+          key={`irr-intro-${currentIndex}`}
+          def={irrDef}
+          analogy={irrKnownAnalogy(irrDef, irrFacts)}
+          onSpeak={speak}
+          isSpeaking={isSpeaking}
+          onFinish={finishIrrIntro}
+        />
+      )}
+
+      {/* Question — verbes irréguliers (specs §16.5) : l'infinitif seul, en
+          anglais, et les deux cases à remplir. */}
+      {!showIntro && irrDef && (
+        <div className="session-question irr-question">
+          <div className="irr-ask">{irrInputMode === 'voice' ? ti.askSay : ti.askWrite}</div>
+          <IrrAnswerInput
+            def={irrDef}
+            onSubmit={handleIrrSubmit}
+            onRecall={handleConjSpeechStart}
+            disabled={numpadDisabled}
+            isSpeaking={isSpeaking}
+            token={`answer-${currentIndex}`}
+          >
+            <button
+              type="button"
+              className="conj-replay-btn"
+              onClick={() => speak(irrPromptTtsKey(irrDef.key))}
+              aria-label={ti.replay}
+            >
+              {'🔊'} {ti.replay}
+            </button>
+          </IrrAnswerInput>
+        </div>
+      )}
+
       {/* Question. Niveau 3 : saisie en deux temps sur le même écran — le
           quotient validé s'installe dans la formule et le « reste ? » prend le
           relais (specs §12.5). Le NumPad est re-keyé par étape (reset de la
@@ -1085,6 +1247,16 @@ export default function SessionScreen({
           typed={conjFeedback.typed}
           box={conjFeedback.box}
           onDismiss={handleConjFeedbackDismiss}
+          onSpeak={speak}
+        />
+      )}
+
+      {/* Feedback — verbes irréguliers (specs §16.6) */}
+      {irrFeedback && (
+        <IrrFeedbackOverlay
+          {...irrFeedback}
+          analogy={irrKnownAnalogy(irrFeedback.def, irrFacts)}
+          onDismiss={handleIrrFeedbackDismiss}
           onSpeak={speak}
         />
       )}

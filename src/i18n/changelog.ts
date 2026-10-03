@@ -11,6 +11,7 @@ const fr: ChangelogEntry[] = [
   {
     date: '2026-10-03',
     items: [
+      "Nouvelle matière\u00a0: les verbes irréguliers anglais. Une troisième tuile «\u00a0Verbes anglais\u00a0» apparaît sur l'accueil. L'app donne l'infinitif, en anglais et à voix haute, et votre enfant répond les deux autres formes, comme en classe\u00a0: «\u00a0go\u00a0» → «\u00a0went, gone\u00a0». Il peut répondre à voix haute (c'est le mode par défaut, le dire aide à retenir) ou les écrire au clavier. 64 verbes, des plus fréquents aux moins fréquents, deux nouveaux au plus par séance, avec leur propre image mystère et un badge par famille de verbes (sing, sang, sung…). Quelques questions au départ repèrent ceux que votre enfant connaît déjà. Dans l'espace parent, une carte dédiée montre les verbes maîtrisés et les erreurs récentes, comme «\u00a0goed\u00a0» au lieu de «\u00a0went\u00a0».",
       "Conjugaison, les règles : elles ont désormais leur onglet dans l'écran « Mes règles » et se montrent au lieu de s'écrire — le tableau des marques (tu → s, nous → ons…), la recette de l'imparfait et du futur en étapes, le temps conjugué en entier, les exceptions à part. Un bouton les lit à voix haute pour les enfants qui lisent encore lentement. L'astuce affichée pendant la séance reprend les mêmes images.",
     ],
   },
@@ -251,6 +252,7 @@ const en: ChangelogEntry[] = [
   {
     date: '2026-10-03',
     items: [
+      "New subject: English irregular verbs. A third “English verbs” tile appears on the home screen. The app gives the base form, in English and out loud, and your child answers the other two forms, as in class: “go” → “went, gone”. They can say them aloud (the default, since saying them helps memory) or type them. 64 verbs, most frequent first, at most two new ones per session, with their own mystery picture and a badge per verb family (sing, sang, sung…). A few questions at the start spot the ones your child already knows. In the parent area, a dedicated card shows the verbs mastered and recent mistakes, such as “goed” instead of “went”. This subject is offered when the app is in French.",
       "French conjugation, the rules: they now have their own tab in the “My rules” screen and are shown rather than written out — the table of endings (tu → s, nous → ons…), the recipe for the imperfect and the future in numbered steps, the full conjugated tense, the exceptions set apart. A button reads them aloud for children who still read slowly. The hint shown during a session uses the same pictures.",
     ],
   },

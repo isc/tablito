@@ -110,6 +110,11 @@
   color: var(--sage-ink);
 }
 
+.parent-subject-icon--irr {
+  background: var(--sky-soft);
+  color: var(--sky);
+}
+
 .parent-subject-titles {
   flex: 1;
   min-width: 0;

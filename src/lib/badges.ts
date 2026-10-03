@@ -17,7 +17,9 @@ import {
   conjFactsOfTense,
   conjFactsOfVerb,
 } from './conjugationFacts';
-import { MASTERY_BOX } from './leitner';
+import { MASTERY_BOX, allMastered, countMastered } from './leitner';
+import { IRR_FAMILIES, type IrrFamily } from './irregularVerbs';
+import { irrFactsOfFamily, irrFamilyBadgeId } from './irregularComposer';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
 import { getLang, type Lang } from '../i18n/lang';
@@ -117,8 +119,29 @@ export function isConjVisible(profile: UserProfile, lang: Lang = getLang()): boo
   return isConjAvailable(lang) && hasOpenedConj(profile);
 }
 
-/** Les trois niveaux de la matière maths (la conjugaison est une matière à part). */
-export type MathLevel = Exclude<FactKind, 'conj'>;
+// === Matière verbes irréguliers anglais (specs §16) ========================
+//
+// Même statut que la conjugaison, condition de langue inversée : la matière
+// est proposée dans toute langue d'interface SAUF l'anglais — un enfant
+// anglophone n'apprend pas ses irréguliers en liste, et une interface en
+// anglais signale avant tout une famille anglophone.
+
+export function isIrrAvailable(lang: Lang = getLang()): boolean {
+  return lang !== 'en';
+}
+
+/** L'enfant a-t-il déjà ouvert la matière ? (pilote la pastille de découverte) */
+export function hasOpenedIrr(profile: UserProfile): boolean {
+  return profile.hasSeenIrrIntro === true;
+}
+
+/** Visible dans les écrans transverses (badges, images, espace parent). */
+export function isIrrVisible(profile: UserProfile, lang: Lang = getLang()): boolean {
+  return isIrrAvailable(lang) && hasOpenedIrr(profile);
+}
+
+/** Les trois niveaux de la matière maths (conjugaison et verbes irréguliers sont des matières à part). */
+export type MathLevel = Exclude<FactKind, 'conj' | 'irr'>;
 
 /**
  * Niveaux de maths débloqués, dans l'ordre de progression : ceux qu'un écran
@@ -475,6 +498,40 @@ const CONJ_VERB_ICON: Record<string, string> = {
   'voir': '👁️',
 };
 
+// Badges des verbes irréguliers (specs §16.9) : un par famille consolidée.
+// Un pictogramme par famille, tiré d'un de ses verbes (sing → 🎵, sleep → 😴).
+const IRR_FAMILY_ICON: Record<IrrFamily, string> = {
+  same: '🔁',
+  ought: '💭',
+  iau: '🎵',
+  ew: '🌱',
+  back: '↩️',
+  en: '✍️',
+  t: '😴',
+  d: '💬',
+  vowel: '🏆',
+  unique: '⭐',
+};
+
+function buildIrrBadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  const u = i.units;
+  return IRR_FAMILIES.map((family) => ({
+    id: irrFamilyBadgeId(family),
+    ...i.irrFamily(family),
+    icon: IRR_FAMILY_ICON[family],
+    color: 'var(--coral)',
+    progressFor: (p: UserProfile) => {
+      const facts = irrFactsOfFamily(p.irrFacts ?? [], family);
+      return {
+        current: countMastered(facts),
+        target: facts.length,
+        unitLabel: u.box4plus,
+      };
+    },
+  }));
+}
+
 function buildConjBadgeDefinitions(): BadgeDefinition[] {
   const i = getBadgeI18n();
   const u = i.units;
@@ -521,6 +578,7 @@ let cachedAll: BadgeDefinition[] = [];
 let cachedDivision: BadgeDefinition[] = [];
 let cachedRemainder: BadgeDefinition[] = [];
 let cachedConj: BadgeDefinition[] = [];
+let cachedIrr: BadgeDefinition[] = [];
 let cachedMap: Map<string, BadgeDefinition> = new Map();
 
 function ensureCache(): void {
@@ -530,8 +588,12 @@ function ensureCache(): void {
   cachedDivision = buildDivisionBadgeDefinitions();
   cachedRemainder = buildRemainderBadgeDefinitions();
   cachedConj = buildConjBadgeDefinitions();
+  cachedIrr = buildIrrBadgeDefinitions();
   cachedMap = new Map(
-    [...cachedAll, ...cachedDivision, ...cachedRemainder, ...cachedConj].map((d) => [d.id, d]),
+    [...cachedAll, ...cachedDivision, ...cachedRemainder, ...cachedConj, ...cachedIrr].map((d) => [
+      d.id,
+      d,
+    ]),
   );
   cacheLang = lang;
 }
@@ -556,6 +618,11 @@ export function getConjBadgeDefinitions(): BadgeDefinition[] {
   return cachedConj;
 }
 
+export function getIrrBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedIrr;
+}
+
 function badgeMap(): Map<string, BadgeDefinition> {
   ensureCache();
   return cachedMap;
@@ -574,6 +641,8 @@ export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[]
   // Conjugaison : visible seulement une fois la matière ouverte, et jamais en
   // anglais (matière fr-only) — même révélation différée que ci-dessus.
   if (isConjVisible(profile)) defs.push(...getConjBadgeDefinitions());
+  // Verbes irréguliers : même révélation différée, jamais en anglais.
+  if (isIrrVisible(profile)) defs.push(...getIrrBadgeDefinitions());
   return defs;
 }
 
@@ -681,6 +750,15 @@ export function checkBadges(
     }
     for (const verb of CONJ_IRREGULAR_VERBS) {
       if (allConjMastered(byVerb.get(verb) ?? [])) earn(conjVerbBadgeId(verb));
+    }
+  }
+
+  // Verbes irréguliers — un badge par famille consolidée. Même court-circuit
+  // que la conjugaison tant qu'aucun verbe n'a été introduit.
+  const irrFacts = profile.irrFacts;
+  if (irrFacts?.some((f) => f.introduced)) {
+    for (const family of IRR_FAMILIES) {
+      if (allMastered(irrFactsOfFamily(irrFacts, family))) earn(irrFamilyBadgeId(family));
     }
   }
 

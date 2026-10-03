@@ -1,20 +1,29 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { getAudioContext } from '../lib/audioContext';
 import { getLang } from '../i18n/lang';
+import { IRR_TTS_PREFIX } from '../lib/irregularVerbs';
 
 const BASE = import.meta.env.BASE_URL;
 
 // Sous-dossier audio par langue : chaque langue vit sous audio/tts/<lang>/
 // (fr, en, …). Les clés passées à speak()/preload() restent identiques d'une
 // langue à l'autre (`q-3-4`…), seul le chemin résolu diffère.
+//
+// Exception : les verbes irréguliers anglais (specs §16.5), préfixe `irr-`,
+// sont de l'anglais quelle que soit la langue de l'interface — la voix
+// anglaise lit « go, went, gone » aussi pour un enfant francophone.
+function ttsLang(key: string): string {
+  return key.startsWith(IRR_TTS_PREFIX) ? 'en' : getLang();
+}
+
 function audioPath(key: string): string {
-  return `${BASE}audio/tts/${getLang()}/${key}.mp3`;
+  return `${BASE}audio/tts/${ttsLang(key)}/${key}.mp3`;
 }
 
 // La clé de cache est préfixée par la langue : changer de langue ne doit pas
 // servir le buffer français déjà décodé pour la même clé logique.
 function cacheKey(key: string): string {
-  return `${getLang()}:${key}`;
+  return `${ttsLang(key)}:${key}`;
 }
 
 // Cache des buffers décodés au niveau module : on ne re-fetch + re-décode

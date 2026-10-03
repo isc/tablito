@@ -14,6 +14,7 @@ interface WeekStrings {
   daysVsBefore: (trend: Trend, days: number) => string;
   mathAccuracy: (percent: string) => string;
   conjAccuracy: (percent: string) => string;
+  irrAccuracy: (percent: string) => string;
   accuracyVsBefore: (trend: Trend, points: number) => string;
   speed: (seconds: string) => string;
   speedVsBefore: (trend: Trend, seconds: string) => string;
@@ -33,6 +34,7 @@ const fr: WeekStrings = {
       : `${days} de ${trend === 'better' ? 'plus' : 'moins'} que la semaine d’avant.`,
   mathAccuracy: (percent) => `${percent} de bonnes réponses en maths`,
   conjAccuracy: (percent) => `${percent} de bonnes réponses en conjugaison`,
+  irrAccuracy: (percent) => `${percent} de bonnes réponses en verbes anglais`,
   accuracyVsBefore: (trend, points) =>
     trend === 'same'
       ? 'Comme la semaine d’avant.'
@@ -61,6 +63,7 @@ const en: WeekStrings = {
       : `${days} ${trend === 'better' ? 'more' : 'fewer'} than the week before.`,
   mathAccuracy: (percent) => `${percent} correct in math`,
   conjAccuracy: (percent) => `${percent} correct in conjugation`,
+  irrAccuracy: (percent) => `${percent} correct in English verbs`,
   accuracyVsBefore: (trend, points) =>
     trend === 'same'
       ? 'Same as the week before.'

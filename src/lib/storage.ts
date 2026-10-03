@@ -24,11 +24,12 @@ function pickRemainderTheme(multTheme: MysteryTheme, divTheme: MysteryTheme | un
   return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
 }
 
-// Matière conjugaison (spec Verbito §7.1) : pool propre, thème tiré distinct de
-// TOUS les thèmes de maths du profil quand le pool le permet — l'image de la
-// conjugaison doit se reconnaître au premier coup d'œil comme « celle-là, c'est
-// l'autre matière », pas comme un doublon d'un niveau de maths.
-function pickConjTheme(taken: (MysteryTheme | undefined)[]): MysteryTheme {
+// Matières conjugaison et verbes irréguliers (spec Verbito §7.1, specs §16.9) :
+// pool propre, thème tiré distinct de TOUS les thèmes déjà pris par le profil
+// quand le pool le permet — l'image d'une matière doit se reconnaître au
+// premier coup d'œil comme « celle-là, c'est l'autre matière », pas comme un
+// doublon d'un niveau de maths.
+function pickDistinctTheme(taken: (MysteryTheme | undefined)[]): MysteryTheme {
   const others = MYSTERY_POOL.filter((t) => !taken.includes(t));
   return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
 }
@@ -338,6 +339,7 @@ export function createNewProfile(name: string): UserProfile {
   const mysteryTheme = pickRandom(MYSTERY_POOL);
   const divisionMysteryTheme = pickDivisionTheme(mysteryTheme);
   const remainderMysteryTheme = pickRemainderTheme(mysteryTheme, divisionMysteryTheme);
+  const conjMysteryTheme = pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme]);
   return {
     name,
     startDate: now,
@@ -363,11 +365,18 @@ export function createNewProfile(name: string): UserProfile {
     // « jamais commencé », ce que tous les lecteurs traitent déjà (`?? []`).
     // Les porter dès la création coûtait ~6 Ko sérialisés à CHAQUE réponse,
     // y compris pour un enfant qui ne fera jamais de conjugaison.
-    conjMysteryTheme: pickConjTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme]),
+    conjMysteryTheme,
     hasSeenConjIntro: false,
     hasDoneConjPlacement: false,
     lastMathSessionDate: null,
     lastConjSessionDate: null,
+    // Verbes irréguliers (specs §16) : même statut que la conjugaison —
+    // `irrFacts` absent jusqu'à la première entrée dans la matière, image tirée
+    // distincte de toutes les autres.
+    irrMysteryTheme: pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme, conjMysteryTheme]),
+    hasSeenIrrIntro: false,
+    hasDoneIrrPlacement: false,
+    lastIrrSessionDate: null,
   };
 }
 
@@ -452,7 +461,7 @@ function normalizeProfile(profile: UserProfile): UserProfile {
   // ne fait que des maths. Seule l'image de la matière est backfillée : elle
   // est tirée une fois, en évitant les thèmes déjà pris par les maths.
   if (profile.conjMysteryTheme === undefined) {
-    profile.conjMysteryTheme = pickConjTheme([
+    profile.conjMysteryTheme = pickDistinctTheme([
       profile.mysteryTheme,
       profile.divisionMysteryTheme,
       profile.remainderMysteryTheme,
@@ -482,6 +491,25 @@ function normalizeProfile(profile: UserProfile): UserProfile {
   }
   if (profile.lastConjSessionDate === undefined) {
     profile.lastConjSessionDate = null;
+  }
+  // Verbes irréguliers (specs §16) : même traitement que la conjugaison, pas
+  // de backfill des faits, seulement l'image et les drapeaux.
+  if (profile.irrMysteryTheme === undefined) {
+    profile.irrMysteryTheme = pickDistinctTheme([
+      profile.mysteryTheme,
+      profile.divisionMysteryTheme,
+      profile.remainderMysteryTheme,
+      profile.conjMysteryTheme,
+    ]);
+  }
+  if (typeof profile.hasSeenIrrIntro !== 'boolean') {
+    profile.hasSeenIrrIntro = false;
+  }
+  if (typeof profile.hasDoneIrrPlacement !== 'boolean') {
+    profile.hasDoneIrrPlacement = false;
+  }
+  if (profile.lastIrrSessionDate === undefined) {
+    profile.lastIrrSessionDate = null;
   }
   // Dernier jour d'absence déjà payé par un gel. Le JSON étant éditable à la
   // main (cf. export/import), tout ce qui n'est pas une date repart à null —
@@ -583,12 +611,13 @@ function isValidProfile(obj: unknown): boolean {
     }
   }
 
-  // conjFacts : même statut optionnel. Un fait de conjugaison ne porte que sa
-  // clé (la définition vit dans l'inventaire statique) — on valide donc la clé
-  // et l'état Leitner, rien d'autre.
-  if (p.conjFacts !== undefined) {
-    if (!Array.isArray(p.conjFacts)) return false;
-    for (const fact of p.conjFacts) {
+  // conjFacts, irrFacts : même statut optionnel. Un fait de conjugaison ou de
+  // verbe irrégulier ne porte que sa clé (la définition vit dans l'inventaire
+  // statique) — on valide donc la clé et l'état Leitner, rien d'autre.
+  for (const keyed of [p.conjFacts, p.irrFacts]) {
+    if (keyed === undefined) continue;
+    if (!Array.isArray(keyed)) return false;
+    for (const fact of keyed) {
       if (typeof fact !== 'object' || fact === null) return false;
       const f = fact as Record<string, unknown>;
       if (typeof f.key !== 'string' || f.key === '') return false;

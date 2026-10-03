@@ -351,6 +351,24 @@
   width: 100%;
 }
 
+/* Trois matières : trois colonnes serrées, libellés sur deux lignes au besoin
+   (« Verbes anglais »). Même hauteur pour les trois tuiles. */
+.home-subjects--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.home-subjects--3 .home-subject-btn {
+  padding: 14px 4px;
+  gap: 6px;
+}
+
+.home-subjects--3 .home-subject-label {
+  font-size: 15px;
+  line-height: 1.15;
+  text-align: center;
+}
+
 .home-subject-btn {
   position: relative;
   display: flex;
