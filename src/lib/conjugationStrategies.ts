@@ -134,17 +134,13 @@ export const CONJ_RULES: readonly ConjStrategy[] = [
  * celles que la séance montre (introduction, correction) pour au moins un fait
  * déjà introduit — par une introduction, ou par le test de placement.
  *
- * L'écran « Mes règles » les révèle ainsi au fil de la matière, comme la règle
- * bonus ×11 (§2.3) : jamais la règle d'un temps pas encore abordé, jamais un
- * mur de règles d'emblée. Et la règle du futur (je chanterai) n'arrive
- * qu'avec le premier fait du futur, donc — hors placement — une fois
- * l'imparfait (je chantais) consolidé, puisque c'est son badge qui ouvre le
- * futur : l'écran ne met pas côte à côte -ai et -ais pendant que l'imparfait
- * s'apprend (§15.4).
+ * L'écran « Mes règles » les révèle ainsi au fil de la matière — pourquoi, et
+ * ce que ça garantit pour l'interférence futur -ai / imparfait -ais : spec
+ * §15.3.
  *
  * Dérivé de `getConjStrategy`, jamais d'une table à part : une règle est listée
- * exactement quand la séance l'afficherait pour un fait de l'enfant, et les
- * deux ne peuvent pas diverger.
+ * exactement quand la séance l'afficherait pour un fait de l'enfant. Un test
+ * vérifie que `CONJ_RULES` contient toutes celles que la séance peut montrer.
  */
 export function metConjRules(facts: readonly Pick<ConjFact, 'key' | 'introduced'>[]): ConjStrategy[] {
   const met = new Set<ConjStrategy>();

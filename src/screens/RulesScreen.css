@@ -144,11 +144,16 @@
   letter-spacing: -0.2px;
 }
 
-.rule-card-message {
+/* Le corps d'une carte, règle de maths ou de conjugaison : même typographie. */
+.rule-card-message,
+.rule-card-lines {
   font-family: var(--sans);
   font-size: 14px;
   color: var(--ink);
   line-height: 1.5;
+}
+
+.rule-card-message {
   margin-bottom: 12px;
 }
 
@@ -280,10 +285,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-family: var(--sans);
-  font-size: 14px;
-  color: var(--ink);
-  line-height: 1.5;
 }
 
 .rule-card-tip {

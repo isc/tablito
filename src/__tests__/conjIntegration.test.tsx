@@ -272,8 +272,15 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     await flush();
   }
 
-  const sectionTitles = () =>
-    Array.from(document.querySelectorAll('.rules-section-title')).map((h) => h.textContent);
+  const textsOf = (selector: string) =>
+    Array.from(document.querySelectorAll(selector), (el) => el.textContent);
+
+  /** L'écran d'avant la conjugaison : les seules règles de maths, sans titres. */
+  function expectMathsOnly(rule10Heading: string): void {
+    expect(text()).toContain(rule10Heading);
+    expect(textsOf('.rules-section-title')).toEqual([]);
+    expect(textsOf('.rule-card-conj')).toEqual([]);
+  }
 
   it('matière ouverte : les règles rencontrées, après celles des maths', async () => {
     // Du présent, dont « nous mangeons », et un imparfait — aucun futur.
@@ -284,10 +291,9 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     renderApp();
     await openRules();
 
-    expect(sectionTitles()).toEqual(['Maths', 'Conjugaison']);
+    expect(textsOf('.rules-section-title')).toEqual(['Maths', 'Conjugaison']);
     expect(text()).toContain('Multiplier par 10');
-    const conjCards = Array.from(document.querySelectorAll('.rule-card-conj .rule-card-heading'));
-    expect(conjCards.map((h) => h.textContent)).toEqual([
+    expect(textsOf('.rule-card-conj .rule-card-heading')).toEqual([
       'Chaque personne a sa marque',
       'L’imparfait se fabrique avec « nous »',
       'Le piège du g et du c',
@@ -303,9 +309,7 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     renderApp();
     await openRules();
 
-    expect(text()).toContain('Multiplier par 10');
-    expect(sectionTitles()).toEqual([]);
-    expect(document.querySelector('.rule-card-conj')).toBeNull();
+    expectMathsOnly('Multiplier par 10');
   });
 
   it('matière jamais ouverte : rien de la conjugaison', async () => {
@@ -315,9 +319,7 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     renderApp();
     await openRules();
 
-    expect(text()).toContain('Multiplier par 10');
-    expect(sectionTitles()).toEqual([]);
-    expect(document.querySelector('.rule-card-conj')).toBeNull();
+    expectMathsOnly('Multiplier par 10');
   });
 
   it('en anglais : les seules règles de maths, même pour un profil qui a joué la matière', async () => {
@@ -326,10 +328,7 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     renderApp();
     await openRules();
 
-    expect(text()).toContain('Multiply by 10');
-    expect(sectionTitles()).toEqual([]);
-    expect(document.querySelector('.rule-card-conj')).toBeNull();
-    expect(text()).not.toMatch(/Conjugaison|Conjugation/);
+    expectMathsOnly('Multiply by 10');
   });
 });
 

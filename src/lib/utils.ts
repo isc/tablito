@@ -44,6 +44,31 @@ export function pickRandom<T>(arr: readonly T[]): T {
 }
 
 /**
+ * Premier créneau de `list`, à partir de `from`, où `block` s'insère sans
+ * heurter ses deux voisins : l'élément qui le précède (`before` devant le
+ * créneau 0) et celui qui le suit. -1 s'il n'y en a aucun. La règle de jonction
+ * des séances (§5.1), écrite une seule fois : l'entrelacement s'en sert dans
+ * ses impasses, la conjugaison pour poser sa paire de contraste d'un bloc.
+ */
+export function firstFreeSlot<T>(
+  list: readonly T[],
+  block: readonly T[],
+  conflicts: (a: T, b: T) => boolean,
+  { from = 0, before }: { from?: number; before?: T } = {},
+): number {
+  const head = block[0];
+  const tail = block[block.length - 1];
+  for (let k = from; k <= list.length; k++) {
+    const prev = k === 0 ? before : list[k - 1];
+    const next = list[k];
+    if ((prev === undefined || !conflicts(prev, head)) && (next === undefined || !conflicts(tail, next))) {
+      return k;
+    }
+  }
+  return -1;
+}
+
+/**
  * Réordonne `items` pour éviter, autant que possible, deux éléments adjacents
  * en conflit. Greedy : premier élément au hasard, puis on prend le premier
  * candidat non conflictuel. En cas d'impasse — tout ce qui reste heurte le
@@ -88,19 +113,11 @@ export function interleaveGreedy<T>(
       }
     }
     if (!placed) {
-      // Sans ce glissement, l'impasse accolait deux voisins en conflit alors
-      // qu'une place existait souvent plus tôt : en conjugaison, deux « nous »
-      // d'affilée (pres-etre-nous → imp-nous) environ une séance sur six. La
-      // jonction avec `after` compte comme les autres. Glisser l'élément ne
-      // crée aucun conflit (il ne heurte aucun de ses deux voisins), et le
-      // dernier posé reste le même pour la suite.
+      // Le glissement ne crée aucun conflit et ne change pas le dernier posé :
+      // la fin de liste, elle, heurte forcément `prev`.
       const item = remaining.shift()!;
-      const at = result.findIndex((next, i) => {
-        const before = i === 0 ? after : result[i - 1];
-        return (before === undefined || !conflicts(before, item)) && !conflicts(item, next);
-      });
-      if (at === -1) result.push(item);
-      else result.splice(at, 0, item);
+      const at = firstFreeSlot(result, [item], conflicts, { before: after });
+      result.splice(at === -1 ? result.length : at, 0, item);
     }
   }
 

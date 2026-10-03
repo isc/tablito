@@ -1234,14 +1234,11 @@ export default function App({
         />
       )}
 
-      {/* Les règles de conjugaison suivent la matière : en français, une fois
-          ouverte (comme ses onglets d'images et de badges), puis au fil des
-          faits rencontrés — calculées ici, seulement quand l'écran s'affiche. */}
       {screen === 'rules' && (
         <RulesScreen
           onBack={goBack}
           showRule11={rule11Unlocked}
-          conjRules={conjVisible ? metConjRules(profile?.conjFacts ?? []) : undefined}
+          conjRules={conjVisible ? metConjRules(conjFacts ?? []) : undefined}
         />
       )}
 

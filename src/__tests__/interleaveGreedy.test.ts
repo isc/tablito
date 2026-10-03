@@ -2,14 +2,9 @@
 import { describe, expect, it } from 'vitest';
 import { interleaveGreedy } from '../lib/utils';
 
-// Entrelacement glouton (specs §1.3). En cas d'impasse — tout ce qui reste
-// heurte le dernier élément posé — l'élément se glisse plus tôt, entre deux
-// voisins qu'il ne heurte ni l'un ni l'autre, au lieu d'être accolé à un voisin
-// en conflit. Sans ça, le composeur de conjugaison posait deux « nous »
-// d'affilée (pres-etre-nous → imp-nous) environ une séance sur six.
-//
-// `after` fixé dans chaque cas : il décide du premier élément, ce qui rend
-// l'ordre déterministe (sans lui, le premier est tiré au hasard).
+// Entrelacement glouton (specs §1.3), impasses comprises. `after` est fixé dans
+// chaque cas : il décide du premier élément, ce qui rend l'ordre déterministe
+// (sans lui, le premier est tiré au hasard).
 
 /** « personne:étiquette » — deux éléments de la même personne sont en conflit. */
 const samePerson = (a: string, b: string) => a.split(':')[0] === b.split(':')[0];

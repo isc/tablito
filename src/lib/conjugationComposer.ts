@@ -33,7 +33,7 @@ import {
   conjFactsInterfere,
   isConjContrastPair,
 } from './conjugationInterference';
-import { daysBetween, interleaveGreedy } from './utils';
+import { daysBetween, firstFreeSlot, interleaveGreedy } from './utils';
 
 // === Séance de conjugaison (spec Verbito §5, §6.2) ===
 //
@@ -394,19 +394,12 @@ function contrastPartner(facts: ConjFact[], selected: ConjFact[], newFacts: Conj
  */
 function placeContrastPair(
   questions: ConjSessionQuestion[],
-  [first, second]: ConjSessionQuestion[],
+  pair: ConjSessionQuestion[],
   from: number,
 ): ConjSessionQuestion[] {
-  let at = questions.length;
-  for (let k = from; k <= questions.length; k++) {
-    const before = questions[k - 1];
-    const after = questions[k];
-    if ((!before || !conjQuestionConflict(before, first)) && (!after || !conjQuestionConflict(second, after))) {
-      at = k;
-      break;
-    }
-  }
-  return [...questions.slice(0, at), first, second, ...questions.slice(at)];
+  const slot = firstFreeSlot(questions, pair, conjQuestionConflict, { from });
+  const at = slot === -1 ? questions.length : slot;
+  return [...questions.slice(0, at), ...pair, ...questions.slice(at)];
 }
 
 /**

@@ -26,13 +26,23 @@ function keysOfTense(tense: ConjTense): string[] {
 describe('CONJ_RULES', () => {
   it('range les quatre règles dans l’ordre de la spec : marques, imparfait, futur, piège de son', () => {
     // Les mêmes objets que ceux de la séance : l'écran n'en réécrit aucune.
-    const strategyOf = (key: string, carrier = 0) =>
-      getConjStrategy(resolveConjQuestion(requireConjFactDef(key), carrier));
+    const strategyOf = (key: string) => getConjStrategy(resolveConjQuestion(requireConjFactDef(key), 0));
     expect(strategyOf('pres-g1-je')).toBe(MARKS);
     expect(strategyOf('imp-je')).toBe(IMPARFAIT);
     expect(strategyOf('fut-je')).toBe(FUTUR);
     expect(strategyOf('pres-g1-nous')).toBe(SON_DOUX);
     expect(CONJ_RULES).toHaveLength(4);
+  });
+
+  it('contient toutes les règles que la séance peut montrer, et elles seules', () => {
+    // metConjRules filtre sur cette liste : une astuce ajoutée à
+    // getConjStrategy mais oubliée ici disparaîtrait de « Mes règles » sans bruit.
+    const shown = new Set(
+      conjFactDefs().flatMap((def) =>
+        def.carriers.map((_, i) => getConjStrategy(resolveConjQuestion(def, i))),
+      ),
+    );
+    expect(shown).toEqual(new Set(CONJ_RULES));
   });
 });
 
@@ -71,9 +81,9 @@ describe('metConjRules', () => {
   });
 
   it('tout l’inventaire introduit : les quatre règles', () => {
-    expect(metConjRules(conjFactDefs().map((def) => ({ key: def.key, introduced: true })))).toEqual([
-      ...CONJ_RULES,
-    ]);
+    expect(metConjRules(conjFactDefs().map((def) => ({ key: def.key, introduced: true })))).toEqual(
+      CONJ_RULES,
+    );
   });
 
   it('ignore une clé inconnue (profil d’une version future)', () => {
