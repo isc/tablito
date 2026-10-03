@@ -46,8 +46,11 @@ export function pickRandom<T>(arr: readonly T[]): T {
 /**
  * Réordonne `items` pour éviter, autant que possible, deux éléments adjacents
  * en conflit. Greedy : premier élément au hasard, puis on prend le premier
- * candidat non conflictuel ; à défaut, le premier restant (best effort).
- * Partagé par l'entrelacement des séances multiplication et division.
+ * candidat non conflictuel. En cas d'impasse — tout ce qui reste heurte le
+ * dernier posé —, le premier restant se glisse plus tôt, entre deux voisins
+ * déjà posés qu'il ne heurte ni l'un ni l'autre ; à défaut seulement, il est
+ * posé en fin de liste (best effort). Partagé par l'entrelacement des séances
+ * de toutes les matières.
  *
  * `after` est l'élément qui PRÉCÉDERA la liste réordonnée sans en faire partie
  * (la dernière introduction du jour, par exemple) : il contraint alors le
@@ -85,7 +88,19 @@ export function interleaveGreedy<T>(
       }
     }
     if (!placed) {
-      result.push(remaining.shift()!);
+      // Sans ce glissement, l'impasse accolait deux voisins en conflit alors
+      // qu'une place existait souvent plus tôt : en conjugaison, deux « nous »
+      // d'affilée (pres-etre-nous → imp-nous) environ une séance sur six. La
+      // jonction avec `after` compte comme les autres. Glisser l'élément ne
+      // crée aucun conflit (il ne heurte aucun de ses deux voisins), et le
+      // dernier posé reste le même pour la suite.
+      const item = remaining.shift()!;
+      const at = result.findIndex((next, i) => {
+        const before = i === 0 ? after : result[i - 1];
+        return (before === undefined || !conflicts(before, item)) && !conflicts(item, next);
+      });
+      if (at === -1) result.push(item);
+      else result.splice(at, 0, item);
     }
   }
 
