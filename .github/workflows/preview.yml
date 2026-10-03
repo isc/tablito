@@ -7,24 +7,123 @@ on:
 permissions:
   contents: write
   pull-requests: write
-
-concurrency:
-  # Serialize gh-pages writes across all preview jobs AND the main deploy,
-  # otherwise two jobs can race on the same branch.
-  # `queue: max` : voir le commentaire dans deploy.yml.
-  group: gh-pages
-  cancel-in-progress: false
-  queue: max
+  # Relance de la CI sur le commit des MP3 (cf. job `tts`).
+  actions: write
 
 # Voir le commentaire dans deploy.yml — opt-in Node 24 pour peaceiris@v4.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-and-deploy:
+  # Génère les MP3 TTS qui manquent à la PR, pour que sa preview ait déjà le
+  # son et qu'il n'y ait plus qu'à fusionner (avant, ils ne se généraient que
+  # sur main, APRÈS la fusion : une matière nouvelle se testait muette).
+  #
+  # Hors du groupe de concurrence `gh-pages` : la génération prend quelques
+  # minutes quand il y a beaucoup de MP3, et elle n'écrit pas sur gh-pages —
+  # elle ne doit pas retenir les déploiements des autres PR et de main.
+  tts:
     runs-on: ubuntu-latest
+    # Une PR venue d'un fork n'a pas la clé Mistral : on s'en passe, sa preview
+    # se construit sans les MP3 manquants.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    outputs:
+      count: ${{ steps.new.outputs.count }}
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Idempotent : ne génère que les fichiers absents, donc rien (et aucun
+      # appel à l'API) sur une PR qui n'ajoute pas de clé. Un échec partiel
+      # (rate limit) ne bloque pas la preview : les fichiers produits sont
+      # gardés, le push suivant reprend les manquants.
+      - name: Generate missing MP3s
+        continue-on-error: true
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+        run: node scripts/generate-tts.mjs
+
+      # Les nouveaux MP3 sont les fichiers non suivis de public/audio/tts. Ils
+      # sont mis de côté avec leur chemin, seuls : l'artefact ne transporte pas
+      # les ~55 Mo de MP3 déjà commités.
+      - name: List new MP3s
+        id: new
+        run: |
+          git ls-files --others --exclude-standard public/audio/tts > "$RUNNER_TEMP/new-mp3.txt"
+          count=$(wc -l < "$RUNNER_TEMP/new-mp3.txt")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "$count nouveaux MP3"
+          while IFS= read -r f; do
+            mkdir -p "$RUNNER_TEMP/tts-new/$(dirname "$f")"
+            cp "$f" "$RUNNER_TEMP/tts-new/$f"
+          done < "$RUNNER_TEMP/new-mp3.txt"
+
+      # Pour le build de la preview (job suivant), qui part d'un checkout neuf.
+      - name: Hand the new MP3s to the preview build
+        if: steps.new.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tts-mp3
+          path: ${{ runner.temp }}/tts-new/
+          retention-days: 1
+
+      # Commit sur la BRANCHE de la PR, pour que la fusion les emporte. Le
+      # checkout ci-dessus est le commit de fusion PR+main (detached) : on
+      # repart donc de la tête de la branche dans un worktree à part, et on y
+      # copie les seuls nouveaux fichiers. Si la branche a bougé entre-temps,
+      # le push échoue sans dommage : le push suivant relance cette génération.
+      #
+      # Un push fait avec le GITHUB_TOKEN ne déclenche aucun workflow (ni cette
+      # preview, donc pas de boucle, ni la CI) : la CI est relancée à la main
+      # sur la branche, pour que le dernier commit de la PR ait ses tests.
+      - name: Commit the new MP3s to the PR branch
+        if: steps.new.outputs.count != '0'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "$HEAD_REF"
+          git worktree add "$RUNNER_TEMP/head" FETCH_HEAD
+          cp -R "$RUNNER_TEMP/tts-new/." "$RUNNER_TEMP/head/"
+          cd "$RUNNER_TEMP/head"
+          git add public/audio/tts
+          git commit -m "assets(tts): MP3 générés par la preview"
+          if git push origin "HEAD:refs/heads/$HEAD_REF"; then
+            gh workflow run ci.yml --ref "$HEAD_REF"
+          else
+            echo "::warning::La branche a bougé : MP3 non commités, le prochain push les régénère."
+          fi
+
+  build-and-deploy:
+    needs: tts
+    # Aussi quand `tts` est sauté (fork) ou a échoué : la preview passe avant.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    concurrency:
+      # Serialize gh-pages writes across all preview jobs AND the main deploy,
+      # otherwise two jobs can race on the same branch.
+      # `queue: max` : voir le commentaire dans deploy.yml.
+      group: gh-pages
+      cancel-in-progress: false
+      queue: max
+    steps:
+      - uses: actions/checkout@v6
+
+      # Les MP3 générés par `tts`, s'il y en a : la preview a déjà le son.
+      - name: Fetch the MP3s generated for this PR
+        if: needs.tts.outputs.count != '' && needs.tts.outputs.count != '0'
+        uses: actions/download-artifact@v4
+        with:
+          name: tts-mp3
+          path: .
 
       - uses: actions/setup-node@v6
         with:
