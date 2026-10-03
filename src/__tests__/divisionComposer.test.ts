@@ -11,6 +11,7 @@ import {
 import { selectDivisionQuestions } from '../lib/divisionComposer';
 import { processAnswer, isDue, MAX_FRAGILE } from '../lib/leitner';
 import { getFactKey } from '../lib/facts';
+import { withDueDivisions, withOneDivisionPerDividend } from './helpers/divisionProfiles';
 
 // Marque les paires multiplicatives données comme prêtes (boîte 4+, boîte 5 par
 // défaut), ou toute la table avec 'all'. Le gate d'intro division est aligné sur
@@ -131,18 +132,11 @@ describe('selectDivisionQuestions — gating sur la maîtrise multiplicative', (
   it('renvoie intros et révisions dues des plus fragiles aux plus solides, sans bonus', () => {
     // 2 + 6 < 12 et 8 divisions introduites non dues seraient disponibles : le
     // plancher reste l'affaire de composeDailySession.
-    const p = withMastered('all');
     const boxes = [5, 3, 1, 5, 3, 5] as const;
-    const seen = new Set<number>();
-    let due = 0;
-    let bonus = 0;
-    p.divisionFacts = p.divisionFacts!.map((f) => {
-      if (seen.has(f.dividend)) return f; // un fait par dividende
-      seen.add(f.dividend);
-      if (due < boxes.length) return { ...f, introduced: true, box: boxes[due++], nextDue: '' };
-      if (bonus++ < 8) return { ...f, introduced: true, box: 2 as const, nextDue: '2026-12-31' };
-      return f;
-    });
+    const p = withOneDivisionPerDividend(withMastered('all'), [
+      ...boxes.map((box) => ({ box, nextDue: '' })),
+      ...Array.from({ length: 8 }, () => ({ box: 2 as const, nextDue: '2026-12-31' })),
+    ]);
 
     const selection = select(p);
 
@@ -152,13 +146,9 @@ describe('selectDivisionQuestions — gating sur la maîtrise multiplicative', (
 
   it("ne relâche la règle du dividende que si la séance, entretien compris, resterait sous le plancher", () => {
     // 2 intros + 7 divisions dues sur 5 dividendes (12÷3 et 12÷4, 15÷3 et 15÷5).
-    const p = withMastered('all');
-    const dueKeys = new Set(['12/3', '12/4', '15/3', '15/5', '16/4', '18/6', '35/7']);
-    p.divisionFacts = p.divisionFacts!.map((f) =>
-      dueKeys.has(getDivisionFactKey(f.dividend, f.divisor))
-        ? { ...f, introduced: true, box: 3 as const, nextDue: '' }
-        : f,
-    );
+    const p = withDueDivisions(withMastered('all'), [
+      '12/3', '12/4', '15/3', '15/5', '16/4', '18/6', '35/7',
+    ]);
     const dividends = (maintenance: number) => select(p, maintenance).due.map((q) => q.fact.dividend);
 
     // 2 + 5 + 5 places d'entretien = 12 : plancher atteint, un fait par dividende.
@@ -166,6 +156,24 @@ describe('selectDivisionQuestions — gating sur la maîtrise multiplicative', (
     expect(new Set(dividends(5)).size).toBe(5);
     // Une place d'entretien de moins, la séance tomberait à 11 : règle relâchée.
     expect(dividends(4)).toHaveLength(7);
+  });
+
+  it("reporte la révision due au dividende d'une intro du jour, même sous le plancher", () => {
+    // Seul 7×8 est prêt : l'intro du jour est 56÷8, et son jumeau 56÷7, déjà
+    // introduit, est dû avec 9 divisions de dividendes distincts.
+    const p = withDueDivisions(withMastered([[7, 8]]), [
+      '56/7', '4/2', '6/2', '8/2', '9/3', '10/2', '12/3', '14/2', '15/3', '16/4',
+    ]);
+
+    // 1 intro + 9 révisions + 2 places d'entretien = 12 : plancher atteint. Sans
+    // entretien, la séance resterait à 10, mais la règle ne se relâche qu'entre
+    // révisions, jamais face à une intro : les bonus comblent (§11.6).
+    for (const maintenance of [2, 0]) {
+      const { intros, due } = select(p, maintenance);
+      expect(intros.map((q) => getDivisionFactKey(q.fact.dividend, q.fact.divisor))).toEqual(['56/8']);
+      expect(due).toHaveLength(9);
+      expect(due.map((q) => q.fact.dividend)).not.toContain(56);
+    }
   });
 
   it('chaque question respecte dividend = divisor × quotient (pas de flip)', () => {
