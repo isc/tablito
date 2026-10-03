@@ -91,6 +91,17 @@ function countErrorsFromHistory(history: Attempt[], cutoff: string | null): numb
 
 export type Subject = 'math' | 'conj' | 'irr';
 
+/**
+ * Date de la dernière séance de chaque matière : c'est elle qui dit si la
+ * séance du jour est faite (la flamme, elle, suit `lastSessionDate`, toutes
+ * matières confondues).
+ */
+export const LAST_SESSION_DATE_FIELD = {
+  math: 'lastMathSessionDate',
+  conj: 'lastConjSessionDate',
+  irr: 'lastIrrSessionDate',
+} as const satisfies Record<Subject, keyof UserProfile>;
+
 /** Matière d'une séance : ses trois niveaux de maths en sont une seule. */
 export function subjectOf(session: Pick<SessionResult, 'kind'>): Subject {
   return session.kind === 'conj' || session.kind === 'irr' ? session.kind : 'math';

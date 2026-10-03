@@ -1,6 +1,7 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { getAudioContext } from '../lib/audioContext';
 import { getLang } from '../i18n/lang';
+import { IRR_TTS_PREFIX } from '../lib/irregularVerbs';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -12,7 +13,7 @@ const BASE = import.meta.env.BASE_URL;
 // sont de l'anglais quelle que soit la langue de l'interface — la voix
 // anglaise lit « go, went, gone » aussi pour un enfant francophone.
 function ttsLang(key: string): string {
-  return key.startsWith('irr-') ? 'en' : getLang();
+  return key.startsWith(IRR_TTS_PREFIX) ? 'en' : getLang();
 }
 
 function audioPath(key: string): string {

@@ -7,6 +7,14 @@ import { judgeIrrAnswer } from '../lib/irregularComposer';
 import { irrHeardForms, irrSpokenAnswer, irrSpokenWords } from '../lib/parseSpokenIrregular';
 import type { IrrVerbDef } from '../lib/irregularVerbs';
 import { irrStrings as t } from '../i18n/irregular';
+// Mêmes réglages que le vocal des maths : ratés avant le clavier, fenêtre
+// d'écho après la voix de synthèse, attente du final après une validation à
+// la volée.
+import {
+  MAX_PARSE_FAILS_BEFORE_KEYPAD as MAX_PARSE_FAILS,
+  POST_TTS_GRACE_MS,
+  TRAILING_FINAL_TIMEOUT_MS,
+} from './VoiceInput';
 import { useVoiceStrings } from '../i18n/voice';
 
 // Réponse dite à voix haute, en anglais (specs §16.6). Même mécanique que le
@@ -22,12 +30,6 @@ import { useVoiceStrings } from '../i18n/voice';
 /** Langue de reconnaissance : la variante la mieux reconnue des navigateurs. */
 export const IRR_RECOGNITION_LANG = 'en-US';
 
-/** Ratés de reconnaissance (rien d'exploitable) avant de proposer le clavier. */
-const MAX_PARSE_FAILS = 3;
-/** Cf. VoiceInput : l'écho de la voix de synthèse arrive juste après elle. */
-const POST_TTS_GRACE_MS = 2000;
-/** Cf. VoiceInput : le final qui suit une validation à la volée est jeté. */
-const TRAILING_FINAL_TIMEOUT_MS = 5000;
 
 interface IrrVoiceInputProps {
   def: IrrVerbDef;
@@ -69,6 +71,9 @@ export default function IrrVoiceInput({
   const wordsRef = useRef<string[]>([]);
   const failsRef = useRef(0);
   const recalledRef = useRef(false);
+  // Dernières formes montrées : les résultats intermédiaires arrivent plusieurs
+  // fois par seconde, et la plupart ne changent rien à l'écran.
+  const shownRef = useRef('');
   const lastSpeakEndRef = useRef(0);
   const expectTrailingFinalRef = useRef(false);
   const trailingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,6 +89,7 @@ export default function IrrVoiceInput({
     wordsRef.current = [];
     failsRef.current = 0;
     recalledRef.current = false;
+    shownRef.current = '';
   }, [questionToken]);
 
   useEffect(() => {
@@ -99,7 +105,11 @@ export default function IrrVoiceInput({
   const report = useCallback(
     (words: string[]) => {
       const heard = irrHeardForms(words, defRef.current);
-      onHeardRef.current(heard);
+      const shown = heard.join(' ');
+      if (shown !== shownRef.current) {
+        shownRef.current = shown;
+        onHeardRef.current(heard);
+      }
       if (heard.length > 0 && !recalledRef.current) {
         recalledRef.current = true;
         onRecallRef.current?.();
@@ -157,10 +167,11 @@ export default function IrrVoiceInput({
       ]);
       // L'alternative qui donne la bonne réponse l'emporte : la reconnaissance
       // classe souvent « eight » devant « ate ».
-      const words = candidates.find(isCorrect) ?? candidates[0];
+      const correct = candidates.find(isCorrect);
+      const words = correct ?? candidates[0];
       const added = words.length - wordsRef.current.length;
       const withinGrace = !pauseMicDuringTTS && Date.now() - lastSpeakEndRef.current < POST_TTS_GRACE_MS;
-      if (withinGrace && !isCorrect(words)) {
+      if (withinGrace && !correct) {
         // Écho de la voix de synthèse : ni réponse, ni raté.
         voiceLog('irr:drop-grace', transcript);
         return;
@@ -211,6 +222,7 @@ export default function IrrVoiceInput({
 
   const restart = () => {
     wordsRef.current = [];
+    shownRef.current = '';
     onHeardRef.current([]);
     setNotHeard(false);
   };

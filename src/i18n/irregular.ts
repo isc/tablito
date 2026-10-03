@@ -39,7 +39,6 @@ export const IRR_FAMILY_HINTS: Record<IrrFamily, string> = {
 };
 
 export const irrStrings = {
-  subject: 'Verbes anglais',
   new: 'Nouveau !',
   next: 'Suivant →',
   gotIt: "J'ai compris !",
@@ -72,7 +71,6 @@ export const irrStrings = {
   /** Voix. */
   voiceUseMic: 'Répondre à voix haute',
   voiceHint: 'Dis : go, went, gone',
-  voiceListening: 'Je t’écoute…',
   voiceNotHeard: "Je n'ai pas bien entendu",
   voiceRestart: 'Recommencer',
   /** Placement (specs §16.8). */
@@ -86,6 +84,4 @@ export const irrStrings = {
   placementEmptyTitle: 'C’est parti pour les verbes !',
   placementEmptySubtitle: 'On va les apprendre ensemble, deux par deux.',
   placementDoneCta: 'Commencer',
-  /** Image mystère. */
-  mysteryHidden: 'Pas encore découvert',
 };

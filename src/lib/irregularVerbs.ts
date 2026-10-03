@@ -152,6 +152,11 @@ const IRR_VERBS: readonly IrrVerbDef[] = [
 
 const BY_KEY = new Map(IRR_VERBS.map((def) => [def.key, def]));
 const RANK = new Map(IRR_VERBS.map((def, i) => [def.key, i]));
+// Verbes de chaque famille, dans l'ordre de l'inventaire : l'inventaire est
+// figé, les badges et l'analogie de famille les relisent souvent.
+const BY_FAMILY = new Map<IrrFamily, IrrVerbDef[]>(
+  IRR_FAMILIES.map((family) => [family, IRR_VERBS.filter((def) => def.family === family)]),
+);
 
 export function irrVerbDefs(): readonly IrrVerbDef[] {
   return IRR_VERBS;
@@ -190,8 +195,8 @@ export function createInitialIrrFacts(): IrrFact[] {
 }
 
 /** Verbes d'une famille, dans l'ordre de l'inventaire. */
-export function irrVerbsOfFamily(family: IrrFamily): IrrVerbDef[] {
-  return IRR_VERBS.filter((def) => def.family === family);
+export function irrVerbsOfFamily(family: IrrFamily): readonly IrrVerbDef[] {
+  return BY_FAMILY.get(family) ?? [];
 }
 
 // --- Formes attendues et affichage ------------------------------------------
@@ -316,13 +321,11 @@ const HOMOPHONES: Record<string, readonly string[]> = {
  * homophone connu ; le renvoie tel quel sinon.
  */
 export function canonicalizeIrrWord(word: string, def: IrrVerbDef): string {
+  // Chiffres gardés le temps de la recherche : « 8 » est un homophone de « ate ».
   const w = word.toLowerCase().replace(/[^a-z0-9]/g, '');
   const forms = [def.key, ...def.preterite, ...def.participle];
   if (forms.includes(w)) return w;
-  for (const form of forms) {
-    if (HOMOPHONES[form]?.includes(w)) return form;
-  }
-  return normalizeIrrWord(w);
+  return forms.find((form) => HOMOPHONES[form]?.includes(w)) ?? w.replace(/\d/g, '');
 }
 
 /** Toutes les formes de l'inventaire (infinitifs compris). */

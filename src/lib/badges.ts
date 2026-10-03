@@ -17,9 +17,9 @@ import {
   conjFactsOfTense,
   conjFactsOfVerb,
 } from './conjugationFacts';
-import { MASTERY_BOX } from './leitner';
+import { MASTERY_BOX, allMastered, countMastered } from './leitner';
 import { IRR_FAMILIES, type IrrFamily } from './irregularVerbs';
-import { allIrrMastered, irrFactsOfFamily, irrFamilyBadgeId } from './irregularComposer';
+import { irrFactsOfFamily, irrFamilyBadgeId } from './irregularComposer';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
 import { getLang, type Lang } from '../i18n/lang';
@@ -524,7 +524,7 @@ function buildIrrBadgeDefinitions(): BadgeDefinition[] {
     progressFor: (p: UserProfile) => {
       const facts = irrFactsOfFamily(p.irrFacts ?? [], family);
       return {
-        current: facts.filter((f) => f.box >= MASTERY_BOX).length,
+        current: countMastered(facts),
         target: facts.length,
         unitLabel: u.box4plus,
       };
@@ -758,7 +758,7 @@ export function checkBadges(
   const irrFacts = profile.irrFacts;
   if (irrFacts?.some((f) => f.introduced)) {
     for (const family of IRR_FAMILIES) {
-      if (allIrrMastered(irrFactsOfFamily(irrFacts, family))) earn(irrFamilyBadgeId(family));
+      if (allMastered(irrFactsOfFamily(irrFacts, family))) earn(irrFamilyBadgeId(family));
     }
   }
 

@@ -61,12 +61,8 @@ export default function IrrAnswerInput({
     (value: string) => {
       setTyping('');
       const next = [...filled, value];
-      if (next.length >= slotCount) {
-        setFilled(next);
-        onSubmit(next, 'keypad');
-      } else {
-        setFilled(next);
-      }
+      setFilled(next);
+      if (next.length >= slotCount) onSubmit(next, 'keypad');
     },
     [filled, slotCount, onSubmit],
   );

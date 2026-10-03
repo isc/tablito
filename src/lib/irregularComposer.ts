@@ -1,5 +1,6 @@
 import type { BoxLevel, IrrFact, IrrSessionQuestion, UserProfile } from '../types';
-import { isDue, shouldIntroduceNew, prioritizeByBoxLevel, pickBonusReviewFacts, MASTERY_BOX } from './leitner';
+import { BADGE_IDS } from '../types';
+import { isDue, shouldIntroduceNew, prioritizeByBoxLevel, pickBonusReviewFacts } from './leitner';
 import {
   IRR_FAMILIES,
   allIrrForms,
@@ -183,21 +184,13 @@ export function composeIrrSession(profile: IrrProfile, now: string): IrrSessionQ
 
 // --- Badges (specs §16.9) ---------------------------------------------------
 
-export const IRR_FAMILY_BADGE_PREFIX = 'irr-famille-';
-
 export function irrFamilyBadgeId(family: IrrFamily): string {
-  return `${IRR_FAMILY_BADGE_PREFIX}${family}`;
+  return `${BADGE_IDS.IRR_FAMILY_PREFIX}${family}`;
 }
 
 /** Faits d'une famille. */
 export function irrFactsOfFamily<T extends { key: string }>(facts: T[], family: IrrFamily): T[] {
-  const keys = new Set(irrVerbsOfFamily(family).map((def) => def.key));
-  return facts.filter((f) => keys.has(f.key));
-}
-
-/** Famille consolidée : non vide, tous ses verbes en boîte ≥ 4. */
-export function allIrrMastered(facts: { box: BoxLevel }[]): boolean {
-  return facts.length > 0 && facts.every((f) => f.box >= MASTERY_BOX);
+  return facts.filter((f) => irrVerbDef(f.key)?.family === family);
 }
 
 // --- Jugement (specs §16.6) ---------------------------------------------------

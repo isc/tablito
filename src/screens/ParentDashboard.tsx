@@ -232,7 +232,7 @@ export default function ParentDashboard({
           onBack={onBack}
           backLabel={t.backToOverview}
           eyebrow={shownName}
-          title={page === 'conj' ? t.conjugations : page === 'irr' ? t.irregularVerbs : t.math}
+          title={{ math: t.math, conj: t.conjugations, irr: t.irregularVerbs }[page]}
         >
           {feedbackButton}
         </Header>

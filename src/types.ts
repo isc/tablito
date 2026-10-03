@@ -329,21 +329,20 @@ export function conjFastThresholdMs(
   expected: string,
   inputMode: 'keypad' | 'voice' = 'keypad',
 ): number {
-  if (inputMode === 'voice') return CONJ_FAST_BASE_MS;
-  return CONJ_FAST_BASE_MS + CONJ_FAST_PER_CHAR_MS * expected.length;
+  return typedFastThresholdMs(expected.length, inputMode);
 }
 
-// Verbes irréguliers — seuil de rapidité (specs §16.6). Au clavier, la
-// formule de la conjugaison (base + coût par lettre à taper, les deux formes
-// comprises). À la voix, le chrono s'arrête à l'apparition du PRÉTÉRIT dans la
-// transcription — l'infinitif récité en tête est affiché, il ne mesure rien —,
-// donc la base seule.
-export function irrFastThresholdMs(
-  expectedLetters: number,
+/**
+ * Le même seuil, en nombre de lettres à produire : c'est lui que les verbes
+ * irréguliers appliquent aux deux formes réunies (specs §16.6). À la voix, le
+ * chrono s'y arrête à l'apparition du prétérit, d'où la base seule aussi.
+ */
+export function typedFastThresholdMs(
+  letters: number,
   inputMode: 'keypad' | 'voice' = 'keypad',
 ): number {
   if (inputMode === 'voice') return CONJ_FAST_BASE_MS;
-  return CONJ_FAST_BASE_MS + CONJ_FAST_PER_CHAR_MS * expectedLetters;
+  return CONJ_FAST_BASE_MS + CONJ_FAST_PER_CHAR_MS * letters;
 }
 
 export interface SessionQuestion {
@@ -442,6 +441,14 @@ export type IrrSessionItem = { kind: 'irr' } & IrrSessionQuestion;
 
 /** Une question de séance, toutes matières confondues. */
 export type AnySessionItem = SessionItem | ConjSessionItem | IrrSessionItem;
+
+/**
+ * Question d'une matière à formes écrites (conjugaison, verbes irréguliers) :
+ * réponse en mots, jamais le canal numérique des maths.
+ */
+export function isWordItem(item: AnySessionItem): item is ConjSessionItem | IrrSessionItem {
+  return item.kind === 'conj' || item.kind === 'irr';
+}
 
 // Log par question pour les séances enregistrées depuis l'ajout du champ.
 // Permet de diagnostiquer vitesse et mode après coup, y compris pour les

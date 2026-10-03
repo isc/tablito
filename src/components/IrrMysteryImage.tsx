@@ -17,12 +17,13 @@ interface IrrMysteryImageProps {
  */
 export default function IrrMysteryImage({ facts, theme }: IrrMysteryImageProps) {
   const factMap = useMemo(() => new Map(facts.map((f) => [f.key, f])), [facts]);
-  const defs = irrVerbDefs();
+  // Libellés des 64 cases : ils ne dépendent que de l'inventaire, dérivés une
+  // fois au montage (cf. ConjMysteryImage).
+  const cells = useMemo(() => irrVerbDefs().map((def) => ({ def, label: irrRecitation(def) })), []);
 
   const cellFor = (row: number, col: number): MysteryCell => {
-    const def = defs[irrGridIndex(row, col)];
+    const { def, label } = cells[irrGridIndex(row, col)];
     const fact = factMap.get(def.key);
-    const label = irrRecitation(def);
     return {
       level: fact?.introduced ? fact.box : 0,
       introduced: fact?.introduced ?? false,

@@ -30,7 +30,8 @@ import {
   DIVISION_FAST_THRESHOLD_MS,
   REMAINDER_FAST_THRESHOLD_MS,
   conjFastThresholdMs,
-  irrFastThresholdMs,
+  isWordItem,
+  typedFastThresholdMs,
   remainderDividend,
 } from '../types';
 import {
@@ -207,7 +208,7 @@ function view(item: SessionItem) {
 }
 
 function itemKey(item: AnySessionItem): string {
-  if (item.kind === 'conj' || item.kind === 'irr') return item.fact.key;
+  if (isWordItem(item)) return item.fact.key;
   if (item.kind === 'rem') return getRemainderFactKey(item.fact.divisor, item.fact.quotient);
   if (item.kind === 'div') return getDivisionFactKey(item.fact.dividend, item.fact.divisor);
   return getFactKey(item.fact.a, item.fact.b);
@@ -456,7 +457,7 @@ export default function SessionScreen({
       // Canal numérique : les questions de conjugaison et de verbes passent par
       // `handleConjSubmit` / `handleIrrSubmit` (réponse en mots, verdict non
       // booléen).
-      if (currentItem.kind === 'conj' || currentItem.kind === 'irr') return;
+      if (isWordItem(currentItem)) return;
 
       // Niveau 3, étape 1 (« Combien de fois ? ») : un quotient JUSTE ne clôt
       // pas la question — on passe à l'étape 2 (« Il reste combien ? ») sans
@@ -583,7 +584,7 @@ export default function SessionScreen({
       const fast =
         verdict === 'correct'
         && (recallMs ?? timeMs)
-          < irrFastThresholdMs(irrExpectedLetters(def), recallMs === null ? 'keypad' : 'voice');
+          < typedFastThresholdMs(irrExpectedLetters(def), recallMs === null ? 'keypad' : 'voice');
       const accepted = isIrrAccepted(verdict);
 
       answerTimesMs.current.push(timeMs);
@@ -750,7 +751,7 @@ export default function SessionScreen({
     if (!currentItem) return;
     // L'intro de conjugaison a son propre enchaînement (`handleConjIntroNext`),
     // celle des verbes irréguliers aussi (`IrrIntro`).
-    if (currentItem.kind === 'conj' || currentItem.kind === 'irr') return;
+    if (isWordItem(currentItem)) return;
 
     const finish = () => {
       setShowIntro(false);
@@ -794,7 +795,7 @@ export default function SessionScreen({
 
   // Dispatch par matière : `mathItem` est nul sur une question de conjugaison,
   // et toute la dérivation mathématique (opérandes, seuil, clés TTS) avec lui.
-  const mathItem = currentItem.kind === 'conj' || currentItem.kind === 'irr' ? null : currentItem;
+  const mathItem = isWordItem(currentItem) ? null : currentItem;
   const conjItem = currentItem.kind === 'conj' ? currentItem : null;
   const irrItem = currentItem.kind === 'irr' ? currentItem : null;
   const irrDef = irrItem ? requireIrrVerbDef(irrItem.fact.key) : null;
@@ -1118,7 +1119,6 @@ export default function SessionScreen({
           onSpeak={speak}
           isSpeaking={isSpeaking}
           onFinish={finishIrrIntro}
-          token={`irr-${currentIndex}`}
         />
       )}
 
@@ -1254,12 +1254,7 @@ export default function SessionScreen({
       {/* Feedback — verbes irréguliers (specs §16.6) */}
       {irrFeedback && (
         <IrrFeedbackOverlay
-          def={irrFeedback.def}
-          verdict={irrFeedback.verdict}
-          fast={irrFeedback.fast}
-          answers={irrFeedback.answers}
-          source={irrFeedback.source}
-          box={irrFeedback.box}
+          {...irrFeedback}
           analogy={irrKnownAnalogy(irrFeedback.def, irrFacts)}
           onDismiss={handleIrrFeedbackDismiss}
           onSpeak={speak}

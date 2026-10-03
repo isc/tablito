@@ -11,7 +11,7 @@ import { conjStrings as t } from '../i18n/conjugation';
 import { TENSE_NAMES } from '../i18n/tense';
 import type { BoxLevel } from '../types';
 import { isConjAccepted, type ConjVerdict } from '../lib/conjugationComposer';
-import { FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
+import { FEEDBACK_ALMOST_DISMISS_MS, FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
 
 // Feedback de la matière conjugaison — quatre cas (spec Verbito §5.3), tous
 // non ego-involving (Butler 1988) :
@@ -26,9 +26,6 @@ import { FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
 //                    le pronom et sa marque s'illuminent ; astuce seulement pour
 //                    les faits en boîte ≤ 2.
 
-/** Le cas « presque » montre une forme à lire : un peu plus de temps que le
-    délai commun d'un feedback accepté (cf. FEEDBACK_DISMISS_MS). */
-const DISMISS_ALMOST_MS = 2600;
 
 interface ConjFeedbackOverlayProps {
   view: ConjQuestionView;
@@ -65,7 +62,7 @@ export default function ConjFeedbackOverlay({
     if (!accepted) return;
     const timer = setTimeout(
       onDismiss,
-      verdict === 'almost' ? DISMISS_ALMOST_MS : FEEDBACK_DISMISS_MS,
+      verdict === 'almost' ? FEEDBACK_ALMOST_DISMISS_MS : FEEDBACK_DISMISS_MS,
     );
     return () => clearTimeout(timer);
   }, [accepted, verdict, onDismiss]);

@@ -15,6 +15,7 @@ import type {
   Badge,
   BoxLevel,
 } from './types';
+import { isWordItem } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
 import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
@@ -58,6 +59,7 @@ import {
   importProfile,
 } from './lib/storage';
 import { getFactKey } from './lib/facts';
+import { LAST_SESSION_DATE_FIELD, subjectOf } from './lib/hardestFacts';
 import { getDivisionFactKey } from './lib/divisionFacts';
 import { getRemainderFactKey } from './lib/remainderFacts';
 import { seedFromPlacement } from './lib/placement';
@@ -566,10 +568,13 @@ export default function App({
   const irrAvailable = isIrrAvailable(lang);
   const irrSessionDone = !!profile && profile.lastIrrSessionDate === today;
   const irrNeedsPlacement = !!profile && irrAvailable && profile.hasDoneIrrPlacement !== true;
+  // Ne dépend que des verbes : une autre mise à jour du profil sur l'accueil
+  // (série, badges) ne recompose pas la séance.
+  const irrFacts = profile?.irrFacts;
   const irrPendingItems = useMemo<IrrSessionItem[]>(() => {
-    if (!onHome || !profile || !irrAvailable || irrSessionDone || irrNeedsPlacement) return [];
-    return composeIrrSession(profile, today).map((q): IrrSessionItem => ({ kind: 'irr', ...q }));
-  }, [onHome, profile, irrAvailable, irrSessionDone, irrNeedsPlacement, today]);
+    if (!onHome || !irrAvailable || irrSessionDone || irrNeedsPlacement) return [];
+    return composeIrrSession({ irrFacts }, today).map((q): IrrSessionItem => ({ kind: 'irr', ...q }));
+  }, [onHome, irrFacts, irrAvailable, irrSessionDone, irrNeedsPlacement, today]);
   const hasIrrSessionAvailable =
     irrAvailable && !irrSessionDone && (irrNeedsPlacement || irrPendingItems.length > 0);
   const irrVisible = !!profile && isIrrVisible(profile, lang);
@@ -608,15 +613,16 @@ export default function App({
   }, [profile, pendingItems, resetSessionTracking]);
 
   /**
-   * Entre en séance de conjugaison. Les deux portes d'entrée de la matière — le
-   * bouton d'accueil et la sortie du test de placement — passent par ici : la
-   * permission micro se demande AVANT d'afficher la première question, sinon
-   * son chrono de rappel tournerait pendant que l'utilisateur répond au prompt
-   * natif du navigateur (§15.10).
+   * Entre en séance d'une matière à formes écrites (conjugaison, verbes). Les
+   * deux portes d'entrée de chaque matière — le bouton d'accueil et la sortie
+   * du test de placement — passent par ici : la permission micro se demande
+   * AVANT d'afficher la première question, sinon son chrono de rappel
+   * tournerait pendant que l'utilisateur répond au prompt natif du navigateur
+   * (§15.10). Chaque matière a son réglage de saisie (§16.6), d'où `wantsMic`.
    */
-  const enterConjSession = useCallback(
-    async (items: ConjSessionItem[]) => {
-      if (isVoiceMode()) {
+  const enterWordSession = useCallback(
+    async (items: ConjSessionItem[] | IrrSessionItem[], wantsMic: () => boolean) => {
+      if (wantsMic()) {
         await preflightMicPermission();
       }
       resetSessionTracking();
@@ -626,21 +632,18 @@ export default function App({
     [resetSessionTracking],
   );
 
-  /**
-   * Entre en séance de verbes irréguliers : même porte que la conjugaison,
-   * mais la voix y est le mode par défaut (§16.6), avec son propre réglage.
-   */
-  const enterIrrSession = useCallback(
-    async (items: IrrSessionItem[]) => {
-      if (isIrrVoiceMode()) {
-        await preflightMicPermission();
-      }
-      resetSessionTracking();
-      setSessionItems(items);
-      setScreen('session');
-    },
-    [resetSessionTracking],
-  );
+  /** Série de bonnes réponses de la séance (badge « Machine »), toutes matières. */
+  const recordStreak = useCallback((correct: boolean) => {
+    if (correct) {
+      sessionConsecutiveCorrect.current++;
+      sessionMaxConsecutiveCorrect.current = Math.max(
+        sessionMaxConsecutiveCorrect.current,
+        sessionConsecutiveCorrect.current,
+      );
+    } else {
+      sessionConsecutiveCorrect.current = 0;
+    }
+  }, []);
 
   /**
    * Séance de verbes irréguliers du jour (specs §16) : à la première entrée,
@@ -659,8 +662,8 @@ export default function App({
       return;
     }
     if (irrPendingItems.length === 0) return;
-    await enterIrrSession(irrPendingItems);
-  }, [profile, irrAvailable, irrNeedsPlacement, irrPendingItems, enterIrrSession]);
+    await enterWordSession(irrPendingItems, isIrrVoiceMode);
+  }, [profile, irrAvailable, irrNeedsPlacement, irrPendingItems, enterWordSession]);
 
   /** Fin du placement des verbes irréguliers : enchaîne sur la première séance. */
   const handleIrrPlacementComplete = useCallback(
@@ -681,9 +684,9 @@ export default function App({
         setScreen('home');
         return;
       }
-      await enterIrrSession(items);
+      await enterWordSession(items, isIrrVoiceMode);
     },
-    [profile, enterIrrSession],
+    [profile, enterWordSession],
   );
 
   /**
@@ -713,8 +716,8 @@ export default function App({
       return;
     }
     if (conjPendingItems.length === 0) return;
-    await enterConjSession(conjPendingItems);
-  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, enterConjSession]);
+    await enterWordSession(conjPendingItems, isVoiceMode);
+  }, [profile, conjAvailable, conjNeedsPlacement, conjPendingItems, enterWordSession]);
 
   /**
    * Fin du test de placement de la conjugaison. Le profil mis à jour est
@@ -747,9 +750,9 @@ export default function App({
         return;
       }
       // Le placement enchaîne DIRECTEMENT sur la première séance.
-      await enterConjSession(items);
+      await enterWordSession(items, isVoiceMode);
     },
-    [profile, enterConjSession],
+    [profile, enterWordSession],
   );
 
   // Met à jour le suivi « fait promu » (boîte finale > boîte initiale dans la
@@ -796,15 +799,7 @@ export default function App({
         ...(afterSignSlip ? { afterSignSlip } : {}),
       });
 
-      if (correct) {
-        sessionConsecutiveCorrect.current++;
-        sessionMaxConsecutiveCorrect.current = Math.max(
-          sessionMaxConsecutiveCorrect.current,
-          sessionConsecutiveCorrect.current,
-        );
-      } else {
-        sessionConsecutiveCorrect.current = 0;
-      }
+      recordStreak(correct);
 
       // Révision bonus : feedback et stats seulement, pas de changement Leitner.
       if (item.isBonusReview) return;
@@ -870,7 +865,7 @@ export default function App({
         };
       });
     },
-    [trackPromotion],
+    [trackPromotion, recordStreak],
   );
 
   /**
@@ -906,15 +901,7 @@ export default function App({
         fast,
       });
 
-      if (accepted) {
-        sessionConsecutiveCorrect.current++;
-        sessionMaxConsecutiveCorrect.current = Math.max(
-          sessionMaxConsecutiveCorrect.current,
-          sessionConsecutiveCorrect.current,
-        );
-      } else {
-        sessionConsecutiveCorrect.current = 0;
-      }
+      recordStreak(accepted);
 
       const today = todayISO();
       const posedKey = item.fact.key;
@@ -994,7 +981,7 @@ export default function App({
         return { ...prev, conjFacts };
       });
     },
-    [trackPromotion],
+    [trackPromotion, recordStreak],
   );
 
   /**
@@ -1023,15 +1010,7 @@ export default function App({
         fast,
       });
 
-      if (accepted) {
-        sessionConsecutiveCorrect.current++;
-        sessionMaxConsecutiveCorrect.current = Math.max(
-          sessionMaxConsecutiveCorrect.current,
-          sessionConsecutiveCorrect.current,
-        );
-      } else {
-        sessionConsecutiveCorrect.current = 0;
-      }
+      recordStreak(accepted);
 
       // Révision bonus : feedback et stats seulement, pas de Leitner.
       if (item.isBonusReview) return;
@@ -1061,7 +1040,7 @@ export default function App({
         return { ...prev, irrFacts };
       });
     },
-    [trackPromotion],
+    [trackPromotion, recordStreak],
   );
 
   // Fin de séance — un seul handler pour les deux modes. Le récap suit le type
@@ -1073,16 +1052,13 @@ export default function App({
     (partial: Omit<SessionResult, 'factsPromoted'>) => {
       if (!profile) return;
 
-      // Une séance appartient à UNE matière. `isConj` gouverne : le récap, la
-      // date de séance marquée, et les jalons de niveau (qui n'existent pas en
-      // conjugaison).
+      // Une séance appartient à UNE matière, qui gouverne le récap, la date de
+      // séance marquée, et les jalons de niveau (qui n'existent qu'en maths).
       // Une séance ne mélange jamais deux matières (§7.2) : le `kind` de sa
       // première question suffit à dire laquelle.
-      const isConj = sessionItems[0]?.kind === 'conj';
-      const isIrr = sessionItems[0]?.kind === 'irr';
-      // Matière à part (conjugaison, verbes) : pas de jalon de niveau de maths.
-      const isOtherSubject = isConj || isIrr;
-      const mode: FactKind = isConj ? 'conj' : isIrr ? 'irr' : sessionMode;
+      const first = sessionItems[0];
+      const isOtherSubject = !!first && isWordItem(first);
+      const mode: FactKind = first && isWordItem(first) ? first.kind : sessionMode;
       const result: SessionResult = {
         ...partial,
         kind: mode,
@@ -1112,11 +1088,7 @@ export default function App({
         // matière, elles, disent seulement quelle tuile de l'accueil est déjà
         // faite aujourd'hui.
         lastSessionDate: today,
-        ...(isConj
-          ? { lastConjSessionDate: today }
-          : isIrr
-            ? { lastIrrSessionDate: today }
-            : { lastMathSessionDate: today }),
+        [LAST_SESSION_DATE_FIELD[subjectOf({ kind: mode })]]: today,
         streakFreezes: streakUpdate.streakFreezes,
         freezeProgress: streakUpdate.freezeProgress,
         sessionHistory,

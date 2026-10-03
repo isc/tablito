@@ -1,6 +1,6 @@
 import type { BoxLevel, ConjFact } from '../types';
 import { conjFastThresholdMs } from '../types';
-import { computeNextDue } from './leitner';
+import { placeFact, placementBox } from './leitner';
 import { conjFactDef, resolveConjQuestion } from './conjugationFacts';
 
 // === Test de placement de la conjugaison (spec Verbito §6.1) ===
@@ -84,23 +84,13 @@ export interface ConjPlacementResult {
  * chrono pénaliserait mécaniquement les formes longues.
  */
 function boxFromResult(result: ConjPlacementResult, expected: string): BoxLevel {
-  const fast = conjFastThresholdMs(expected);
-  if (result.timeMs < fast) return 3;
-  if (result.timeMs < fast * 2) return 2;
-  return 1;
+  return placementBox(result.timeMs, conjFastThresholdMs(expected));
 }
 
 function expectedOf(key: string, carrierIndex: number): string | null {
   const def = conjFactDef(key);
   if (!def) return null;
   return resolveConjQuestion(def, carrierIndex).expected;
-}
-
-function place(fact: ConjFact, box: BoxLevel, today: string): void {
-  fact.introduced = true;
-  fact.box = box;
-  fact.lastSeen = today;
-  fact.nextDue = computeNextDue(box, today);
 }
 
 /**
@@ -146,7 +136,7 @@ export function seedConjFromPlacement(
     const box = boxFromResult(result, expected);
 
     const tested = byKey.get(result.key);
-    if (tested) place(tested, box, today);
+    if (tested) placeFact(tested, box, today);
 
     for (const impliedKey of probe.implies) {
       if (testedKeys.has(impliedKey)) continue;
@@ -154,7 +144,7 @@ export function seedConjFromPlacement(
       if (!fact) continue;
       // Une dominance ne fait jamais REDESCENDRE un fait déjà mieux placé.
       if (fact.introduced && fact.box >= box) continue;
-      place(fact, box, today);
+      placeFact(fact, box, today);
     }
   }
 }

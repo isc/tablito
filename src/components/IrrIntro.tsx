@@ -5,6 +5,7 @@ import StrategyHintShell from './StrategyHintShell';
 import { isIrrAccepted, judgeIrrAnswer } from '../lib/irregularComposer';
 import { irrRecitation, irrRecitationTtsKey, type IrrVerbDef } from '../lib/irregularVerbs';
 import { IRR_FAMILY_HINTS, IRR_FAMILY_NAMES, irrStrings as t } from '../i18n/irregular';
+import { useIrrInputMode } from '../hooks/useInputMode';
 
 /** Durée d'exposition du modèle avant masquage, étape 3 (cf. conjugaison). */
 const COPY_REVEAL_MS = 4000;
@@ -21,7 +22,6 @@ interface IrrIntroProps {
   isSpeaking: boolean;
   /** Fin de l'introduction : la première question suit (étape 4). */
   onFinish: () => void;
-  token: string;
 }
 
 /**
@@ -33,7 +33,8 @@ interface IrrIntroProps {
  *      écrit (« je lis, je cache, je redis »).
  * La 4ᵉ étape est la question elle-même, la 5ᵉ le re-test différé.
  */
-export default function IrrIntro({ def, analogy, onSpeak, isSpeaking, onFinish, token }: IrrIntroProps) {
+export default function IrrIntro({ def, analogy, onSpeak, isSpeaking, onFinish }: IrrIntroProps) {
+  const { inputMode } = useIrrInputMode();
   const [step, setStep] = useState<Step>('listen');
   const [modelVisible, setModelVisible] = useState(true);
   const [attempts, setAttempts] = useState(0);
@@ -103,17 +104,13 @@ export default function IrrIntro({ def, analogy, onSpeak, isSpeaking, onFinish, 
       {step === 'copy' && (
         <>
           <div className="session-intro-explanation" aria-live="polite">
-            {modelVisible ? (attempts > 0 ? t.copyAgain : t.copyLook) : t.copySay}
+            {modelVisible ? (attempts > 0 ? t.copyAgain : t.copyLook) : inputMode === 'voice' ? t.copySay : t.copyWrite}
           </div>
           {modelVisible ? (
             <IrrForms def={def} size="large" />
           ) : (
-            <IrrAnswerInput
-              def={def}
-              onSubmit={handleCopy}
-              isSpeaking={isSpeaking}
-              token={`${token}-copy-${attempts}`}
-            />
+            // Re-monté à chaque essai (le modèle s'intercale) : saisie vierge.
+            <IrrAnswerInput def={def} onSubmit={handleCopy} isSpeaking={isSpeaking} token="copy" />
           )}
         </>
       )}

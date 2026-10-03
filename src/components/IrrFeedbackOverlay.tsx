@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 import FeedbackStar from './FeedbackStar';
 import IrrForms from './IrrForms';
 import StrategyHintShell from './StrategyHintShell';
-import { FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
+import { FEEDBACK_ALMOST_DISMISS_MS, FEEDBACK_DISMISS_MS } from './FeedbackOverlay';
 import { isIrrAccepted, irrWrittenAnswer, type IrrVerdict } from '../lib/irregularComposer';
 import { irrRecitation, irrRecitationTtsKey, type IrrVerbDef } from '../lib/irregularVerbs';
 import { pickRandom } from '../lib/utils';
 import { IRR_FAMILY_HINTS, IRR_FAMILY_NAMES, irrStrings as t } from '../i18n/irregular';
 import type { BoxLevel } from '../types';
 
-/** Le « presque » montre une forme à relire : un peu plus long (cf. conjugaison). */
-const DISMISS_ALMOST_MS = 2600;
 
 interface IrrFeedbackOverlayProps {
   def: IrrVerbDef;
@@ -51,7 +49,7 @@ export default function IrrFeedbackOverlay({
       onSpeak(irrRecitationTtsKey(def.key));
       return;
     }
-    const timer = setTimeout(onDismiss, verdict === 'almost' ? DISMISS_ALMOST_MS : FEEDBACK_DISMISS_MS);
+    const timer = setTimeout(onDismiss, verdict === 'almost' ? FEEDBACK_ALMOST_DISMISS_MS : FEEDBACK_DISMISS_MS);
     return () => clearTimeout(timer);
   }, [accepted, verdict, onDismiss, onSpeak, def.key]);
 

@@ -1,6 +1,6 @@
-import type { BoxLevel, IrrFact } from '../types';
-import { irrFastThresholdMs } from '../types';
-import { computeNextDue } from './leitner';
+import type { IrrFact } from '../types';
+import { typedFastThresholdMs } from '../types';
+import { placeFact, placementBox } from './leitner';
 import { irrExpectedLetters, irrVerbDefs, requireIrrVerbDef } from './irregularVerbs';
 
 // === Placement des verbes irréguliers (specs §16.8) ===
@@ -31,13 +31,6 @@ export interface IrrPlacementResult {
   inputMode: 'keypad' | 'voice';
 }
 
-function boxFromResult(result: IrrPlacementResult): BoxLevel {
-  const fast = irrFastThresholdMs(irrExpectedLetters(requireIrrVerbDef(result.key)), result.inputMode);
-  if (result.timeMs < fast) return 3;
-  if (result.timeMs < fast * 2) return 2;
-  return 1;
-}
-
 /**
  * Ensemence les boîtes à partir des sondes réussies, à la boîte que dit leur
  * vitesse (cf. seedConjFromPlacement). Un raté n'est pas placé : le placement
@@ -54,10 +47,7 @@ export function seedIrrFromPlacement(
     if (!result.correct) continue;
     const fact = byKey.get(result.key);
     if (!fact) continue;
-    const box = boxFromResult(result);
-    fact.introduced = true;
-    fact.box = box;
-    fact.lastSeen = today;
-    fact.nextDue = computeNextDue(box, today);
+    const fast = typedFastThresholdMs(irrExpectedLetters(requireIrrVerbDef(result.key)), result.inputMode);
+    placeFact(fact, placementBox(result.timeMs, fast), today);
   }
 }
