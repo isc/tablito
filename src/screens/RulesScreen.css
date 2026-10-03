@@ -63,8 +63,8 @@
   animation: slideUp 0.4s ease both;
 }
 
-/* nth-of-type, pas nth-child : les titres de section (h2), présents quand la
-   conjugaison ajoute ses règles, ne décalent pas la cascade des cartes. */
+/* Cascade d'apparition des cartes. Les onglets, quand la conjugaison en ajoute,
+   sont un div de plus : la première carte part alors à 0,1 s, sans gêne. */
 .rule-card:nth-of-type(3) {
   animation-delay: 0.1s;
 }
@@ -73,10 +73,11 @@
   animation-delay: 0.2s;
 }
 
-/* Titre de section (Maths / Conjugaison) : la typographie d'un eyebrow, qui
-   le porte ; la marge seule sépare les deux sections. */
-.rules-section-title {
-  margin-top: 6px;
+/* Onglets Maths / Conjugaison (ParentSegmented), présents seulement quand la
+   conjugaison a des règles à montrer : à la taille d'une cible d'enfant. */
+.rules-content > .parent-segmented .parent-segmented-option {
+  min-height: 44px;
+  font-size: 15px;
 }
 
 .rule-card-head {
@@ -127,6 +128,15 @@
   font-weight: inherit;
 }
 
+/* Carte de conjugaison : badge, titre, et le bouton « Écouter » au bout. */
+.rule-card-conj .rule-card-head {
+  margin-bottom: 14px;
+}
+
+.rule-card-conj .rule-card-tip {
+  margin-top: 14px;
+}
+
 .rule-card-eyebrow {
   font-family: var(--sans);
   font-size: 11px;
@@ -144,16 +154,11 @@
   letter-spacing: -0.2px;
 }
 
-/* Le corps d'une carte, règle de maths ou de conjugaison : même typographie. */
-.rule-card-message,
-.rule-card-lines {
+.rule-card-message {
   font-family: var(--sans);
   font-size: 14px;
   color: var(--ink);
   line-height: 1.5;
-}
-
-.rule-card-message {
   margin-bottom: 12px;
 }
 
@@ -277,14 +282,6 @@
 
 .rule-card-honey .rule-example-highlight {
   color: var(--honey-ink);
-}
-
-/* Les lignes d'une règle de conjugaison : une idée par ligne, comme dans
-   l'astuce de la séance. */
-.rule-card-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 .rule-card-tip {

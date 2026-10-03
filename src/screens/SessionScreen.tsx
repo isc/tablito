@@ -12,7 +12,8 @@ import VoiceInput from '../components/VoiceInput';
 import ConjVoiceInput from '../components/ConjVoiceInput';
 import DotGrid from '../components/DotGrid';
 import ConjForm from '../components/ConjForm';
-import { renderConjHintLine } from '../components/conjHintLine';
+import ConjRuleVisual from '../components/ConjRuleVisual';
+import ConjRuleListenButton from '../components/ConjRuleListenButton';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import ConjFeedbackOverlay from '../components/ConjFeedbackOverlay';
 import StrategyHint from '../components/StrategyHint';
@@ -904,9 +905,11 @@ export default function SessionScreen({
               {conjIntroStrategy && (
                 <StrategyHintShell
                   title={conjIntroStrategy.title}
-                  lines={conjIntroStrategy.lines.map(renderConjHintLine)}
                   variant="intro"
-                />
+                  action={<ConjRuleListenButton rule={conjIntroStrategy} onSpeak={speak} />}
+                >
+                  <ConjRuleVisual rule={conjIntroStrategy} compact person={cv.person} />
+                </StrategyHintShell>
               )}
               <button className="btn btn--ink session-intro-btn" onClick={handleConjIntroNext}>
                 {tc.next}
@@ -1082,6 +1085,7 @@ export default function SessionScreen({
           typed={conjFeedback.typed}
           box={conjFeedback.box}
           onDismiss={handleConjFeedbackDismiss}
+          onSpeak={speak}
         />
       )}
     </div>

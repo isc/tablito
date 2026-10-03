@@ -1281,7 +1281,7 @@ const SECTIONS_FR = [
         <li><strong>× 11</strong>, en bonus une fois les tables de 2 à 9 maîtrisées : on répète le chiffre (3 × 11 = 33). Une pastille « Nouveau » le signale.</li>
       </ul>
       <p>Ces tables ne font donc pas partie des 36 faits à apprendre.</p>
-      <p>Une fois la conjugaison commencée, ses règles s'y ajoutent au fur et à mesure que l'enfant aborde ce qu'elles expliquent : les marques de personne (nous → -ons, vous → -ez…), la fabrication de l'imparfait et du futur, le piège du g et du c. Ce sont les astuces mêmes que la séance montre.</p>
+      <p>Une fois la conjugaison commencée, ses règles s'y ajoutent, dans un onglet à part, au fur et à mesure que l'enfant aborde ce qu'elles expliquent : les marques de personne (nous → -ons, vous → -ez…), la fabrication de l'imparfait et du futur, le piège du g et du c. Elles sont montrées en images (tableau des marques, recette en étapes, temps conjugué en entier) et un bouton les lit à voix haute. Ce sont les astuces mêmes que la séance montre.</p>
     `,
     shots: [
       { file: '12-rules', caption: 'Règles pour ×1 et ×10.' },

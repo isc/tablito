@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { buildEntriesFr, buildEntriesEn } from './generate-tts.mjs';
 import { conjFactDefs, resolveConjQuestion } from '../src/lib/conjugationFacts.ts';
 import { conjStrings } from '../src/i18n/conjugation.ts';
+import { CONJ_RULES, conjRuleTtsKey } from '../src/lib/conjugationRules.ts';
 
 const DEFS = conjFactDefs();
 
@@ -88,6 +89,13 @@ describe('entrées TTS de la conjugaison', () => {
     // deux textes viennent donc du module de strings, ce test le vérifie.
     expect(frByKey.get('conj-voice-spell')).toBe(conjStrings.voiceSpellNow);
     expect(frByKey.get('conj-voice-again')).toContain(conjStrings.voiceNotHeard);
+  });
+
+  it('lit chaque règle de conjugaison, avec le texte `speech` de la règle', () => {
+    // Le bouton « Écouter » de l'écran « Mes règles » et de l'astuce de la
+    // séance : sans MP3, un tap muet, sans le moindre message d'erreur.
+    const missing = CONJ_RULES.filter((rule) => frByKey.get(conjRuleTtsKey(rule)) !== rule.speech);
+    expect(missing.map((rule) => rule.id)).toEqual([]);
   });
 
   it("n'oublie aucun fait de l'inventaire", () => {

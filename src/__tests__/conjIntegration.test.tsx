@@ -275,10 +275,10 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
   const textsOf = (selector: string) =>
     Array.from(document.querySelectorAll(selector), (el) => el.textContent);
 
-  /** L'écran d'avant la conjugaison : les seules règles de maths, sans titres. */
+  /** L'écran d'avant la conjugaison : les seules règles de maths, sans onglets. */
   function expectMathsOnly(rule10Heading: string): void {
     expect(text()).toContain(rule10Heading);
-    expect(textsOf('.rules-section-title')).toEqual([]);
+    expect(textsOf('.rules-content > .parent-segmented button')).toEqual([]);
     expect(textsOf('.rule-card-conj')).toEqual([]);
   }
 
@@ -291,8 +291,15 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     renderApp();
     await openRules();
 
-    expect(textsOf('.rules-section-title')).toEqual(['Maths', 'Conjugaison']);
+    // Deux onglets, les maths d'abord : les règles de conjugaison attendent
+    // qu'on ouvre le leur.
+    expect(textsOf('.rules-content > .parent-segmented button')).toEqual(['Maths', 'Conjugaison']);
     expect(text()).toContain('Multiplier par 10');
+    expect(textsOf('.rule-card-conj')).toEqual([]);
+
+    fireEvent.click(button(/^Conjugaison$/)!);
+    await flush();
+    expect(text()).not.toContain('Multiplier par 10');
     expect(textsOf('.rule-card-conj .rule-card-heading')).toEqual([
       'Chaque personne a sa marque',
       'L’imparfait se fabrique avec « nous »',
@@ -300,6 +307,11 @@ describe('Écran « Mes règles » : les règles de la matière (spec §15.3)', 
     ]);
     // Le futur n'a pas encore été abordé : sa règle attend son premier fait.
     expect(text()).not.toContain('Le futur se fabrique');
+    // Chaque règle : ses blocs en entier (l'écran ne coupe pas au cœur de
+    // la séance), et un bouton « Écouter ».
+    expect(text()).toContain('Les 4 rebelles');
+    expect(text()).toContain('Les 6 terminaisons');
+    expect(document.querySelectorAll('.rule-card-conj [aria-label="Écouter la règle"]')).toHaveLength(3);
   });
 
   it('matière ouverte mais aucun fait encore rencontré : l’écran d’avant', async () => {

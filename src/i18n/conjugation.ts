@@ -1,7 +1,7 @@
 // Strings de la matière conjugaison (LetterKeyboard, ConjForm, écran de séance,
 // feedback). Volontairement FR SEULEMENT, sans table `{ fr, en }` : la matière
 // est fr-only (masquée quand la langue d'interface est l'anglais), exactement
-// comme `lib/conjugationStrategies.ts`. Une traduction anglaise serait du texte
+// comme `lib/conjugationRules.ts`. Une traduction anglaise serait du texte
 // mort — et un `useStrings` ici laisserait croire que l'écran est bilingue.
 //
 // AUCUN import runtime ici : `scripts/generate-tts.mjs` charge ce module via
@@ -70,6 +70,8 @@ export const conjStrings = {
   incorrectMessage: 'On regarde ensemble',
   youWrote: 'Tu as écrit',
   hintEyebrow: "L'astuce",
+  /** Bouton « Écouter » de l'astuce : le MP3 de la règle (conj-rule-<id>). */
+  listenRule: 'Écouter la règle',
 
   // --- Image mystère de la matière (spec §7.1) ---
   /**
