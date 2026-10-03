@@ -10,6 +10,8 @@ interface StrategyHintShellProps {
   eyebrow?: string;
   // Rappel additionnel affiché en intro (ex : la règle ×10 pour les ×9).
   recall?: string;
+  // Bouton en bout d'en-tête (ex : « Écouter » des règles de conjugaison).
+  action?: ReactNode;
 }
 
 function BulbIcon() {
@@ -31,7 +33,7 @@ function BulbIcon() {
  * DivisionStrategyHint. Chaque variante d'opération fournit son titre, ses
  * lignes, et ses éléments spécifiques (eyebrow, recall).
  */
-export default function StrategyHintShell({ title, lines, variant, eyebrow, recall }: StrategyHintShellProps) {
+export default function StrategyHintShell({ title, lines, variant, eyebrow, recall, action }: StrategyHintShellProps) {
   const lineEls = lines.map((line, i) => (
     <div key={i} className="strategy-hint-line">{line}</div>
   ));
@@ -44,6 +46,7 @@ export default function StrategyHintShell({ title, lines, variant, eyebrow, reca
             <BulbIcon />
           </div>
           <div className="strategy-hint-title">{title}</div>
+          {action}
         </div>
         <div className="strategy-hint-lines">{lineEls}</div>
         {recall && <div className="strategy-hint-recall">{recall}</div>}
@@ -53,8 +56,20 @@ export default function StrategyHintShell({ title, lines, variant, eyebrow, reca
 
   return (
     <div className="strategy-hint feedback">
-      <div className="strategy-hint-eyebrow">{eyebrow}</div>
-      <div className="strategy-hint-body">{title}</div>
+      {action ? (
+        <div className="strategy-hint-top">
+          <div>
+            <div className="strategy-hint-eyebrow">{eyebrow}</div>
+            <div className="strategy-hint-body">{title}</div>
+          </div>
+          {action}
+        </div>
+      ) : (
+        <>
+          <div className="strategy-hint-eyebrow">{eyebrow}</div>
+          <div className="strategy-hint-body">{title}</div>
+        </>
+      )}
       <div className="strategy-hint-lines">{lineEls}</div>
     </div>
   );

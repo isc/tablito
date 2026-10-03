@@ -313,9 +313,8 @@ async function buildEntriesFr() {
   // Les deux seules relances PARLÉES du mode vocal épelé (§15.10). En vocal,
   // l'enfant a les yeux ailleurs que sur l'écran : une relance uniquement
   // affichée serait une relance muette. Elles ne dépendent d'aucun fait, d'où
-  // ces clés statiques — le reste de la matière (astuces de
-  // conjugationStrategies.ts, autres messages de i18n/conjugation.ts) est
-  // affiché, jamais parlé.
+  // ces clés statiques — les autres messages de i18n/conjugation.ts sont
+  // affichés, jamais parlés.
   //
   // Le texte est LU dans le module de strings, pas recopié : c'est la même
   // exigence que pour les phrases porteuses ci-dessus. Une relance dont le MP3
@@ -326,6 +325,12 @@ async function buildEntriesFr() {
     text: `${conjStrings.voiceNotHeard}. Tu peux répéter ?`,
   });
   entries.push({ key: 'conj-voice-spell', text: conjStrings.voiceSpellNow });
+
+  // Les règles de la conjugaison, lues par le bouton « Écouter » (écran « Mes
+  // règles », astuce de la séance) : `conj-rule-<id>`, texte `speech` de
+  // src/lib/conjugationRules.ts, lu là aussi plutôt que recopié.
+  const { CONJ_RULES, conjRuleTtsKey } = await importTs('src/lib/conjugationRules.ts');
+  for (const rule of CONJ_RULES) entries.push({ key: conjRuleTtsKey(rule), text: rule.speech });
 
   return entries;
 }

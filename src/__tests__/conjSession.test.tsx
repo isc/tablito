@@ -381,6 +381,13 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
     tapValidate();
     // Le piège de son a priorité : c'est LUI qui vient de faire rater.
     expect(text()).toContain('Le piège du g et du c');
+    // Le cœur de la règle en images (le e de mang·e·ons), pas son mot de la
+    // fin sur la cédille, réservé à l'écran « Mes règles ».
+    expect(document.querySelector('.strategy-hint .conj-rule-spotlight')?.textContent).toBe(
+      'nous mangeonsLe e garde le son doux de manger.',
+    );
+    expect(text()).not.toContain('cédille');
+    expect(document.querySelector('.strategy-hint [aria-label="Écouter la règle"]')).not.toBeNull();
     unmount();
 
     render(
@@ -519,6 +526,8 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
     expect(document.querySelector('.conj-form-mark.is-lit')).not.toBeNull();
     // Ancrage à la règle transversale : les marques de personne.
     expect(text()).toContain('Chaque personne a sa marque');
+    // La ligne de la personne demandée s'illumine dans le tableau des marques.
+    expect(document.querySelector('.conj-rule-mark-row.is-current .conj-rule-pronoun')?.textContent).toBe('nous');
   });
 
   it('étape 3 : copie différée — le modèle s’affiche 4 s, se masque, l’enfant écrit', () => {

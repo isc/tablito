@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import ConjForm from './ConjForm';
-import { renderConjHintLine } from './conjHintLine';
+import ConjRuleVisual from './ConjRuleVisual';
 import FeedbackStar from './FeedbackStar';
+import ListenButton from './ListenButton';
 import StrategyHintShell from './StrategyHintShell';
 import { conjWrittenForm, type ConjQuestionView } from '../lib/conjugationFacts';
 import { getConjStrategy } from '../lib/conjugationStrategies';
+import { conjRuleTtsKey } from '../lib/conjugationRules';
 import { pickRandom } from '../lib/utils';
 import { conjStrings as t } from '../i18n/conjugation';
 import { TENSE_NAMES } from '../i18n/tense';
@@ -38,6 +40,8 @@ interface ConjFeedbackOverlayProps {
   /** Boîte du fait posé — l'astuce est gatée à ≤ 2 (§5.3). */
   box: BoxLevel;
   onDismiss: () => void;
+  /** Lit un MP3 (le bouton « Écouter » de l'astuce), par le `speak` de la séance. */
+  onSpeak: (key: string) => void;
 }
 
 export default function ConjFeedbackOverlay({
@@ -47,6 +51,7 @@ export default function ConjFeedbackOverlay({
   typed,
   box,
   onDismiss,
+  onSpeak,
 }: ConjFeedbackOverlayProps) {
   // Message tiré une fois pour toutes au montage (pas à chaque render).
   const [praise] = useState(() => pickRandom(t.correctMessages));
@@ -106,9 +111,10 @@ export default function ConjFeedbackOverlay({
         {strategy && (
           <StrategyHintShell
             title={strategy.title}
-            lines={strategy.lines.map(renderConjHintLine)}
+            lines={[<ConjRuleVisual key="rule" rule={strategy} compact person={view.person} />]}
             variant="feedback"
             eyebrow={t.hintEyebrow}
+            action={<ListenButton onClick={() => onSpeak(conjRuleTtsKey(strategy))} label={t.listenRule} />}
           />
         )}
         <button type="button" className="feedback-ok-btn" onClick={onDismiss}>

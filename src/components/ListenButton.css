@@ -1,0 +1,20 @@
+/* Bouton « Écouter » d'une règle (ListenButton). Cible de 44 px. */
+.listen-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-left: auto;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--cream);
+  color: var(--indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.listen-btn:active {
+  background: var(--cream-deep);
+}

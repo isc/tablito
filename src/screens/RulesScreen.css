@@ -63,7 +63,7 @@
   animation: slideUp 0.4s ease both;
 }
 
-/* nth-of-type, pas nth-child : les titres de section (h2), présents quand la
+/* nth-of-type, pas nth-child : les onglets (nav), présents quand la
    conjugaison ajoute ses règles, ne décalent pas la cascade des cartes. */
 .rule-card:nth-of-type(3) {
   animation-delay: 0.1s;
@@ -73,10 +73,34 @@
   animation-delay: 0.2s;
 }
 
-/* Titre de section (Maths / Conjugaison) : la typographie d'un eyebrow, qui
-   le porte ; la marge seule sépare les deux sections. */
-.rules-section-title {
-  margin-top: 6px;
+/* Onglets Maths / Conjugaison, présents seulement quand la conjugaison a des
+   règles à montrer. */
+.rules-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  background: var(--cream-deep);
+  border-radius: 14px;
+  padding: 4px;
+}
+
+.rules-tab {
+  min-height: 44px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.rules-tab.is-active {
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
 }
 
 .rule-card-head {
@@ -125,6 +149,36 @@
 
 .rule-card-conj .rule-card-badge b {
   font-weight: inherit;
+}
+
+/* Carte de conjugaison : badge, titre, et le bouton « Écouter » au bout. */
+.rule-card-conj .rule-card-head {
+  margin-bottom: 14px;
+}
+
+.rule-card-conj .rule-card-tip {
+  margin-top: 14px;
+}
+
+/* La règle écrite en entier, repliée sous les blocs. */
+.rule-card-details {
+  margin: 14px -20px -18px;
+  border-top: 1.5px solid var(--line-soft);
+}
+
+.rule-card-details summary {
+  min-height: 44px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--indigo);
+  cursor: pointer;
+}
+
+.rule-card-details .rule-card-lines {
+  padding: 0 20px 18px;
 }
 
 .rule-card-eyebrow {
@@ -279,8 +333,7 @@
   color: var(--honey-ink);
 }
 
-/* Les lignes d'une règle de conjugaison : une idée par ligne, comme dans
-   l'astuce de la séance. */
+/* La règle de conjugaison écrite en entier (dépliée) : une idée par ligne. */
 .rule-card-lines {
   display: flex;
   flex-direction: column;

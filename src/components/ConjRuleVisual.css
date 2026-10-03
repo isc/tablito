@@ -1,0 +1,211 @@
+/* Une règle de conjugaison en images (ConjRuleVisual) : écran « Mes règles »
+   et astuce de la séance. Les formes sont en serif et en grand, comme la forme
+   segmentée de la question : c'est elle que l'enfant doit reconnaître. */
+
+.conj-rule-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--sans);
+  color: var(--ink);
+  /* Fond des lignes : crème sur la carte blanche des règles, blanc sur la
+     carte honey de la correction (cf. plus bas). */
+  --conj-rule-cell: var(--cream);
+}
+
+.strategy-hint.feedback .conj-rule-visual {
+  --conj-rule-cell: var(--paper);
+}
+
+.conj-rule-form {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.conj-rule-form--lg {
+  font-size: 22px;
+}
+
+.conj-rule-form--xl {
+  font-size: 28px;
+}
+
+.conj-rule-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  line-height: 1.3;
+}
+
+.conj-rule-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Tableau des marques : pronom → marque → exemple. */
+.conj-rule-marks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conj-rule-mark-row {
+  display: grid;
+  grid-template-columns: 84px 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  background: var(--conj-rule-cell);
+  border-radius: 14px;
+  padding: 8px 12px;
+  border: 1.5px solid transparent;
+}
+
+/* La personne de la question, en séance. */
+.conj-rule-mark-row.is-current {
+  border-color: var(--honey);
+}
+
+.conj-rule-pronoun {
+  justify-self: start;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--honey-soft);
+  box-shadow: 0 1px 0 var(--honey);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.conj-rule-mark {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--conj-mark);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.conj-rule-mark-example {
+  color: var(--ink-soft);
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* En séance, la carte est plus étroite et la bonne forme s'affiche juste
+   au-dessus : le tableau passe en 2 × 2, pronom et marque seuls. */
+.conj-rule-visual--compact .conj-rule-marks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.conj-rule-visual--compact .conj-rule-mark-row {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px;
+  padding: 8px;
+}
+
+.conj-rule-visual--compact .conj-rule-pronoun {
+  font-size: 15px;
+  padding: 2px 6px;
+}
+
+.conj-rule-visual--compact .conj-rule-mark {
+  font-size: 21px;
+}
+
+.conj-rule-visual--compact .conj-rule-mark-example {
+  display: none;
+}
+
+/* La recette : étapes numérotées. */
+.conj-rule-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conj-rule-step {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  background: var(--conj-rule-cell);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.conj-rule-step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Le temps conjugué : singulier à gauche, pluriel à droite. */
+.conj-rule-table {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+}
+
+.conj-rule-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.conj-rule-chip {
+  font-size: 17px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: var(--paper);
+}
+
+.conj-rule-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  border: 1.5px dashed var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.conj-rule-spotlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--conj-rule-cell);
+  border-radius: 16px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+.conj-rule-caption {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.conj-rule-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}

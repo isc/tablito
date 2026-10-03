@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-03',
+    items: [
+      "Conjugaison, les règles : elles ont désormais leur onglet dans l'écran « Mes règles » et se montrent au lieu de s'écrire — le tableau des marques (tu → s, nous → ons…), la recette de l'imparfait et du futur en étapes, le temps conjugué en entier, les exceptions à part. Un bouton les lit à voix haute pour les enfants qui lisent encore lentement. L'astuce affichée pendant la séance reprend les mêmes images.",
+    ],
+  },
+  {
     date: '2026-09-29',
     items: [
       "Conjugaison, espace parent\u00a0: sous chaque forme à retravailler, les dernières réponses fausses de votre enfant à côté de la forme attendue — «\u00a0chanterais\u00a0» au lieu de «\u00a0chanterai\u00a0». Jusqu'ici on voyait qu'une forme était ratée, pas comment\u00a0; or confondre le futur et le conditionnel, oublier le e de l'infinitif ou écrire «\u00a0-ai\u00a0» pour «\u00a0-ais\u00a0» ne se reprennent pas de la même façon. Les réponses sont enregistrées à partir de cette version\u00a0: les erreurs plus anciennes restent comptées, sans le détail.",
@@ -242,6 +248,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-03',
+    items: [
+      "French conjugation, the rules: they now have their own tab in the “My rules” screen and are shown rather than written out — the table of endings (tu → s, nous → ons…), the recipe for the imperfect and the future in numbered steps, the full conjugated tense, the exceptions set apart. A button reads them aloud for children who still read slowly. The hint shown during a session uses the same pictures.",
+    ],
+  },
   {
     date: '2026-09-29',
     items: [
