@@ -1,16 +1,20 @@
 import type {
   UserProfile,
   SessionItem,
+  DivisionFact,
   DivisionSessionQuestion,
   RemainderSessionQuestion,
 } from '../types';
 import { remainderDividend } from '../types';
 import { isDue, pickBonusReviewFacts, prioritizeByBoxLevel } from './leitner';
-import { selectDivisionQuestions, divisionConflict } from './divisionComposer';
+import {
+  selectDivisionQuestions,
+  divisionConflict,
+  divisionCoexistsWithAll,
+} from './divisionComposer';
 import { selectRemainderQuestions } from './remainderComposer';
 import { randomDisplayOrder, MIN_QUESTIONS } from './sessionComposer';
 import { getFactKey } from './facts';
-import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey, drawRemainder } from './remainderFacts';
 import { isRemainderUnlocked } from './badges';
 import { computeSimilarity } from './similarity';
@@ -50,10 +54,7 @@ function multItem(fact: UserProfile['facts'][number], isBonusReview = false): Se
   };
 }
 
-function divItem(
-  fact: NonNullable<UserProfile['divisionFacts']>[number],
-  isBonusReview = false,
-): SessionItem {
+function divItem(fact: DivisionFact, isBonusReview = false): SessionItem {
   return { kind: 'div', fact, isIntroduction: false, isRetry: false, isBonusReview };
 }
 
@@ -223,7 +224,8 @@ function assemble(
 
 // Révisions bonus pour combler une séance courte : niveau le plus récent
 // d'abord (cohérent avec le niveau en cours), puis les précédents. Exclut les
-// faits déjà présents dans la séance.
+// faits déjà présents dans la séance, et toute division au dividende d'une
+// autre division de la séance (§11.6).
 function bonusPadding(profile: UserProfile, used: SessionItem[], count: number): SessionItem[] {
   const usedRemKeys = new Set(
     used
@@ -239,16 +241,22 @@ function bonusPadding(profile: UserProfile, used: SessionItem[], count: number):
     : [];
   if (remBonus.length >= count) return remBonus;
 
-  const usedDivKeys = new Set(
-    used
-      .filter((i) => i.kind === 'div')
-      .map((i) => getDivisionFactKey(i.fact.dividend, i.fact.divisor)),
+  // Règle du dividende, jamais relâchée ici : elle ne coûte pas le plancher,
+  // les tables (réserve inépuisable) prennent le relais. Un fait déjà présent
+  // partage son propre dividende, le même filtre l'écarte.
+  const divisionFacts = profile.divisionFacts ?? [];
+  const sessionDivs = used.flatMap((i) => (i.kind === 'div' ? [i.fact] : []));
+  const ranked = pickBonusReviewFacts(
+    divisionFacts,
+    (f) => !divisionCoexistsWithAll(f, sessionDivs),
+    divisionFacts.length,
   );
-  const divBonus = pickBonusReviewFacts(
-    profile.divisionFacts ?? [],
-    (f) => usedDivKeys.has(getDivisionFactKey(f.dividend, f.divisor)),
-    count - remBonus.length,
-  ).map((fact) => divItem(fact, true));
+  const divBonusFacts: DivisionFact[] = [];
+  for (const fact of ranked) {
+    if (remBonus.length + divBonusFacts.length >= count) break;
+    if (divisionCoexistsWithAll(fact, divBonusFacts)) divBonusFacts.push(fact);
+  }
+  const divBonus = divBonusFacts.map((fact) => divItem(fact, true));
 
   if (remBonus.length + divBonus.length >= count) return [...remBonus, ...divBonus];
 
