@@ -2,11 +2,6 @@
 
 Suivi léger des évolutions techniques envisagées mais non encore tranchées.
 
-## Composition de séance
-
-- **Bonus reviews sans entrelacement** — les révisions bonus ajoutées en fin de séance (quand peu de faits sont dus) ne passent pas par l'algo d'entrelacement. Deux bonus consécutifs peuvent donc être de la même table. Impact limité (ne se produit qu'en début d'apprentissage, quand peu de faits sont introduits). Priorité faible.
-  - Pointeur : `src/lib/sessionComposer.ts`
-
 ## Algorithme d'introduction
 
 - **Strictesse de `shouldIntroduceNew`** — la condition actuelle exige que **tous** les faits introduits soient en boîte ≥ 2 pour qu'un nouveau fait soit introduit. Avantage : pas de surcharge cognitive. Inconvénient : une erreur d'inattention sur un fait bien connu bloque les introductions tant qu'il n'est pas repromu. Priorité moyenne.

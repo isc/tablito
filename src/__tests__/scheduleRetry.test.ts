@@ -33,7 +33,7 @@ describe('scheduleRetry', () => {
 
   it('retombe sur le premier écart quand aucun créneau ne convient', () => {
     // Fenêtre saturée : les deux créneaux touchent une reprise déjà placée.
-    // Best-effort, comme `interleaveGreedy` — on pose, on ne s'étire pas.
+    // Best-effort, comme `interleaveOrder` — on pose, on ne s'étire pas.
     const queue = [q('A'), q('b'), { ...q('r'), isRetry: true }, q('c')];
 
     expect(ids(scheduleRetry(queue, 0, queue[0], [2, 3]))).toBe('A b A r c');

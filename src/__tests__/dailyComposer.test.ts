@@ -116,6 +116,30 @@ describe('composeDailySession (séance mixte §11.6)', () => {
     });
   });
 
+  it("coupe les révisions de division par priorité quand l'entretien leur prend des places", () => {
+    // 14 divisions dues (4 en boîte 1, 4 en boîte 3, 6 en boîte 5) et 6 tables
+    // dues : l'entretien prend 6 des 15 places, il en reste 9 pour la division.
+    // Elles vont aux plus fragiles. Coupée dans l'ordre de la séance, la
+    // sélection pouvait écarter une révision plus fragile qu'une autre gardée.
+    const p = masteredProfile();
+    p.facts = p.facts.map((f, i) => (i < MAX_MAINTENANCE ? { ...f, nextDue: NOW } : f));
+    const boxes = [1, 1, 1, 1, 3, 3, 3, 3, 5, 5, 5, 5, 5, 5] as const;
+    const seen = new Set<number>();
+    let due = 0;
+    p.divisionFacts = p.divisionFacts!.map((f) => {
+      if (due >= boxes.length || seen.has(f.dividend)) return f; // un fait par dividende
+      seen.add(f.dividend);
+      return { ...f, introduced: true, box: boxes[due++], lastSeen: '2026-01-01', nextDue: NOW };
+    });
+
+    const session = composeDailySession(p, NOW);
+
+    const div = session.filter((i) => i.kind === 'div');
+    expect(div.every((i) => !i.isIntroduction && !i.isBonusReview)).toBe(true);
+    expect(div.map((i) => i.fact.box).sort()).toEqual([1, 1, 1, 1, 3, 3, 3, 3, 5]);
+    expect(session.filter((i) => i.kind === 'mult')).toHaveLength(MAX_MAINTENANCE);
+  });
+
   it('PLANCHER — 1ère séance post-déblocage atteint le minimum malgré peu de division', () => {
     // Déblocage frais : aucune division introduite, aucune table due → sans
     // filet la séance tomberait à ~2 questions. Le padding bonus la remplit.

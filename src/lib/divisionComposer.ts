@@ -8,7 +8,6 @@ import {
 } from './leitner';
 import { getFactKey } from './facts';
 import { getDivisionFactKey, parentMultiplicationKey } from './divisionFacts';
-import { interleaveGreedy } from './utils';
 
 // Mêmes bornes que la multiplication (cf. sessionComposer.ts, specs §6).
 const MIN_QUESTIONS = 12;
@@ -16,18 +15,13 @@ const MAX_QUESTIONS = 15;
 const MAX_NEW_FACTS = 2;
 
 /**
- * Deux faits de division en conflit s'ils ne doivent pas être adjacents :
+ * Deux faits de division en conflit : jamais introduits ensemble, jamais
+ * adjacents dans la séance (composeDailySession).
  * - même dividende (56÷7 vs 56÷8) → forte interférence, le cas clé du §11.6 ;
  * - même diviseur → même « table » (règle d'entrelacement).
  */
-function questionConflict(a: DivisionFact, b: DivisionFact): boolean {
+export function divisionConflict(a: DivisionFact, b: DivisionFact): boolean {
   return a.dividend === b.dividend || a.divisor === b.divisor;
-}
-
-// Entrelacement : deux questions adjacentes ne doivent pas être en conflit
-// (même dividende ou même diviseur, cf. questionConflict).
-function interleave(questions: DivisionSessionQuestion[]): DivisionSessionQuestion[] {
-  return interleaveGreedy(questions, (a, b) => questionConflict(a.fact, b.fact));
 }
 
 function makeQuestion(
@@ -51,8 +45,13 @@ function makeQuestion(
  *   n'est introduit que si son parent multiplicatif est en boîte 4+ (§11.3),
  *   même seuil que l'ouverture du niveau (isDivisionUnlocked).
  * - Anti-interférence renforcée : jamais deux faits de même dividende
- *   adjacents (§11.6).
+ *   introduits ensemble, ni retenus ensemble tant que le pool dû le permet
+ *   (§11.6).
  * - Pas de variation d'ordre : la division n'est pas commutative (§11.2).
+ *
+ * Renvoie la séance dans l'ordre de PRIORITÉ, non entrelacée : intros,
+ * révisions dues (les plus fragiles d'abord, §6.1), puis bonus. L'appelant,
+ * composeDailySession, y ajoute l'entretien et ordonne la séance entière.
  *
  * Renvoie une liste vide si aucun fait de division n'est encore éligible
  * (niveau pas encore débloqué / aucune table maîtrisée).
@@ -91,7 +90,7 @@ export function composeDivisionSession(
     for (const fact of eligible) {
       if (newFacts.length >= MAX_NEW_FACTS) break;
       // Ne pas introduire ensemble deux faits qui interfèrent.
-      if (newFacts.some((nf) => questionConflict(nf, fact))) continue;
+      if (newFacts.some((nf) => divisionConflict(nf, fact))) continue;
       newFacts.push(fact);
     }
   }
@@ -122,7 +121,7 @@ export function composeDivisionSession(
   const reviewQuestions = selected.map((fact) => makeQuestion(fact));
   const introQuestions = newFacts.map((fact) => makeQuestion(fact, { isIntroduction: true }));
 
-  const result = [...introQuestions, ...interleave(reviewQuestions)];
+  const result = [...introQuestions, ...reviewQuestions];
 
   // Padding par révisions bonus (pas de modification Leitner — cf. §6.2 /
   // pickBonusReviewFacts).
@@ -135,7 +134,7 @@ export function composeDivisionSession(
       (f) => usedKeys.has(getDivisionFactKey(f.dividend, f.divisor)),
       MIN_QUESTIONS - result.length,
     ).map((fact) => makeQuestion(fact, { isBonusReview: true }));
-    result.push(...interleave(bonus));
+    result.push(...bonus);
   }
 
   return result;

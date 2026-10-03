@@ -1,7 +1,7 @@
 import type { UserProfile, SessionItem } from '../types';
 import { remainderDividend } from '../types';
 import { isDue, pickBonusReviewFacts, prioritizeByBoxLevel } from './leitner';
-import { composeDivisionSession } from './divisionComposer';
+import { composeDivisionSession, divisionConflict } from './divisionComposer';
 import { composeRemainderSession } from './remainderComposer';
 import { randomDisplayOrder } from './sessionComposer';
 import { getFactKey } from './facts';
@@ -9,7 +9,7 @@ import { getDivisionFactKey } from './divisionFacts';
 import { getRemainderFactKey, drawRemainder } from './remainderFacts';
 import { isRemainderUnlocked } from './badges';
 import { computeSimilarity } from './similarity';
-import { interleaveGreedy } from './utils';
+import { interleaveOrder } from './utils';
 
 // Cible haute d'une séance (cf. sessionComposer / specs §6).
 const TARGET_QUESTIONS = 15;
@@ -76,15 +76,16 @@ function itemTable(item: SessionItem): number {
 
 // Deux éléments à ne pas rendre adjacents. Même type : règles de chaque piste
 // (dividende/diviseur partagés en ÷ et reste, table partagée / forte similarité
-// en ×). Entre types : un élément du niveau 3 est en conflit avec la division
-// de même diviseur ou de même dividende (45÷7 juste à côté de 42÷7 ou de 45÷9
-// serait confusible) et avec la multiplication ancre de sa zone (7×6 juste
-// avant la zone (7,6) soufflerait l'encadrement). × vs ÷ exacts : pas de
-// conflit (inchangé, specs §11.6).
+// en ×). En reste (§12.7), le même diviseur couvre aussi les zones à quotients
+// adjacents ((7,6) et (7,7) se touchent à un point près : 48÷7 contre 49÷7), et
+// le même dividende TIRÉ (45÷7 vs 45÷6) donne deux lectures du même nombre,
+// hautement confusibles dans la même série. Entre types : un élément du niveau
+// 3 est en conflit avec la division de même diviseur ou de même dividende (45÷7
+// juste à côté de 42÷7 ou de 45÷9 serait confusible) et avec la multiplication
+// ancre de sa zone (7×6 juste avant la zone (7,6) soufflerait l'encadrement).
+// × vs ÷ exacts : pas de conflit (inchangé, specs §11.6).
 function itemConflict(a: SessionItem, b: SessionItem): boolean {
-  if (a.kind === 'div' && b.kind === 'div') {
-    return a.fact.dividend === b.fact.dividend || a.fact.divisor === b.fact.divisor;
-  }
+  if (a.kind === 'div' && b.kind === 'div') return divisionConflict(a.fact, b.fact);
   if (a.kind === 'mult' && b.kind === 'mult') {
     return itemTable(a) === itemTable(b) || computeSimilarity(a.fact, b.fact) === 'strong';
   }
@@ -140,7 +141,8 @@ function remCrossConflict(
  * la maintenance n'est jamais en retard. Tous types entrelacés.
  *
  * Les intros du niveau actif passent en tête (comme en multiplication) ; le
- * reste (révisions + entretien + éventuel padding bonus) est entrelacé.
+ * reste (révisions + entretien + éventuel padding bonus) est entrelacé d'un
+ * seul tenant, à la suite de la dernière intro.
  *
  * Plancher de longueur : les premiers jours post-déblocage, peu de faits du
  * niveau actif sont introduits (rythme 2/séance) et peu d'entretien est dû —
@@ -210,6 +212,10 @@ function composeRemainderDaily(profile: UserProfile, today: string): SessionItem
 // Tronc commun : l'entretien remplace des révisions du niveau actif pour viser
 // ~TARGET sans gonfler la séance (intros gardées en priorité), puis padding
 // bonus sous le plancher, puis entrelacement.
+//
+// `reviews` arrive dans l'ordre de priorité du composeur du niveau actif
+// (révisions dues les plus fragiles d'abord, puis bonus) : la coupe garde
+// donc les plus fragiles.
 function assemble(
   profile: UserProfile,
   intros: SessionItem[],
@@ -224,7 +230,11 @@ function assemble(
     core.push(...bonusPadding(profile, [...intros, ...core], deficit));
   }
 
-  return [...intros, ...interleaveGreedy(core, itemConflict)];
+  // Révisions dues (niveau actif puis entretien) devant les bonus, par un tri
+  // stable, puis un seul entrelacement à la suite de la dernière intro (specs
+  // §1.3).
+  core.sort((a, b) => Number(a.isBonusReview) - Number(b.isBonusReview));
+  return [...intros, ...interleaveOrder(core, itemConflict, intros.at(-1))];
 }
 
 // Révisions bonus pour combler une séance courte : niveau le plus récent

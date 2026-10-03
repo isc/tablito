@@ -106,6 +106,31 @@ describe('composeRemainderSession — gating sur la maîtrise des divisions', ()
     }
   });
 
+  it('renvoie la séance dans l’ordre de priorité : intros, révisions dues des plus fragiles aux plus solides, bonus', () => {
+    // Comme en division : composeDailySession coupe dans cet ordre, puis
+    // ordonne la séance entière.
+    const p = withMasteredDivisions([[2, 2], [3, 3]]); // zones (2,2) et (3,3) à introduire
+    const boxes = [5, 3, 1, 5, 3, 5] as const;
+    let due = 0;
+    let bonus = 0;
+    p.remainderFacts = p.remainderFacts!.map((f) => {
+      if (f.divisor === f.quotient && f.divisor <= 3) return f;
+      if (due < boxes.length) return { ...f, introduced: true, box: boxes[due++], nextDue: '' };
+      if (bonus++ < 8) return { ...f, introduced: true, box: 2 as const, nextDue: '2026-12-31' };
+      return f;
+    });
+
+    const session = composeRemainderSession(p, NOW);
+
+    expect(
+      session.map((q) => (q.isIntroduction ? 'intro' : q.isBonusReview ? 'bonus' : `due:${q.fact.box}`)),
+    ).toEqual([
+      ...['intro', 'intro'],
+      ...['due:1', 'due:3', 'due:3', 'due:5', 'due:5', 'due:5'],
+      ...['bonus', 'bonus', 'bonus', 'bonus'],
+    ]);
+  });
+
   it('complète une séance courte avec des révisions bonus de zones introduites', () => {
     const p = withMasteredDivisions([[2, 2]]);
     // Beaucoup de zones introduites mais non dues → réserve de bonus.
