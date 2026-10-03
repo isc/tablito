@@ -27,6 +27,13 @@ jobs:
     # Une PR venue d'un fork n'a pas la clé Mistral : on s'en passe, sa preview
     # se construit sans les MP3 manquants.
     if: github.event.pull_request.head.repo.full_name == github.repository
+    # Une seule génération à la fois par PR. Deux pushs rapprochés lançaient
+    # deux générations complètes en parallèle (le double d'appels à l'API), et
+    # la plus lente écrasait les MP3 de l'autre. La plus récente l'emporte :
+    # elle porte le contenu le plus à jour.
+    concurrency:
+      group: tts-${{ github.head_ref }}
+      cancel-in-progress: true
     outputs:
       count: ${{ steps.new.outputs.count }}
     steps:
@@ -76,8 +83,10 @@ jobs:
       # Commit sur la BRANCHE de la PR, pour que la fusion les emporte. Le
       # checkout ci-dessus est le commit de fusion PR+main (detached) : on
       # repart donc de la tête de la branche dans un worktree à part, et on y
-      # copie les seuls nouveaux fichiers. Si la branche a bougé entre-temps,
-      # le push échoue sans dommage : le push suivant relance cette génération.
+      # copie les seuls nouveaux fichiers, sans jamais écraser un MP3 que la
+      # branche a déjà (commité entre-temps par une autre génération) : rien à
+      # commiter alors. Si la branche a bougé entre-temps, le push échoue sans
+      # dommage : le push suivant relance cette génération.
       #
       # Un push fait avec le GITHUB_TOKEN ne déclenche aucun workflow (ni cette
       # preview, donc pas de boucle, ni la CI) : la CI est relancée à la main
@@ -92,9 +101,13 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin "$HEAD_REF"
           git worktree add "$RUNNER_TEMP/head" FETCH_HEAD
-          cp -R "$RUNNER_TEMP/tts-new/." "$RUNNER_TEMP/head/"
+          cp -Rn "$RUNNER_TEMP/tts-new/." "$RUNNER_TEMP/head/"
           cd "$RUNNER_TEMP/head"
           git add public/audio/tts
+          if git diff --cached --quiet; then
+            echo "Ces MP3 sont déjà sur la branche : rien à commiter."
+            exit 0
+          fi
           git commit -m "assets(tts): MP3 générés par la preview"
           if git push origin "HEAD:refs/heads/$HEAD_REF"; then
             gh workflow run ci.yml --ref "$HEAD_REF"
