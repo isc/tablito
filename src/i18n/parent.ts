@@ -110,6 +110,12 @@ interface ParentDashboardStrings {
   mathSessions: string;
   conjSessions: string;
   irrSessions: string;
+  classVerbs: string;
+  classVerbsSubtitle: string;
+  classVerbsReadOnly: string;
+  classVerbsNext: (verbs: string) => string;
+  classVerbsLearned: string;
+  classVerbsClear: string;
   mathSessionsMixed: string;
   evolution: string;
   accuracy: string;
@@ -287,6 +293,13 @@ const parentDashboardFr: ParentDashboardStrings = {
   mathSessions: 'Séances de maths',
   conjSessions: 'Séances de conjugaison',
   irrSessions: 'Séances de verbes anglais',
+  classVerbs: 'Vus en classe',
+  classVerbsSubtitle:
+    "Touchez les verbes que la classe a déjà vus\u00a0: ils seront introduits en premier, dans l'ordre où vous les touchez. Les autres suivent, des plus courants aux plus rares.",
+  classVerbsReadOnly: "Se règle depuis l'appareil de l'enfant.",
+  classVerbsNext: (verbs) => `Prochains verbes\u00a0: ${verbs}`,
+  classVerbsLearned: 'déjà appris',
+  classVerbsClear: 'Tout décocher',
   mathSessionsMixed: 'Chaque séance mélange les niveaux débloqués.',
   evolution: 'Évolution',
   accuracy: 'Réussite',
@@ -486,6 +499,13 @@ const parentDashboardEn: ParentDashboardStrings = {
   mathSessions: 'Math sessions',
   conjSessions: 'Conjugation sessions',
   irrSessions: 'English verb sessions',
+  classVerbs: 'Seen in class',
+  classVerbsSubtitle:
+    'Tap the verbs the class has already covered: they will be introduced first, in the order you tap them. The others follow, from most to least common.',
+  classVerbsReadOnly: "Set from the child's device.",
+  classVerbsNext: (verbs) => `Next verbs: ${verbs}`,
+  classVerbsLearned: 'already learned',
+  classVerbsClear: 'Clear all',
   mathSessionsMixed: 'Each session mixes the unlocked levels.',
   evolution: 'Trend',
   accuracy: 'Accuracy',

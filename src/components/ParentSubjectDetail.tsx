@@ -32,6 +32,7 @@ import DivisionProgressGrid from './DivisionProgressGrid';
 import RemainderProgressGrid from './RemainderProgressGrid';
 import ConjProgressGrid from './ConjProgressGrid';
 import IrrProgressGrid from './IrrProgressGrid';
+import IrrClassVerbs from './IrrClassVerbs';
 import EvolutionChart from './EvolutionChart';
 import ParentBoxChart from './ParentBoxChart';
 import HardFactList from './ParentHardFacts';
@@ -48,6 +49,12 @@ type Metric = 'accuracy' | 'speed';
 interface ParentSubjectDetailProps {
   profile: UserProfile;
   subject: Subject;
+  /**
+   * Modifie le profil affiché — seulement quand c'est le profil actif de
+   * l'appareil : un enfant suivi à distance, ou un autre profil, se lit sans
+   * se régler.
+   */
+  onUpdateProfile?: (update: (profile: UserProfile) => UserProfile) => void;
 }
 
 // Une seule courbe, à bascule réussite / rapidité. Composant à part pour que la
@@ -151,7 +158,7 @@ function SessionHistory({ sessions }: { sessions: SessionResult[] }) {
   );
 }
 
-function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
+function ParentSubjectDetail({ profile, subject, onUpdateProfile }: ParentSubjectDetailProps) {
   const t = useParentDashboardStrings();
   const guideBase = useGuideBase();
 
@@ -243,6 +250,18 @@ function ParentSubjectDetail({ profile, subject }: ParentSubjectDetailProps) {
           {grid()}
         </div>
       </div>
+
+      {subject === 'irr' && (
+        <div className="parent-section">
+          <IrrClassVerbs
+            classVerbs={profile.irrClassVerbs ?? []}
+            facts={profile.irrFacts ?? []}
+            onChange={
+              onUpdateProfile && ((irrClassVerbs) => onUpdateProfile((p) => ({ ...p, irrClassVerbs })))
+            }
+          />
+        </div>
+      )}
 
       {sessions.length > 0 && (
         <div className="parent-section">

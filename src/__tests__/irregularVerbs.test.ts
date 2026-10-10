@@ -9,6 +9,7 @@ import {
   irrVerbDefs,
   irrVerbsOfFamily,
   requireIrrVerbDef,
+  sanitizeIrrClassVerbs,
 } from '../lib/irregularVerbs';
 import {
   composeIrrSession,
@@ -18,7 +19,7 @@ import {
   judgeIrrAnswer,
 } from '../lib/irregularComposer';
 import { irrHeardForms, irrSpokenAnswer, irrSpokenWords } from '../lib/parseSpokenIrregular';
-import { seedIrrFromPlacement } from '../lib/irregularPlacement';
+import { irrPlacementProbes, seedIrrFromPlacement } from '../lib/irregularPlacement';
 import { MAX_LENGTH } from '../components/LetterKeyboard';
 
 const TODAY = '2026-10-03';
@@ -193,6 +194,40 @@ describe('composition (specs §16.4, §16.7)', () => {
     );
     const keys = session.map((q) => q.fact.key);
     expect(keys.includes('fall') && keys.includes('feel')).toBe(false);
+  });
+});
+
+describe('vus en classe (specs §16.3)', () => {
+  const intros = (irrClassVerbs: string[], states = {}) =>
+    composeIrrSession({ irrFacts: factsWith(states), irrClassVerbs }, TODAY)
+      .filter((q) => q.isIntroduction)
+      .map((q) => q.fact.key);
+
+  it('introduit d’abord les verbes de la classe, dans l’ordre coché', () => {
+    expect(intros(['be', 'begin', 'choose', 'break'])).toEqual(['be', 'begin']);
+    expect(intros(['choose', 'break'])).toEqual(['choose', 'break']);
+  });
+
+  it('passe aux verbes fréquents une fois ceux de la classe introduits', () => {
+    expect(intros(['begin'], { begin: { box: 2, due: false } })).toEqual(['be', 'have']);
+    expect(intros(['be', 'begin'], { be: { box: 2, due: false } })).toEqual(['begin', 'have']);
+  });
+
+  it('garde l’espacement des verbes en interférence', () => {
+    // bring et buy se confondent : buy attend 48 h, un verbe fréquent passe.
+    expect(intros(['bring', 'buy'])).toEqual(['bring', 'be']);
+  });
+
+  it('sonde d’abord les verbes de la classe au placement', () => {
+    const probes = irrPlacementProbes(['choose', 'be', 'break']);
+    expect(probes.slice(0, 4)).toEqual(['choose', 'be', 'break', 'have']);
+    expect(probes).toHaveLength(10);
+    expect(new Set(probes).size).toBe(10);
+  });
+
+  it('assainit la liste d’un profil importé', () => {
+    expect(sanitizeIrrClassVerbs(['be', 'zzz', 3, 'be', 'go'])).toEqual(['be', 'go']);
+    expect(sanitizeIrrClassVerbs('be')).toEqual([]);
   });
 });
 

@@ -4,7 +4,7 @@ import { isDue, shouldIntroduceNew, prioritizeByBoxLevel, pickBonusReviewFacts }
 import {
   IRR_FAMILIES,
   allIrrForms,
-  irrIntroRank,
+  irrIntroPriority,
   irrVerbDef,
   irrVerbsOfFamily,
   normalizeIrrWord,
@@ -115,12 +115,13 @@ function makeQuestion(fact: IrrFact, flags: Partial<IrrSessionQuestion> = {}): I
 }
 
 /** Tout ce que la composition lit d'un profil. */
-export type IrrProfile = Pick<UserProfile, 'irrFacts'>;
+export type IrrProfile = Pick<UserProfile, 'irrFacts' | 'irrClassVerbs'>;
 
 /**
  * Compose la séance du jour (12-15 questions quand l'inventaire le permet).
  *
- * - intro : au plus 2 verbes nouveaux, dans l'ordre de fréquence, jamais en
+ * - intro : au plus 2 verbes nouveaux — ceux vus en classe d'abord, puis par
+ *   fréquence (irrIntroPriority) —, jamais en
  *   interférence avec un verbe introduit il y a moins de 48 h ni entre eux ;
  * - révisions : verbes dus, priorisés par boîte ;
  * - anti-interférence : deux verbes confusibles non consolidés ne sont jamais
@@ -131,6 +132,7 @@ export function composeIrrSession(profile: IrrProfile, now: string): IrrSessionQ
   const facts = (profile.irrFacts ?? []).filter((f) => irrVerbDef(f.key));
   if (facts.length === 0) return [];
   const today = now.slice(0, 10);
+  const classVerbs = profile.irrClassVerbs ?? [];
 
   const recentlyIntroduced = facts.filter(
     (f) => f.introducedAt && daysBetween(f.introducedAt, today) < IRR_INTRO_SPACING_DAYS,
@@ -140,7 +142,7 @@ export function composeIrrSession(profile: IrrProfile, now: string): IrrSessionQ
   if (shouldIntroduceNew(facts)) {
     const candidates = facts
       .filter((f) => !f.introduced)
-      .sort((a, b) => irrIntroRank(a.key) - irrIntroRank(b.key));
+      .sort((a, b) => irrIntroPriority(a.key, classVerbs) - irrIntroPriority(b.key, classVerbs));
     for (const fact of candidates) {
       if (newFacts.length >= IRR_MAX_NEW_FACTS) break;
       if (recentlyIntroduced.some((r) => irrKeysInterfere(r.key, fact.key))) continue;

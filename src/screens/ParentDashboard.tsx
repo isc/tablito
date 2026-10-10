@@ -60,6 +60,8 @@ interface ParentDashboardProps {
   // relu) — reste monté.
   page: ParentPage | null;
   onOpenPage: (page: ParentPage | null) => void;
+  // Réglage du profil actif depuis une page de matière (« vus en classe »).
+  onUpdateProfile: (update: (profile: UserProfile) => UserProfile) => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -87,6 +89,7 @@ export default function ParentDashboard({
   openOnWatched = false,
   page,
   onOpenPage,
+  onUpdateProfile,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
 
@@ -236,7 +239,12 @@ export default function ParentDashboard({
         >
           {feedbackButton}
         </Header>
-        <ParentSubjectDetail key={selected?.key ?? 'none'} profile={shown} subject={page} />
+        <ParentSubjectDetail
+          key={selected?.key ?? 'none'}
+          profile={shown}
+          subject={page}
+          onUpdateProfile={shown === profile ? onUpdateProfile : undefined}
+        />
       </div>
     );
   }

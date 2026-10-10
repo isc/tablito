@@ -5,6 +5,7 @@ import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
 import { createInitialRemainderFacts } from './remainderFacts';
 import { inferIntroductionsFromKnowns } from './placement';
+import { sanitizeIrrClassVerbs } from './irregularVerbs';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX, settleStreak } from './streak';
 import { pickRandom, todayISO } from './utils';
 import { gunzip, urlBase64ToUint8Array } from './codec';
@@ -501,6 +502,9 @@ function normalizeProfile(profile: UserProfile): UserProfile {
       profile.remainderMysteryTheme,
       profile.conjMysteryTheme,
     ]);
+  }
+  if (profile.irrClassVerbs !== undefined) {
+    profile.irrClassVerbs = sanitizeIrrClassVerbs(profile.irrClassVerbs);
   }
   if (typeof profile.hasSeenIrrIntro !== 'boolean') {
     profile.hasSeenIrrIntro = false;

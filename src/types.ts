@@ -258,6 +258,9 @@ export interface UserProfile {
   // (les 64 verbes sont ensemencés à la première entrée). ===
   irrFacts?: IrrFact[];
   irrMysteryTheme?: MysteryTheme;
+  // Verbes « vus en classe », cochés par le parent dans l'ordre de la classe
+  // (specs §16.3) : introduits avant tous les autres. Absent = aucun.
+  irrClassVerbs?: string[];
   hasSeenIrrIntro?: boolean;
   hasDoneIrrPlacement?: boolean;
   lastIrrSessionDate?: string | null;

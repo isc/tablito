@@ -78,10 +78,10 @@ function v(
 }
 
 /**
- * L'inventaire, dans l'ORDRE D'INTRODUCTION : la fréquence (specs §16.3), qui
- * est aussi, très probablement, l'ordre de la classe. C'est aussi l'ordre des
- * cases de l'image mystère, qui se dévoile donc dans l'ordre où l'enfant
- * apprend.
+ * L'inventaire, dans l'ORDRE D'INTRODUCTION par défaut : la fréquence (specs
+ * §16.3). Les verbes « vus en classe », cochés par le parent, passent devant
+ * (cf. irrIntroPriority) : chaque classe suit sa propre liste. C'est aussi
+ * l'ordre des cases de l'image mystère.
  */
 const IRR_VERBS: readonly IrrVerbDef[] = [
   v('be', ['was', 'were'], 'been', 'être', 'unique'),
@@ -175,6 +175,40 @@ export function requireIrrVerbDef(key: string): IrrVerbDef {
 /** Rang d'introduction (fréquence), -1 pour une clé inconnue. */
 export function irrIntroRank(key: string): number {
   return RANK.get(key) ?? -1;
+}
+
+/**
+ * Priorité d'introduction d'un verbe (plus petit = plus tôt, specs §16.3) :
+ * les verbes vus en classe d'abord, dans l'ordre où le parent les a cochés,
+ * puis tous les autres par fréquence.
+ */
+export function irrIntroPriority(key: string, classVerbs: readonly string[] = []): number {
+  const i = classVerbs.indexOf(key);
+  return i >= 0 ? i : classVerbs.length + irrIntroRank(key);
+}
+
+/**
+ * Les verbes de l'inventaire, du premier introduit au dernier (cf.
+ * irrIntroPriority).
+ */
+export function irrVerbsInIntroOrder(classVerbs: readonly string[] = []): IrrVerbDef[] {
+  return [...IRR_VERBS].sort(
+    (a, b) => irrIntroPriority(a.key, classVerbs) - irrIntroPriority(b.key, classVerbs),
+  );
+}
+
+/**
+ * La liste « vus en classe » d'un profil, assainie : des clés de l'inventaire,
+ * sans doublon, dans leur ordre. Le JSON d'un profil s'édite à la main
+ * (export/import) : tout le reste est ignoré.
+ */
+export function sanitizeIrrClassVerbs(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  for (const key of value) {
+    if (typeof key === 'string' && BY_KEY.has(key)) seen.add(key);
+  }
+  return [...seen];
 }
 
 /** Index dans l'inventaire de la case (row, col) de la grille 8×8. */

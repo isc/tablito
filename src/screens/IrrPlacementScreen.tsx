@@ -16,19 +16,21 @@ import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock'
 /** Le verdict s'affiche brièvement, sans commentaire ni son négatif. */
 const FEEDBACK_MS = { correct: 600, incorrect: 1400 } as const;
 
-const PROBES = irrPlacementProbes();
-
 interface IrrPlacementScreenProps {
+  /** Verbes vus en classe (specs §16.3) : sondés en premier. */
+  classVerbs?: readonly string[];
   onComplete: (results: IrrPlacementResult[]) => void;
 }
 
 /**
  * Placement des verbes irréguliers (specs §16.8) : quelques sondes sur les
- * verbes les plus fréquents, « Je ne sais pas » toujours à portée, arrêt après
+ * premiers verbes de l'ordre d'introduction (vus en classe, puis fréquents), « Je ne sais pas » toujours à portée, arrêt après
  * 3 échecs consécutifs. Contrairement à la conjugaison, il accepte la voix
  * comme le clavier : c'est l'oral que la classe a entraîné.
  */
-export default function IrrPlacementScreen({ onComplete }: IrrPlacementScreenProps) {
+export default function IrrPlacementScreen({ classVerbs, onComplete }: IrrPlacementScreenProps) {
+  // Figées au montage : la liste ne change pas pendant le placement.
+  const [probes] = useState(() => irrPlacementProbes(classVerbs));
   const { speak, stop: stopSpeech, isSpeaking } = useTTS();
   const [step, setStep] = useState<'intro' | 'test' | 'done'>('intro');
   const [index, setIndex] = useState(0);
@@ -37,7 +39,7 @@ export default function IrrPlacementScreen({ onComplete }: IrrPlacementScreenPro
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const startedAt = useRef(NOT_STARTED);
 
-  const key = PROBES[index];
+  const key = probes[index];
   const def = requireIrrVerbDef(key);
 
   useEffect(() => {
@@ -57,14 +59,14 @@ export default function IrrPlacementScreen({ onComplete }: IrrPlacementScreenPro
       setFeedback(correct ? 'correct' : 'incorrect');
       setTimeout(() => {
         setFeedback(null);
-        if (index + 1 >= PROBES.length || failures >= IRR_MAX_CONSECUTIVE_FAILURES) {
+        if (index + 1 >= probes.length || failures >= IRR_MAX_CONSECUTIVE_FAILURES) {
           setStep('done');
         } else {
           setIndex(index + 1);
         }
       }, correct ? FEEDBACK_MS.correct : FEEDBACK_MS.incorrect);
     },
-    [feedback, results, key, consecutiveFailures, index, stopSpeech],
+    [feedback, results, key, consecutiveFailures, index, stopSpeech, probes.length],
   );
 
   const handleSubmit = useCallback(
@@ -108,7 +110,7 @@ export default function IrrPlacementScreen({ onComplete }: IrrPlacementScreenPro
     );
   }
 
-  const dots = PROBES.map((_, i) => (i < index ? 'done' : i === index ? 'current' : 'pending'));
+  const dots = probes.map((_, i) => (i < index ? 'done' : i === index ? 'current' : 'pending'));
 
   return (
     <div className="welcome-screen">

@@ -1,23 +1,24 @@
 import type { IrrFact } from '../types';
 import { typedFastThresholdMs } from '../types';
 import { placeFact, placementBox } from './leitner';
-import { irrExpectedLetters, irrVerbDefs, requireIrrVerbDef } from './irregularVerbs';
+import { irrExpectedLetters, irrVerbsInIntroOrder, requireIrrVerbDef } from './irregularVerbs';
 
 // === Placement des verbes irréguliers (specs §16.8) ===
 //
-// Quelques sondes sur les verbes les plus fréquents — ceux que la classe a le
-// plus de chances d'avoir déjà vus —, « Je ne sais pas » toujours à portée,
+// Quelques sondes sur les premiers verbes de l'ordre d'introduction — ceux
+// que la classe a cochés, puis les plus fréquents : ceux que l'enfant a le plus
+// de chances d'avoir déjà vus —, « Je ne sais pas » toujours à portée,
 // arrêt après 3 échecs consécutifs. Mais PAS d'inférence par dominance : chaque
 // irrégulier est une forme stockée, savoir « went » ne dit rien de « took ».
 // Seuls les verbes réussis sont ensemencés.
 
-/** Nombre de sondes : les verbes les plus fréquents de l'inventaire. */
+/** Nombre de sondes : les premiers verbes de l'ordre d'introduction. */
 export const IRR_PLACEMENT_PROBE_COUNT = 10;
 
 export const IRR_MAX_CONSECUTIVE_FAILURES = 3;
 
-export function irrPlacementProbes(): string[] {
-  return irrVerbDefs()
+export function irrPlacementProbes(classVerbs: readonly string[] = []): string[] {
+  return irrVerbsInIntroOrder(classVerbs)
     .slice(0, IRR_PLACEMENT_PROBE_COUNT)
     .map((def) => def.key);
 }

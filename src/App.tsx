@@ -571,10 +571,11 @@ export default function App({
   // Ne dépend que des verbes : une autre mise à jour du profil sur l'accueil
   // (série, badges) ne recompose pas la séance.
   const irrFacts = profile?.irrFacts;
+  const irrClassVerbs = profile?.irrClassVerbs;
   const irrPendingItems = useMemo<IrrSessionItem[]>(() => {
     if (!onHome || !irrAvailable || irrSessionDone || irrNeedsPlacement) return [];
-    return composeIrrSession({ irrFacts }, today).map((q): IrrSessionItem => ({ kind: 'irr', ...q }));
-  }, [onHome, irrFacts, irrAvailable, irrSessionDone, irrNeedsPlacement, today]);
+    return composeIrrSession({ irrFacts, irrClassVerbs }, today).map((q): IrrSessionItem => ({ kind: 'irr', ...q }));
+  }, [onHome, irrFacts, irrClassVerbs, irrAvailable, irrSessionDone, irrNeedsPlacement, today]);
   const hasIrrSessionAvailable =
     irrAvailable && !irrSessionDone && (irrNeedsPlacement || irrPendingItems.length > 0);
   const irrVisible = !!profile && isIrrVisible(profile, lang);
@@ -1201,6 +1202,12 @@ export default function App({
   // profil actif. Sauvegardée tout de suite, et pas seulement par l'effet de
   // sauvegarde qui suit le rendu : l'index des profils doit porter le prénom
   // restauré dès ce rendu-là, que l'espace parent relit.
+  // Réglage du profil actif depuis l'espace parent (« vus en classe ») : le
+  // profil suit le chemin habituel, sauvegardé par l'effet de sauvegarde.
+  const handleParentProfileUpdate = useCallback((update: (p: UserProfile) => UserProfile) => {
+    setProfile((prev) => (prev ? update(prev) : prev));
+  }, []);
+
   const handleRestore = useCallback((backup: UserProfile) => {
     saveProfile(backup);
     setProfile(backup);
@@ -1332,7 +1339,7 @@ export default function App({
       )}
 
       {screen === 'irrPlacement' && profile && (
-        <IrrPlacementScreen onComplete={handleIrrPlacementComplete} />
+        <IrrPlacementScreen classVerbs={profile?.irrClassVerbs} onComplete={handleIrrPlacementComplete} />
       )}
 
       {screen === 'session' && profile && sessionItems.length > 0 && (
@@ -1403,6 +1410,7 @@ export default function App({
           onDeleteProfile={handleDeleteProfile}
           page={nav.parentPage}
           onOpenPage={openParentPage}
+          onUpdateProfile={handleParentProfileUpdate}
         />
       )}
       </Suspense>
