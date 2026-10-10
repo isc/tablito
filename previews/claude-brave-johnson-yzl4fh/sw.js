@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261003195441"
+const VERSION = "20261010211515"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/previews/claude-brave-johnson-yzl4fh/"
 const ASSETS = [
@@ -78,6 +78,7 @@ const ASSETS = [
   "/previews/claude-brave-johnson-yzl4fh/src/components/FeedbackStar.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/FlameIcon.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/IrrAnswerInput.js",
+  "/previews/claude-brave-johnson-yzl4fh/src/components/IrrClassVerbs.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/IrrFeedbackOverlay.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/IrrForms.js",
   "/previews/claude-brave-johnson-yzl4fh/src/components/IrrIntro.js",
