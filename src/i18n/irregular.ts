@@ -48,11 +48,8 @@ export const irrStrings = {
   introListen: 'Écoute et répète à voix haute',
   /** Étape 2 : l'analogie avec un verbe de la même famille déjà su. */
   introFamily: (example: string) => `Comme ${example}`,
-  /** Étape 3 : copie différée. */
+  /** Étape 3 : la première question s'ouvre sur le modèle (copie différée). */
   copyLook: 'Regarde bien…',
-  copySay: 'À toi ! Dis les trois formes.',
-  copyWrite: 'À toi ! Écris les deux formes.',
-  copyAgain: 'Regarde encore une fois…',
   /** Consigne de la question. */
   askSay: 'Dis le verbe !',
   askWrite: 'Écris le prétérit, puis le participe',
