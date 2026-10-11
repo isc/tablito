@@ -787,15 +787,15 @@ async function captureConjScreens(page) {
   await gotoHome(page);
   await page.waitForSelector('.home-subjects');
   await page.locator('.home-subjects .home-subject-btn').nth(1).click();
-  await page.waitForSelector('.conj-question .letterpad-display');
+  await page.waitForSelector('.conj-question .letterpad-keys');
 
   // La réponse attendue n'est pas dans le DOM : on retrouve la question
   // affichée dans l'inventaire (même geste que answerCurrentConj dans
   // src/__tests__/conjIntegration.test.tsx), infinitif compris.
   const squash = (t) => t.replace(/\s+/g, '');
   const shown = await page.evaluate(() => ({
-    sentence: document.querySelector('.conj-question .conj-sentence').innerText,
-    verb: document.querySelector('.conj-question .conj-intro-infinitive').textContent.replace(/[()]/g, '').trim(),
+    sentence: document.querySelector('.conj-question .conj-form--stacked').innerText,
+    verb: document.querySelector('.conj-question .conj-verb-tag').textContent.trim(),
   }));
   const findExpected = () => {
     for (const def of conjFactDefs()) {
@@ -1249,7 +1249,7 @@ const SECTIONS_FR = [
       <p>Chaque matière a sa séance du jour ; la série de jours est commune.</p>
     `,
     shots: [
-      { file: '24-conj-question', caption: 'Une phrase à compléter, au clavier de lettres. L\'infinitif est rappelé sous la question.' },
+      { file: '24-conj-question', caption: 'Le verbe à conjuguer, puis la phrase à compléter : la réponse s\'écrit directement dans la phrase, au clavier de lettres.' },
       { file: '25-conj-feedback-correct', caption: 'Bonne réponse : la forme s\'affiche, radical et terminaison en deux couleurs.' },
     ],
   },

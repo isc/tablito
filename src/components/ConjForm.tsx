@@ -35,6 +35,14 @@ interface ConjFormProps {
    */
   blank?: boolean;
   /**
+   * Ce que l'enfant a tapé (ou épelé), écrit SUR le trait : la réponse se
+   * construit dans la phrase, qu'il relit en entier avant de valider. Il n'y a
+   * pas d'autre ardoise.
+   */
+  typed?: string;
+  /** Curseur clignotant au bout de la saisie : le trait attend des lettres. */
+  caret?: boolean;
+  /**
    * Mise en scène « question » : trois lignes empilées et centrées — contexte
    * avant, groupe verbal seul, contexte après (en encre douce, corps réduit).
    * Le verbe ne partage jamais sa ligne : c'est l'objet de la question
@@ -55,6 +63,8 @@ export default function ConjForm({
   before,
   after,
   blank = false,
+  typed = '',
+  caret = false,
   stacked = false,
   lit = 'none',
 }: ConjFormProps) {
@@ -91,7 +101,12 @@ export default function ConjForm({
         {mark !== '' && (
           <span className={`conj-form-mark${markLit ? ' is-lit' : ''}`}>{mark}</span>
         )}
-        {blank && <span className="conj-blank" aria-hidden="true" />}
+        {blank && (
+          <span className="conj-blank" aria-live="polite">
+            {typed}
+            {caret && <span className="caret" aria-hidden="true" />}
+          </span>
+        )}
       </span>
       {after && !stacked && ' '}
       {after && <span className="conj-form-context">{after.trimStart()}</span>}

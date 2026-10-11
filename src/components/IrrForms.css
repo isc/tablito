@@ -117,7 +117,7 @@
 }
 
 .session-question.irr-question {
-  padding: 16px 16px 0;
+  padding: 16px;
 }
 
 .irr-intro .irr-forms {
@@ -141,9 +141,4 @@
   color: var(--ink);
   text-align: center;
   margin: 6px 0 4px;
-}
-
-/* La saisie s'écrit dans la case active : l'ardoise du clavier ferait doublon. */
-.irr-answer .letterpad-display {
-  display: none;
 }

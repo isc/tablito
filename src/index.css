@@ -142,6 +142,22 @@ input, select, textarea {
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Curseur de saisie clignotant, à la hauteur du texte qu'il suit : l'ardoise
+   du pavé numérique, le trait de la phrase de conjugaison. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.8em;
+  margin-left: 2px;
+  background: var(--indigo);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }

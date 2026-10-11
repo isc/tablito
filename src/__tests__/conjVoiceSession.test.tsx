@@ -99,7 +99,8 @@ async function settle(): Promise<void> {
   }
 }
 
-const slate = () => document.querySelector('.letterpad-display-input')?.textContent ?? '';
+/** Ce qui est écrit sur le trait de la phrase (épelé ou tapé). */
+const written = () => document.querySelector('.conj-blank')?.textContent ?? '';
 
 /** Durée simulée de la lecture de l'énoncé. */
 const TTS_MS = 500;
@@ -172,8 +173,8 @@ describe('Épeler une réponse à voix haute (specs §15.10)', () => {
     const [, judgement, fast] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement, boolean];
     expect(judgement.verdict).toBe('correct');
     expect(fast).toBe(true);
-    // Écho visuel : l'ardoise porte ce qui a été entendu.
-    expect(slate()).toBe('geons');
+    // Écho visuel : le trait porte ce qui a été entendu.
+    expect(written()).toBe('geons');
   });
 
   it('la forme entière s’épelle quand c’est elle qui est demandée', async () => {
@@ -200,7 +201,7 @@ describe('Épeler une réponse à voix haute (specs §15.10)', () => {
 
     const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
     expect(judgement.verdict).toBe('correct');
-    expect(slate()).toBe('ent');
+    expect(written()).toBe('ent');
   });
 
   it('la meilleure hypothèse du recognizer est retenue, pas forcément la première', async () => {
@@ -221,9 +222,9 @@ describe('Épeler une réponse à voix haute (specs §15.10)', () => {
     promptEnds();
 
     saying('chantons o');
-    expect(slate()).toBe('o');
+    expect(written()).toBe('o');
     saying('chantons o haine');
-    expect(slate()).toBe('on');
+    expect(written()).toBe('on');
   });
 });
 
@@ -323,14 +324,14 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
 
     say('sommes esse o');
     // Rien n'est parti : la reconstruction n'a pas la longueur attendue. Mais
-    // ce qui est entendu s'affiche déjà, l'ardoise ne recule pas.
+    // ce qui est entendu s'affiche déjà, le trait ne recule pas.
     expect(onConjAnswer).not.toHaveBeenCalled();
-    expect(slate()).toBe('so');
+    expect(written()).toBe('so');
 
     // Elle reprend, et c'est la SOMME des deux finals qui est jugée.
     advance(1_500);
     say('emme emme e esse');
-    expect(slate()).toBe('sommes');
+    expect(written()).toBe('sommes');
     const [, judgement] = onConjAnswer.mock.calls[0] as [unknown, ConjJudgement];
     expect(judgement.verdict).toBe('correct');
   });
@@ -347,7 +348,7 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
 
     expect(onConjAnswer).not.toHaveBeenCalled();
     expect(text()).toContain(t.voiceNotHeard);
-    expect(slate()).toBe('');
+    expect(written()).toBe('');
   });
 
   it('l’écho de la synthèse est jeté, et ne compte pas comme un raté', async () => {
@@ -362,7 +363,7 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
     say('en ce moment ils jouent aux billes');
     expect(onConjAnswer).not.toHaveBeenCalled();
     expect(text()).not.toContain(t.voiceNotHeard);
-    expect(slate()).toBe('');
+    expect(written()).toBe('');
   });
 
   it('répondre par-dessus l’énoncé n’aboutit jamais à un silence', async () => {
@@ -378,7 +379,7 @@ describe('Un raté de reconnaissance n’est jamais une erreur (specs §15.10)',
     say('chantons o haine esse');
 
     expect(onConjAnswer).not.toHaveBeenCalled();
-    expect(slate()).toBe('');
+    expect(written()).toBe('');
     expect(text()).toContain(t.voiceNotHeard);
   });
 });
@@ -391,12 +392,12 @@ describe('Correction au clavier (specs §15.10)', () => {
     promptEnds();
 
     saying('chantons o haine');
-    expect(slate()).toBe('on');
+    expect(written()).toBe('on');
 
     const abortsBefore = spy.aborts;
     typeLetters('s');
     expect(spy.aborts).toBeGreaterThan(abortsBefore);
-    expect(slate()).toBe('ons');
+    expect(written()).toBe('ons');
     expect(text()).toContain(t.voiceTookOver);
 
     // Plus aucune soumission automatique ne peut lui passer devant.
@@ -481,8 +482,8 @@ describe('Seuil de rapidité en vocal : la latence de rappel (specs §15.10)', (
 
     advance(TTS_MS); // l'énoncé finit ; la fenêtre d'écho court encore
     saying('chantons');
-    // Le contenu, lui, est bien jeté : l'ardoise reste vide.
-    expect(slate()).toBe('');
+    // Le contenu, lui, est bien jeté : le trait reste vide.
+    expect(written()).toBe('');
 
     advance(ECHO_WINDOW_MS);
     advance(20_000);
@@ -549,10 +550,10 @@ describe('Politique micro (specs §15.10, §3.6bis)', () => {
     // Le feedback accepté se referme tout seul (§5.3).
     advance(FEEDBACK_DISMISS_MS);
 
-    // Question suivante : ardoise vide, consigne remise à zéro, micro toujours
+    // Question suivante : trait vide, consigne remise à zéro, micro toujours
     // le même (aucun abort/start supplémentaire n'est nécessaire).
     await settle();
-    expect(slate()).toBe('');
+    expect(written()).toBe('');
     expect(text()).toContain(t.voiceSpellWhole);
   });
 });

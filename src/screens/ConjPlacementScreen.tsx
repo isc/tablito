@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ConjForm from '../components/ConjForm';
+import ConjQuestionPrompt from '../components/ConjQuestionPrompt';
 import LetterKeyboard from '../components/LetterKeyboard';
 import Mascot from '../components/Mascot';
 import {
@@ -43,6 +44,9 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
   // Le verdict affiché est AUSSI le verrou de saisie : tant qu'il est là, la
   // sonde est jouée et le clavier comme le « Je ne sais pas » ont disparu.
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  // La saisie, écrite sur le trait de la phrase. Vidée au passage à la sonde
+  // suivante, en même temps que le clavier re-keyé repart vide.
+  const [typed, setTyped] = useState('');
   const startedAt = useRef(NOT_STARTED);
 
   const probe = CONJ_PLACEMENT_PROBES[index];
@@ -77,6 +81,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
           setStep('done');
         } else {
           setIndex(index + 1);
+          setTyped('');
         }
       }, correct ? FEEDBACK_MS.correct : FEEDBACK_MS.incorrect);
     },
@@ -148,19 +153,12 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
           ))}
         </div>
 
-        <div className="conj-sentence">
-          <ConjForm
-            stacked
-            before={view.carrier.before}
-            subject={view.subject}
-            segment={[view.displayedStem, '']}
-            blank
-            after={view.tail}
-          />
-        </div>
-        <div className="conj-question-meta">
-          <span className="conj-intro-infinitive">{t.infinitive(view.verb)}</span>
-        </div>
+        <ConjQuestionPrompt
+          view={view}
+          typed={typed}
+          caret={feedback === null}
+          onReplay={() => speak(view.promptTtsKey)}
+        />
 
         {feedback ? (
           // Jamais de croix ni de correction claironnée : un ✓ quand c'est
@@ -178,7 +176,7 @@ export default function ConjPlacementScreen({ onComplete }: ConjPlacementScreenP
               <LetterKeyboard
                 key={`probe-${index}`}
                 onSubmit={handleSubmit}
-                prefix={view.displayedStem}
+                onInput={setTyped}
               />
             </div>
             <button className="welcome-dontknow" onClick={() => record(false)}>

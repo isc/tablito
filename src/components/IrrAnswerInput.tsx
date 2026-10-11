@@ -85,8 +85,8 @@ export default function IrrAnswerInput({
 
   const voice = inputMode === 'voice' && STT_SUPPORTED && !voiceGaveUp;
 
-  // La case en cours s'écrit dans la case elle-même : l'ardoise du clavier
-  // est masquée, une seule place pour la réponse.
+  // La case en cours s'écrit dans la case elle-même : une seule place pour la
+  // réponse.
   const handleTyping = useCallback(
     (value: string) => setValues((prev) => (prev[active] === value ? prev : withSlot(prev, active, value))),
     [active],

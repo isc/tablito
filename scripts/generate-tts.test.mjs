@@ -76,9 +76,10 @@ describe('entrées TTS de la conjugaison', () => {
       .map((v) => v.sentenceTtsKey);
     expect(divergingIntro).toEqual([]);
 
-    // L'énoncé s'arrête à l'infinitif, jamais sur la forme conjuguée.
+    // L'énoncé nomme l'infinitif, jamais la forme conjuguée — pas même comme
+    // un mot de la phrase porteuse.
     const leaking = asked
-      .filter((v) => !v.prompt.endsWith(`… ${v.verb}`))
+      .filter((v) => !v.prompt.toLowerCase().startsWith(`${v.verb}. `) || v.prompt.split(/[^\p{L}]+/u).includes(v.form))
       .map((v) => v.promptTtsKey);
     expect(leaking).toEqual([]);
   });

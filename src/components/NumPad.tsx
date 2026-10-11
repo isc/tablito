@@ -83,9 +83,9 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
 
   return (
     <div className="pad-container numpad-container">
-      <div className="pad-display numpad-display" aria-live="polite">
+      <div className="numpad-display" aria-live="polite">
         {input || ''}
-        {!disabled && <span className="pad-display-cursor" />}
+        {!disabled && <span className="caret" />}
       </div>
       <div className="numpad-grid">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (

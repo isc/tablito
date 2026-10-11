@@ -1,10 +1,22 @@
-/* Pavé numérique des maths. Le socle commun aux deux pavés (ardoise, relief,
-   états, curseur) vit dans Pad.css ; ici ne restent que les dimensions et la
-   typographie propres au pavé de chiffres. */
+/* Pavé numérique des maths. Le socle commun aux deux pavés (relief, états)
+   vit dans Pad.css ; ici l'ardoise, et les dimensions et la typographie
+   propres au pavé de chiffres. */
 
+/* L'ardoise : ce que l'enfant a tapé jusqu'ici, en gros. */
 .numpad-display {
+  font-family: var(--serif);
   font-size: 32px;
+  font-weight: 500;
   letter-spacing: 2px;
+  line-height: 1;
+  color: var(--ink);
+  height: 50px;
+  padding: 6px 12px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid var(--indigo);
+  position: relative;
 }
 
 .numpad-grid {

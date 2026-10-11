@@ -5,7 +5,7 @@
    promesse de la spec, « correction au clavier toujours possible » — donc le
    micro devient une barre compacte : l'icône, son halo d'écoute, et la
    consigne à côté. L'écho des lettres entendues, lui, n'a pas de composant :
-   c'est l'ardoise du clavier qui se remplit (cf. LetterKeyboard `value`).
+   il s'écrit sur le trait de la phrase (cf. LetterKeyboard `value`, `onInput`).
 
    Deux classes viennent de VoiceInput.css et ne sont pas redéfinies ici :
    `.voice-mic-ring` (le halo d'écoute) et `.voice-error` (micro bloqué, pas de

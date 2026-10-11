@@ -105,9 +105,9 @@ describe('inventaire — la structure de la spec §3.3', () => {
     expect(new Set(sentences.map((s) => s.key)).size).toBe(sentences.length);
     expect(sentences.length).toBeLessThanOrEqual(220);
     for (const { key, text } of sentences) {
-      // Énoncé : « Demain, nous… chanter » — l'infinitif clôt la phrase.
-      // Phrase complète : ponctuée, forme conjuguée comprise.
-      expect(text).toMatch(key.endsWith('-p') ? /^[A-ZÀ-Ý].*[.!?]$/u : /^[A-ZÀ-Ý].*… \p{L}+$/u);
+      // Énoncé : « Chanter. Demain, je… à la fête. » — le verbe, puis la
+      // phrase suspendue au trou. Phrase complète : forme conjuguée comprise.
+      expect(text).toMatch(key.endsWith('-p') ? /^[A-ZÀ-Ý].*[.!?]$/u : /^[A-ZÀ-Ý]\p{L}+\. [A-ZÀ-Ý].*… .*[.!?]$/u);
     }
   });
 
@@ -239,8 +239,8 @@ describe('réponse attendue et segmentation (§4.2, §4.5)', () => {
   });
 
   it('garde le radical affiché aux temps où il ne trahit rien', () => {
-    // Présent et imparfait : le radical se déduit de l'infinitif déjà rappelé
-    // sous la question (chanter → chant), la connaissance testée est la seule
+    // Présent et imparfait : le radical se déduit de l'infinitif affiché en
+    // tête de la question (chanter → chant), la connaissance testée est la seule
     // terminaison — rien ne change.
     for (const key of ['pres-g1-je', 'imp-je']) {
       const view = resolveConjQuestion(conjFactDef(key)!, 0);
@@ -301,10 +301,10 @@ describe('réponse attendue et segmentation (§4.2, §4.5)', () => {
   });
 
   it('n’énonce JAMAIS la forme demandée : l’audio de la question dit l’infinitif', () => {
-    // « Bientôt, nous… être » — pas « Bientôt, nous serons prêts », qui
-    // dicterait la réponse au moment même où on la demande (§4.1).
+    // « Être. Bientôt, nous… prêts. » — pas « Bientôt, nous serons prêts »,
+    // qui dicterait la réponse au moment même où on la demande (§15.5).
     const view = resolveConjQuestion(conjFactDef('fut-etre')!, 1);
-    expect(view.prompt).toBe('Bientôt, nous… être');
+    expect(view.prompt).toBe('Être. Bientôt, nous… prêts.');
     expect(view.prompt).not.toContain(view.form);
     expect(view.promptTtsKey).toBe('conj-fut-etre-1');
     // Hors porteuse 0, aucune phrase complète n'est pré-générée.
