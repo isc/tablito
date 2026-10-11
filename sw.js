@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261003193051"
+const VERSION = "20261011135256"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -77,6 +77,14 @@ const ASSETS = [
   "/src/components/FeedbackOverlay.js",
   "/src/components/FeedbackStar.js",
   "/src/components/FlameIcon.js",
+  "/src/components/IrrAnswerInput.js",
+  "/src/components/IrrClassVerbs.js",
+  "/src/components/IrrFeedbackOverlay.js",
+  "/src/components/IrrForms.js",
+  "/src/components/IrrIntro.js",
+  "/src/components/IrrMysteryImage.js",
+  "/src/components/IrrProgressGrid.js",
+  "/src/components/IrrVoiceInput.js",
   "/src/components/LanguageToggle.js",
   "/src/components/LeitnerGrid.js",
   "/src/components/LetterKeyboard.js",
@@ -133,6 +141,7 @@ const ASSETS = [
   "/src/i18n/conjugation.js",
   "/src/i18n/home.js",
   "/src/i18n/homeIdea.js",
+  "/src/i18n/irregular.js",
   "/src/i18n/lang.js",
   "/src/i18n/language.js",
   "/src/i18n/onboarding.js",
@@ -167,12 +176,16 @@ const ASSETS = [
   "/src/lib/hardestFacts.js",
   "/src/lib/homeIdea.js",
   "/src/lib/install.js",
+  "/src/lib/irregularComposer.js",
+  "/src/lib/irregularPlacement.js",
+  "/src/lib/irregularVerbs.js",
   "/src/lib/leitner.js",
   "/src/lib/letterNames.js",
   "/src/lib/micPreflight.js",
   "/src/lib/parseEnglishNumber.js",
   "/src/lib/parseFrenchNumber.js",
   "/src/lib/parseSpelledLetters.js",
+  "/src/lib/parseSpokenIrregular.js",
   "/src/lib/parseSpokenNumber.js",
   "/src/lib/parseSpokenRemainder.js",
   "/src/lib/phoneticDict.js",
@@ -203,6 +216,7 @@ const ASSETS = [
   "/src/screens/ChangelogScreen.js",
   "/src/screens/ConjPlacementScreen.js",
   "/src/screens/HomeScreen.js",
+  "/src/screens/IrrPlacementScreen.js",
   "/src/screens/ParentDashboard.js",
   "/src/screens/PrivacyScreen.js",
   "/src/screens/ProfileSelectScreen.js",
@@ -224,7 +238,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/"],"splash":["/splash/"],"landing":["/video/","/img/hero-poster"],"qrscan":["/vendor/qr-scanner/"],"phonetic":["/phonetic/"],"qrgen":["/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"b98220b90770","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_VERSIONS = {"audio":"08c1b3147ebd","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
