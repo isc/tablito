@@ -83,6 +83,12 @@
   flex: 1;
 }
 
+/* Placement : enveloppe hors mise en page, ses enfants restent dans le flex de
+   .welcome-step. */
+.irr-placement-input:not([hidden]) {
+  display: contents;
+}
+
 .irr-slot-label {
   font-family: var(--sans);
   font-size: 13px;

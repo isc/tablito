@@ -2,12 +2,14 @@ import { act, cleanup, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SessionScreen from '../screens/SessionScreen';
+import IrrPlacementScreen from '../screens/IrrPlacementScreen';
 import type { IrrSessionItem } from '../types';
-import { createInitialIrrFacts } from '../lib/irregularVerbs';
+import { createInitialIrrFacts, irrExpectedForms, requireIrrVerbDef } from '../lib/irregularVerbs';
+import { irrPlacementProbes } from '../lib/irregularPlacement';
 import type { IrrVerdict } from '../lib/irregularComposer';
 import { IRR_RECOGNITION_LANG } from '../components/IrrVoiceInput';
 import { IRR_INPUT_MODE_STORAGE_KEY } from '../hooks/useInputMode';
-import { advance } from './helpers/dom';
+import { advance, requireButton } from './helpers/dom';
 import { patchBufferSource, type PatchedBufferSource } from './helpers/audio';
 
 // Réponse dite à voix haute des verbes irréguliers (specs §16.6), dans le vrai
@@ -18,9 +20,13 @@ import { patchBufferSource, type PatchedBufferSource } from './helpers/audio';
 vi.mock('../lib/install', () => ({ isAndroid: () => false }));
 
 const { spy } = vi.hoisted(() => {
-  const spy = { instance: null as InstanceType<typeof Recognition> | null, lang: '' };
+  const spy = { instance: null as InstanceType<typeof Recognition> | null, lang: '', created: 0 };
 
   class Recognition {
+    constructor() {
+      spy.created++;
+    }
+
     lang = '';
     interimResults = false;
     continuous = false;
@@ -96,6 +102,7 @@ let audio: PatchedBufferSource;
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
   spy.instance = null;
+  spy.created = 0;
   audio = patchBufferSource({ endAfterMs: TTS_MS });
 });
 
@@ -165,5 +172,21 @@ describe('Dire le verbe (specs §16.6)', () => {
     advance(2100);
     say('put put put');
     expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
+  });
+});
+
+describe('Placement à la voix (specs §16.8)', () => {
+  it('une seule reconnaissance pour toutes les sondes : le micro reste ouvert d’un verbe à l’autre', () => {
+    render(<IrrPlacementScreen onComplete={() => {}} />);
+    act(() => requireButton(/C’est parti/).click());
+
+    for (const key of irrPlacementProbes().slice(0, 4)) {
+      promptEnds();
+      expect(document.querySelector('.irr-form--base')?.textContent).toBe(key);
+      expect(document.querySelector('.voice-mic.listening')).not.toBeNull();
+      say([key, ...irrExpectedForms(requireIrrVerbDef(key))].join(' '));
+      advance(700); // le verdict
+    }
+    expect(spy.created).toBe(1);
   });
 });
