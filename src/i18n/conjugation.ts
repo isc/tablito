@@ -16,8 +16,6 @@ export const conjStrings = {
   next: 'Suivant →',
   gotIt: "J'ai compris !",
   replay: 'Réécouter',
-  /** Rappel de l'infinitif à côté de la phrase porteuse : « (chanter) ». */
-  infinitive: (verb: string) => `(${verb})`,
 
   // --- Introduction d'un fait nouveau (spec §5.2) ---
   /** Étape 2 : ancrage à la règle. */

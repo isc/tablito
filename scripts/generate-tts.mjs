@@ -341,14 +341,15 @@ async function buildEntriesFr() {
   });
 
   // Les phrases porteuses de la conjugaison, en DEUX jeux de clés :
-  //   `conj-<clé du fait>-<rang>`   l'ÉNONCÉ (« Demain, nous… chanter »), lu
-  //                                 à la question et à la réécoute (§15.5) ;
+  //   `conj-<clé du fait>-<rang>`   l'ÉNONCÉ (« Chanter. Demain, je… à la
+  //                                 fête. »), lu à la question et à la
+  //                                 réécoute (§15.5) ;
   //   `conj-<clé du fait>-0-p`      la phrase COMPLÈTE, forme conjuguée
   //                                 incluse, lue à l'étape 1 de l'introduction
   //                                 (§15.6) — porteuse 0 seulement, la seule
   //                                 qu'une introduction utilise.
-  // L'énoncé s'arrête à l'infinitif : lire « Bientôt, nous serons prêts » au
-  // moment où l'on demande la forme dicterait la réponse.
+  // L'énoncé tait la forme : lire « Bientôt, nous serons prêts » au moment où
+  // l'on demande la forme dicterait la réponse.
   entries.push(...(await loadConjEntries()));
 
   // Les deux seules relances PARLÉES du mode vocal épelé (§15.10). En vocal,

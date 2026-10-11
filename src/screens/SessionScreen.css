@@ -145,7 +145,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 20px 0;
+  /* En bas, de l'air : la bascule micro ↔ clavier, dernier élément d'une
+     question, collait au bord de l'écran (remonté le 11/10/2026). */
+  padding: 8px 20px 16px;
   animation: slideUp 0.3s ease;
 }
 
@@ -245,16 +247,6 @@
   margin-top: 8px;
 }
 
-/* Rappel de l'infinitif : la consigne, jamais l'énoncé. Discret par
-   construction — l'exercice ne doit pas commencer par un déchiffrage (§8). */
-.conj-intro-infinitive {
-  font-family: var(--sans);
-  font-size: 15px;
-  font-style: italic;
-  font-weight: 700;
-  color: var(--ink-muted);
-}
-
 /* Copie différée (§5.2 étape 3). Le masquage se joue dans le JSX (la
    terminaison cède la place au trait), pas ici : plus de fondu, la couverture
    est nette — « je lis, je cache, j'écris » est un geste franc. Hauteur
@@ -296,36 +288,7 @@
 }
 
 .session-question.conj-question {
-  padding: 8px 16px 0;
-}
-
-/* Un seul item à l'écran, gros corps, interlignage généreux (§8). Toute la
-   mise en scène (pile de trois lignes, verbe insécable, contexte en encre
-   douce) vit dans ConjForm en mode `stacked` — ici, seul l'espacement.
-
-   `margin-top: auto` ici et `margin-bottom: auto` sur le méta juste dessous :
-   l'énoncé et son infinitif forment UN groupe, posé dans le mou que laisse le
-   clavier ancré en bas, au lieu de rester collés en haut. Sans ça tout le mou
-   s'accumulait d'un coup entre l'infinitif et le clavier — « un gros espace
-   vide au milieu et tout coincé en bas », remonté par un parent le 23/08/2026
-   sur un écran de 841 px. Le clavier, lui, ne bouge pas d'une question à
-   l'autre : ce sont les pouces qui l'attendent là, pas l'inverse. */
-.conj-sentence {
-  display: flex;
-  justify-content: center;
-  padding: 16px 0 4px;
-  margin-top: auto;
-}
-
-.conj-question-meta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 4px 0 2px;
-  /* Contrepoids du `margin-top: auto` de .conj-sentence — cf. son commentaire. */
-  margin-bottom: auto;
+  padding-inline: 16px;
 }
 
 /* Réécoute : la phrase est lue d'office à l'affichage, ce bouton n'est là que

@@ -14,6 +14,8 @@ import VoiceInput from '../components/VoiceInput';
 import ConjVoiceInput from '../components/ConjVoiceInput';
 import DotGrid from '../components/DotGrid';
 import ConjForm from '../components/ConjForm';
+import ConjQuestionPrompt from '../components/ConjQuestionPrompt';
+import ListenButton from '../components/ListenButton';
 import ConjRuleVisual from '../components/ConjRuleVisual';
 import ConjRuleListenButton from '../components/ConjRuleListenButton';
 import FeedbackOverlay from '../components/FeedbackOverlay';
@@ -221,9 +223,9 @@ function conjView(item: ConjSessionItem): ConjQuestionView {
 }
 
 // Clé TTS de l'énoncé d'une question (pré-générée par scripts/generate-tts.mjs).
-// En conjugaison, l'énoncé s'arrête à l'infinitif (« Demain, nous… chanter »,
-// §4.1) : lire la phrase entière dicterait la réponse au moment où on la
-// demande, et les formes irrégulières n'auraient plus qu'à être transcrites.
+// En conjugaison, l'énoncé tait la forme (« Chanter. Demain, je… à la
+// fête. », §15.5) : la dire dicterait la réponse au moment où on la demande,
+// et les formes irrégulières n'auraient plus qu'à être transcrites.
 function questionKey(item: AnySessionItem): string {
   // Verbes irréguliers : l'infinitif seul, lu par la voix anglaise (§16.5).
   if (item.kind === 'irr') return irrPromptTtsKey(item.fact.key);
@@ -266,6 +268,10 @@ export default function SessionScreen({
   // Étape 3 : le modèle est visible (4 s) puis masqué — l'enfant tape alors.
   const [conjCopyVisible, setConjCopyVisible] = useState(true);
   const conjCopyAttempts = useRef(0);
+  // La saisie en cours, écrite sur le trait de la phrase (§15.5). Rangée avec
+  // le jeton du clavier qui l'a produite : un clavier re-keyé (question
+  // suivante, nouvel essai de copie) repart d'un trait vide, sans remise à zéro.
+  const [conjTyped, setConjTyped] = useState({ token: '', text: '' });
   const [feedback, setFeedback] = useState<{
     item: SessionItem;
     correct: boolean;
@@ -829,14 +835,15 @@ export default function SessionScreen({
     q: ConjQuestionView,
     token: string,
     onSubmitTyped: (typed: string, source?: 'keypad' | 'voice') => void,
-  ) =>
-    conjVoiceMode ? (
+  ) => {
+    const onInput = (text: string) => setConjTyped({ token, text });
+    return conjVoiceMode ? (
       <ConjVoiceInput
         expectedForm={q.form}
         expectedLength={q.expected.length}
         subject={q.subject}
         onSubmit={onSubmitTyped}
-        prefix={q.displayedStem}
+        onInput={onInput}
         endingOnly={q.endingOnly}
         disabled={numpadDisabled}
         isSpeaking={isSpeaking}
@@ -850,7 +857,7 @@ export default function SessionScreen({
           key={token}
           onSubmit={onSubmitTyped}
           disabled={numpadDisabled}
-          prefix={q.displayedStem}
+          onInput={onInput}
         />
         {STT_SUPPORTED && (
           <button
@@ -864,6 +871,13 @@ export default function SessionScreen({
         )}
       </>
     );
+  };
+  /** La saisie à écrire sur le trait, si elle vient du clavier de `token`. */
+  const conjTypedFor = (token: string) => (conjTyped.token === token ? conjTyped.text : '');
+  // Jetons des claviers : un par question, un par essai de copie — un nouvel
+  // essai repart d'un clavier neuf.
+  const answerToken = `answer-${currentIndex}`;
+  const copyToken = `copy-${currentIndex}-${conjCopyAttempts.current}`;
 
   const maxDots = Math.min(questions.length, MAX_SESSION_QUESTIONS);
   const progressDots = Array.from({ length: maxDots }, (_, i) => {
@@ -998,6 +1012,7 @@ export default function SessionScreen({
             <>
               {/* Le nom du temps — nommé ici et au feedback, jamais sur la
                   question (cf. `tenseName` dans i18n/conjugation). */}
+              <span className="conj-verb-tag">{cv.verb}</span>
               <div className="eyebrow tense-chip">{TENSE_NAMES.fr[cv.def.tense]}</div>
               {/* 1. La phrase en contexte, lue à voix haute, forme visible —
                   même mise en scène empilée que la question. */}
@@ -1010,7 +1025,6 @@ export default function SessionScreen({
                   after={cv.tail}
                 />
               </div>
-              <div className="conj-intro-infinitive">{tc.infinitive(cv.verb)}</div>
               <button className="btn btn--ink session-intro-btn" onClick={handleConjIntroNext}>
                 {tc.next}
               </button>
@@ -1052,24 +1066,22 @@ export default function SessionScreen({
               {/* Masqué, le modèle devient EXACTEMENT la question (§5.2 étape
                   3) : pronom, radical affiché, trait à compléter. Un vide
                   intégral ne disait plus quelle personne était demandée — et
-                  couvrir le radical n'aurait rien couvert, le clavier juste
-                  dessous l'affiche déjà en préfixe. */}
+                  couvrir le radical rendrait la copie plus dure que la
+                  question, qui l'affiche. La saisie s'écrit sur le trait. */}
               <div className="conj-copy-model">
                 <ConjForm
                   subject={cv.subject}
                   segment={conjCopyVisible ? cv.segment : [cv.displayedStem, '']}
                   blank={!conjCopyVisible}
+                  typed={conjTypedFor(copyToken)}
+                  caret={!numpadDisabled}
                 />
               </div>
               {!conjCopyVisible && (
                 <div className="conj-keyboard-area">
                   {/* La copie différée s'épelle aussi bien qu'elle s'écrit : en
                       mode vocal, l'enfant n'a jamais besoin du clavier. */}
-                  {renderConjInput(
-                    cv,
-                    `copy-${currentIndex}-${conjCopyAttempts.current}`,
-                    handleConjCopy,
-                  )}
+                  {renderConjInput(cv, copyToken, handleConjCopy)}
                 </div>
               )}
             </>
@@ -1077,34 +1089,20 @@ export default function SessionScreen({
         </div>
       )}
 
-      {/* Question — conjugaison (spec §4.1, §4.2) : la phrase porteuse, le
+      {/* Question — conjugaison (spec §15.5) : le verbe, la phrase porteuse, le
           radical affiché quand il est régulier, et la seule terminaison à
-          taper. Aucune auto-validation : la longueur n'est pas prévisible. */}
+          taper, écrite sur le trait. Aucune auto-validation : la longueur
+          n'est pas prévisible. */}
       {!showIntro && cv && (
         <div className="session-question conj-question">
-          <div className="conj-sentence">
-            <ConjForm
-              stacked
-              before={cv.carrier.before}
-              subject={cv.subject}
-              segment={[cv.displayedStem, '']}
-              blank
-              after={cv.tail}
-            />
-          </div>
-          <div className="conj-question-meta">
-            <span className="conj-intro-infinitive">{tc.infinitive(cv.verb)}</span>
-            <button
-              type="button"
-              className="conj-replay-btn"
-              onClick={() => speak(cv.promptTtsKey)}
-              aria-label={tc.replay}
-            >
-              {'🔊'} {tc.replay}
-            </button>
-          </div>
+          <ConjQuestionPrompt
+            view={cv}
+            typed={conjTypedFor(answerToken)}
+            caret={!numpadDisabled}
+            onReplay={() => speak(cv.promptTtsKey)}
+          />
           <div className="conj-keyboard-area">
-            {renderConjInput(cv, `answer-${currentIndex}`, handleConjSubmit)}
+            {renderConjInput(cv, answerToken, handleConjSubmit)}
           </div>
         </div>
       )}
@@ -1135,14 +1133,7 @@ export default function SessionScreen({
             isSpeaking={isSpeaking}
             token={`answer-${currentIndex}`}
           >
-            <button
-              type="button"
-              className="conj-replay-btn"
-              onClick={() => speak(irrPromptTtsKey(irrDef.key))}
-              aria-label={ti.replay}
-            >
-              {'🔊'} {ti.replay}
-            </button>
+            <ListenButton label={ti.replay} onClick={() => speak(irrPromptTtsKey(irrDef.key))} />
           </IrrAnswerInput>
         </div>
       )}

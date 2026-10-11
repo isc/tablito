@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-11',
+    items: [
+      "Conjugaison, la question se lit dans l'ordre du geste\u00a0: le verbe à conjuguer s'affiche en tête, en grand, puis la phrase à compléter. Il était jusqu'ici entre parenthèses, en petit, sous la phrase — alors qu'au futur et pour les verbes irréguliers, c'est la seule indication du verbe demandé. Votre enfant écrit désormais directement dans la phrase, sur le trait, et la relit en entier avant de valider. À voix haute aussi, le verbe vient d'abord, puis la phrase entière («\u00a0Regarder. Bientôt, nous… les étoiles.\u00a0»)\u00a0: l'ancienne formule, «\u00a0Bientôt, nous… regarder\u00a0», s'entendait «\u00a0nous regarder\u00a0», la mauvaise forme à la place même de la réponse.",
+    ],
+  },
+  {
     date: '2026-10-03',
     items: [
       "Nouvelle matière\u00a0: les verbes irréguliers anglais. Une troisième tuile «\u00a0Verbes anglais\u00a0» apparaît sur l'accueil. L'app donne l'infinitif, en anglais et à voix haute, et votre enfant répond les deux autres formes, comme en classe\u00a0: «\u00a0go\u00a0» → «\u00a0went, gone\u00a0». Il peut répondre à voix haute (c'est le mode par défaut, le dire aide à retenir) ou les écrire au clavier. 64 verbes, des plus fréquents aux moins fréquents, deux nouveaux au plus par séance — et si la classe suit sa propre liste, cochez dans l'espace parent les verbes «\u00a0vus en classe\u00a0»\u00a0: ils passent en premier, avec leur propre image mystère et un badge par famille de verbes (sing, sang, sung…). Quelques questions au départ repèrent ceux que votre enfant connaît déjà. Dans l'espace parent, une carte dédiée montre les verbes maîtrisés et les erreurs récentes, comme «\u00a0goed\u00a0» au lieu de «\u00a0went\u00a0».",
@@ -249,6 +255,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-11',
+    items: [
+      "French conjugation: the question now reads in the order your child works through it. The verb to conjugate comes first, in large type, followed by the sentence to complete. Until now it sat in small type in brackets under the sentence, even though in the future tense and for irregular verbs it is the only clue to which verb is asked. Your child now writes straight into the sentence, on the blank line, and rereads the whole sentence before checking. Read aloud, the verb also comes first, then the whole sentence (“Regarder. Bientôt, nous… les étoiles.”): the old wording, “Bientôt, nous… regarder”, sounded like “nous regarder”, the wrong form in the very place of the answer.",
+    ],
+  },
   {
     date: '2026-10-03',
     items: [

@@ -683,10 +683,14 @@ export interface ConjQuestionView {
   /** Fin de phrase : « des crêpes. » (chaîne vide si la phrase s'arrête là). */
   tail: string;
   /**
-   * ÉNONCÉ lu quand la question est posée : « Demain, nous… chanter » (§4.1).
-   * L'infinitif, jamais la forme conjuguée — un MP3 qui dit « nous serons »
-   * dicterait la réponse au moment même où on la demande, et le Leitner
-   * promouvrait un rappel jamais testé sur tous les irréguliers non homophones.
+   * ÉNONCÉ lu quand la question est posée : « Chanter. Demain, je… à la
+   * fête. » (§15.5) — le verbe à part, dans l'ordre de l'écran, puis la
+   * phrase entière avec un silence à la place du trou. Jamais la forme
+   * conjuguée : un MP3 qui dit « nous serons » dicterait la réponse au moment
+   * même où on la demande, et le Leitner promouvrait un rappel jamais testé
+   * sur tous les irréguliers non homophones. Et jamais l'infinitif DANS le trou
+   * (« nous… chanter ») : l'oreille y entend « nous chanter », la mauvaise
+   * forme à l'endroit même de la réponse.
    */
   prompt: string;
   /** Clé stable du MP3 de l'énoncé. */
@@ -725,7 +729,7 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
     // entier, e compris » est LE fait du temps (avis parent du 15/09/2026).
     // L'enfant écrit donc la forme entière, comme pour un radical irrégulier.
     // Aux autres temps le radical ne trahit rien : il se déduit de l'infinitif
-    // déjà donné sous la question (chanter → chant), et la connaissance testée
+    // affiché en tête de la question (chanter → chant), et la connaissance testée
     // est bien la seule terminaison.
     //
     // Condition lue dans la DONNÉE, pas dans le nom du temps : un temps qui se
@@ -765,9 +769,9 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
     endingOnly,
     lead,
     tail,
-    // Le pronom SANS élision : rien ne le suit à l'oral, « j'… avoir » ne se dit
-    // pas. C'est l'énoncé de la spec, au mot près (« Demain, nous… chanter »).
-    prompt: `${carrier.before} ${person}… ${verb}`,
+    // Le verbe d'abord, puis la phrase entière, suspendue au trou. Le pronom
+    // SANS élision : le trou le suit à l'oral, « j'… un vélo » ne se dit pas.
+    prompt: `${verb[0].toUpperCase()}${verb.slice(1)}. ${carrier.before} ${person}…${tail}`,
     promptTtsKey: conjTtsKey(def.key, index),
     sentence: `${lead}${form}${tail}`,
     sentenceTtsKey: index === 0 ? conjSentenceTtsKey(def.key) : null,

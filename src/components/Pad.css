@@ -1,7 +1,8 @@
 /* Socle commun des deux pavés de saisie : le pavé numérique des maths
    (NumPad) et le mini-clavier alphabétique de la conjugaison (LetterKeyboard).
-   Même ardoise, même relief 2 px, même feedback tactile, mêmes états — le
-   geste doit être le même d'une matière à l'autre.
+   Même relief 2 px, même feedback tactile, mêmes états — le geste doit être le
+   même d'une matière à l'autre. L'ardoise, elle, n'est qu'au pavé numérique :
+   en conjugaison, la saisie s'écrit dans la phrase.
 
    ⚠️ Ce fichier ne déclare AUCUNE des propriétés que les deux pavés règlent
    différemment (height, min-height, border-radius, font-size, letter-spacing,
@@ -22,34 +23,6 @@
   -webkit-touch-callout: none;
 }
 
-/* L'ardoise : ce que l'enfant a tapé jusqu'ici, en gros. */
-.pad-display {
-  font-family: var(--serif);
-  font-weight: 500;
-  line-height: 1;
-  color: var(--ink);
-  height: 50px;
-  padding: 6px 12px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 2px solid var(--indigo);
-  position: relative;
-}
-
-.pad-display-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 26px;
-  background: var(--indigo);
-  animation: blink 1s infinite;
-  margin-left: 2px;
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
 
 .pad-btn {
   font-family: var(--sans);

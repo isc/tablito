@@ -1,27 +1,8 @@
 /* Mini-clavier alphabétique de la matière conjugaison (spec Verbito §15.5).
-   Le socle commun aux deux pavés (ardoise, relief 2 px, états, curseur) vit
-   dans Pad.css — le geste doit être le même d'une matière à l'autre ; ici ne
-   restent que les dimensions propres à un clavier de lettres et l'ardoise à
-   radical. */
-
-.letterpad-display {
-  font-size: 32px;
-  letter-spacing: 1px;
-}
-
-/* Le radical déjà donné, en encre douce : l'enfant voit la forme entière se
-   construire (« chant » + « ons ») sans confondre ce qu'il a tapé avec ce qui
-   lui était offert. */
-.letterpad-display-prefix {
-  color: var(--conj-stem);
-  opacity: 0.65;
-  font-weight: 500;
-}
-
-.letterpad-display-input {
-  color: var(--ink);
-  font-weight: 600;
-}
+   Le socle commun aux deux pavés (relief 2 px, états) vit dans Pad.css — le
+   geste doit être le même d'une matière à l'autre ; ici ne restent que les
+   dimensions propres à un clavier de lettres. Pas d'ardoise, contrairement au
+   pavé numérique : la saisie s'écrit dans la phrase (cf. LetterKeyboard). */
 
 .letterpad-rows {
   display: flex;

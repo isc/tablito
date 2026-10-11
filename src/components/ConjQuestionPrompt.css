@@ -1,0 +1,54 @@
+/* L'énoncé d'une question de conjugaison (§15.5) : le verbe en tête, la phrase
+   à compléter dessous. Un seul item à l'écran, gros corps, interlignage
+   généreux (§8) ; la pile de trois lignes de la phrase vit dans ConjForm.
+
+   `margin-top: auto` : avec celle du clavier ancré en bas (.conj-keyboard-area),
+   le mou se partage à parts égales au-dessus et au-dessous de l'énoncé, centré
+   entre la barrette et le clavier. Sans ça tout le mou s'accumulait d'un coup
+   au-dessus du clavier — « un gros espace vide au milieu et tout coincé en
+   bas », remonté par un parent le 23/08/2026 sur un écran de 841 px. Le
+   clavier, lui, ne bouge pas d'une question à l'autre : ce sont les pouces qui
+   l'attendent là, pas l'inverse. */
+.conj-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 0 4px;
+  margin-top: auto;
+}
+
+/* Le verbe reste au centre exact, aligné sur la phrase ; la réécoute se range
+   à sa droite sans le décaler. */
+.conj-prompt-verb-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+}
+
+.conj-prompt-verb-row > .conj-verb-tag {
+  grid-column: 2;
+}
+
+.conj-prompt-verb-row > .listen-btn {
+  justify-self: start;
+}
+
+/* Le verbe à conjuguer : la donnée de départ de l'exercice, pas un rappel —
+   en grand. Une étiquette à plat, de la famille de la pastille du temps
+   (TenseChip) : elle nomme, elle n'agit pas. Surtout pas le relief des touches
+   du clavier juste dessous, qui la ferait prendre pour une touche. */
+.conj-verb-tag {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--cream-deep);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 22px 6px;
+}

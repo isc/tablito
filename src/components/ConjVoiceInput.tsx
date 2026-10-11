@@ -26,10 +26,10 @@ import { useVoiceStrings } from '../i18n/voice';
 //      avant qu'elle ait la longueur attendue, les finals étant recollés d'un
 //      bout à l'autre de l'épellation ; sinon on redemande, gentiment, et on
 //      bascule au clavier au deuxième raté ;
-//   2. **écho visuel corrigeable.** Les lettres reconnues remplissent l'ardoise
-//      du clavier, qui reste sous la main : dès que l'enfant y touche, le micro
-//      se coupe et c'est elle qui valide — plus aucune soumission automatique
-//      ne peut lui passer devant ;
+//   2. **écho visuel corrigeable.** Les lettres reconnues s'écrivent sur le
+//      trait de la phrase, et le clavier reste sous la main : dès que l'enfant
+//      y touche, le micro se coupe et c'est lui qui valide — plus aucune
+//      soumission automatique ne peut lui passer devant ;
 //   3. **on ne compare jamais en orthographe.** Tout l'appariement est délégué
 //      à `parseSpelledLetters`, qui projette le transcript en phonèmes.
 //
@@ -108,8 +108,11 @@ interface ConjVoiceInputProps {
    * réponse tapée au clavier (§15.10).
    */
   onSubmit: (value: string, source: 'voice' | 'keypad') => void;
-  /** Radical affiché en encre douce dans l'ardoise (« chant »). */
-  prefix?: string;
+  /**
+   * La saisie en cours, épelée ou tapée, pour l'écrire sur le trait de la
+   * phrase (cf. LetterKeyboard `onInput`).
+   */
+  onInput: (value: string) => void;
   /** Seule la terminaison est demandée : la consigne dite diffère. */
   endingOnly?: boolean;
   disabled?: boolean;
@@ -136,7 +139,7 @@ export default function ConjVoiceInput({
   expectedLength,
   subject = '',
   onSubmit,
-  prefix = '',
+  onInput,
   endingOnly = false,
   disabled = false,
   isSpeaking = false,
@@ -147,7 +150,7 @@ export default function ConjVoiceInput({
   const { setInputMode } = useInputMode();
   const tv = useVoiceStrings();
 
-  // Écho visuel : les lettres entendues, poussées dans l'ardoise du clavier.
+  // Écho visuel : les lettres entendues, poussées dans la saisie du clavier.
   const [echo, setEcho] = useState('');
   const [keyboardOnly, setKeyboardOnly] = useState(false);
   // L'enfant a pris la main au clavier : micro coupé, validation à elle.
@@ -159,11 +162,11 @@ export default function ConjVoiceInput({
   const [hint, setHint] = useState<'spell' | 'again' | 'spell-now'>('spell');
 
   /**
-   * Remet la surface en position « je t'écoute » : ardoise vide, micro ouvert,
+   * Remet la surface en position « je t'écoute » : saisie vide, micro ouvert,
    * consigne de départ. Trois moments l'utilisent — une nouvelle question, la
    * réouverture du micro après l'avoir coupé, et le retour volontaire à la voix
    * après la bascule clavier — et ils doivent repartir du même état, sinon un
-   * reste de la question précédente traîne dans l'ardoise.
+   * reste de la question précédente traîne sur le trait.
    */
   function resumeVoice(): void {
     setEcho('');
@@ -455,8 +458,8 @@ export default function ConjVoiceInput({
     <LetterKeyboard
       onSubmit={submitTyped}
       disabled={disabled}
-      prefix={prefix}
-      // Écho poussé dans l'ardoise, sauf si l'enfant a pris la main.
+      onInput={onInput}
+      // Écho poussé dans la saisie, sauf si l'enfant a pris la main.
       value={tookOver ? undefined : echo}
       onEdit={handleEdit}
     />

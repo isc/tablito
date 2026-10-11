@@ -131,12 +131,26 @@
   text-decoration-thickness: 2px;
 }
 
-/* Le trait de la terminaison à compléter. Largeur FIXE : elle ne doit jamais
-   trahir le nombre de lettres attendues. */
+/* Le trait de la terminaison à compléter, sur lequel s'écrit la saisie. Sa
+   largeur de départ est FIXE et ne s'allonge qu'avec ce qui est tapé : elle ne
+   doit jamais trahir le nombre de lettres attendues. Il porte toujours du texte
+   (l'espace sans chasse du ::before quand il est vide) : sa ligne de base est
+   celle des lettres, et le trait ne descend pas à la première frappe. */
 .conj-blank {
   display: inline-block;
-  width: 2.2em;
-  height: 0.9em;
+  min-width: 2.2em;
   border-bottom: 3px solid var(--indigo);
   margin: 0 0.06em;
+  color: var(--indigo-ink);
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.conj-blank::before {
+  content: '\200b';
+}
+
+.conj-blank > .caret {
+  vertical-align: -0.08em;
 }

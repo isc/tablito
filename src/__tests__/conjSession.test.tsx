@@ -65,14 +65,11 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
 
     expect(text()).toContain('En ce moment,');
     expect(text()).toContain('nous');
-    // Rappel de l'infinitif, jamais l'énoncé lui-même.
-    expect(text()).toContain('(manger)');
+    // Le verbe à conjuguer, en tête : la donnée de départ de l'exercice.
+    expect(document.querySelector('.conj-verb-tag')?.textContent).toBe('manger');
     // Le radical est affiché (en couleur de radical), la terminaison est le blanc.
     expect(document.querySelector('.conj-form-stem')?.textContent).toBe('man');
     expect(document.querySelector('.conj-blank')).not.toBeNull();
-    // Le radical est rappelé dans l'ardoise du clavier : l'enfant voit la forme
-    // se construire sans confondre ce qu'il tape avec ce qui lui est offert.
-    expect(document.querySelector('.letterpad-display-prefix')?.textContent).toBe('man');
   });
 
   it('forme irrégulière : aucun radical donné, la forme entière est à taper', () => {
@@ -85,9 +82,8 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       />,
     );
 
-    expect(text()).toContain('(être)');
+    expect(document.querySelector('.conj-verb-tag')?.textContent).toBe('être');
     expect(document.querySelector('.conj-form-stem')?.textContent).toBe('');
-    expect(document.querySelector('.letterpad-display-prefix')).toBeNull();
   });
 
   it('futur régulier : aucun radical donné non plus — l’infinitif EST la réponse', () => {
@@ -104,11 +100,10 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       />,
     );
 
-    // L'infinitif reste rappelé — sans lui, on ne saurait pas quel verbe
+    // L'infinitif reste en tête — sans lui, on ne saurait pas quel verbe
     // conjuguer — mais il n'est plus pré-écrit dans la réponse.
-    expect(text()).toContain('(manger)');
+    expect(document.querySelector('.conj-verb-tag')?.textContent).toBe('manger');
     expect(document.querySelector('.conj-form-stem')?.textContent).toBe('');
-    expect(document.querySelector('.letterpad-display-prefix')).toBeNull();
 
     tapLetters('mangerons');
     tapValidate();
@@ -181,7 +176,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
     expect(audio.starts()).toBeGreaterThan(0);
 
     const before = audio.starts();
-    fireEvent.click(document.querySelector<HTMLButtonElement>('.conj-replay-btn')!);
+    fireEvent.click(document.querySelector<HTMLButtonElement>('.conj-question .listen-btn')!);
     expect(audio.starts()).toBe(before + 1);
 
     audio.restore();
@@ -190,7 +185,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
 });
 
 describe('Mini-clavier de lettres (spec §4.2)', () => {
-  it('les lettres tapées s’affichent, l’effacement retire la dernière', () => {
+  it('les lettres tapées s’écrivent sur le trait de la phrase, l’effacement retire la dernière', () => {
     render(
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
@@ -201,10 +196,12 @@ describe('Mini-clavier de lettres (spec §4.2)', () => {
     );
 
     tapLetters('ons');
-    expect(document.querySelector('.letterpad-display-input')?.textContent).toBe('ons');
+    // Après le radical affiché : la forme se construit dans la phrase même.
+    expect(document.querySelector('.conj-form-stem')?.textContent).toBe('chant');
+    expect(document.querySelector('.conj-blank')?.textContent).toBe('ons');
 
     fireEvent.click(document.querySelector<HTMLButtonElement>('.letterpad-btn-backspace')!);
-    expect(document.querySelector('.letterpad-display-input')?.textContent).toBe('on');
+    expect(document.querySelector('.conj-blank')?.textContent).toBe('on');
   });
 
   it('validation EXPLICITE : rien n’est soumis tant que « Valider » n’est pas pressé', () => {

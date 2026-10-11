@@ -52,15 +52,9 @@ interface LetterKeyboardProps {
   onSubmit: (value: string) => void;
   disabled?: boolean;
   /**
-   * Radical affiché à gauche de la saisie, en encre douce (« chant » quand
-   * l'enfant ne tape que la terminaison, §4.2). Purement visuel : il n'est
-   * jamais inclus dans la valeur soumise.
-   */
-  prefix?: string;
-  /**
    * Texte imposé de l'extérieur, réappliqué à chaque fois qu'il CHANGE : c'est
    * l'écho visuel du mode vocal épelé (§15.10), les lettres reconnues qui
-   * remplissent l'ardoise à mesure qu'on les entend. Entre deux changements, le
+   * remplissent la saisie à mesure qu'on les entend. Entre deux changements, le
    * clavier reste maître de sa saisie — sans quoi la correction au clavier,
    * promise par la spec, serait effacée au render suivant.
    */
@@ -70,10 +64,11 @@ interface LetterKeyboardProps {
   /** Jeu de touches : `fr` (avec é, ê) par défaut, `en` pour l'anglais. */
   layout?: 'fr' | 'en';
   /**
-   * La saisie en cours, à chaque frappe : pour l'afficher ailleurs que dans
-   * l'ardoise du clavier (les cases des verbes irréguliers, specs §16.6).
+   * La saisie en cours, à chaque frappe. Le clavier n'a pas d'ardoise : la
+   * saisie s'écrit là où va la réponse — sur le trait de la phrase porteuse
+   * (§15.5), dans la case du verbe irrégulier (§16.6).
    */
-  onInput?: (value: string) => void;
+  onInput: (value: string) => void;
   /**
    * Libellé du bouton de validation (« Valider » par défaut) : « Suivant → »
    * quand la validation passe à la case suivante (verbes irréguliers).
@@ -89,7 +84,6 @@ interface LetterKeyboardProps {
 export default function LetterKeyboard({
   onSubmit,
   disabled = false,
-  prefix = '',
   value,
   onEdit,
   layout = 'fr',
@@ -107,7 +101,7 @@ export default function LetterKeyboard({
   const setInputBoth = useCallback((next: string) => {
     inputRef.current = next;
     setInput(next);
-    onInputRef.current?.(next);
+    onInputRef.current(next);
   }, [onInputRef]);
 
   // Pas de reset à la ré-activation : les appelants re-keyent le clavier à
@@ -188,11 +182,6 @@ export default function LetterKeyboard({
 
   return (
     <div className="pad-container letterpad-container">
-      <div className="pad-display letterpad-display" aria-live="polite">
-        {prefix && <span className="letterpad-display-prefix">{prefix}</span>}
-        <span className="letterpad-display-input">{input}</span>
-        {!disabled && <span className="pad-display-cursor" />}
-      </div>
       <div className="letterpad-rows">
         <div className="letterpad-keys">{keys.map(key)}</div>
         <div className="letterpad-row--actions">
