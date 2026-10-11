@@ -2,12 +2,14 @@ import { act, cleanup, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SessionScreen from '../screens/SessionScreen';
+import IrrPlacementScreen from '../screens/IrrPlacementScreen';
 import type { IrrSessionItem } from '../types';
-import { createInitialIrrFacts } from '../lib/irregularVerbs';
+import { createInitialIrrFacts, irrExpectedForms, requireIrrVerbDef } from '../lib/irregularVerbs';
+import { irrPlacementProbes } from '../lib/irregularPlacement';
 import type { IrrVerdict } from '../lib/irregularComposer';
 import { IRR_RECOGNITION_LANG } from '../components/IrrVoiceInput';
 import { IRR_INPUT_MODE_STORAGE_KEY } from '../hooks/useInputMode';
-import { advance } from './helpers/dom';
+import { advance, requireButton } from './helpers/dom';
 import { patchBufferSource, type PatchedBufferSource } from './helpers/audio';
 
 // Réponse dite à voix haute des verbes irréguliers (specs §16.6), dans le vrai
@@ -18,9 +20,13 @@ import { patchBufferSource, type PatchedBufferSource } from './helpers/audio';
 vi.mock('../lib/install', () => ({ isAndroid: () => false }));
 
 const { spy } = vi.hoisted(() => {
-  const spy = { instance: null as InstanceType<typeof Recognition> | null, lang: '' };
+  const spy = { instance: null as InstanceType<typeof Recognition> | null, lang: '', created: 0 };
 
   class Recognition {
+    constructor() {
+      spy.created++;
+    }
+
     lang = '';
     interimResults = false;
     continuous = false;
@@ -57,12 +63,14 @@ function emit(transcript: string, isFinal: boolean, alternatives: string[] = [])
 const say = (transcript: string, alternatives?: string[]) => emit(transcript, true, alternatives);
 const saying = (transcript: string) => emit(transcript, false);
 
-function irrItem(key: string): IrrSessionItem {
+function irrItem(key: string, isIntroduction = false): IrrSessionItem {
   const fact = createInitialIrrFacts().find((f) => f.key === key)!;
   return {
     kind: 'irr',
-    fact: { ...fact, introduced: true, box: 2, lastSeen: '2026-09-01', nextDue: '2026-09-02' },
-    isIntroduction: false,
+    fact: isIntroduction
+      ? fact
+      : { ...fact, introduced: true, box: 2, lastSeen: '2026-09-01', nextDue: '2026-09-02' },
+    isIntroduction,
     isRetry: false,
     isBonusReview: false,
   };
@@ -96,6 +104,7 @@ let audio: PatchedBufferSource;
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
   spy.instance = null;
+  spy.created = 0;
   audio = patchBufferSource({ endAfterMs: TTS_MS });
 });
 
@@ -165,5 +174,39 @@ describe('Dire le verbe (specs §16.6)', () => {
     advance(2100);
     say('put put put');
     expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
+  });
+});
+
+describe('Introduction d’un verbe (specs §16.7)', () => {
+  it('la copie différée est la première question : le verbe n’est demandé qu’une fois', () => {
+    const onIrrAnswer = renderSession([irrItem('go', true)]);
+    act(() => requireButton(/Suivant/).click());
+
+    // Le modèle d'abord, sans saisie…
+    expect(document.querySelector('.irr-ask')?.textContent).toBe('Regarde bien…');
+    expect(slots()).toEqual(['went', 'gone']);
+    expect(document.querySelector('.irr-answer')).toBeNull();
+    // … puis masqué : la question elle-même, notée.
+    advance(4000);
+    promptEnds();
+    say('go went gone');
+    expect(onIrrAnswer).toHaveBeenCalledTimes(1);
+    expect((onIrrAnswer.mock.calls[0] as [IrrSessionItem])[0].isIntroduction).toBe(true);
+  });
+});
+
+describe('Placement à la voix (specs §16.8)', () => {
+  it('une seule reconnaissance pour toutes les sondes : le micro reste ouvert d’un verbe à l’autre', () => {
+    render(<IrrPlacementScreen onComplete={() => {}} />);
+    act(() => requireButton(/C’est parti/).click());
+
+    for (const key of irrPlacementProbes().slice(0, 4)) {
+      promptEnds();
+      expect(document.querySelector('.irr-form--base')?.textContent).toBe(key);
+      expect(document.querySelector('.voice-mic.listening')).not.toBeNull();
+      say([key, ...irrExpectedForms(requireIrrVerbDef(key))].join(' '));
+      advance(700); // le verdict
+    }
+    expect(spy.created).toBe(1);
   });
 });

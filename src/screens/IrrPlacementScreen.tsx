@@ -121,25 +121,28 @@ export default function IrrPlacementScreen({ classVerbs, onComplete }: IrrPlacem
           ))}
         </div>
 
-        {feedback ? (
+        {feedback && (
           <>
             <IrrForms def={def} size="large" />
             <div className={`welcome-test-feedback ${feedback}`}>{feedback === 'correct' ? '✓' : ''}</div>
           </>
-        ) : (
-          <>
-            <IrrAnswerInput
-              def={def}
-              onSubmit={handleSubmit}
-              isSpeaking={isSpeaking}
-              token={`probe-${index}`}
-            />
-            <button className="welcome-dontknow" onClick={() => record(false, 'keypad')}>
-              <span className="welcome-dontknow-mark">?</span>
-              <span>{t.placementDontKnow}</span>
-            </button>
-          </>
         )}
+        {/* Masquée au verdict, jamais démontée : la remonter recréait la
+            reconnaissance vocale à chaque sonde, et le micro finissait par ne
+            plus s'ouvrir. */}
+        <div className="irr-placement-input" hidden={feedback !== null}>
+          <IrrAnswerInput
+            def={def}
+            onSubmit={handleSubmit}
+            disabled={feedback !== null}
+            isSpeaking={isSpeaking}
+            token={`probe-${index}`}
+          />
+          <button className="welcome-dontknow" onClick={() => record(false, 'keypad')}>
+            <span className="welcome-dontknow-mark">?</span>
+            <span>{t.placementDontKnow}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -33,7 +33,10 @@ interface IrrAnswerInputProps {
   onRecall?: () => void;
   disabled?: boolean;
   isSpeaking?: boolean;
-  /** Change à chaque question : la saisie repart de zéro. */
+  /**
+   * Change à chaque question : la saisie repart de zéro. Garder le composant
+   * monté d'une question à l'autre : le démonter recrée la reconnaissance vocale.
+   */
   token: string;
   /** Sous les cases, avant la saisie (le bouton « Réécouter » de la question). */
   children?: ReactNode;

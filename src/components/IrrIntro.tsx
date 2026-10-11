@@ -1,26 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import IrrForms from './IrrForms';
-import IrrAnswerInput from './IrrAnswerInput';
 import StrategyHintShell from './StrategyHintShell';
-import { isIrrAccepted, judgeIrrAnswer } from '../lib/irregularComposer';
 import { irrRecitation, irrRecitationTtsKey, type IrrVerbDef } from '../lib/irregularVerbs';
 import { IRR_FAMILY_HINTS, IRR_FAMILY_NAMES, irrStrings as t } from '../i18n/irregular';
-import { useIrrInputMode } from '../hooks/useInputMode';
 
-/** Durée d'exposition du modèle avant masquage, étape 3 (cf. conjugaison). */
-const COPY_REVEAL_MS = 4000;
-/** Copies ratées tolérées : un geste d'ancrage, jamais une épreuve. */
-const COPY_MAX_ATTEMPTS = 3;
-
-type Step = 'listen' | 'family' | 'copy';
+type Step = 'listen' | 'family';
 
 interface IrrIntroProps {
   def: IrrVerbDef;
   /** Verbe déjà su de la même famille : l'étape 2 n'existe qu'avec lui. */
   analogy: IrrVerbDef | null;
   onSpeak: (key: string) => void;
-  isSpeaking: boolean;
-  /** Fin de l'introduction : la première question suit (étape 4). */
+  /** Fin de l'introduction : la première question suit (étape 3). */
   onFinish: () => void;
 }
 
@@ -28,43 +19,12 @@ interface IrrIntroProps {
  * Introduction d'un verbe nouveau (specs §16.7) :
  *   1. écouter — les trois formes affichées et récitées par la voix anglaise,
  *      avec la traduction en petit ;
- *   2. la famille — l'analogie avec un verbe déjà su, s'il y en a un ;
- *   3. copie différée — les formes 4 s, masquées, l'enfant les dit ou les
- *      écrit (« je lis, je cache, je redis »).
- * La 4ᵉ étape est la question elle-même, la 5ᵉ le re-test différé.
+ *   2. la famille — l'analogie avec un verbe déjà su, s'il y en a un.
+ * La 3ᵉ étape est la première question, ouverte sur le modèle affiché puis
+ * masqué (la copie différée, cf. SessionScreen), la 4ᵉ le re-test différé.
  */
-export default function IrrIntro({ def, analogy, onSpeak, isSpeaking, onFinish }: IrrIntroProps) {
-  const { inputMode } = useIrrInputMode();
+export default function IrrIntro({ def, analogy, onSpeak, onFinish }: IrrIntroProps) {
   const [step, setStep] = useState<Step>('listen');
-  const [modelVisible, setModelVisible] = useState(true);
-  const [attempts, setAttempts] = useState(0);
-
-  useEffect(() => {
-    if (step !== 'copy' || !modelVisible) return;
-    const timer = setTimeout(() => setModelVisible(false), COPY_REVEAL_MS);
-    return () => clearTimeout(timer);
-  }, [step, modelVisible]);
-
-  const startCopy = useCallback(() => {
-    setStep('copy');
-    setModelVisible(true);
-    onSpeak(irrRecitationTtsKey(def.key));
-  }, [def.key, onSpeak]);
-
-  const handleCopy = useCallback(
-    (answers: string[], source: 'keypad' | 'voice') => {
-      const ok = isIrrAccepted(judgeIrrAnswer(def, answers, source));
-      const next = attempts + 1;
-      setAttempts(next);
-      if (ok || next >= COPY_MAX_ATTEMPTS) {
-        onFinish();
-      } else {
-        setModelVisible(true);
-        onSpeak(irrRecitationTtsKey(def.key));
-      }
-    },
-    [def, attempts, onFinish, onSpeak],
-  );
 
   return (
     <div className="session-intro irr-intro">
@@ -80,7 +40,7 @@ export default function IrrIntro({ def, analogy, onSpeak, isSpeaking, onFinish }
           </button>
           <button
             className="btn btn--ink session-intro-btn"
-            onClick={() => (analogy ? setStep('family') : startCopy())}
+            onClick={() => (analogy ? setStep('family') : onFinish())}
           >
             {t.next}
           </button>
@@ -95,23 +55,9 @@ export default function IrrIntro({ def, analogy, onSpeak, isSpeaking, onFinish }
             variant="intro"
             lines={[t.introFamily(irrRecitation(analogy)), IRR_FAMILY_HINTS[def.family]]}
           />
-          <button className="btn btn--ink session-intro-btn" onClick={startCopy}>
+          <button className="btn btn--ink session-intro-btn" onClick={onFinish}>
             {t.next}
           </button>
-        </>
-      )}
-
-      {step === 'copy' && (
-        <>
-          <div className="session-intro-explanation" aria-live="polite">
-            {modelVisible ? (attempts > 0 ? t.copyAgain : t.copyLook) : inputMode === 'voice' ? t.copySay : t.copyWrite}
-          </div>
-          {modelVisible ? (
-            <IrrForms def={def} size="large" />
-          ) : (
-            // Re-monté à chaque essai (le modèle s'intercale) : saisie vierge.
-            <IrrAnswerInput def={def} onSubmit={handleCopy} isSpeaking={isSpeaking} token="copy" />
-          )}
         </>
       )}
     </div>

@@ -20,6 +20,7 @@ import ConjRuleVisual from '../components/ConjRuleVisual';
 import ConjRuleListenButton from '../components/ConjRuleListenButton';
 import FeedbackOverlay from '../components/FeedbackOverlay';
 import ConjFeedbackOverlay from '../components/ConjFeedbackOverlay';
+import IrrForms from '../components/IrrForms';
 import IrrIntro from '../components/IrrIntro';
 import IrrAnswerInput from '../components/IrrAnswerInput';
 import IrrFeedbackOverlay from '../components/IrrFeedbackOverlay';
@@ -112,8 +113,11 @@ type IntroStep = 'grid' | 'commute' | 'strategy';
  */
 type ConjIntroStep = 'sentence' | 'mechanics' | 'copy';
 
-/** Durée d'exposition du modèle avant masquage, étape 3 (spec §5.2). */
-const CONJ_COPY_REVEAL_MS = 4000;
+/**
+ * Durée d'exposition du modèle avant masquage, à la copie différée de la
+ * conjugaison (étape 3, spec §5.2) comme des verbes irréguliers (§16.7).
+ */
+const COPY_REVEAL_MS = 4000;
 
 /**
  * Nombre de copies ratées tolérées avant de passer à la question quand même :
@@ -272,6 +276,8 @@ export default function SessionScreen({
   // le jeton du clavier qui l'a produite : un clavier re-keyé (question
   // suivante, nouvel essai de copie) repart d'un trait vide, sans remise à zéro.
   const [conjTyped, setConjTyped] = useState({ token: '', text: '' });
+  // Verbes irréguliers : modèle affiché en tête de la première question.
+  const [irrModelVisible, setIrrModelVisible] = useState(false);
   const [feedback, setFeedback] = useState<{
     item: SessionItem;
     correct: boolean;
@@ -394,6 +400,7 @@ export default function SessionScreen({
     setNumpadDisabled(false);
     setRemQuotient(null);
     setSignSlip(false);
+    setIrrModelVisible(false);
     conjRecallMs.current = null;
   }
 
@@ -415,12 +422,12 @@ export default function SessionScreen({
   useEffect(() => {
     const mode = currentItem?.kind === 'irr' ? irrInputMode : inputMode;
     if (mode !== 'voice') return;
-    if (showIntro) return;
+    if (showIntro || irrModelVisible) return;
     if (remQuotient !== null || signSlip) return;
     if (!isSpeaking) {
       questionStartTime.current = startQuestion();
     }
-  }, [isSpeaking, inputMode, irrInputMode, currentItem?.kind, showIntro, currentIndex, remQuotient, signSlip]);
+  }, [isSpeaking, inputMode, irrInputMode, currentItem?.kind, showIntro, irrModelVisible, currentIndex, remQuotient, signSlip]);
 
   // Étape 2 de l'intro conjugaison : le pronom s'illumine à l'arrivée, sa
   // marque une demi-seconde plus tard — l'accord se joue dans cet écart.
@@ -435,9 +442,20 @@ export default function SessionScreen({
   // s'affiche 4 s puis se masque — c'est le masquage qui fait le rappel.
   useEffect(() => {
     if (!showIntro || conjIntroStep !== 'copy' || !conjCopyVisible) return;
-    const timer = setTimeout(() => setConjCopyVisible(false), CONJ_COPY_REVEAL_MS);
+    const timer = setTimeout(() => setConjCopyVisible(false), COPY_REVEAL_MS);
     return () => clearTimeout(timer);
   }, [showIntro, conjIntroStep, conjCopyVisible]);
+
+  // Verbes irréguliers : la copie différée EST la première question (§16.7).
+  // Le masquage du modèle l'ouvre, et lance son chrono.
+  useEffect(() => {
+    if (!irrModelVisible) return;
+    const timer = setTimeout(() => {
+      setIrrModelVisible(false);
+      questionStartTime.current = startQuestion();
+    }, COPY_REVEAL_MS);
+    return () => clearTimeout(timer);
+  }, [irrModelVisible]);
 
   const moveToNext = useCallback(() => {
     const nextIndex = currentIndex + 1;
@@ -615,16 +633,13 @@ export default function SessionScreen({
     [currentItem, currentIndex, onIrrAnswer, playCorrect, stopSpeech],
   );
 
-  /** Fin de l'introduction d'un verbe : la première question suit. */
+  /** Fin de l'introduction d'un verbe : la première question, modèle récité. */
   const finishIrrIntro = useCallback(() => {
     if (!currentItem) return;
     setShowIntro(false);
-    submittingRef.current = false;
-    setNumpadDisabled(false);
-    questionStartTime.current = startQuestion();
-    conjRecallMs.current = null;
-    speakQuestion(currentItem);
-  }, [currentItem, speakQuestion]);
+    setIrrModelVisible(true);
+    speak(introKey(currentItem));
+  }, [currentItem, speak]);
 
   /**
    * Réponse à une question de conjugaison (spec §4.5, §5.3). L'attribution
@@ -1115,26 +1130,33 @@ export default function SessionScreen({
           def={irrDef}
           analogy={irrKnownAnalogy(irrDef, irrFacts)}
           onSpeak={speak}
-          isSpeaking={isSpeaking}
           onFinish={finishIrrIntro}
         />
       )}
 
       {/* Question — verbes irréguliers (specs §16.5) : l'infinitif seul, en
-          anglais, et les deux cases à remplir. */}
+          anglais, et les deux cases à remplir. Après une intro, le modèle
+          d'abord (la copie différée, §16.7), dans le même conteneur : le
+          masquage ne rejoue pas l'entrée de l'écran. */}
       {!showIntro && irrDef && (
         <div className="session-question irr-question">
-          <div className="irr-ask">{irrInputMode === 'voice' ? ti.askSay : ti.askWrite}</div>
-          <IrrAnswerInput
-            def={irrDef}
-            onSubmit={handleIrrSubmit}
-            onRecall={handleConjSpeechStart}
-            disabled={numpadDisabled}
-            isSpeaking={isSpeaking}
-            token={`answer-${currentIndex}`}
-          >
-            <ListenButton label={ti.replay} onClick={() => speak(irrPromptTtsKey(irrDef.key))} />
-          </IrrAnswerInput>
+          <div className="irr-ask">
+            {irrModelVisible ? ti.copyLook : irrInputMode === 'voice' ? ti.askSay : ti.askWrite}
+          </div>
+          {irrModelVisible ? (
+            <IrrForms def={irrDef} size="large" />
+          ) : (
+            <IrrAnswerInput
+              def={irrDef}
+              onSubmit={handleIrrSubmit}
+              onRecall={handleConjSpeechStart}
+              disabled={numpadDisabled}
+              isSpeaking={isSpeaking}
+              token={`answer-${currentIndex}`}
+            >
+              <ListenButton label={ti.replay} onClick={() => speak(irrPromptTtsKey(irrDef.key))} />
+            </IrrAnswerInput>
+          )}
         </div>
       )}
 
