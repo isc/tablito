@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261011160414"
+const VERSION = "20261011165447"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -63,6 +63,7 @@ const ASSETS = [
   "/src/components/ConjForm.js",
   "/src/components/ConjMysteryImage.js",
   "/src/components/ConjProgressGrid.js",
+  "/src/components/ConjQuestionPrompt.js",
   "/src/components/ConjRuleListenButton.js",
   "/src/components/ConjRuleVisual.js",
   "/src/components/ConjVoiceInput.js",
@@ -88,6 +89,7 @@ const ASSETS = [
   "/src/components/LanguageToggle.js",
   "/src/components/LeitnerGrid.js",
   "/src/components/LetterKeyboard.js",
+  "/src/components/ListenButton.js",
   "/src/components/Mascot.js",
   "/src/components/Modal.js",
   "/src/components/MysteryGrid.js",
@@ -238,7 +240,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/"],"splash":["/splash/"],"landing":["/video/","/img/hero-poster"],"qrscan":["/vendor/qr-scanner/"],"phonetic":["/phonetic/"],"qrgen":["/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"08c1b3147ebd","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_VERSIONS = {"audio":"3bfe57df85b5","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"4ddccaf41ca2","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
