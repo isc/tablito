@@ -459,6 +459,12 @@
   font-size: 12px;
 }
 
+/* Verbes irréguliers anglais : pastille « En », même gabarit que « Vb ». */
+.parent-hard-fact-kind--irr {
+  background: var(--sky);
+  font-size: 12px;
+}
+
 /* === Suivi à distance === */
 
 /* Barre de fraîcheur du profil suivi, dans sa section (cf. ParentDashboard). */

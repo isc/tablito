@@ -11,7 +11,7 @@ import {
   shouldIntroduceNew,
   prioritizeByBoxLevel,
   pickBonusReviewFacts,
-  MASTERY_BOX,
+  allMastered,
 } from './leitner';
 import {
   CONJ_IRREGULAR_VERBS,
@@ -100,7 +100,7 @@ export function conjVerbBadgeId(verb: string): string {
  * badges de la matière — temps et verbe irrégulier.
  */
 export function allConjMastered(facts: ConjFact[]): boolean {
-  return facts.length > 0 && facts.every((f) => f.box >= MASTERY_BOX);
+  return allMastered(facts);
 }
 
 /**

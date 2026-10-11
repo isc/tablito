@@ -1,6 +1,7 @@
 import { useStrings, type Lang } from './lang';
 import { tenseFr } from './tense';
 import type { HomeIdea } from '../lib/homeIdea';
+import { IRR_FAMILY_HINTS } from './irregular';
 
 // Strings de l'idée pour aider à la maison, sous « À retravailler » de
 // l'accueil de l'espace parent (ParentHomeIdea). L'essentiel du texte vient
@@ -32,6 +33,10 @@ const fr: HomeIdeaStrings = {
         const at = tenseFr(idea.tense, 'à');
         return `${at.charAt(0).toUpperCase()}${at.slice(1)}, «\u00a0${idea.verb}\u00a0» change de radical\u00a0: ${idea.examples.join(', ')}. Les terminaisons, elles, restent celles de tous les verbes. Faites-lui réciter les autres personnes.`;
       }
+      case 'irrRecite': {
+        const hint = idea.family === 'unique' ? '' : ` Astuce de Tablito\u00a0: ${IRR_FAMILY_HINTS[idea.family].charAt(0).toLowerCase()}${IRR_FAMILY_HINTS[idea.family].slice(1)}`;
+        return `Faites-lui réciter le verbe à voix haute, en anglais\u00a0: «\u00a0${idea.recitation}\u00a0». Le dire aide à le retenir.${hint}`;
+      }
     }
   },
 };
@@ -46,10 +51,11 @@ const en: HomeIdeaStrings = {
         return `× 2 means doubling. Ask for double ${idea.n}: ${idea.n} + ${idea.n} = ${idea.n * 2}, so 2 × ${idea.n} = ${idea.n * 2}.`;
       case 'oral':
         return `Ask out loud, in the car or at dinner: "${idea.a} × ${idea.b}?" A few seconds, a few times a week, is enough.`;
-      // La conjugaison est fr-only (masquée en anglais) : ses idées ne
-      // s'affichent jamais ici, et une traduction serait du texte mort.
+      // Conjugaison et verbes irréguliers sont masqués en anglais : leurs idées
+      // ne s'affichent jamais ici, et une traduction serait du texte mort.
       case 'conjIrregular':
       case 'conjStem':
+      case 'irrRecite':
         return fr.idea(idea);
     }
   },

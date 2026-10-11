@@ -33,11 +33,11 @@ interface VoiceInputProps {
   pair?: { expectedRemainder: number; onSubmit: (quotient: number, remainder: number) => void };
 }
 
-const MAX_PARSE_FAILS_BEFORE_KEYPAD = 3;
+export const MAX_PARSE_FAILS_BEFORE_KEYPAD = 3;
 // After the TTS ends, Chrome's recognition may still emit a final carrying
 // speaker→mic echo. Drop non-matching finals within this window so the echo
 // doesn't count as a wrong answer or push the user to the keypad fallback.
-const POST_TTS_GRACE_MS = 2000;
+export const POST_TTS_GRACE_MS = 2000;
 // With the mic running continuously across questions, the trailing final of
 // utterance N (or a late interim) can arrive after the question has advanced
 // and get re-submitted as the answer to question N+1. We don't blanket-drop
@@ -47,7 +47,7 @@ const POST_TTS_GRACE_MS = 2000;
 const POST_SUBMIT_DEAF_MS = 800;
 // Safety net for the expectTrailingFinal flag: if for some reason the final
 // never arrives (recognizer error, abort), don't keep dropping events forever.
-const TRAILING_FINAL_TIMEOUT_MS = 5000;
+export const TRAILING_FINAL_TIMEOUT_MS = 5000;
 // Sur Android, la Web Speech API est adossée au SpeechRecognizer natif :
 // sessions mono-énoncé (bip système à chaque démarrage) et pas d'annulation
 // d'écho. Micro ouvert pendant la voix de synthèse, le recognizer capture la

@@ -14,7 +14,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import type { BoxLevel, UserProfile } from '../types';
-import { isConjVisible, unlockedMathLevels, type MathLevel } from '../lib/badges';
+import { isConjVisible, isIrrVisible, unlockedMathLevels, type MathLevel } from '../lib/badges';
 import { CONJ_TENSES } from '../lib/conjugationFacts';
 import { countMastered, factsOf, masteryBuckets } from '../lib/leitner';
 import { getHardestFactsAcross, HARD_FACTS_WINDOW, type Subject } from '../lib/hardestFacts';
@@ -101,6 +101,8 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
   // Conjugaison : visible dès qu'elle a été ouverte, jamais en anglais (spec
   // Verbito §9, matière fr-only).
   const conjVisible = isConjVisible(profile, lang);
+  // Verbes irréguliers (specs §16) : même règle, jamais en anglais.
+  const irrVisible = isIrrVisible(profile, lang);
   // Le niveau en cours est le dernier débloqué ; les précédents sont passés.
   const levels = unlockedMathLevels(profile);
   const current = levels[levels.length - 1];
@@ -118,7 +120,14 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
   };
 
   // Les matières que l'accueil lit : une matière masquée ne compte nulle part.
-  const subjects = useMemo<Subject[]>(() => (conjVisible ? ['math', 'conj'] : ['math']), [conjVisible]);
+  const subjects = useMemo<Subject[]>(
+    () => [
+      'math',
+      ...(conjVisible ? (['conj'] as const) : []),
+      ...(irrVisible ? (['irr'] as const) : []),
+    ],
+    [conjVisible, irrVisible],
+  );
 
   // Trois points toutes matières confondues, triés comme la liste de chaque
   // page de matière.
@@ -133,7 +142,7 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
         {/* La journée en tête : « a-t-il fait sa séance aujourd'hui ? » est la
             question qu'on vient poser ici en premier. Les compteurs cumulés
             ferment la même carte plutôt que d'en ouvrir trois autres. */}
-        <ActivityStrip profile={profile} today={today} conjVisible={conjVisible}>
+        <ActivityStrip profile={profile} today={today} conjVisible={conjVisible} irrVisible={irrVisible}>
           <div className="parent-kpis">
             <div className="parent-kpi">
               <div className="parent-stat-value">{profile.totalSessions}</div>
@@ -194,6 +203,18 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
               rowName={t.verbForms}
               facts={factsOf(profile, 'conj')}
               onOpen={() => onOpenSubject('conj')}
+            />
+          )}
+
+          {irrVisible && (
+            <SubjectCard
+              subject="irr"
+              icon={t.irrSymbol}
+              title={t.irregularVerbs}
+              sub={t.irregularVerbsSub}
+              rowName={t.irregularMastered}
+              facts={factsOf(profile, 'irr')}
+              onOpen={() => onOpenSubject('irr')}
             />
           )}
         </div>

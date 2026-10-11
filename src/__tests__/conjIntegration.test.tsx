@@ -207,7 +207,7 @@ describe('Migration d’un profil antérieur à la matière (spec §7.1)', () =>
 });
 
 describe('Accueil multi-matières (spec §9)', () => {
-  it('en français : deux tuiles, et une pastille de découverte sur la conjugaison', () => {
+  it('en français : une tuile par matière, et une pastille de découverte sur la conjugaison', () => {
     const p = createNewProfile('Zoé');
     p.hasSeenRulesIntro = true;
     p.lastSessionDate = null;
@@ -229,7 +229,7 @@ describe('Accueil multi-matières (spec §9)', () => {
     renderApp();
 
     expect(button(/Conjugaison/)).not.toBeNull();
-    expect(document.querySelector('.home-subject-dot')).toBeNull();
+    expect(button(/Conjugaison/)!.querySelector('.home-subject-dot')).toBeNull();
   });
 
   it('en anglais : aucune trace de la matière, l’accueil est celui d’avant', () => {

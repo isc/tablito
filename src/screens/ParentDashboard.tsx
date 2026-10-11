@@ -60,6 +60,8 @@ interface ParentDashboardProps {
   // relu) — reste monté.
   page: ParentPage | null;
   onOpenPage: (page: ParentPage | null) => void;
+  // Réglage du profil actif depuis une page de matière (« vus en classe »).
+  onUpdateProfile: (update: (profile: UserProfile) => UserProfile) => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -87,6 +89,7 @@ export default function ParentDashboard({
   openOnWatched = false,
   page,
   onOpenPage,
+  onUpdateProfile,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
 
@@ -225,18 +228,23 @@ export default function ParentDashboard({
   // Page d'une matière, sur le profil affiché. Une page ne s'ouvre que depuis
   // une carte de l'accueil, qui n'existe qu'avec un profil affiché ; la clé
   // repart de zéro (niveau actif, bascules) si la source changeait dessous.
-  if ((page === 'math' || page === 'conj') && shown) {
+  if ((page === 'math' || page === 'conj' || page === 'irr') && shown) {
     return (
       <div className="parent-dashboard parent-dashboard--subject">
         <Header
           onBack={onBack}
           backLabel={t.backToOverview}
           eyebrow={shownName}
-          title={page === 'conj' ? t.conjugations : t.math}
+          title={{ math: t.math, conj: t.conjugations, irr: t.irregularVerbs }[page]}
         >
           {feedbackButton}
         </Header>
-        <ParentSubjectDetail key={selected?.key ?? 'none'} profile={shown} subject={page} />
+        <ParentSubjectDetail
+          key={selected?.key ?? 'none'}
+          profile={shown}
+          subject={page}
+          onUpdateProfile={shown === profile ? onUpdateProfile : undefined}
+        />
       </div>
     );
   }

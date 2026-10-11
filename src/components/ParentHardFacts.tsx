@@ -1,5 +1,5 @@
 // Liste « À retravailler » de l'espace parent : une ligne par fait, marquée de
-// sa nature (×, ÷, reste, conjugaison) pour se lire dans une liste mélangée —
+// sa nature (×, ÷, reste, conjugaison, verbe anglais) pour se lire dans une liste mélangée —
 // celle de l'accueil croise les matières, celle d'une page de matière les
 // niveaux.
 
@@ -22,6 +22,7 @@ export default function HardFactList({ facts, showBox = false }: HardFactListPro
     div: { name: t.factDivision, symbol: t.divSymbol },
     rem: { name: t.factRemainder, symbol: t.remSymbol },
     conj: { name: t.factConjugation, symbol: t.conjSymbol },
+    irr: { name: t.factIrregular, symbol: t.irrSymbol },
   };
   const label = (f: HardFact): string => {
     switch (f.kind) {
@@ -32,6 +33,7 @@ export default function HardFactList({ facts, showBox = false }: HardFactListPro
       case 'rem':
         return t.formatRemFact(...remainderZoneBounds(f), f.divisor);
       case 'conj':
+      case 'irr':
         return f.label;
     }
   };
@@ -45,7 +47,7 @@ export default function HardFactList({ facts, showBox = false }: HardFactListPro
           </span>
           <span className="parent-hard-fact-name">
             {label(f)}
-            {f.kind === 'conj' && f.recentMistakes.length > 0 && (
+            {(f.kind === 'conj' || f.kind === 'irr') && f.recentMistakes.length > 0 && (
               <span className="parent-hard-fact-mistakes">
                 {`${t.recentMistakes} ${f.recentMistakes.map((m) => t.mistake(m.answeredWith, m.expectedForm)).join(' · ')}`}
               </span>

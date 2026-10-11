@@ -7,6 +7,9 @@ import { renderConjHintLine } from '../components/conjHintLine';
 import { useTTS } from '../hooks/useTTS';
 import { useRulesStrings } from '../i18n/home';
 import type { ConjStrategy } from '../lib/conjugationRules';
+import IrrForms from '../components/IrrForms';
+import { irrRecitationTtsKey, type IrrFamily, type IrrVerbDef } from '../lib/irregularVerbs';
+import { IRR_FAMILY_HINTS, IRR_FAMILY_NAMES, irrStrings } from '../i18n/irregular';
 
 interface RulesScreenProps {
   onBack: () => void;
@@ -15,15 +18,26 @@ interface RulesScreenProps {
   // et tant que la matière n'a pas été ouverte : l'écran reste alors celui des
   // seules règles de maths, sans onglets.
   conjRules?: readonly ConjStrategy[];
+  // Familles de verbes irréguliers déjà rencontrées (cf. metIrrFamilies), même
+  // révélation au fil de la matière.
+  irrFamilies?: readonly { family: IrrFamily; example: IrrVerbDef }[];
 }
 
-export default function RulesScreen({ onBack, showRule11 = false, conjRules = [] }: RulesScreenProps) {
+export default function RulesScreen({
+  onBack,
+  showRule11 = false,
+  conjRules = [],
+  irrFamilies = [],
+}: RulesScreenProps) {
   const t = useRulesStrings();
   const hasConj = conjRules.length > 0;
-  // Deux onglets plutôt qu'une seule colonne : les règles de conjugaison, plus
-  // longues, enterraient celles des maths sous plusieurs écrans de défilement.
-  const [tab, setTab] = useState<'maths' | 'conj'>('maths');
+  const hasIrr = irrFamilies.length > 0;
+  // Un onglet par matière plutôt qu'une seule colonne : les règles de
+  // conjugaison, plus longues, enterraient celles des maths sous plusieurs
+  // écrans de défilement.
+  const [tab, setTab] = useState<'maths' | 'conj' | 'irr'>('maths');
   const showConj = hasConj && tab === 'conj';
+  const showIrr = hasIrr && tab === 'irr';
   const { speak } = useTTS();
   return (
     <div className="rules-screen">
@@ -39,19 +53,40 @@ export default function RulesScreen({ onBack, showRule11 = false, conjRules = []
           {t.intro}
         </div>
 
-        {hasConj && (
+        {(hasConj || hasIrr) && (
           <ParentSegmented
             label={t.title}
             options={[
-              { value: 'maths', label: t.sectionMaths },
-              { value: 'conj', label: t.sectionConj },
+              { value: 'maths' as const, label: t.sectionMaths },
+              ...(hasConj ? [{ value: 'conj' as const, label: t.sectionConj }] : []),
+              ...(hasIrr ? [{ value: 'irr' as const, label: t.sectionIrr }] : []),
             ]}
             value={tab}
             onChange={setTab}
           />
         )}
 
-        {!showConj && (
+        {/* Familles de verbes irréguliers (specs §16.3) : des analogies, pas
+            des règles — chacune avec le premier verbe rencontré. */}
+        {showIrr &&
+          irrFamilies.map(({ family, example }) => (
+            <div key={family} className="rule-card rule-card-irr">
+              <div className="rule-card-head">
+                <div className="rule-card-heading">{IRR_FAMILY_NAMES[family]}</div>
+                <button
+                  type="button"
+                  className="conj-replay-btn"
+                  onClick={() => speak(irrRecitationTtsKey(example.key))}
+                >
+                  {'🔊'} {irrStrings.listen}
+                </button>
+              </div>
+              <IrrForms def={example} />
+              <div className="rule-card-tip">{IRR_FAMILY_HINTS[family]}</div>
+            </div>
+          ))}
+
+        {!showConj && !showIrr && (
           <>
             {/* Règle ×1 */}
             <div className="rule-card rule-card-indigo">

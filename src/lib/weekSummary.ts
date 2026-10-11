@@ -46,6 +46,7 @@ export interface WeekSummary {
   daysVs: Versus | null;
   math: MathWeek | null;
   conj: SubjectWeek | null;
+  irr: SubjectWeek | null;
   /** Faits montés d'une boîte pendant la semaine. */
   promoted: number;
   /** Faits découverts pendant la semaine. */
@@ -97,32 +98,41 @@ function subjectWeek(now: Totals, before: Totals | null): SubjectWeek {
  * séance de ces matières n'existe.
  */
 export function weekSummary(profile: UserProfile, today: string, subjects: Subject[]): WeekSummary | null {
-  const bySubject = (subject: Subject) =>
-    subjects.includes(subject) ? sessionsOfSubject(profile.sessionHistory, subject) : [];
-  const math = bySubject('math');
-  const conj = bySubject('conj');
-  if (math.length + conj.length === 0) return null;
-
   const start = addDays(today, -(WEEK_DAYS - 1));
   const previousStart = addDays(start, -WEEK_DAYS);
-  const thisWeek = (s: SessionResult) => s.date >= start && s.date <= today;
-  const weekBefore = (s: SessionResult) => s.date >= previousStart && s.date < start;
-  const [mathNow, mathBefore] = [math.filter(thisWeek), math.filter(weekBefore)];
-  const [conjNow, conjBefore] = [conj.filter(thisWeek), conj.filter(weekBefore)];
-  const now = [...mathNow, ...conjNow];
+  // Séances de chaque matière visible, cette semaine et la semaine d'avant.
+  const split = (subject: Subject) => {
+    const all = subjects.includes(subject) ? sessionsOfSubject(profile.sessionHistory, subject) : [];
+    return {
+      now: all.filter((s) => s.date >= start && s.date <= today),
+      before: all.filter((s) => s.date >= previousStart && s.date < start),
+      any: all.length > 0,
+    };
+  };
+  const math = split('math');
+  const conj = split('conj');
+  const irr = split('irr');
+  if (!math.any && !conj.any && !irr.any) return null;
+
+  const now = [...math.now, ...conj.now, ...irr.now];
   const days = new Set(now.map((s) => s.date)).size;
-  const previousDays = new Set([...mathBefore, ...conjBefore].map((s) => s.date)).size;
+  const previousDays = new Set([...math.before, ...conj.before, ...irr.before].map((s) => s.date)).size;
 
   // Une séance de maths porte le niveau en cours (×, ÷ ou avec reste). Un
   // niveau débloqué dans la fenêtre fausserait la comparaison — la division
   // avec reste est plus lente que les tables —, d'où une comparaison seulement
   // à niveau égal sur les deux semaines.
-  const mathTotals = totals(mathNow);
+  const mathTotals = totals(math.now);
   const mathBaseline =
-    mathBefore.length > 0 && new Set([...mathNow, ...mathBefore].map((s) => s.kind)).size === 1
-      ? totals(mathBefore)
+    math.before.length > 0 && new Set([...math.now, ...math.before].map((s) => s.kind)).size === 1
+      ? totals(math.before)
       : null;
-  const conjTotals = totals(conjNow);
+  // Matière à formes écrites : la réussite seule, comparée dès qu'il y a eu une
+  // semaine d'avant.
+  const wordWeek = ({ now: n, before }: { now: SessionResult[]; before: SessionResult[] }) => {
+    const t = totals(n);
+    return t.questions === 0 ? null : subjectWeek(t, before.length > 0 ? totals(before) : null);
+  };
 
   return {
     days,
@@ -138,10 +148,8 @@ export function weekSummary(profile: UserProfile, today: string, subjects: Subje
             secondsVs:
               mathBaseline && versus(tenths(seconds(mathTotals) - seconds(mathBaseline)), SAME_SECONDS, true),
           },
-    conj:
-      conjTotals.questions === 0
-        ? null
-        : subjectWeek(conjTotals, conjBefore.length > 0 ? totals(conjBefore) : null),
+    conj: wordWeek(conj),
+    irr: wordWeek(irr),
     promoted: now.reduce((sum, s) => sum + s.factsPromoted, 0),
     discovered: now.reduce((sum, s) => sum + s.newFactsIntroduced, 0),
   };

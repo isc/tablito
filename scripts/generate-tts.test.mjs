@@ -23,11 +23,12 @@ import { buildEntriesFr, buildEntriesEn } from './generate-tts.mjs';
 import { conjFactDefs, resolveConjQuestion } from '../src/lib/conjugationFacts.ts';
 import { conjStrings } from '../src/i18n/conjugation.ts';
 import { CONJ_RULES, conjRuleTtsKey } from '../src/lib/conjugationRules.ts';
+import { irrPromptTtsKey, irrRecitationTtsKey, irrVerbDefs } from '../src/lib/irregularVerbs.ts';
 
 const DEFS = conjFactDefs();
 
 const fr = await buildEntriesFr();
-const en = buildEntriesEn();
+const en = await buildEntriesEn();
 const frByKey = new Map(fr.map((e) => [e.key, e.text]));
 
 // Ce que l'UI demandera réellement : la clé de CHAQUE couple (fait, porteuse),
@@ -131,5 +132,22 @@ describe('entrées TTS, toutes matières', () => {
         expect(text.trim().length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+// Verbes irréguliers anglais (specs §16.5) : deux MP3 par verbe, en anglais,
+// quelle que soit la langue de l'interface. Même risque de matière muette.
+describe('entrées TTS des verbes irréguliers', () => {
+  const enKeys = new Set(en.map((e) => e.key));
+
+  it('couvre l’infinitif et la récitation de chacun des 64 verbes, en anglais', () => {
+    const missing = irrVerbDefs()
+      .flatMap((def) => [irrPromptTtsKey(def.key), irrRecitationTtsKey(def.key)])
+      .filter((k) => !enKeys.has(k));
+    expect(missing).toEqual([]);
+  });
+
+  it('ne les génère jamais avec la voix française', () => {
+    expect(fr.filter((e) => e.key.startsWith('irr-'))).toEqual([]);
   });
 });

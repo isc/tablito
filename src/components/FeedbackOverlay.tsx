@@ -19,6 +19,10 @@ import { useFeedbackOverlayStrings } from '../i18n/session';
  */
 export const FEEDBACK_DISMISS_MS = 1800;
 
+/** Le « presque » des matières à formes écrites montre une forme à relire :
+    un peu plus de temps qu'un feedback accepté. */
+export const FEEDBACK_ALMOST_DISMISS_MS = 2600;
+
 interface FeedbackOverlayProps {
   // Question à laquelle on vient de répondre (multiplication, division ou
   // division avec reste).

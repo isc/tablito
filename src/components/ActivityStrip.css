@@ -56,6 +56,10 @@
   background: var(--sage);
 }
 
+.parent-activity-seg--irr.is-done {
+  background: var(--sky);
+}
+
 /* Jour antérieur à l'ouverture de la conjugaison : pas de case vide (qui se
    lirait « séance manquée »), pas de case pleine — rien. */
 .parent-activity-seg.is-void {
@@ -103,4 +107,8 @@
 
 .parent-activity-swatch--conj {
   background: var(--sage);
+}
+
+.parent-activity-swatch--irr {
+  background: var(--sky);
 }

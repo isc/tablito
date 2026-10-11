@@ -1,0 +1,64 @@
+/* « Vus en classe » (cf. IrrClassVerbs.tsx) : les 64 verbes en pastilles. */
+
+.irr-class-verbs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.irr-class-verb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+button.irr-class-verb {
+  cursor: pointer;
+}
+
+.irr-class-verb.is-selected {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+  color: var(--indigo-ink);
+}
+
+/* Rang dans la liste de la classe : l'ordre d'introduction. */
+.irr-class-verb-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--indigo);
+  color: var(--paper);
+  font-size: 11px;
+}
+
+.irr-class-verb-learned {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.irr-class-verbs-clear {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--indigo);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}

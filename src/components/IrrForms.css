@@ -1,0 +1,143 @@
+/* Verbes irréguliers anglais (specs §16.5) : la récitation « go → went →
+   gone ». L'infinitif en encre (il est donné), les formes à produire dans la
+   couleur de la matière — le ciel, celui de l'espace parent. */
+
+.irr-forms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 6px;
+  row-gap: 4px;
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  font-size: 22px;
+  text-align: center;
+}
+
+.irr-forms--large {
+  font-size: clamp(22px, 7.5vw, 32px);
+}
+
+.irr-form-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.irr-form--base {
+  color: var(--ink);
+}
+
+.irr-form--slot {
+  color: var(--sky);
+  min-width: 1.8em;
+  border-bottom: 2px solid transparent;
+}
+
+.irr-form--slot.is-blank {
+  border-bottom-color: var(--line);
+}
+
+.irr-form--slot.is-active {
+  border-bottom-color: var(--sky);
+}
+
+/* Saisie au clavier : chaque case se choisit au clic. */
+.irr-form--slot.is-clickable {
+  font: inherit;
+  background: none;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.irr-arrow,
+.irr-sep {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+/* Traduction française : en petit, l'aide au sens, pas l'objet de la question. */
+.irr-translation {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-align: center;
+  margin: 4px 0 10px;
+}
+
+.irr-answer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  flex: 1;
+}
+
+.irr-slot-label {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sky);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.irr-voice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+}
+
+.irr-ask {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.session-question.irr-question {
+  padding: 16px 16px 0;
+}
+
+.irr-intro .irr-forms {
+  margin: 12px 0 4px;
+}
+
+.irr-intro .conj-replay-btn,
+.irr-feedback .conj-replay-btn {
+  align-self: center;
+  margin: 2px auto 12px;
+}
+
+.irr-feedback .irr-forms {
+  margin: 10px 0 2px;
+}
+
+.irr-hint-line {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  margin: 6px 0 4px;
+}
+
+/* La saisie s'écrit dans la case active : l'ardoise du clavier ferait doublon. */
+.irr-answer .letterpad-display {
+  display: none;
+}

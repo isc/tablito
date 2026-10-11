@@ -30,6 +30,12 @@ interface HomeScreenProps {
   // (révélation différée, comme la règle bonus ×11 — jamais de modale).
   conjVisible: boolean;
   onStartConj: () => void;
+  // === Matière verbes irréguliers anglais (specs §16) : même contrat que la
+  // conjugaison — proposée dans toute langue sauf l'anglais.
+  irrAvailable?: boolean;
+  hasIrrSessionAvailable?: boolean;
+  irrVisible?: boolean;
+  onStartIrr?: () => void;
   onStart: () => void;
   onShowProgress: () => void;
   onShowBadges: () => void;
@@ -150,6 +156,22 @@ function IconVerb() {
   );
 }
 
+// Verbes irréguliers anglais : la flèche de la récitation (go → went → gone),
+// trois pastilles, la première en encre (l'infinitif donné), les deux autres
+// dans la couleur de la matière.
+function IconEnglish() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="6" fill="var(--sky-soft)" stroke="var(--ink)" strokeWidth="1.6" />
+      <rect x="8" y="10" width="7" height="3.2" rx="1.6" fill="var(--ink)" />
+      <path d="M16.5 11.6 H 19.5 M 18.3 10.2 L 19.7 11.6 L 18.3 13" stroke="var(--ink)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="20.5" y="10" width="4" height="3.2" rx="1.6" fill="var(--sky)" />
+      <rect x="8" y="18" width="5" height="3.2" rx="1.6" fill="var(--sky)" opacity="0.55" />
+      <rect x="14.5" y="18" width="9" height="3.2" rx="1.6" fill="var(--sky)" />
+    </svg>
+  );
+}
+
 function IconRuler() {
   return (
     <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -206,6 +228,10 @@ export default function HomeScreen({
   hasConjSessionAvailable = false,
   conjVisible = false,
   onStartConj,
+  irrAvailable = false,
+  hasIrrSessionAvailable = false,
+  irrVisible = false,
+  onStartIrr,
   onStart,
   onShowProgress,
   onShowBadges,
@@ -371,11 +397,11 @@ export default function HomeScreen({
         </div>
 
         <div className="home-cta-wrap">
-          {conjAvailable ? (
-            // Deux matières ⇒ deux tuiles jumelles. Chacune porte l'état de SA
-            // séance du jour ; la flamme de série, elle, reste partagée (§7.2 :
-            // une séance quelconque la maintient).
-            <div className="home-subjects">
+          {conjAvailable || irrAvailable ? (
+            // Plusieurs matières ⇒ des tuiles jumelles. Chacune porte l'état de
+            // SA séance du jour ; la flamme de série, elle, reste partagée
+            // (§7.2 : une séance quelconque la maintient).
+            <div className={`home-subjects${conjAvailable && irrAvailable ? ' home-subjects--3' : ''}`}>
               <SubjectTile
                 icon={<IconMaths />}
                 label={t.subjectMaths}
@@ -383,14 +409,26 @@ export default function HomeScreen({
                 onStart={onStart}
                 t={t}
               />
-              <SubjectTile
-                icon={<IconVerb />}
-                label={t.subjectConj}
-                available={hasConjSessionAvailable}
-                isNew={!conjVisible}
-                onStart={onStartConj}
-                t={t}
-              />
+              {conjAvailable && (
+                <SubjectTile
+                  icon={<IconVerb />}
+                  label={t.subjectConj}
+                  available={hasConjSessionAvailable}
+                  isNew={!conjVisible}
+                  onStart={onStartConj}
+                  t={t}
+                />
+              )}
+              {irrAvailable && onStartIrr && (
+                <SubjectTile
+                  icon={<IconEnglish />}
+                  label={t.subjectIrr}
+                  available={hasIrrSessionAvailable}
+                  isNew={!irrVisible}
+                  onStart={onStartIrr}
+                  t={t}
+                />
+              )}
             </div>
           ) : hasSessionAvailable ? (
             <button className="btn btn--indigo home-start-btn" onClick={onStart}>
@@ -407,7 +445,7 @@ export default function HomeScreen({
             {/* Plusieurs images dès qu'un 2ᵉ inventaire existe : niveau 2
                 débloqué OU matière conjugaison ouverte. */}
             <span className="home-nav-btn-label">
-              {divisionUnlocked || conjVisible ? t.myPictures : t.myPicture}
+              {divisionUnlocked || conjVisible || irrVisible ? t.myPictures : t.myPicture}
             </span>
           </button>
           <button className="home-nav-btn" onClick={onShowBadges}>
