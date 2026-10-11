@@ -202,8 +202,9 @@ export function useSpeechRecognition({
         lastStartAtRef.current = Date.now();
         try {
           rec.start();
-        } catch {
+        } catch (e) {
           // start() throws if already started — ignore
+          voiceLog('reco:start-threw', String(e));
         }
       };
 
@@ -241,8 +242,9 @@ export function useSpeechRecognition({
     setError(null);
     try {
       rec.start();
-    } catch {
+    } catch (e) {
       // Already started — ignore
+      voiceLog('reco:start-threw', String(e));
     }
   }, [ensureRecognition]);
 
