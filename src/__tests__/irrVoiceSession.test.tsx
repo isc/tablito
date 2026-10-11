@@ -63,12 +63,14 @@ function emit(transcript: string, isFinal: boolean, alternatives: string[] = [])
 const say = (transcript: string, alternatives?: string[]) => emit(transcript, true, alternatives);
 const saying = (transcript: string) => emit(transcript, false);
 
-function irrItem(key: string): IrrSessionItem {
+function irrItem(key: string, isIntroduction = false): IrrSessionItem {
   const fact = createInitialIrrFacts().find((f) => f.key === key)!;
   return {
     kind: 'irr',
-    fact: { ...fact, introduced: true, box: 2, lastSeen: '2026-09-01', nextDue: '2026-09-02' },
-    isIntroduction: false,
+    fact: isIntroduction
+      ? fact
+      : { ...fact, introduced: true, box: 2, lastSeen: '2026-09-01', nextDue: '2026-09-02' },
+    isIntroduction,
     isRetry: false,
     isBonusReview: false,
   };
@@ -172,6 +174,24 @@ describe('Dire le verbe (specs §16.6)', () => {
     advance(2100);
     say('put put put');
     expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
+  });
+});
+
+describe('Introduction d’un verbe (specs §16.7)', () => {
+  it('la copie différée est la première question : le verbe n’est demandé qu’une fois', () => {
+    const onIrrAnswer = renderSession([irrItem('go', true)]);
+    act(() => requireButton(/Suivant/).click());
+
+    // Le modèle d'abord, sans saisie…
+    expect(document.querySelector('.irr-ask')?.textContent).toBe('Regarde bien…');
+    expect(slots()).toEqual(['went', 'gone']);
+    expect(document.querySelector('.irr-answer')).toBeNull();
+    // … puis masqué : la question elle-même, notée.
+    advance(4000);
+    promptEnds();
+    say('go went gone');
+    expect(onIrrAnswer).toHaveBeenCalledTimes(1);
+    expect((onIrrAnswer.mock.calls[0] as [IrrSessionItem])[0].isIntroduction).toBe(true);
   });
 });
 

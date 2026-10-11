@@ -50,11 +50,10 @@ function answerShownVerb(): string {
   return key;
 }
 
-/** Joue une introduction : écouter, (famille), copie différée. */
+/** Joue une introduction, puis laisse se masquer le modèle de la première question. */
 function playIntro(): void {
   while (button(/Suivant/)) fireEvent.click(button(/Suivant/)!);
-  advance(4000); // le modèle se masque
-  answerShownVerb();
+  advance(4000);
 }
 
 /** Joue la séance jusqu'au récap. Renvoie les verbes posés. */
