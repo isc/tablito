@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261011155822"
+const VERSION = "20261011165202"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/previews/claude-conjugation-screen-layout-21d61e/"
 const ASSETS = [
