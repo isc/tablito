@@ -79,7 +79,7 @@ describe('inventaire (specs §16.3)', () => {
     // « read, read, read » s'entendait « red » trois fois.
     const entries = allIrrTtsEntries();
     expect(entries).toContainEqual({ key: 'irr-read', text: 'reed.' });
-    expect(entries).toContainEqual({ key: 'irr-read-all', text: 'reed, red, red.', forms: ['reed', 'red', 'red'] });
+    expect(entries).toContainEqual({ key: 'irr-read-all', text: 'reed, red, red.', forms: ['read', 'read', 'read'] });
   });
 });
 

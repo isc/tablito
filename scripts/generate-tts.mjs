@@ -12,7 +12,9 @@
  * Skips files that already exist (delete a file to regenerate it).
  *
  * Les énoncés de conjugaison sont retouchés (un bip couvre la forme, cf.
- * scripts/tts-takes.mjs) : il faut alors ffmpeg dans le PATH.
+ * scripts/tts-takes.mjs) : il faut alors ffmpeg dans le PATH, et un Python qui
+ * a Vosk (`pip install vosk` ; `VOSK_PYTHON` pour en désigner un autre que
+ * python3).
  *
  * Voix : la voix française par défaut est figée ci-dessous. La voix anglaise
  * est surchargeable par la variable d'env MISTRAL_VOICE_ID_EN (sinon on réutilise
@@ -35,14 +37,14 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { importTs } from './import-ts.mjs';
 import { mp3DurationSeconds } from './mp3-duration.mjs';
-import { beepOver, confusedForms, decodeMp3, encodeMp3, formLeaks, hiddenSpan } from './tts-takes.mjs';
+import { confusedForms, hideWord } from './tts-takes.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TTS_ROOT = join(__dirname, '..', 'public', 'audio', 'tts');
 
 const MISTRAL_API = 'https://api.mistral.ai/v1';
 const MODEL = 'voxtral-mini-tts-2603';
-// Transcription des prises, pour les vérifier ou y situer un mot (cf. reviewTake).
+// Transcription des récitations, pour les vérifier (cf. reviewTake).
 const TRANSCRIPTION_MODEL = 'voxtral-mini-latest';
 // Marie - Curious (fr_fr, female)
 const VOICE_ID_FR = 'e0580ce5-e63c-4cbe-88c8-a983b80c5f1f';
@@ -69,8 +71,6 @@ async function generateEntry(entry, voiceId, lang, outputPath) {
     const audio = await generateAudio(entry.text, voiceId);
     if (!audio) return false;
     const result = await reviewTake(entry, audio, lang);
-    // Transcription indisponible : une autre prise n'y changerait rien.
-    if (!result) return false;
     if (result.audio && !result.problem) {
       best = result;
       break;
@@ -89,8 +89,7 @@ async function generateEntry(entry, voiceId, lang, outputPath) {
 
 // Ce qui peut faire rejeter une prise. Rend { audio, problem } : `audio` est ce
 // qu'on écrirait (null si la prise est inutilisable), `problem` null si la prise
-// est bonne. Rend null si la transcription est indisponible pour une prise
-// qu'on ne peut pas écrire sans elle.
+// est bonne.
 async function reviewTake(entry, audio, lang) {
   // Une synthèse d'un mot seul ajoute parfois une hésitation (« be… hum ») :
   // le fichier est alors nettement plus long que le mot.
@@ -101,36 +100,15 @@ async function reviewTake(entry, audio, lang) {
   // Une récitation (« know, knew, known ») où deux formes sonnent pareil. Sans
   // transcription, on ne peut rien en dire : la prise passe.
   if (entry.forms) {
-    const heard = await transcribe(audio, { language: lang });
+    const heard = await transcribe(audio, lang);
     return { audio, problem: heard && confusedForms(entry.forms, heard.text) };
   }
-  if (entry.hide !== undefined) return hideWord(entry, audio, lang);
+  if (entry.hide !== undefined) {
+    const result = hideWord(audio, entry.text, entry.hide);
+    if (result.span) process.stdout.write(`(bip ${result.span.start.toFixed(2)}–${result.span.end.toFixed(2)} s) `);
+    return result;
+  }
   return { audio, problem: null };
-}
-
-// Couvre d'un bip le mot n° `hide` du texte (la forme conjuguée d'un énoncé),
-// situé par la transcription horodatée de la prise ; puis vérifie, sur une
-// seconde transcription, que la forme ne s'entend plus.
-async function hideWord({ text, hide }, audio, lang) {
-  const heard = await transcribe(audio, { words: true });
-  if (!heard) return null;
-  const span = hiddenSpan(text, hide, heard.segments);
-  if (span.error) {
-    const words = heard.segments.map((w) => `${w.text}@${w.start}-${w.end}`).join(' ');
-    return { audio: null, problem: `${span.error} [${words}]` };
-  }
-  const masked = encodeMp3(beepOver(decodeMp3(audio), span));
-  process.stdout.write(`(bip ${span.start.toFixed(2)}–${span.end.toFixed(2)} s) `);
-  const check = await transcribe(masked, { language: lang });
-  if (!check) return null;
-  // Une forme encore audible dicterait la réponse : pire que pas de MP3, la
-  // prise n'est jamais gardée.
-  if (formLeaks(text, hide, check.text)) {
-    return { audio: null, problem: `forme audible : « ${check.text.trim()} »` };
-  }
-  // Un pronom fondu dans la forme part sous le bip avec elle : moins bien,
-  // mais mieux qu'une question muette si aucune prise ne fait mieux.
-  return { audio: masked, problem: span.fused ? 'pronom fondu dans la forme, couvert avec elle' : null };
 }
 
 async function generateAudio(text, voiceId) {
@@ -146,15 +124,12 @@ async function generateAudio(text, voiceId) {
   return Buffer.from(data.audio_data, 'base64');
 }
 
-// Transcription d'une prise : le texte seul (`language` imposée, plus fiable),
-// ou mot à mot horodaté (`words`) — l'API refuse les deux à la fois. Rend
-// { text, segments: [{ text, start, end }] }, ou null.
-async function transcribe(audio, { language, words = false }) {
+// Transcription d'une prise, dans la langue imposée. Rend { text }, ou null.
+async function transcribe(audio, language) {
   const form = new FormData();
   form.append('model', TRANSCRIPTION_MODEL);
   form.append('file', new Blob([audio], { type: 'audio/mpeg' }), 'take.mp3');
-  if (words) form.append('timestamp_granularities', 'word');
-  else form.append('language', language);
+  form.append('language', language);
   return callMistral('audio/transcriptions', form);
 }
 
@@ -612,10 +587,10 @@ async function generateLang(lang) {
   return failed;
 }
 
-// Un énoncé à couvrir d'un bip manque-t-il ? Le bip passe par ffmpeg, absent
-// des runners GitHub : les workflows ne l'installent que dans ce cas
-// (`--needs-ffmpeg`), l'installation coûtant une demi-minute à chaque preview.
-async function needsFfmpeg(langs) {
+// Un énoncé à couvrir d'un bip manque-t-il ? Le bip passe par ffmpeg et Vosk,
+// absents des runners GitHub : les workflows ne les installent que dans ce cas
+// (`--needs-beep-tools`), l'installation coûtant une demi-minute.
+async function needsBeepTools(langs) {
   for (const lang of langs) {
     const entries = await LANGS[lang].build();
     if (entries.some((e) => e.hide !== undefined && !existsSync(mp3Path(lang, e.key)))) return true;
@@ -630,8 +605,8 @@ async function main() {
     .map((s) => s.trim())
     .filter((s) => s in LANGS);
 
-  if (process.argv.includes('--needs-ffmpeg')) {
-    console.log((await needsFfmpeg(requested)) ? 'yes' : 'no');
+  if (process.argv.includes('--needs-beep-tools')) {
+    console.log((await needsBeepTools(requested)) ? 'yes' : 'no');
     return;
   }
 

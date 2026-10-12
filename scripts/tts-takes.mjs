@@ -1,6 +1,7 @@
-// Vérifier et retoucher une prise de synthèse vocale, d'après sa transcription
-// (cf. generate-tts.mjs). Ce module ne parle à aucune API : il compare une
-// transcription au texte, et taille l'audio (ffmpeg décode et réencode le MP3).
+// Vérifier et retoucher une prise de synthèse vocale (cf. generate-tts.mjs). Ce
+// module ne parle à aucune API : il compare une transcription au texte, aligne
+// l'audio sur son texte (Vosk, scripts/align-words.py), et taille l'audio
+// (ffmpeg décode et réencode le MP3).
 //
 // Deux usages :
 // - les récitations des verbes irréguliers (entrées `forms`) : la synthèse
@@ -11,10 +12,13 @@
 //   un trou (« Demain, je… à la fête ») donnait une diction hachée, et un
 //   silence si court que le trou s'entendait à peine (même soir). La phrase
 //   est donc synthétisée EN ENTIER, avec sa prosodie naturelle, puis la forme
-//   est remplacée par un bip : la transcription horodatée mot à mot dit où
-//   elle tombe.
+//   est remplacée par un bip, posé par un alignement forcé de l'audio sur son
+//   texte. Les horodatages mot à mot d'un modèle de transcription (Voxtral)
+//   flottaient de 100 à 300 ms : le bip mangeait le pronom, et laissait
+//   entendre l'attaque ou la terminaison de la forme.
 
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 /** Mot ramené à ses lettres : minuscules, sans accents ni ponctuation. */
 export function normalizeWord(word) {
@@ -46,23 +50,6 @@ export function confusedForms(forms, transcript) {
   return null;
 }
 
-/**
- * Recolle les morceaux d'un mot à apostrophe que la transcription rend en deux
- * (« Aujourd » + « 'hui, ») : le texte, lui, n'en fait qu'un mot.
- */
-export function mergeApostropheTokens(words) {
-  const merged = [];
-  for (const w of words) {
-    const prev = merged[merged.length - 1];
-    if (prev && /^['’]/.test(w.text.trim())) {
-      merged[merged.length - 1] = { text: prev.text + w.text.trim(), start: prev.start, end: w.end };
-    } else {
-      merged.push({ ...w, text: w.text.trim() });
-    }
-  }
-  return merged.filter((w) => normalizeWord(w.text) !== '');
-}
-
 function similarity(a, b) {
   if (a === b) return 1;
   const prev = Array.from({ length: b.length + 1 }, (_, j) => j);
@@ -81,6 +68,10 @@ function similarity(a, b) {
 // En dessous, deux mots ne sont pas « le même mot mal transcrit ».
 const MIN_SIMILARITY = 0.5;
 const GAP = -0.5;
+// Ce que Vosk rend pour un son qui n'est aucun des mots permis : un mot hors de
+// son vocabulaire (« chanterai »), ou le bip. Il peut tenir la place de
+// n'importe quel mot attendu.
+const UNKNOWN = '[unk]';
 
 /**
  * Aligne les mots attendus sur les mots entendus (Needleman-Wunsch, score de
@@ -91,7 +82,7 @@ const GAP = -0.5;
  */
 export function alignWords(expected, heard) {
   const a = expected.map(normalizeWord);
-  const b = heard.map(normalizeWord);
+  const b = heard.map((w) => (w === UNKNOWN ? w : normalizeWord(w)));
   const grid = (fill) => Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(fill));
   const score = grid(0);
   // Le pas retenu dans chaque case : 'd' (apparier), 'u' (mot attendu sauté),
@@ -102,7 +93,7 @@ export function alignWords(expected, heard) {
   for (let j = 1; j <= b.length; j++) [score[0][j], step[0][j]] = [j * GAP, 'l'];
   for (let i = 1; i <= a.length; i++) {
     for (let j = 1; j <= b.length; j++) {
-      sim[i][j] = similarity(a[i - 1], b[j - 1]);
+      sim[i][j] = b[j - 1] === UNKNOWN ? MIN_SIMILARITY : similarity(a[i - 1], b[j - 1]);
       const options = [
         [score[i - 1][j - 1] + 2 * sim[i][j] - 1, 'd'],
         [score[i - 1][j] + GAP, 'u'],
@@ -128,46 +119,96 @@ export function alignWords(expected, heard) {
 
 /**
  * Où tombe, dans l'audio, le mot n° `hide` de `text` (mots séparés par des
- * espaces) ? `words` : la transcription horodatée, `{ text, start, end }` en
- * secondes. Rend `{ start, end, fused }`, ou `{ error }` quand la forme est
- * introuvable (synthèse qui a dit autre chose, mot avalé). `fused` : le mot
- * d'avant n'est pas entendu à part, la synthèse a fondu le pronom dans la forme
- * (« je aime » dit « j'aime ») et le bip l'emporte avec elle.
+ * espaces) ? `words` : les mots alignés, `{ text, start, end }` en secondes.
+ * Rend `{ start, end }`, ou `{ error }` quand la forme est introuvable.
  */
 export function hiddenSpan(text, hide, words) {
-  const heard = mergeApostropheTokens(words);
-  const map = alignWords(text.split(/\s+/), heard.map((w) => w.text));
-  const j = map[hide];
-  if (j === null) return { error: 'forme introuvable dans la transcription' };
-  // Les horodatages laissent parfois un blanc entre deux mots : le bip le
-  // couvre aussi, plutôt que de risquer d'y laisser filer une terminaison.
-  const prev = heard[j - 1];
-  const next = heard[j + 1];
+  const j = alignWords(text.split(/\s+/), words.map((w) => w.text))[hide];
+  if (j === null) return { error: 'forme introuvable à l’alignement' };
+  // Un blanc entre deux mots (une pause) est couvert aussi, plutôt que de
+  // risquer d'y laisser filer une attaque ou une terminaison.
+  const prev = words[j - 1];
+  const next = words[j + 1];
   return {
-    start: prev ? Math.min(heard[j].start, prev.end) : heard[j].start,
-    end: next ? Math.max(heard[j].end, next.start) : heard[j].end,
-    fused: hide > 0 && map[hide - 1] !== j - 1,
+    start: prev ? Math.min(words[j].start, prev.end) : words[j].start,
+    end: next ? Math.max(words[j].end, next.start) : words[j].end,
   };
 }
 
+// Marge, en secondes, autour du bip pour un son non reconnu : l'horodatage de
+// la reconnaissance va par pas de 30 ms.
+const REGION_TOLERANCE = 0.06;
+
 /**
- * La forme s'entend-elle malgré le bip ? Contrôle a posteriori, sur la
- * transcription (texte seul) de l'audio couvert : un horodatage trop court
- * laisserait filer une terminaison — justement ce que la question teste. Un
- * reste de forme se transcrit rarement en mot proche (« trouvera » couvert à
- * moitié revient « il y aura ») : on exige donc qu'entre le mot d'avant et le
- * mot d'après, rien ne soit entendu, sinon le bip lui-même.
+ * Ce qui cloche dans l'audio couvert, d'après les mots qu'on y reconnaît
+ * (`heard`, horodatés) ; null si rien. `region` : où tombe le bip, marges
+ * comprises. Deux défauts :
+ * - le mot d'avant ne s'entend plus : le bip a mangé le pronom, qui porte la
+ *   personne. Le mot d'après n'est pas exigé : souvent minuscule (« au »,
+ *   « de »), il se reconnaît mal juste après un bip, et en perdre l'attaque ne
+ *   trahit rien ;
+ * - la forme s'entend encore : reconnue, ou un mot reconnu sous le bip, ou un
+ *   son inconnu qui en déborde — un reste de forme que l'aligneur ne connaît
+ *   pas (« chanterai » est hors de son vocabulaire).
  */
-export function formLeaks(text, hide, transcript) {
+export function maskProblem(text, hide, heard, region) {
   const expected = text.split(/\s+/);
-  const heard = transcript.split(/\s+/).filter((w) => normalizeWord(w) !== '');
-  const map = alignWords(expected, heard);
-  if (map[hide] !== null) return true;
+  const map = alignWords(expected, heard.map((w) => w.text));
   const before = hide > 0 ? map[hide - 1] : -1;
-  const after = hide + 1 < expected.length ? map[hide + 1] : heard.length;
-  // Transcription trop brouillée pour situer le trou : rien à en conclure.
-  if (before === null || after === null) return false;
-  return heard.slice(before + 1, after).some((w) => !/^b[ie]+p/.test(normalizeWord(w)));
+  if (before === null || heard[before]?.text === UNKNOWN) return 'mot précédent couvert par le bip';
+  const neighbours = new Set([before, map[hide + 1]]);
+  const overlaps = (w) => w.start < region.end - REGION_TOLERANCE && w.end > region.start + REGION_TOLERANCE;
+  const spills = (w) => w.start < region.start - REGION_TOLERANCE || w.end > region.end + REGION_TOLERANCE;
+  const leaked =
+    (map[hide] !== null && heard[map[hide]].text !== UNKNOWN) ||
+    heard.some((w, k) => !neighbours.has(k) && (w.text === UNKNOWN ? overlaps(w) && spills(w) : overlaps(w)));
+  return leaked ? `forme audible : « ${heard.map((w) => w.text).join(' ')} »` : null;
+}
+
+// Python qui a Vosk : `VOSK_PYTHON`, sinon python3.
+export const PYTHON = process.env.VOSK_PYTHON || 'python3';
+const ALIGN_SCRIPT = fileURLToPath(new URL('./align-words.py', import.meta.url));
+
+// Un mot tel que l'écrit Vosk : minuscules, accents et apostrophes gardés.
+const voskWord = (w) => w.toLowerCase().replace(/’/g, "'").replace(/[^\p{L}'-]/gu, '');
+
+/**
+ * Les mots de l'audio, horodatés par Vosk : `{ text, start, end }`. `forced` :
+ * le texte entier est la seule phrase permise, un alignement forcé. Sinon,
+ * chacun de ses mots dans n'importe quel ordre — pour vérifier ce qui s'entend
+ * encore, la forme couverte.
+ */
+function voskWords(mp3, text, { forced }) {
+  const words = text.split(/\s+/).map(voskWord);
+  const grammar = forced ? [words.join(' '), UNKNOWN] : [...new Set(words), UNKNOWN];
+  const pcm = decode(mp3, 's16le', 16000);
+  return JSON.parse(run(PYTHON, [ALIGN_SCRIPT, JSON.stringify(grammar)], pcm).toString());
+}
+
+// Les frontières d'un mot très court sont les moins sûres : « tu es » se dit
+// presque d'un bloc, et l'alignement ne laisse à « es » que 30 ms, la voyelle
+// restant du côté de « tu ». Avant de rejeter la prise, on élargit le bip
+// d'autant de chaque côté — tant que ses voisins s'entendent encore.
+const WIDEN_SECONDS = [0, 0.05, 0.1];
+
+/**
+ * Couvre d'un bip le mot n° `hide` de `text` dans `mp3`, situé par alignement
+ * forcé, puis vérifie l'audio couvert (cf. maskProblem). Rend `{ audio, span,
+ * problem }` : `audio` null si la prise est inutilisable — une forme encore
+ * audible dicterait la réponse, pire que pas de MP3.
+ */
+export function hideWord(mp3, text, hide) {
+  const found = hiddenSpan(text, hide, voskWords(mp3, text, { forced: true }));
+  if (found.error) return { audio: null, problem: found.error };
+  const samples = decodeMp3(mp3);
+  let problem = null;
+  for (const widen of WIDEN_SECONDS) {
+    const span = { start: Math.max(0, found.start - widen), end: found.end + widen };
+    const audio = encodeMp3(beepOver(samples, span));
+    problem = maskProblem(text, hide, voskWords(audio, text, { forced: false }), beepRegion(span));
+    if (!problem) return { audio, span, problem };
+  }
+  return { audio: null, problem };
 }
 
 // Le format des MP3 de la synthèse (mono, 22 050 Hz) : le fichier couvert reste
@@ -182,6 +223,13 @@ const BEEP_MIN_SECONDS = 0.35;
 const BEEP_PAD_SECONDS = 0.06;
 const FADE_SECONDS = 0.015;
 
+const toneSeconds = ({ start, end }) => Math.max(end - start - 2 * BEEP_PAD_SECONDS, BEEP_MIN_SECONDS);
+
+/** Où tombe le bip dans l'audio couvert, marges comprises. */
+export function beepRegion(span) {
+  return { start: span.start, end: span.start + 2 * BEEP_PAD_SECONDS + toneSeconds(span) };
+}
+
 /**
  * Remplace `[start, end]` (secondes) par un bip. Le niveau du bip suit celui de
  * la voix (RMS), un peu en dessous : ni noyé, ni criard.
@@ -191,7 +239,7 @@ export function beepOver(samples, { start, end }, sampleRate = SAMPLE_RATE) {
   const e = Math.round(end * sampleRate);
   const fade = Math.round(FADE_SECONDS * sampleRate);
   const pad = Math.round(BEEP_PAD_SECONDS * sampleRate);
-  const tone = Math.round(Math.max(end - start - 2 * BEEP_PAD_SECONDS, BEEP_MIN_SECONDS) * sampleRate);
+  const tone = Math.round(toneSeconds({ start, end }) * sampleRate);
 
   let sum = 0;
   for (const v of samples) sum += v * v;
@@ -211,23 +259,29 @@ export function beepOver(samples, { start, end }, sampleRate = SAMPLE_RATE) {
   return out;
 }
 
-function ffmpeg(args, input) {
-  const res = spawnSync('ffmpeg', ['-v', 'error', ...args], { input, maxBuffer: 1 << 28 });
-  if (res.error) throw new Error(`ffmpeg introuvable : ${res.error.message}`);
-  if (res.status !== 0) throw new Error(`ffmpeg : ${res.stderr.toString().trim()}`);
+function run(command, args, input) {
+  const res = spawnSync(command, args, { input, maxBuffer: 1 << 28 });
+  if (res.error) throw new Error(`${command} introuvable : ${res.error.message}`);
+  if (res.status !== 0) throw new Error(`${command} : ${res.stderr.toString().trim()}`);
   return res.stdout;
 }
 
+/** PCM mono brut d'un MP3, au format et à la fréquence voulus. */
+function decode(mp3, format, rate) {
+  return run('ffmpeg', ['-v', 'error', '-i', 'pipe:0', '-f', format, '-ac', '1', '-ar', String(rate), 'pipe:1'], mp3);
+}
+
 export function decodeMp3(buf) {
-  const pcm = ffmpeg(['-i', 'pipe:0', '-f', 'f32le', '-ac', '1', '-ar', String(SAMPLE_RATE), 'pipe:1'], buf);
+  const pcm = decode(buf, 'f32le', SAMPLE_RATE);
   // Copie : le Buffer rendu n'est pas forcément aligné sur 4 octets.
   return new Float32Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + pcm.byteLength));
 }
 
 export function encodeMp3(samples) {
   const pcm = Buffer.from(samples.buffer, samples.byteOffset, samples.byteLength);
-  return ffmpeg(
-    ['-f', 'f32le', '-ac', '1', '-ar', String(SAMPLE_RATE), '-i', 'pipe:0', '-c:a', 'libmp3lame', '-b:a', '64k', '-f', 'mp3', 'pipe:1'],
+  return run(
+    'ffmpeg',
+    ['-v', 'error', '-f', 'f32le', '-ac', '1', '-ar', String(SAMPLE_RATE), '-i', 'pipe:0', '-c:a', 'libmp3lame', '-b:a', '64k', '-f', 'mp3', 'pipe:1'],
     pcm,
   );
 }

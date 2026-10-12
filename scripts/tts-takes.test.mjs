@@ -1,10 +1,12 @@
 // @vitest-environment node
 //
 // Vérification et retouche des prises de synthèse vocale (scripts/tts-takes.mjs).
-// Les transcriptions ci-dessous imitent ce que rendent les modèles : mots à
-// apostrophe coupés en deux, horodatages contigus, homophones.
+// Les mots reconnus ci-dessous imitent ce que rendent les modèles : homophones
+// pour la transcription des récitations, mots du texte ou « [unk] » pour
+// l'aligneur.
 
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import {
   alignWords,
@@ -12,9 +14,10 @@ import {
   confusedForms,
   decodeMp3,
   encodeMp3,
-  formLeaks,
   hiddenSpan,
-  mergeApostropheTokens,
+  hideWord,
+  maskProblem,
+  PYTHON,
 } from './tts-takes.mjs';
 
 const words = (...list) => list.map(([text, start, end]) => ({ text, start, end }));
@@ -37,49 +40,65 @@ describe('récitations des verbes irréguliers', () => {
 });
 
 describe('énoncés à bip de la conjugaison', () => {
-  it('recolle les mots à apostrophe coupés par la transcription', () => {
-    const merged = mergeApostropheTokens(words(['Aujourd', 0, 0.24], ["'hui,", 0.24, 0.54], ['il', 0.54, 0.78]));
-    expect(merged.map((w) => [w.text, w.start, w.end])).toEqual([
-      ["Aujourd'hui,", 0, 0.54],
-      ['il', 0.54, 0.78],
-    ]);
-  });
-
   it('situe la forme à sa place, pas sur l’infinitif qui lui ressemble', () => {
     const text = 'Trouver. Demain, il trouvera la réponse.';
     const heard = words(
-      ['Trouver.', 0, 0.6],
-      ['Demain,', 0.9, 1.3],
+      ['trouver', 0, 0.6],
+      ['demain', 0.9, 1.3],
       ['il', 1.3, 1.45],
       ['trouvera', 1.45, 1.9],
       ['la', 1.9, 2.0],
-      ['réponse.', 2.0, 2.5],
+      ['réponse', 2.0, 2.5],
     );
     expect(alignWords(text.split(' '), heard.map((w) => w.text))).toEqual([0, 1, 2, 3, 4, 5]);
-    expect(hiddenSpan(text, 3, heard)).toEqual({ start: 1.45, end: 1.9, fused: false });
+    expect(hiddenSpan(text, 3, heard)).toEqual({ start: 1.45, end: 1.9 });
   });
 
-  it('étend le bip aux blancs laissés autour de la forme', () => {
-    const heard = words(['Demain,', 0, 0.4], ['nous', 0.5, 0.7], ['chanterons', 0.75, 1.2], ['fort.', 1.3, 1.6]);
-    expect(hiddenSpan('Demain, nous chanterons fort.', 2, heard)).toEqual({ start: 0.7, end: 1.3, fused: false });
-  });
-
-  it('signale une prise où le pronom est fondu dans la forme', () => {
-    // « je aime » synthétisé « j'aime » : le bip emporte le pronom avec elle.
-    const heard = words(['Aimer.', 0, 0.5], ['Aujourd', 0.8, 1.0], ["'hui,", 1.0, 1.3], ["j'aime", 1.3, 1.7], ['ce', 1.7, 1.8], ['livre.', 1.8, 2.2]);
-    expect(hiddenSpan('Aimer. Aujourd’hui, je aime ce livre.', 3, heard)).toEqual({ start: 1.3, end: 1.7, fused: true });
+  it('étend le bip aux pauses laissées autour de la forme', () => {
+    const heard = words(['demain', 0, 0.4], ['nous', 0.5, 0.7], ['chanterons', 0.75, 1.2], ['fort', 1.3, 1.6]);
+    expect(hiddenSpan('Demain, nous chanterons fort.', 2, heard)).toEqual({ start: 0.7, end: 1.3 });
   });
 
   it('refuse une prise où la forme est introuvable', () => {
-    const heard = words(['Demain,', 0, 0.4], ['il', 0.4, 0.6], ['la', 0.6, 0.7], ['réponse.', 0.7, 1.1]);
+    const heard = words(['demain', 0, 0.4], ['il', 0.4, 0.6], ['la', 0.6, 0.7], ['réponse', 0.7, 1.1]);
     expect(hiddenSpan('Demain, il trouvera la réponse.', 2, heard).error).toMatch(/introuvable/);
   });
 
-  it('entend une terminaison qui a filé sous le bip', () => {
+  it('situe une forme hors du vocabulaire de l’aligneur par sa place', () => {
+    // Vosk ne connaît pas « chanterai » : il rend « [unk] » à sa place.
+    const heard = words(['demain', 0, 0.48], ['je', 0.84, 1.05], ['[unk]', 1.05, 1.5], ['à', 1.56, 1.62], ['la', 1.62, 1.71], ['fête', 1.71, 2.13]);
+    expect(hiddenSpan('Demain, je chanterai à la fête.', 2, heard)).toEqual({ start: 1.05, end: 1.56 });
+  });
+
+  describe('contrôle de l’audio couvert', () => {
     const text = 'Demain, il trouvera la réponse.';
-    expect(formLeaks(text, 2, 'Demain, il y aura la réponse.')).toBe(true);
-    expect(formLeaks(text, 2, 'Demain, il, la réponse.')).toBe(false);
-    expect(formLeaks(text, 2, 'Demain, il bip la réponse.')).toBe(false);
+    // Le bip couvre 0,6–1,1 s ; « la » reprend à 1,15 s.
+    const region = { start: 0.6, end: 1.1 };
+    const heard = (...middle) => words(['demain', 0, 0.4], ['il', 0.4, 0.6], ...middle, ['la', 1.15, 1.25], ['réponse', 1.25, 1.7]);
+
+    it('laisse passer un bip reconnu comme un son inconnu, ou pas reconnu du tout', () => {
+      expect(maskProblem(text, 2, heard(['[unk]', 0.6, 1.1]), region)).toBeNull();
+      expect(maskProblem(text, 2, heard(), region)).toBeNull();
+    });
+
+    it('entend la forme, ou un mot reconnu à sa place', () => {
+      expect(maskProblem(text, 2, heard(['trouvera', 0.6, 1.1]), region)).toMatch(/audible/);
+      expect(maskProblem(text, 2, heard(['la', 0.6, 0.7], ['[unk]', 0.7, 1.1]), region)).toMatch(/audible/);
+    });
+
+    it('entend un reste de forme inconnu de l’aligneur, qui déborde du bip', () => {
+      expect(maskProblem(text, 2, heard(['[unk]', 0.45, 1.1]), region)).toMatch(/audible/);
+    });
+
+    it('refuse un bip qui a mangé le pronom', () => {
+      const lost = words(['demain', 0, 0.4], ['[unk]', 0.4, 1.1], ['la', 1.15, 1.25], ['réponse', 1.25, 1.7]);
+      expect(maskProblem(text, 2, lost, region)).toMatch(/précédent/);
+    });
+
+    it('n’exige pas le petit mot d’après, mal reconnu juste après un bip', () => {
+      const noNext = words(['demain', 0, 0.4], ['il', 0.4, 0.6], ['[unk]', 0.6, 1.1], ['réponse', 1.25, 1.7]);
+      expect(maskProblem(text, 2, noNext, region)).toBeNull();
+    });
   });
 });
 
@@ -110,5 +129,20 @@ describe.skipIf(!hasFfmpeg)('MP3 (ffmpeg)', () => {
     const tone = Float32Array.from({ length: 22050 }, (_, i) => 0.3 * Math.sin((2 * Math.PI * 440 * i) / 22050));
     const samples = decodeMp3(encodeMp3(tone));
     expect(Math.abs(samples.length - tone.length)).toBeLessThan(2000);
+  });
+});
+
+// La chaîne réelle, sur un MP3 du dépôt : seulement là où Vosk est installé
+// (`VOSK_PYTHON`, cf. scripts/generate-tts.mjs) — pas dans la CI de test.
+const hasVosk = hasFfmpeg && spawnSync(PYTHON, ['-c', 'import vosk']).status === 0;
+
+describe.skipIf(!hasVosk)('bip posé par alignement forcé (Vosk)', () => {
+  it('couvre la forme, et seulement elle', () => {
+    const mp3 = readFileSync(new URL('../public/audio/tts/fr/conj-pres-dire-nous-0-p.mp3', import.meta.url));
+    const result = hideWord(mp3, 'Aujourd’hui, nous disons merci.', 2);
+    expect(result.problem).toBeNull();
+    // « nous » finit vers 1,17 s, « merci » commence vers 1,56 s (enveloppe d'énergie).
+    expect(result.span.start).toBeGreaterThan(1.1);
+    expect(result.span.end).toBeLessThan(1.65);
   });
 });

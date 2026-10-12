@@ -27,15 +27,8 @@ jobs:
 
       - run: npm ci
 
-      # Le bip des énoncés de conjugaison passe par ffmpeg, absent des runners
-      # (cf. scripts/tts-takes.mjs). Installé seulement quand un tel énoncé
-      # manque : l'installation coûte une demi-minute.
-      - name: Install ffmpeg if needed
-        run: |
-          if [ "$(node scripts/generate-tts.mjs --needs-ffmpeg)" = yes ]; then
-            sudo apt-get update -q
-            sudo apt-get install -y -q --no-install-recommends ffmpeg
-          fi
+      # ffmpeg et Vosk, pour le bip des énoncés de conjugaison, s'il en manque.
+      - uses: ./.github/actions/beep-tools
 
       - name: Generate missing MP3 files
         run: node scripts/generate-tts.mjs
