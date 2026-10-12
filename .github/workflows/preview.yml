@@ -46,6 +46,16 @@ jobs:
 
       - run: npm ci
 
+      # Le bip des énoncés de conjugaison passe par ffmpeg, absent des runners
+      # (cf. scripts/tts-takes.mjs). Installé seulement quand un tel énoncé
+      # manque : l'installation coûte une demi-minute.
+      - name: Install ffmpeg if needed
+        run: |
+          if [ "$(node scripts/generate-tts.mjs --needs-ffmpeg)" = yes ]; then
+            sudo apt-get update -q
+            sudo apt-get install -y -q --no-install-recommends ffmpeg
+          fi
+
       # Idempotent : ne génère que les fichiers absents, donc rien (et aucun
       # appel à l'API) sur une PR qui n'ajoute pas de clé. Un échec partiel
       # (rate limit) ne bloque pas la preview : les fichiers produits sont

@@ -285,15 +285,30 @@ export function irrRecitationTtsKey(key: string): string {
 /** Préfixe des clés TTS de la matière, lues en anglais par `useTTS`. */
 export const IRR_TTS_PREFIX = 'irr-';
 
-/** Textes à synthétiser, pour `scripts/generate-tts.mjs`. */
-export function allIrrTtsEntries(): { key: string; text: string }[] {
-  return IRR_VERBS.flatMap((def) => [
-    { key: irrPromptTtsKey(def.key), text: `${def.key}.` },
-    {
-      key: irrRecitationTtsKey(def.key),
-      text: `${def.key}, ${def.preterite.join(', ')}, ${def.participle[0]}.`,
-    },
-  ]);
+// Ce que la synthèse LIT quand l'orthographe ne dit pas le son : « read » se
+// dit /riːd/ à l'infinitif, /rɛd/ au passé. Écrit « read, read, read », rien ne
+// lui permet de choisir, et la récitation s'entendait « red, red, red »
+// (transcription du 12/10/2026). Toutes les formes, dans l'ordre de la
+// récitation.
+const SPOKEN: Record<string, readonly string[]> = {
+  read: ['reed', 'red', 'red'],
+};
+
+/**
+ * Textes à synthétiser, pour `scripts/generate-tts.mjs`. `forms` : ce que la
+ * récitation doit faire entendre, dans l'ordre. Le script vérifie, sur une
+ * transcription, que deux formes différentes ne sonnent pas pareil : la
+ * synthèse remplace parfois l'infinitif par la forme suivante (« knew, knew,
+ * known » pour know, avis parent du 11/10/2026).
+ */
+export function allIrrTtsEntries(): { key: string; text: string; forms?: string[] }[] {
+  return IRR_VERBS.flatMap((def) => {
+    const forms = [...(SPOKEN[def.key] ?? [def.key, ...irrExpectedForms(def)])];
+    return [
+      { key: irrPromptTtsKey(def.key), text: `${forms[0]}.` },
+      { key: irrRecitationTtsKey(def.key), text: `${forms.join(', ')}.`, forms },
+    ];
+  });
 }
 
 // --- Homophones (specs §16.6) ------------------------------------------------

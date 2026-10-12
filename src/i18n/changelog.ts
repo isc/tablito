@@ -9,6 +9,13 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-12',
+    items: [
+      "Conjugaison, la question à voix haute se dit d'une traite\u00a0: la phrase entière, avec un bip à la place de la réponse («\u00a0Chanter. Demain, je [bip] à la fête.\u00a0»). La phrase suspendue au trou sonnait haché, et le silence était si court que le trou s'entendait à peine.",
+      "Verbes anglais\u00a0: certaines récitations faisaient entendre la mauvaise forme en tête — «\u00a0knew, knew, known\u00a0» au lieu de «\u00a0know, knew, known\u00a0». Elles sont refaites, et chaque récitation est désormais contrôlée par une transcription automatique.",
+    ],
+  },
+  {
     date: '2026-10-11',
     items: [
       "Conjugaison, la question se lit dans l'ordre du geste\u00a0: le verbe à conjuguer s'affiche en tête, en grand, puis la phrase à compléter. Il était jusqu'ici entre parenthèses, en petit, sous la phrase — alors qu'au futur et pour les verbes irréguliers, c'est la seule indication du verbe demandé. Votre enfant écrit désormais directement dans la phrase, sur le trait, et la relit en entier avant de valider. À voix haute aussi, le verbe vient d'abord, puis la phrase entière («\u00a0Regarder. Bientôt, nous… les étoiles.\u00a0»)\u00a0: l'ancienne formule, «\u00a0Bientôt, nous… regarder\u00a0», s'entendait «\u00a0nous regarder\u00a0», la mauvaise forme à la place même de la réponse.",
@@ -255,6 +262,13 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-12',
+    items: [
+      "French conjugation: the spoken question now flows in one go — the whole sentence, with a beep where the answer goes («\u00a0Chanter. Demain, je [bip] à la fête.\u00a0»). The sentence used to stop at the gap, which sounded choppy, and the pause was so short the gap was hard to hear.",
+      "English verbs: some recitations said the wrong form first — \"knew, knew, known\" instead of \"know, knew, known\". They have been redone, and every recitation is now checked against an automatic transcription.",
+    ],
+  },
   {
     date: '2026-10-11',
     items: [

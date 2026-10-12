@@ -104,10 +104,12 @@ describe('inventaire — la structure de la spec §3.3', () => {
     const sentences = allConjCarrierSentences();
     expect(new Set(sentences.map((s) => s.key)).size).toBe(sentences.length);
     expect(sentences.length).toBeLessThanOrEqual(220);
-    for (const { key, text } of sentences) {
-      // Énoncé : « Chanter. Demain, je… à la fête. » — le verbe, puis la
-      // phrase suspendue au trou. Phrase complète : forme conjuguée comprise.
-      expect(text).toMatch(key.endsWith('-p') ? /^[A-ZÀ-Ý].*[.!?]$/u : /^[A-ZÀ-Ý]\p{L}+\. [A-ZÀ-Ý].*… .*[.!?]$/u);
+    for (const { key, text, hide } of sentences) {
+      // Énoncé : « Chanter. Demain, je chanterai à la fête. » — le verbe, puis
+      // la phrase entière, dont la forme sera couverte d'un bip. Phrase
+      // complète : forme conjuguée comprise, rien de couvert.
+      expect(text).toMatch(key.endsWith('-p') ? /^[A-ZÀ-Ý].*[.!?]$/u : /^[A-ZÀ-Ý]\p{L}+\. [A-ZÀ-Ý].*[.!?]$/u);
+      expect(hide === undefined).toBe(key.endsWith('-p'));
     }
   });
 
@@ -300,12 +302,13 @@ describe('réponse attendue et segmentation (§4.2, §4.5)', () => {
     expect(view.sentenceTtsKey).toBe('conj-fut-je-0-p');
   });
 
-  it('n’énonce JAMAIS la forme demandée : l’audio de la question dit l’infinitif', () => {
-    // « Être. Bientôt, nous… prêts. » — pas « Bientôt, nous serons prêts »,
-    // qui dicterait la réponse au moment même où on la demande (§15.5).
+  it('n’énonce JAMAIS la forme demandée : un bip la couvre dans l’audio de la question', () => {
+    // « Être. Bientôt, nous [bip] prêts. » — pas « Bientôt, nous serons
+    // prêts », qui dicterait la réponse au moment même où on la demande
+    // (§15.5). La phrase est synthétisée entière, puis la forme couverte.
     const view = resolveConjQuestion(conjFactDef('fut-etre')!, 1);
-    expect(view.prompt).toBe('Être. Bientôt, nous… prêts.');
-    expect(view.prompt).not.toContain(view.form);
+    expect(view.prompt).toBe('Être. Bientôt, nous serons prêts.');
+    expect(view.prompt.split(/\s+/)[view.promptHiddenWord]).toBe(view.form);
     expect(view.promptTtsKey).toBe('conj-fut-etre-1');
     // Hors porteuse 0, aucune phrase complète n'est pré-générée.
     expect(view.sentenceTtsKey).toBeNull();
