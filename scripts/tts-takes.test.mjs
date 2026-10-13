@@ -14,6 +14,7 @@ import {
   confusedForms,
   decodeMp3,
   encodeMp3,
+  fricativeEnd,
   hiddenSpan,
   hideWord,
   maskProblem,
@@ -116,6 +117,22 @@ describe('bip', () => {
     expect(out.subarray(1000, 1060).every((v) => v === 0)).toBe(true);
   });
 
+  it('trouve la fin du « j » d’un pronom élidé : du bruit aigu, puis une voyelle', () => {
+    // 0,1 s de silence, 0,08 s de friction (bruit), 0,2 s de voyelle (sinusoïde grave).
+    const rate = 22050;
+    let seed = 1;
+    const noise = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5) * 0.2;
+    const signal = Float32Array.from({ length: Math.round(0.38 * rate) }, (_, i) => {
+      const t = i / rate;
+      if (t < 0.1) return 0;
+      if (t < 0.18) return noise();
+      return 0.3 * Math.sin(2 * Math.PI * 200 * t);
+    });
+    expect(fricativeEnd(signal, 0, 0.38, rate)).toBeCloseTo(0.18, 1);
+    // Sans friction (une voyelle d'emblée), pas de « j » à trouver.
+    expect(fricativeEnd(signal.subarray(Math.round(0.18 * rate)), 0, 0.2, rate)).toBeNull();
+  });
+
   it('ne fait jamais un bip trop court pour s’entendre', () => {
     const out = beepOver(voice, { start: 1, end: 1.1 }, rate);
     expect(out.length).toBeGreaterThan(3000 - 100 + 350);
@@ -144,5 +161,14 @@ describe.skipIf(!hasVosk)('bip posé par alignement forcé (Vosk)', () => {
     // « nous » finit vers 1,17 s, « merci » commence vers 1,56 s (enveloppe d'énergie).
     expect(result.span.start).toBeGreaterThan(1.1);
     expect(result.span.end).toBeLessThan(1.65);
+  });
+
+  it('garde le « j » d’un pronom élidé devant le bip', () => {
+    // « j’étais » : le /ʒ/ finit vers 1,12 s, la voyelle suit (dérivée du signal).
+    const mp3 = readFileSync(new URL('../public/audio/tts/fr/conj-imp-etre-0-p.mp3', import.meta.url));
+    const result = hideWord(mp3, 'Hier, j’étais malade.', 1);
+    expect(result.problem).toBeNull();
+    expect(result.span.start).toBeGreaterThan(1.08);
+    expect(result.span.start).toBeLessThan(1.16);
   });
 });

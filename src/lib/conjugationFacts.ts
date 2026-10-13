@@ -692,11 +692,12 @@ export interface ConjQuestionView {
    * on la demande, et le Leitner promouvrait un rappel jamais testé sur tous
    * les irréguliers non homophones.
    *
-   * Le pronom est SANS élision (« je aime ») : il reste audible devant le bip,
-   * là où « j'aime » le fondrait dans la forme couverte.
+   * Le pronom garde son élision, comme à l'écran (« Avant, j’aimais les
+   * épinards. ») : le bip ne couvre alors que ce qui suit le « j ». « je
+   * aimais », essayé d'abord, s'entendait faux (avis parent du 13/10/2026).
    */
   prompt: string;
-  /** Rang, dans `prompt` découpé aux espaces, du mot couvert par le bip : la forme. */
+  /** Rang, dans `prompt` découpé aux espaces, du mot couvert par le bip : la forme, élision comprise. */
   promptHiddenWord: number;
   /** Clé stable du MP3 de l'énoncé. */
   promptTtsKey: string;
@@ -759,9 +760,10 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
   const subject = conjSubject(person, form);
   const lead = `${carrier.before} ${subject}`;
   const tail = carrier.after ? ` ${carrier.after}` : '';
+  const sentence = `${lead}${form}${tail}`;
   // L'énoncé synthétisé : le verbe d'abord, puis la phrase entière, dont la
   // forme sera couverte d'un bip (cf. `prompt`).
-  const spokenLead = `${verb[0].toUpperCase()}${verb.slice(1)}. ${carrier.before} ${person}`;
+  const verbFirst = `${verb[0].toUpperCase()}${verb.slice(1)}. `;
 
   return {
     def,
@@ -777,10 +779,10 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
     endingOnly,
     lead,
     tail,
-    prompt: `${spokenLead} ${form}${tail}`,
-    promptHiddenWord: spokenLead.split(/\s+/).length,
+    prompt: `${verbFirst}${sentence}`,
+    promptHiddenWord: `${verbFirst}${lead}${form}`.split(/\s+/).length - 1,
     promptTtsKey: conjTtsKey(def.key, index),
-    sentence: `${lead}${form}${tail}`,
+    sentence,
     sentenceTtsKey: index === 0 ? conjSentenceTtsKey(def.key) : null,
   };
 }

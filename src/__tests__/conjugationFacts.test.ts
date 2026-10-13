@@ -310,6 +310,10 @@ describe('réponse attendue et segmentation (§4.2, §4.5)', () => {
     expect(view.prompt).toBe('Être. Bientôt, nous serons prêts.');
     expect(view.prompt.split(/\s+/)[view.promptHiddenWord]).toBe(view.form);
     expect(view.promptTtsKey).toBe('conj-fut-etre-1');
+    // Élidé comme à l'écran : le bip ne couvre que ce qui suit le « j ».
+    const elided = resolveConjQuestion(conjFactDef('imp-je')!, 1);
+    expect(elided.prompt).toBe('Aimer. Avant, j’aimais les épinards.');
+    expect(elided.prompt.split(/\s+/)[elided.promptHiddenWord]).toBe('j’aimais');
     // Hors porteuse 0, aucune phrase complète n'est pré-générée.
     expect(view.sentenceTtsKey).toBeNull();
   });

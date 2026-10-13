@@ -77,7 +77,8 @@ describe('entrées TTS de la conjugaison', () => {
     expect(divergingIntro).toEqual([]);
 
     // L'énoncé nomme l'infinitif, et la forme conjuguée n'y est dite que là
-    // où le bip la couvre : une seconde occurrence resterait audible.
+    // où le bip la couvre (élision comprise : « j’aimais ») : une seconde
+    // occurrence resterait audible.
     const frHide = new Map(fr.map((e) => [e.key, e.hide]));
     const leaking = asked
       .filter((v) => {
@@ -85,7 +86,7 @@ describe('entrées TTS de la conjugaison', () => {
         const hide = frHide.get(v.promptTtsKey);
         return (
           !v.prompt.toLowerCase().startsWith(`${v.verb}. `) ||
-          words[hide] !== v.form ||
+          words[hide] !== v.label.split(/\s+/).at(-1) ||
           words.filter((w) => w.split(/[^\p{L}]+/u).includes(v.form)).length !== 1
         );
       })

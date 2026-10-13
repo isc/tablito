@@ -191,6 +191,12 @@ function voskWords(mp3, text, { forced }) {
 // d'autant de chaque côté — tant que ses voisins s'entendent encore.
 const WIDEN_SECONDS = [0, 0.05, 0.1];
 
+// Un pronom élidé (« j’aimais ») fait corps avec la forme : l'alignement ne
+// sait pas l'en séparer — son « j » isolé est la lettre « ji », qui avale la
+// voyelle. Le bip ne couvre alors que ce qui suit le /ʒ/, repéré à l'acoustique
+// (cf. fricativeEnd).
+const ELIDED = /^j['’]/i;
+
 /**
  * Couvre d'un bip le mot n° `hide` de `text` dans `mp3`, situé par alignement
  * forcé, puis vérifie l'audio couvert (cf. maskProblem). Rend `{ audio, span,
@@ -201,14 +207,61 @@ export function hideWord(mp3, text, hide) {
   const found = hiddenSpan(text, hide, voskWords(mp3, text, { forced: true }));
   if (found.error) return { audio: null, problem: found.error };
   const samples = decodeMp3(mp3);
+  const tokens = text.split(/\s+/);
+  const elided = ELIDED.test(tokens[hide]);
+  const start = elided ? fricativeEnd(samples, found.start, found.end) : found.start;
+  if (start === null) return { audio: null, problem: '« j » élidé introuvable' };
+  // Le « j » laissé devant le bip n'est pas un mot : le contrôle ne cherche que
+  // la forme (« ai »), sans quoi il prendrait ce « j » pour « j’ai ».
+  const checked = tokens.with(hide, tokens[hide].replace(ELIDED, '')).join(' ');
   let problem = null;
   for (const widen of WIDEN_SECONDS) {
-    const span = { start: Math.max(0, found.start - widen), end: found.end + widen };
+    // Élargi, le bip mangerait le « j » : on ne l'élargit alors que vers la fin.
+    const span = { start: elided ? start : Math.max(0, start - widen), end: found.end + widen };
     const audio = encodeMp3(beepOver(samples, span));
-    problem = maskProblem(text, hide, voskWords(audio, text, { forced: false }), beepRegion(span));
+    // Le « j » laissé devant se reconnaît, au mieux, en son inconnu collé au
+    // bip : la région admise commence avec le mot.
+    const region = { ...beepRegion(span), start: Math.min(span.start, found.start) };
+    problem = maskProblem(checked, hide, voskWords(audio, checked, { forced: false }), region);
     if (!problem) return { audio, span, problem };
   }
   return { audio: null, problem };
+}
+
+// Trames de 10 ms. Une fricative comme /ʒ/ est un bruit riche en aigus : sa
+// dérivée pèse autant que le signal (rapport ≥ 0,4), là où une voyelle, grave et
+// régulière, a une dérivée faible (rapport < 0,15).
+const FRAME_SECONDS = 0.01;
+const FRICATIVE_RATIO = 0.4;
+const VOWEL_RATIO = 0.15;
+const FRICATIVE_MIN_FRAMES = 3;
+// Énergie moyenne par échantillon au-dessus de laquelle une trame est parlée (-40 dB).
+const SPEECH_ENERGY = 10 ** (-40 / 10);
+
+/**
+ * Fin du /ʒ/ qui ouvre le mot situé entre `from` et `to` (secondes, pause
+ * d'avant comprise) : la première trame de voyelle après au moins 30 ms de
+ * friction. null si l'audio ne montre pas ce motif.
+ */
+export function fricativeEnd(samples, from, to, sampleRate = SAMPLE_RATE) {
+  const hop = Math.round(FRAME_SECONDS * sampleRate);
+  const last = Math.min(samples.length, Math.round(to * sampleRate));
+  let run = 0;
+  let afterFriction = false;
+  for (let s = Math.round(from * sampleRate); s + hop <= last; s += hop) {
+    let energy = 0;
+    let slope = 0;
+    for (let i = Math.max(s, 1); i < s + hop; i++) {
+      energy += samples[i] ** 2;
+      slope += (samples[i] - samples[i - 1]) ** 2;
+    }
+    const ratio = slope / (energy + 1e-12);
+    const loud = energy / hop > SPEECH_ENERGY;
+    if (afterFriction && ratio < VOWEL_RATIO) return s / sampleRate;
+    run = loud && ratio >= FRICATIVE_RATIO ? run + 1 : 0;
+    if (run >= FRICATIVE_MIN_FRAMES) afterFriction = true;
+  }
+  return null;
 }
 
 // Le format des MP3 de la synthèse (mono, 22 050 Hz) : le fichier couvert reste
