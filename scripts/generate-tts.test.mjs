@@ -64,8 +64,8 @@ describe('entrées TTS de la conjugaison', () => {
 
   it('fait dire au MP3 exactement ce que l’écran demande', () => {
     // Un MP3 qui diverge de l'écran est pire que pas de MP3 du tout — et
-    // l'énoncé de la question ne doit JAMAIS contenir la forme conjuguée,
-    // sinon il dicte la réponse au moment où on la demande.
+    // l'énoncé de la question ne doit JAMAIS faire entendre la forme
+    // conjuguée, sinon il dicte la réponse au moment où on la demande.
     const diverging = asked
       .filter((v) => frByKey.get(v.promptTtsKey) !== v.prompt)
       .map((v) => v.promptTtsKey);
@@ -76,10 +76,20 @@ describe('entrées TTS de la conjugaison', () => {
       .map((v) => v.sentenceTtsKey);
     expect(divergingIntro).toEqual([]);
 
-    // L'énoncé nomme l'infinitif, jamais la forme conjuguée — pas même comme
-    // un mot de la phrase porteuse.
+    // L'énoncé nomme l'infinitif, et la forme conjuguée n'y est dite que là
+    // où le bip la couvre (élision comprise : « j’aimais ») : une seconde
+    // occurrence resterait audible.
+    const frHide = new Map(fr.map((e) => [e.key, e.hide]));
     const leaking = asked
-      .filter((v) => !v.prompt.toLowerCase().startsWith(`${v.verb}. `) || v.prompt.split(/[^\p{L}]+/u).includes(v.form))
+      .filter((v) => {
+        const words = v.prompt.split(/\s+/);
+        const hide = frHide.get(v.promptTtsKey);
+        return (
+          !v.prompt.toLowerCase().startsWith(`${v.verb}. `) ||
+          words[hide] !== v.label.split(/\s+/).at(-1) ||
+          words.filter((w) => w.split(/[^\p{L}]+/u).includes(v.form)).length !== 1
+        );
+      })
       .map((v) => v.promptTtsKey);
     expect(leaking).toEqual([]);
   });

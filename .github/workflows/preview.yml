@@ -46,6 +46,9 @@ jobs:
 
       - run: npm ci
 
+      # ffmpeg et Vosk, pour le bip des énoncés de conjugaison, s'il en manque.
+      - uses: ./.github/actions/beep-tools
+
       # Idempotent : ne génère que les fichiers absents, donc rien (et aucun
       # appel à l'API) sur une PR qui n'ajoute pas de clé. Un échec partiel
       # (rate limit) ne bloque pas la preview : les fichiers produits sont

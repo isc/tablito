@@ -683,16 +683,22 @@ export interface ConjQuestionView {
   /** Fin de phrase : « des crêpes. » (chaîne vide si la phrase s'arrête là). */
   tail: string;
   /**
-   * ÉNONCÉ lu quand la question est posée : « Chanter. Demain, je… à la
-   * fête. » (§15.5) — le verbe à part, dans l'ordre de l'écran, puis la
-   * phrase entière avec un silence à la place du trou. Jamais la forme
-   * conjuguée : un MP3 qui dit « nous serons » dicterait la réponse au moment
-   * même où on la demande, et le Leitner promouvrait un rappel jamais testé
-   * sur tous les irréguliers non homophones. Et jamais l'infinitif DANS le trou
-   * (« nous… chanter ») : l'oreille y entend « nous chanter », la mauvaise
-   * forme à l'endroit même de la réponse.
+   * Texte SYNTHÉTISÉ pour l'énoncé lu quand la question est posée (§15.5) :
+   * « Chanter. Demain, je chanterai à la fête. » — le verbe à part, dans
+   * l'ordre de l'écran, puis la phrase entière, forme comprise : c'est ce qui
+   * lui garde une diction naturelle. Le MP3, lui, ne dit jamais la forme :
+   * scripts/generate-tts.mjs la couvre d'un bip (mot n° `promptHiddenWord`).
+   * Un MP3 qui dirait « nous serons » dicterait la réponse au moment même où
+   * on la demande, et le Leitner promouvrait un rappel jamais testé sur tous
+   * les irréguliers non homophones.
+   *
+   * Le pronom garde son élision, comme à l'écran (« Avant, j’aimais les
+   * épinards. ») : le bip ne couvre alors que ce qui suit le « j ». « je
+   * aimais », essayé d'abord, s'entendait faux (avis parent du 13/10/2026).
    */
   prompt: string;
+  /** Rang, dans `prompt` découpé aux espaces, du mot couvert par le bip : la forme, élision comprise. */
+  promptHiddenWord: number;
   /** Clé stable du MP3 de l'énoncé. */
   promptTtsKey: string;
   /** Phrase complète, forme incluse — affichée à l'intro et à la correction. */
@@ -754,6 +760,10 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
   const subject = conjSubject(person, form);
   const lead = `${carrier.before} ${subject}`;
   const tail = carrier.after ? ` ${carrier.after}` : '';
+  const sentence = `${lead}${form}${tail}`;
+  // L'énoncé synthétisé : le verbe d'abord, puis la phrase entière, dont la
+  // forme sera couverte d'un bip (cf. `prompt`).
+  const verbFirst = `${verb[0].toUpperCase()}${verb.slice(1)}. `;
 
   return {
     def,
@@ -769,11 +779,10 @@ export function resolveConjQuestion(def: ConjFactDef, carrierIndex: number): Con
     endingOnly,
     lead,
     tail,
-    // Le verbe d'abord, puis la phrase entière, suspendue au trou. Le pronom
-    // SANS élision : le trou le suit à l'oral, « j'… un vélo » ne se dit pas.
-    prompt: `${verb[0].toUpperCase()}${verb.slice(1)}. ${carrier.before} ${person}…${tail}`,
+    prompt: `${verbFirst}${sentence}`,
+    promptHiddenWord: `${verbFirst}${lead}${form}`.split(/\s+/).length - 1,
     promptTtsKey: conjTtsKey(def.key, index),
-    sentence: `${lead}${form}${tail}`,
+    sentence,
     sentenceTtsKey: index === 0 ? conjSentenceTtsKey(def.key) : null,
   };
 }
@@ -791,16 +800,25 @@ export function conjSentenceTtsKey(factKey: string): string {
   return `conj-${factKey}-0-p`;
 }
 
+/** Une entrée pour scripts/generate-tts.mjs ; `hide` : rang du mot à couvrir d'un bip. */
+interface ConjTtsEntry {
+  key: string;
+  text: string;
+  hide?: number;
+}
+
 /**
  * Toutes les entrées TTS de l'inventaire, pour la génération des MP3 :
  * l'énoncé de chaque porteuse (151), plus la phrase complète de la porteuse 0
  * de chaque fait (63), lue à l'étape 1 de l'introduction.
  */
-export function allConjCarrierSentences(): { key: string; text: string }[] {
+export function allConjCarrierSentences(): ConjTtsEntry[] {
   return conjFactDefs().flatMap((def) =>
     def.carriers.flatMap((_, i) => {
       const view = resolveConjQuestion(def, i);
-      const entries = [{ key: view.promptTtsKey, text: view.prompt }];
+      const entries: ConjTtsEntry[] = [
+        { key: view.promptTtsKey, text: view.prompt, hide: view.promptHiddenWord },
+      ];
       if (view.sentenceTtsKey) entries.push({ key: view.sentenceTtsKey, text: view.sentence });
       return entries;
     }),

@@ -72,7 +72,14 @@ describe('inventaire (specs §16.3)', () => {
     const entries = allIrrTtsEntries();
     expect(entries).toHaveLength(128);
     expect(entries).toContainEqual({ key: 'irr-go', text: 'go.' });
-    expect(entries).toContainEqual({ key: 'irr-go-all', text: 'go, went, gone.' });
+    expect(entries).toContainEqual({ key: 'irr-go-all', text: 'go, went, gone.', forms: ['go', 'went', 'gone'] });
+  });
+
+  it('écrit pour la synthèse le son que l’orthographe ne dit pas', () => {
+    // « read, read, read » s'entendait « red » trois fois.
+    const entries = allIrrTtsEntries();
+    expect(entries).toContainEqual({ key: 'irr-read', text: 'reed.' });
+    expect(entries).toContainEqual({ key: 'irr-read-all', text: 'reed, red, red.', forms: ['read', 'read', 'read'] });
   });
 });
 

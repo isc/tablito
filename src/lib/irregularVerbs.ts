@@ -285,15 +285,32 @@ export function irrRecitationTtsKey(key: string): string {
 /** Préfixe des clés TTS de la matière, lues en anglais par `useTTS`. */
 export const IRR_TTS_PREFIX = 'irr-';
 
-/** Textes à synthétiser, pour `scripts/generate-tts.mjs`. */
-export function allIrrTtsEntries(): { key: string; text: string }[] {
-  return IRR_VERBS.flatMap((def) => [
-    { key: irrPromptTtsKey(def.key), text: `${def.key}.` },
-    {
-      key: irrRecitationTtsKey(def.key),
-      text: `${def.key}, ${def.preterite.join(', ')}, ${def.participle[0]}.`,
-    },
-  ]);
+// Ce que la synthèse LIT quand l'orthographe la trompe, toutes les formes dans
+// l'ordre de la récitation :
+// - « read » se dit /riːd/ à l'infinitif, /rɛd/ au passé : écrit « read, read,
+//   read », la récitation s'entendait « red, red, red » ;
+// - « know, knew, known » se disait « knew, knew, known » (avis parent du
+//   11/10/2026), à chaque prise. « no » se prononce comme « know ».
+const SPOKEN: Record<string, readonly string[]> = {
+  read: ['reed', 'red', 'red'],
+  know: ['no', 'knew', 'known'],
+};
+
+/**
+ * Textes à synthétiser, pour `scripts/generate-tts.mjs`. `forms` : les formes
+ * de la récitation. Le script vérifie, sur une transcription, que deux formes
+ * qui s'écrivent différemment ne s'entendent pas pareil : la synthèse remplace
+ * parfois l'infinitif par la forme suivante.
+ */
+export function allIrrTtsEntries(): { key: string; text: string; forms?: string[] }[] {
+  return IRR_VERBS.flatMap((def) => {
+    const forms = [def.key, ...irrExpectedForms(def)];
+    const spoken = SPOKEN[def.key] ?? forms;
+    return [
+      { key: irrPromptTtsKey(def.key), text: `${spoken[0]}.` },
+      { key: irrRecitationTtsKey(def.key), text: `${spoken.join(', ')}.`, forms },
+    ];
+  });
 }
 
 // --- Homophones (specs §16.6) ------------------------------------------------

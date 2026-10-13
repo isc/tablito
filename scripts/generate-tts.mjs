@@ -11,6 +11,11 @@
  *
  * Skips files that already exist (delete a file to regenerate it).
  *
+ * Les énoncés de conjugaison sont retouchés (un bip couvre la forme, cf.
+ * scripts/tts-takes.mjs) : il faut alors ffmpeg dans le PATH, et un Python qui
+ * a Vosk (`pip install vosk` ; `VOSK_PYTHON` pour en désigner un autre que
+ * python3).
+ *
  * Voix : la voix française par défaut est figée ci-dessous. La voix anglaise
  * est surchargeable par la variable d'env MISTRAL_VOICE_ID_EN (sinon on réutilise
  * la voix par défaut, qui sait lire l'anglais — accent près).
@@ -32,12 +37,15 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { importTs } from './import-ts.mjs';
 import { mp3DurationSeconds } from './mp3-duration.mjs';
+import { confusedForms, hideWord } from './tts-takes.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TTS_ROOT = join(__dirname, '..', 'public', 'audio', 'tts');
 
-const MISTRAL_TTS_URL = 'https://api.mistral.ai/v1/audio/speech';
+const MISTRAL_API = 'https://api.mistral.ai/v1';
 const MODEL = 'voxtral-mini-tts-2603';
+// Transcription des récitations, pour les vérifier (cf. reviewTake).
+const TRANSCRIPTION_MODEL = 'voxtral-mini-latest';
 // Marie - Curious (fr_fr, female)
 const VOICE_ID_FR = 'e0580ce5-e63c-4cbe-88c8-a983b80c5f1f';
 // Voix anglaise (en, female), surchargeable par MISTRAL_VOICE_ID_EN.
@@ -53,47 +61,86 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // (texte/voix invalide) et échouent tout de suite.
 const MAX_ATTEMPTS = 5;
 
-// Une synthèse d'un mot seul ajoute parfois une hésitation (« be… hum ») : le
-// fichier est alors nettement plus long que le mot. Les entrées qui portent un
-// `maxSeconds` sont donc chronométrées, et retentées tant qu'elles le
-// dépassent ; à défaut, on garde la prise la plus courte.
+// Une prise peut être mauvaise sans que l'API ne signale rien (cf. reviewTake) :
+// on en refait une, jusqu'à MAX_TAKES ; à défaut, on garde la moins mauvaise.
 const MAX_TAKES = 4;
 
-async function generateEntry({ text, maxSeconds }, voiceId, outputPath) {
+async function generateEntry(entry, voiceId, lang, outputPath) {
   let best = null;
   for (let take = 1; take <= MAX_TAKES; take++) {
-    const audio = await generateAudio(text, voiceId);
+    const audio = await generateAudio(entry.text, voiceId);
     if (!audio) return false;
-    const seconds = maxSeconds ? mp3DurationSeconds(audio) : 0;
-    if (!best || seconds < best.seconds) best = { audio, seconds };
-    if (!maxSeconds || seconds <= maxSeconds) break;
-    process.stdout.write(`(${seconds.toFixed(2)} s > ${maxSeconds} s, nouvelle prise) `);
+    const result = await reviewTake(entry, audio, lang);
+    if (result.audio && !result.problem) {
+      best = result;
+      break;
+    }
+    // Faute de bonne prise, la plus courte : l'excès de durée est une hésitation.
+    const seconds = entry.maxSeconds && result.audio ? mp3DurationSeconds(result.audio) : 0;
+    if (result.audio && (!best || seconds < best.seconds)) best = { ...result, seconds };
+    process.stdout.write(`(${result.problem}, nouvelle prise) `);
     await sleep(300);
   }
-  if (maxSeconds && best.seconds > maxSeconds) {
-    process.stdout.write(`(gardé le plus court : ${best.seconds.toFixed(2)} s) `);
-  }
+  if (!best) return false;
+  if (best.problem) console.log(`\n::warning::${entry.key} gardé malgré : ${best.problem}`);
   await writeFile(outputPath, best.audio);
   return true;
 }
 
+// Ce qui peut faire rejeter une prise. Rend { audio, problem } : `audio` est ce
+// qu'on écrirait (null si la prise est inutilisable), `problem` null si la prise
+// est bonne.
+async function reviewTake(entry, audio, lang) {
+  // Une synthèse d'un mot seul ajoute parfois une hésitation (« be… hum ») :
+  // le fichier est alors nettement plus long que le mot.
+  const seconds = entry.maxSeconds ? mp3DurationSeconds(audio) : 0;
+  if (seconds > entry.maxSeconds) {
+    return { audio, problem: `${seconds.toFixed(2)} s > ${entry.maxSeconds} s` };
+  }
+  // Une récitation (« know, knew, known ») où deux formes sonnent pareil. Sans
+  // transcription, on ne peut rien en dire : la prise passe.
+  if (entry.forms) {
+    const heard = await transcribe(audio, lang);
+    return { audio, problem: heard && confusedForms(entry.forms, heard.text) };
+  }
+  if (entry.hide !== undefined) {
+    const result = hideWord(audio, entry.text, entry.hide);
+    if (result.span) process.stdout.write(`(bip ${result.span.start.toFixed(2)}–${result.span.end.toFixed(2)} s) `);
+    return result;
+  }
+  return { audio, problem: null };
+}
+
 async function generateAudio(text, voiceId) {
+  const data = await callMistral(
+    'audio/speech',
+    JSON.stringify({ model: MODEL, input: text, voice_id: voiceId, response_format: 'mp3' }),
+  );
+  if (!data) return null;
+  if (!data.audio_data) {
+    console.error('No audio_data in response');
+    return null;
+  }
+  return Buffer.from(data.audio_data, 'base64');
+}
+
+// Transcription d'une prise, dans la langue imposée. Rend { text }, ou null.
+async function transcribe(audio, language) {
+  const form = new FormData();
+  form.append('model', TRANSCRIPTION_MODEL);
+  form.append('file', new Blob([audio], { type: 'audio/mpeg' }), 'take.mp3');
+  form.append('language', language);
+  return callMistral('audio/transcriptions', form);
+}
+
+// `body` : une chaîne JSON, ou un FormData (multipart, en-tête posé par fetch).
+async function callMistral(path, body) {
+  const headers = { Authorization: `Bearer ${API_KEY}` };
+  if (typeof body === 'string') headers['Content-Type'] = 'application/json';
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let response;
     try {
-      response = await fetch(MISTRAL_TTS_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          input: text,
-          voice_id: voiceId,
-          response_format: 'mp3',
-        }),
-      });
+      response = await fetch(`${MISTRAL_API}/${path}`, { method: 'POST', headers, body });
     } catch (err) {
       // Erreur réseau : transitoire, on retente.
       if (attempt < MAX_ATTEMPTS) {
@@ -104,14 +151,7 @@ async function generateAudio(text, voiceId) {
       return null;
     }
 
-    if (response.ok) {
-      const data = await response.json();
-      if (!data.audio_data) {
-        console.error('No audio_data in response');
-        return null;
-      }
-      return Buffer.from(data.audio_data, 'base64');
-    }
+    if (response.ok) return response.json();
 
     const transient = response.status === 429 || response.status >= 500;
     if (transient && attempt < MAX_ATTEMPTS) {
@@ -119,8 +159,8 @@ async function generateAudio(text, voiceId) {
       continue;
     }
 
-    const body = await response.text();
-    console.error(`API error: ${response.status} - ${body}`);
+    const text = await response.text();
+    console.error(`API error (${path}): ${response.status} - ${text}`);
     return null;
   }
   return null;
@@ -341,15 +381,16 @@ async function buildEntriesFr() {
   });
 
   // Les phrases porteuses de la conjugaison, en DEUX jeux de clés :
-  //   `conj-<clé du fait>-<rang>`   l'ÉNONCÉ (« Chanter. Demain, je… à la
-  //                                 fête. »), lu à la question et à la
+  //   `conj-<clé du fait>-<rang>`   l'ÉNONCÉ (« Chanter. Demain, je [bip] à
+  //                                 la fête. »), lu à la question et à la
   //                                 réécoute (§15.5) ;
   //   `conj-<clé du fait>-0-p`      la phrase COMPLÈTE, forme conjuguée
   //                                 incluse, lue à l'étape 1 de l'introduction
   //                                 (§15.6) — porteuse 0 seulement, la seule
   //                                 qu'une introduction utilise.
-  // L'énoncé tait la forme : lire « Bientôt, nous serons prêts » au moment où
-  // l'on demande la forme dicterait la réponse.
+  // L'énoncé tait la forme : entendre « Bientôt, nous serons prêts » au moment
+  // où l'on demande la forme dicterait la réponse. Il est synthétisé en entier
+  // puis la forme est couverte d'un bip (entrées `hide`, cf. hideWord).
   entries.push(...(await loadConjEntries()));
 
   // Les deux seules relances PARLÉES du mode vocal épelé (§15.10). En vocal,
@@ -503,6 +544,9 @@ const LANGS = {
   en: { dir: join(TTS_ROOT, 'en'), voice: VOICE_ID_EN, build: buildEntriesEn },
 };
 
+// Le seul critère de génération : le MP3 manque (cf. en-tête).
+const mp3Path = (lang, key) => join(LANGS[lang].dir, `${key}.mp3`);
+
 async function generateLang(lang) {
   const { dir, voice, build } = LANGS[lang];
   await mkdir(dir, { recursive: true });
@@ -516,7 +560,7 @@ async function generateLang(lang) {
 
   for (const entry of entries) {
     const { key, text } = entry;
-    const filepath = join(dir, `${key}.mp3`);
+    const filepath = mp3Path(lang, key);
 
     if (existsSync(filepath)) {
       skipped++;
@@ -526,7 +570,7 @@ async function generateLang(lang) {
     const preview = text.length > 60 ? text.slice(0, 57) + '...' : text;
     process.stdout.write(`[${lang}] ${key}: "${preview}"... `);
 
-    const ok = await generateEntry(entry, voice, filepath);
+    const ok = await generateEntry(entry, voice, lang, filepath);
     if (ok) {
       console.log('ok');
       success++;
@@ -543,17 +587,33 @@ async function generateLang(lang) {
   return failed;
 }
 
-async function main() {
-  if (!API_KEY) {
-    console.error('MISTRAL_API_KEY environment variable not set');
-    process.exit(1);
+// Un énoncé à couvrir d'un bip manque-t-il ? Le bip passe par ffmpeg et Vosk,
+// absents des runners GitHub : les workflows ne les installent que dans ce cas
+// (`--needs-beep-tools`), l'installation coûtant une demi-minute.
+async function needsBeepTools(langs) {
+  for (const lang of langs) {
+    const entries = await LANGS[lang].build();
+    if (entries.some((e) => e.hide !== undefined && !existsSync(mp3Path(lang, e.key)))) return true;
   }
+  return false;
+}
 
+async function main() {
   // TTS_LANGS=fr,en (défaut : toutes les langues supportées).
   const requested = (process.env.TTS_LANGS || 'fr,en')
     .split(',')
     .map((s) => s.trim())
     .filter((s) => s in LANGS);
+
+  if (process.argv.includes('--needs-beep-tools')) {
+    console.log((await needsBeepTools(requested)) ? 'yes' : 'no');
+    return;
+  }
+
+  if (!API_KEY) {
+    console.error('MISTRAL_API_KEY environment variable not set');
+    process.exit(1);
+  }
 
   let failed = 0;
   for (const lang of requested) {

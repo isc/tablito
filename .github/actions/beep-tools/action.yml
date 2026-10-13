@@ -1,0 +1,23 @@
+name: Beep tools
+description: >-
+  ffmpeg et Vosk (Python), pour le bip des énoncés de conjugaison
+  (cf. scripts/tts-takes.mjs). Absents des runners, ils ne sont installés que
+  quand un tel énoncé manque : l'installation coûte une demi-minute.
+runs:
+  using: composite
+  steps:
+    - id: beep
+      shell: bash
+      run: echo "needed=$(node scripts/generate-tts.mjs --needs-beep-tools)" >> "$GITHUB_OUTPUT"
+
+    - if: steps.beep.outputs.needed == 'yes'
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - if: steps.beep.outputs.needed == 'yes'
+      shell: bash
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y -q --no-install-recommends ffmpeg
+        pip install -q vosk

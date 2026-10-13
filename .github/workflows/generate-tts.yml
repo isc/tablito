@@ -27,6 +27,9 @@ jobs:
 
       - run: npm ci
 
+      # ffmpeg et Vosk, pour le bip des énoncés de conjugaison, s'il en manque.
+      - uses: ./.github/actions/beep-tools
+
       - name: Generate missing MP3 files
         run: node scripts/generate-tts.mjs
         env:
