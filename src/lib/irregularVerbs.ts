@@ -338,7 +338,10 @@ const HOMOPHONES: Record<string, readonly string[]> = {
   find: ['fined'],
   // Formes passées.
   were: ['where'],
-  been: ['bean', 'bin', 'ben'],
+  // « was, were, been » : la reconnaissance préfère la phrase « were being »,
+  // et « being » sonnerait plus près de « bring » que de « been ».
+  been: ['bean', 'bin', 'ben', 'being'],
+  known: ['noon', 'nun'],
   done: ['dun'],
   made: ['maid'],
   knew: ['new', 'gnu'],

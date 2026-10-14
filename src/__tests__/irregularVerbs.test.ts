@@ -267,6 +267,9 @@ describe('réponse dite, appariement au son (specs §16.6)', () => {
     expect(answer('go went gun', 'go')).toEqual(['went', 'gone']);
     expect(answer('sing sang song', 'sing')).toEqual(['sang', 'sung']);
     expect(answer('teach thought taught', 'teach')).toEqual(['thought', 'taught']);
+    // Vécu sur Android : « been » transcrit « being », recalé en « bring ».
+    expect(answer('be was were being', 'be')).toEqual(['was', 'were', 'been']);
+    expect(answer('know knew noon', 'know')).toEqual(['knew', 'known']);
   });
 
   it('ne transforme jamais une forme dite telle quelle', () => {
