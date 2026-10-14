@@ -14,7 +14,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import type { BoxLevel, UserProfile } from '../types';
-import { isConjVisible, isIrrVisible, unlockedMathLevels, type MathLevel } from '../lib/badges';
+import { hasOpenedIrr, isConjVisible, isIrrAvailable, isIrrVisible, unlockedMathLevels, type MathLevel } from '../lib/badges';
 import { CONJ_TENSES } from '../lib/conjugationFacts';
 import { countMastered, factsOf, masteryBuckets } from '../lib/leitner';
 import { getHardestFactsAcross, HARD_FACTS_WINDOW, type Subject } from '../lib/hardestFacts';
@@ -42,6 +42,8 @@ const CONJ_TENSES_LABEL = (() => {
 interface ParentOverviewProps {
   profile: UserProfile;
   onOpenSubject: (subject: Subject) => void;
+  /** Profil actif de l'appareil : ses réglages se modifient ici (cf. ParentDashboard). */
+  editable?: boolean;
 }
 
 function Check() {
@@ -62,10 +64,12 @@ interface SubjectCardProps {
   facts: Array<{ box: BoxLevel; introduced: boolean }>;
   onOpen: () => void;
   children?: ReactNode;
+  /** Matière pas encore commencée : ce texte remplace le compte et la barre. */
+  notStarted?: string;
 }
 
 // Une carte de matière : la carte entière est le bouton qui ouvre sa page.
-function SubjectCard({ subject, icon, title, sub, rowName, facts, onOpen, children }: SubjectCardProps) {
+function SubjectCard({ subject, icon, title, sub, rowName, facts, onOpen, children, notStarted }: SubjectCardProps) {
   const buckets = masteryBuckets(facts);
   return (
     <button type="button" className={`parent-card parent-subject-card parent-subject-card--${subject}`} onClick={onOpen}>
@@ -82,18 +86,24 @@ function SubjectCard({ subject, icon, title, sub, rowName, facts, onOpen, childr
         </span>
       </span>
       {children}
-      <span className="parent-level-row">
-        <span className="parent-level-name">{rowName}</span>
-        <span className="parent-level-count">
-          {buckets.mastered} / {facts.length}
-        </span>
-      </span>
-      <MasteryBar buckets={buckets} total={facts.length} />
+      {notStarted ? (
+        <span className="parent-level-row">{notStarted}</span>
+      ) : (
+        <>
+          <span className="parent-level-row">
+            <span className="parent-level-name">{rowName}</span>
+            <span className="parent-level-count">
+              {buckets.mastered} / {facts.length}
+            </span>
+          </span>
+          <MasteryBar buckets={buckets} total={facts.length} />
+        </>
+      )}
     </button>
   );
 }
 
-export default function ParentOverview({ profile, onOpenSubject }: ParentOverviewProps) {
+export default function ParentOverview({ profile, onOpenSubject, editable = false }: ParentOverviewProps) {
   const t = useParentDashboardStrings();
   const { lang } = useLang();
   const today = todayISO();
@@ -103,6 +113,12 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
   const conjVisible = isConjVisible(profile, lang);
   // Verbes irréguliers (specs §16) : même règle, jamais en anglais.
   const irrVisible = isIrrVisible(profile, lang);
+  // Sauf pour régler les verbes vus en classe, qui servent AVANT la première
+  // séance : ils ouvrent le test de départ (§16.8). Sur l'appareil de l'enfant,
+  // la carte est donc là dès le début, « pas encore commencés » — sans elle,
+  // rien ne menait au réglage tant que l'enfant n'avait pas ouvert la matière
+  // (avis parent du 13/10/2026).
+  const irrToConfigure = editable && isIrrAvailable(lang) && !hasOpenedIrr(profile);
   // Le niveau en cours est le dernier débloqué ; les précédents sont passés.
   const levels = unlockedMathLevels(profile);
   const current = levels[levels.length - 1];
@@ -206,7 +222,7 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
             />
           )}
 
-          {irrVisible && (
+          {(irrVisible || irrToConfigure) && (
             <SubjectCard
               subject="irr"
               icon={t.irrSymbol}
@@ -215,6 +231,7 @@ export default function ParentOverview({ profile, onOpenSubject }: ParentOvervie
               rowName={t.irregularMastered}
               facts={factsOf(profile, 'irr')}
               onOpen={() => onOpenSubject('irr')}
+              notStarted={irrToConfigure ? t.irrNotStarted : undefined}
             />
           )}
         </div>

@@ -17,7 +17,7 @@
 
 import { memo, useMemo, useState, type ReactNode } from 'react';
 import type { FactKind, SessionResult, UserProfile } from '../types';
-import { activeLevel, unlockedMathLevels, type MathLevel } from '../lib/badges';
+import { activeLevel, hasOpenedIrr, unlockedMathLevels, type MathLevel } from '../lib/badges';
 import { countMastered, factsOf } from '../lib/leitner';
 import {
   getHardestFacts,
@@ -208,6 +208,26 @@ function ParentSubjectDetail({ profile, subject, onUpdateProfile }: ParentSubjec
     [profile, subject],
   );
 
+  const classVerbs = subject === 'irr' && (
+    <IrrClassVerbs
+      classVerbs={profile.irrClassVerbs ?? []}
+      facts={profile.irrFacts ?? []}
+      onChange={onUpdateProfile && ((irrClassVerbs) => onUpdateProfile((p) => ({ ...p, irrClassVerbs })))}
+    />
+  );
+
+  // Matière pas encore commencée, ouverte depuis l'accueil pour cocher les
+  // verbes vus en classe avant la première séance : ni grille ni séances à
+  // montrer, seulement le réglage.
+  if (subject === 'irr' && !hasOpenedIrr(profile)) {
+    return (
+      <div className="parent-section">
+        <p className="parent-section-subtitle">{t.irrNotStartedNote}</p>
+        {classVerbs}
+      </div>
+    );
+  }
+
   return (
     <>
       {levels.length > 1 && (
@@ -251,17 +271,7 @@ function ParentSubjectDetail({ profile, subject, onUpdateProfile }: ParentSubjec
         </div>
       </div>
 
-      {subject === 'irr' && (
-        <div className="parent-section">
-          <IrrClassVerbs
-            classVerbs={profile.irrClassVerbs ?? []}
-            facts={profile.irrFacts ?? []}
-            onChange={
-              onUpdateProfile && ((irrClassVerbs) => onUpdateProfile((p) => ({ ...p, irrClassVerbs })))
-            }
-          />
-        </div>
-      )}
+      {classVerbs && <div className="parent-section">{classVerbs}</div>}
 
       {sessions.length > 0 && (
         <div className="parent-section">
