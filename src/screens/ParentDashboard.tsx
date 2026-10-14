@@ -192,6 +192,9 @@ export default function ParentDashboard({
     : selectedLocalId === activeId
       ? profile
       : otherLocal;
+  // Seul le profil actif se modifie d'ici : ni un autre enfant de l'appareil,
+  // ni un enfant suivi (ses réglages se font sur son propre appareil).
+  const editable = shown === profile;
   const shownName = shown?.name ?? watchedEntry?.name ?? '';
   // « Envoyer un avis » : sur l'accueil et sur la page d'une matière, là où
   // un parent repère un souci. L'avis joint le profil affiché.
@@ -243,7 +246,7 @@ export default function ParentDashboard({
           key={selected?.key ?? 'none'}
           profile={shown}
           subject={page}
-          onUpdateProfile={shown === profile ? onUpdateProfile : undefined}
+          onUpdateProfile={editable ? onUpdateProfile : undefined}
         />
       </div>
     );
@@ -344,7 +347,7 @@ export default function ParentDashboard({
       )}
 
       {shown ? (
-        <ParentOverview profile={shown} onOpenSubject={onOpenPage} />
+        <ParentOverview profile={shown} onOpenSubject={onOpenPage} editable={editable} />
       ) : watchedEntry ? (
         <div className="parent-section">
           <p className="parent-section-subtitle">

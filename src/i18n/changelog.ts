@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-14',
+    items: [
+      "Verbes anglais\u00a0: les verbes «\u00a0vus en classe\u00a0» se cochent avant même la première séance. Sur l'appareil de votre enfant, la carte «\u00a0Verbes anglais\u00a0» est dans l'espace parent dès le départ\u00a0: les verbes cochés ouvrent alors son test de départ. Elle n'apparaissait jusqu'ici qu'après une première séance.",
+    ],
+  },
+  {
     date: '2026-10-12',
     items: [
       "Conjugaison, la question à voix haute se dit d'une traite\u00a0: la phrase entière, avec un bip à la place de la réponse («\u00a0Chanter. Demain, je [bip] à la fête.\u00a0»). La phrase suspendue au trou sonnait haché, et le silence était si court que le trou s'entendait à peine.",
@@ -262,6 +268,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-14',
+    items: [
+      "English verbs: the verbs \"seen in class\" can now be ticked before the very first session. On your child's device, the \"English verbs\" card is in the parent area from the start, and the ticked verbs then open the starting test. Until now it only appeared after a first session.",
+    ],
+  },
   {
     date: '2026-10-12',
     items: [

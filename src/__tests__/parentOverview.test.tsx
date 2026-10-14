@@ -237,3 +237,47 @@ describe('page Maths', () => {
     expect(boxCount(4) + boxCount(5)).toBe(p.facts.length);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Verbes irréguliers « vus en classe », avant la première séance.
+//
+// « J'ai voulu configurer les verbes irréguliers pour Zoé sur son téléphone,
+// sauf que comme elle n'a fait aucune séance de verbes irréguliers, je ne peux
+// pas aller les lui configurer » (avis parent du 13/10/2026). Le réglage sert
+// justement AVANT : les verbes cochés ouvrent le test de départ (§16.8).
+// ---------------------------------------------------------------------------
+
+describe('verbes irréguliers pas encore commencés', () => {
+  function irrCard(): Element | null {
+    return document.querySelector('.parent-subject-card--irr');
+  }
+
+  it("sur l'appareil de l'enfant, la carte mène au réglage avant toute séance", () => {
+    const onOpenSubject = vi.fn();
+    render(<ParentOverview profile={createNewProfile('Zoé')} onOpenSubject={onOpenSubject} editable />);
+    const card = irrCard();
+    expect(card?.textContent).toContain('Pas encore commencés');
+    // Rien à compter encore : ni compte ni barre de maîtrise.
+    expect(card?.querySelector('.parent-level-count')).toBeNull();
+    fireEvent.click(card!);
+    expect(onOpenSubject).toHaveBeenCalledWith('irr');
+  });
+
+  it('pour un enfant suivi à distance, pas de carte : le réglage ne se fait pas d’ici', () => {
+    renderOverview(createNewProfile('Zoé'));
+    expect(irrCard()).toBeNull();
+  });
+
+  it('la page ne montre que le réglage, et les verbes cochés passent en premier', () => {
+    let profile = createNewProfile('Zoé');
+    const onUpdateProfile = vi.fn((update: (p: UserProfile) => UserProfile) => {
+      profile = update(profile);
+    });
+    render(<ParentSubjectDetail profile={profile} subject="irr" onUpdateProfile={onUpdateProfile} />);
+    expect(text()).toContain('Pas encore commencés');
+    expect(document.querySelector('.parent-mastery-count')).toBeNull();
+
+    fireEvent.click(requireButton(/^begin$/));
+    expect(profile.irrClassVerbs).toEqual(['begin']);
+  });
+});

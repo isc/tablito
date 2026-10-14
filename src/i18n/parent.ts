@@ -66,6 +66,8 @@ interface ParentDashboardStrings {
   // réserves que la conjugaison (masquée en anglais).
   irregularVerbs: string;
   irregularVerbsSub: string;
+  irrNotStarted: string;
+  irrNotStartedNote: string;
   // Niveau actif de la carte Maths (les niveaux passés y sont des pastilles).
   currentMult: string;
   currentDiv: string;
@@ -255,6 +257,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   verbForms: 'Formes verbales',
   irregularVerbs: 'Verbes anglais',
   irregularVerbsSub: 'Verbes irréguliers : prétérit, participe',
+  irrNotStarted: 'Pas encore commencés. Cochez les verbes vus en classe\u00a0: ils passeront en premier.',
+  irrNotStartedNote: 'Pas encore commencés. Les verbes cochés ici ouvriront le test de départ.',
   currentMult: 'En cours\u00a0: les multiplications',
   currentDiv: 'En cours\u00a0: les divisions',
   currentRem: 'En cours\u00a0: la division avec reste',
@@ -461,6 +465,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   verbForms: 'Verb forms',
   irregularVerbs: 'English verbs',
   irregularVerbsSub: 'Irregular verbs: past simple, past participle',
+  irrNotStarted: 'Not started yet. Tick the verbs seen in class: they will come first.',
+  irrNotStartedNote: 'Not started yet. The verbs ticked here will open the starting test.',
   currentMult: 'Working on: multiplication',
   currentDiv: 'Working on: division',
   currentRem: 'Working on: division with remainders',
