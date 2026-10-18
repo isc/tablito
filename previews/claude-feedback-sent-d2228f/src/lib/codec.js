@@ -1,3 +1,0 @@
-function u(r){const t="=".repeat((4-r.length%4)%4),e=(r+t).replace(/-/g,"+").replace(/_/g,"/"),a=atob(e),i=new Uint8Array(new ArrayBuffer(a.length));for(let n=0;n<a.length;n++)i[n]=a.charCodeAt(n);return i}function f(r){let t="";for(let e=0;e<r.length;e++)t+=String.fromCharCode(r[e]);return btoa(t).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}async function o(r,t){const e=new ReadableStream({start(a){a.enqueue(r),a.close()}});return new Uint8Array(await new Response(e.pipeThrough(t)).arrayBuffer())}function p(r){return o(r,new CompressionStream("gzip"))}function s(r){return o(r,new DecompressionStream("gzip"))}export{f as bytesToBase64url,s as gunzip,p as gzip,u as urlBase64ToUint8Array};
-
-//# sourceMappingURL=codec.js.map
