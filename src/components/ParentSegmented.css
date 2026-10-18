@@ -43,3 +43,10 @@
   border-radius: 999px;
   font-size: 12.5px;
 }
+
+/* Onglets par matière des écrans de l'enfant (Règles, Badges) : à la taille
+   d'une cible d'enfant. */
+.parent-segmented--kid .parent-segmented-option {
+  min-height: 44px;
+  font-size: 15px;
+}

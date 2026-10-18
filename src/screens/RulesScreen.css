@@ -73,13 +73,6 @@
   animation-delay: 0.2s;
 }
 
-/* Onglets Maths / Conjugaison (ParentSegmented), présents seulement quand la
-   conjugaison a des règles à montrer : à la taille d'une cible d'enfant. */
-.rules-content > .parent-segmented .parent-segmented-option {
-  min-height: 44px;
-  font-size: 15px;
-}
-
 .rule-card-head {
   display: flex;
   align-items: center;

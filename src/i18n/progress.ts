@@ -1,5 +1,7 @@
 import { useStrings } from './lang';
 import type { BoxLevel } from '../types';
+import type { BadgeSection } from '../lib/badges';
+import type { Subject } from '../lib/hardestFacts';
 
 // Strings des écrans/composants « Progression & Badges » (ProgressScreen,
 // BadgesScreen, Badge, BadgeDetailModal, LeitnerGrid, StreakDetailModal,
@@ -116,6 +118,14 @@ interface BadgesScreenStrings {
   myBadges: string;
   collection: string;
   badges: string;
+  // Titre des badges de toutes les matières, au-dessus des onglets.
+  general: string;
+  // Onglets, affichés seulement quand une seconde matière est visible — donc
+  // jamais en anglais : les entrées `en` de conj/irr ne sont jamais rendues.
+  subjects: Record<Subject, string>;
+  // Titres des sections des niveaux de maths. La conjugaison et les verbes
+  // anglais tiennent en une section, que leur onglet nomme déjà.
+  sections: Partial<Record<BadgeSection, string>>;
 }
 
 const badgesScreenFr: BadgesScreenStrings = {
@@ -123,6 +133,17 @@ const badgesScreenFr: BadgesScreenStrings = {
   myBadges: 'Mes badges',
   collection: 'Collection',
   badges: 'badges',
+  general: 'Général',
+  subjects: {
+    math: 'Maths',
+    conj: progressScreenFr.conjugations,
+    irr: progressScreenFr.irregularVerbs,
+  },
+  sections: {
+    mult: progressScreenFr.multiplications,
+    div: progressScreenFr.divisions,
+    rem: progressScreenFr.remainders,
+  },
 };
 
 const badgesScreenEn: BadgesScreenStrings = {
@@ -130,6 +151,17 @@ const badgesScreenEn: BadgesScreenStrings = {
   myBadges: 'My badges',
   collection: 'Collection',
   badges: 'badges',
+  general: 'General',
+  subjects: {
+    math: 'Maths',
+    conj: progressScreenEn.conjugations,
+    irr: progressScreenEn.irregularVerbs,
+  },
+  sections: {
+    mult: progressScreenEn.multiplications,
+    div: progressScreenEn.divisions,
+    rem: progressScreenEn.remainders,
+  },
 };
 
 export const badgesScreenStrings = { fr: badgesScreenFr, en: badgesScreenEn };
