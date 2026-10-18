@@ -55,6 +55,7 @@ export default function RulesScreen({
 
         {(hasConj || hasIrr) && (
           <ParentSegmented
+            kid
             label={t.title}
             options={[
               { value: 'maths' as const, label: t.sectionMaths },

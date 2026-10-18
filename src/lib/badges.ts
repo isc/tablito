@@ -23,6 +23,7 @@ import { irrFactsOfFamily, irrFamilyBadgeId } from './irregularComposer';
 import { todayISO, daysBetween } from './utils';
 import { getBadgeI18n } from '../i18n/badges';
 import { getLang, type Lang } from '../i18n/lang';
+import type { Subject } from './hardestFacts';
 
 function hasBadge(profile: UserProfile, id: string): boolean {
   return profile.badges.some((b) => b.id === id);
@@ -247,10 +248,9 @@ export interface BadgeDefinition {
   progressFor?: (profile: UserProfile) => { current: number; target: number; unitLabel: string };
 }
 
-// Définitions des badges de multiplication, construites pour la langue
-// d'interface courante (les chaînes viennent de i18n/badges, le reste — icône,
-// couleur, logique de progression — est figé ici).
-function buildAllBadgeDefinitions(): BadgeDefinition[] {
+// Badges d'aucune matière : assiduité (séances, série de jours, retour après
+// une absence) et exploits d'une séance, gagnés en conjugaison comme en maths.
+function buildGeneralBadgeDefinitions(): BadgeDefinition[] {
   const i = getBadgeI18n();
   const u = i.units;
   return [
@@ -261,6 +261,48 @@ function buildAllBadgeDefinitions(): BadgeDefinition[] {
       color: 'var(--sage)',
       progressFor: (p) => ({ current: Math.min(p.totalSessions, 1), target: 1, unitLabel: u.session }),
     },
+    {
+      id: BADGE_IDS.REGULIER,
+      ...i.regulier,
+      icon: '🔥',
+      color: 'var(--coral)',
+      progressFor: (p) => ({ current: Math.min(p.currentStreak, 7), target: 7, unitLabel: u.days }),
+    },
+    {
+      id: BADGE_IDS.MACHINE,
+      ...i.machine,
+      icon: '⚡',
+      color: 'var(--honey)',
+    },
+    {
+      id: BADGE_IDS.VELOCE,
+      ...i.veloce,
+      icon: '🚀',
+      color: 'var(--coral)',
+    },
+    {
+      id: BADGE_IDS.PERSEVERANCE,
+      ...i.perseverance,
+      icon: '💪',
+      color: 'var(--sage)',
+    },
+    {
+      id: BADGE_IDS.FLAMME_ETERNELLE,
+      ...i.flammeEternelle,
+      icon: '🌟',
+      color: 'var(--coral)',
+      progressFor: (p) => ({ current: Math.min(p.currentStreak, 30), target: 30, unitLabel: u.days }),
+    },
+  ];
+}
+
+// Définitions des badges de multiplication, construites pour la langue
+// d'interface courante (les chaînes viennent de i18n/badges, le reste — icône,
+// couleur, logique de progression — est figé ici).
+function buildMultBadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  const u = i.units;
+  return [
     {
       id: BADGE_IDS.PREMIERE_CASE,
       ...i.premiereCase,
@@ -280,19 +322,6 @@ function buildAllBadgeDefinitions(): BadgeDefinition[] {
         const ready = p.facts.filter((f) => f.box === 5).length;
         return { current: Math.min(ready, 1), target: 1, unitLabel: u.box5 };
       },
-    },
-    {
-      id: BADGE_IDS.REGULIER,
-      ...i.regulier,
-      icon: '🔥',
-      color: 'var(--coral)',
-      progressFor: (p) => ({ current: Math.min(p.currentStreak, 7), target: 7, unitLabel: u.days }),
-    },
-    {
-      id: BADGE_IDS.MACHINE,
-      ...i.machine,
-      icon: '⚡',
-      color: 'var(--honey)',
     },
     {
       id: BADGE_IDS.EXPLORATION,
@@ -335,25 +364,6 @@ function buildAllBadgeDefinitions(): BadgeDefinition[] {
         target: p.facts.length,
         unitLabel: u.box5,
       }),
-    },
-    {
-      id: BADGE_IDS.VELOCE,
-      ...i.veloce,
-      icon: '🚀',
-      color: 'var(--coral)',
-    },
-    {
-      id: BADGE_IDS.PERSEVERANCE,
-      ...i.perseverance,
-      icon: '💪',
-      color: 'var(--sage)',
-    },
-    {
-      id: BADGE_IDS.FLAMME_ETERNELLE,
-      ...i.flammeEternelle,
-      icon: '🌟',
-      color: 'var(--coral)',
-      progressFor: (p) => ({ current: Math.min(p.currentStreak, 30), target: 30, unitLabel: u.days }),
     },
   ];
 }
@@ -574,7 +584,8 @@ function buildConjBadgeDefinitions(): BadgeDefinition[] {
 // medallionColorFor/getBadgeDetail sont appelés une fois par badge dans les
 // boucles de rendu de BadgesScreen.
 let cacheLang: Lang | null = null;
-let cachedAll: BadgeDefinition[] = [];
+let cachedGeneral: BadgeDefinition[] = [];
+let cachedMult: BadgeDefinition[] = [];
 let cachedDivision: BadgeDefinition[] = [];
 let cachedRemainder: BadgeDefinition[] = [];
 let cachedConj: BadgeDefinition[] = [];
@@ -584,23 +595,33 @@ let cachedMap: Map<string, BadgeDefinition> = new Map();
 function ensureCache(): void {
   const lang = getLang();
   if (cacheLang === lang) return;
-  cachedAll = buildAllBadgeDefinitions();
+  cachedGeneral = buildGeneralBadgeDefinitions();
+  cachedMult = buildMultBadgeDefinitions();
   cachedDivision = buildDivisionBadgeDefinitions();
   cachedRemainder = buildRemainderBadgeDefinitions();
   cachedConj = buildConjBadgeDefinitions();
   cachedIrr = buildIrrBadgeDefinitions();
   cachedMap = new Map(
-    [...cachedAll, ...cachedDivision, ...cachedRemainder, ...cachedConj, ...cachedIrr].map((d) => [
-      d.id,
-      d,
-    ]),
+    [
+      ...cachedGeneral,
+      ...cachedMult,
+      ...cachedDivision,
+      ...cachedRemainder,
+      ...cachedConj,
+      ...cachedIrr,
+    ].map((d) => [d.id, d]),
   );
   cacheLang = lang;
 }
 
-export function getAllBadgeDefinitions(): BadgeDefinition[] {
+export function getGeneralBadgeDefinitions(): BadgeDefinition[] {
   ensureCache();
-  return cachedAll;
+  return cachedGeneral;
+}
+
+export function getMultBadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedMult;
 }
 
 export function getDivisionBadgeDefinitions(): BadgeDefinition[] {
@@ -628,22 +649,54 @@ function badgeMap(): Map<string, BadgeDefinition> {
   return cachedMap;
 }
 
+export type BadgeSection = MathLevel | 'conj' | 'irr';
+
+export interface BadgeGroup {
+  section: BadgeSection;
+  defs: BadgeDefinition[];
+}
+
+export interface VisibleBadges {
+  /** Badges de toutes les matières, montrés au-dessus des onglets. */
+  general: BadgeDefinition[];
+  /** Sections de chaque matière visible, dans l'ordre des onglets. */
+  bySubject: Map<Subject, BadgeGroup[]>;
+}
+
+const MATH_LEVEL_BADGES: Record<MathLevel, () => BadgeDefinition[]> = {
+  mult: getMultBadgeDefinitions,
+  div: getDivisionBadgeDefinitions,
+  rem: getRemainderBadgeDefinitions,
+};
+
 /**
- * Définitions de badges à afficher pour ce profil : les badges multiplication
- * toujours, les badges division uniquement une fois le niveau débloqué — on ne
- * spoile pas la division à un enfant qui apprend encore ses tables (même
- * logique que la révélation différée de la règle ×11, specs §2.3).
+ * Badges à afficher pour ce profil, rangés par matière (specs §4.2) : les
+ * badges multiplication toujours, ceux d'un niveau de maths suivant une fois
+ * ce niveau débloqué — on ne spoile pas la division à un enfant qui apprend
+ * encore ses tables (même logique que la révélation différée de la règle ×11,
+ * §2.3).
  */
-export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[] {
-  const defs = [...getAllBadgeDefinitions()];
-  if (isDivisionUnlocked(profile)) defs.push(...getDivisionBadgeDefinitions());
-  if (isRemainderUnlocked(profile)) defs.push(...getRemainderBadgeDefinitions());
+export function visibleBadges(profile: UserProfile): VisibleBadges {
+  const math = unlockedMathLevels(profile).map((level) => ({
+    section: level,
+    defs: MATH_LEVEL_BADGES[level](),
+  }));
+  const bySubject = new Map<Subject, BadgeGroup[]>([['math', math]]);
   // Conjugaison : visible seulement une fois la matière ouverte, et jamais en
   // anglais (matière fr-only) — même révélation différée que ci-dessus.
-  if (isConjVisible(profile)) defs.push(...getConjBadgeDefinitions());
+  if (isConjVisible(profile)) {
+    bySubject.set('conj', [{ section: 'conj', defs: getConjBadgeDefinitions() }]);
+  }
   // Verbes irréguliers : même révélation différée, jamais en anglais.
-  if (isIrrVisible(profile)) defs.push(...getIrrBadgeDefinitions());
-  return defs;
+  if (isIrrVisible(profile)) {
+    bySubject.set('irr', [{ section: 'irr', defs: getIrrBadgeDefinitions() }]);
+  }
+  return { general: getGeneralBadgeDefinitions(), bySubject };
+}
+
+export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[] {
+  const { general, bySubject } = visibleBadges(profile);
+  return [...general, ...[...bySubject.values()].flat().flatMap((g) => g.defs)];
 }
 
 /**

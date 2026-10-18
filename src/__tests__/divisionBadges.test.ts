@@ -11,6 +11,7 @@ import {
   getDivisionBadgeDefinitions,
 } from '../lib/badges';
 import { createNewProfile } from '../lib/storage';
+import { unlockDivision } from './helpers/divisionProfiles';
 
 function profile(): UserProfile {
   return createNewProfile('Zoé');
@@ -18,12 +19,6 @@ function profile(): UserProfile {
 
 function earn(p: UserProfile, id: string): void {
   p.badges.push({ id, earnedDate: '2026-06-02', icon: '' });
-}
-
-// Débloque le niveau 2 : les 8 badges de table (n=2..9). C'est désormais le
-// critère réel, pas « Génie de la multiplication » (boîte 5 partout).
-function unlockDivision(p: UserProfile): void {
-  for (let n = 2; n <= 9; n++) earn(p, `${BADGE_IDS.TABLE_PREFIX}${n}`);
 }
 
 describe('isDivisionUnlocked', () => {

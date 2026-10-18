@@ -3,7 +3,14 @@ import type { UserProfile } from '../types';
 import BadgeComponent from '../components/Badge';
 import BadgeDetailModal from '../components/BadgeDetailModal';
 import BackChevron from '../components/BackChevron';
-import { visibleBadgeDefinitions, getBadgeDetail } from '../lib/badges';
+import ParentSegmented from '../components/ParentSegmented';
+import {
+  visibleBadges,
+  visibleBadgeDefinitions,
+  getBadgeDetail,
+  type BadgeDefinition,
+} from '../lib/badges';
+import type { Subject } from '../lib/hardestFacts';
 import { useBadgesScreenStrings } from '../i18n/progress';
 
 interface BadgesScreenProps {
@@ -14,13 +21,37 @@ interface BadgesScreenProps {
 export default function BadgesScreen({ profile, onBack }: BadgesScreenProps) {
   const t = useBadgesScreenStrings();
   const earnedMap = new Map(profile.badges.map((b) => [b.id, b]));
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const badgeDefinitions = visibleBadgeDefinitions(profile);
+  const [selected, setSelected] = useState<BadgeDefinition | null>(null);
+  // Un onglet par matière, comme l'écran Règles : avec la conjugaison et les
+  // verbes anglais, une seule grille dépassait les soixante badges. Les badges
+  // de toutes les matières restent au-dessus des onglets.
+  const [tab, setTab] = useState<Subject>('math');
+  const { general, bySubject } = visibleBadges(profile);
+  const subjects = [...bySubject.keys()];
+  const total = visibleBadgeDefinitions(profile).length;
+  const selectedEarned = selected ? earnedMap.get(selected.id) : undefined;
 
-  const selectedDef = selectedId
-    ? badgeDefinitions.find((d) => d.id === selectedId) ?? null
-    : null;
-  const selectedEarned = selectedId ? earnedMap.get(selectedId) : undefined;
+  const renderSection = (key: string, title: string | undefined, defs: BadgeDefinition[]) => (
+    <section key={key} className="badges-section">
+      {title && <h2 className="eyebrow">{title}</h2>}
+      <div className="badges-grid">
+        {defs.map((def) => {
+          const earned = earnedMap.get(def.id);
+          const progress = earned ? undefined : getBadgeDetail(def.id, profile).progress;
+          return (
+            <BadgeComponent
+              key={def.id}
+              badge={def}
+              earned={!!earned}
+              earnedDate={earned?.earnedDate}
+              progress={progress}
+              onClick={() => setSelected(def)}
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
 
   return (
     <div className="badges-screen">
@@ -35,34 +66,31 @@ export default function BadgesScreen({ profile, onBack }: BadgesScreenProps) {
         <div className="badges-banner-eyebrow">{t.collection}</div>
         <div className="badges-banner-count">
           {profile.badges.length}
-          <span>/ {badgeDefinitions.length} {t.badges}</span>
+          <span>/ {total} {t.badges}</span>
         </div>
       </div>
 
-      <div className="badges-grid">
-        {badgeDefinitions.map((def) => {
-          const earned = earnedMap.get(def.id);
-          const progress = earned ? undefined : getBadgeDetail(def.id, profile).progress;
-          return (
-            <BadgeComponent
-              key={def.id}
-              badge={def}
-              earned={!!earned}
-              earnedDate={earned?.earnedDate}
-              progress={progress}
-              onClick={() => setSelectedId(def.id)}
-            />
-          );
-        })}
+      <div className="badges-content">
+        {renderSection('general', t.general, general)}
+        {subjects.length > 1 && (
+          <ParentSegmented
+            kid
+            label={t.myBadges}
+            options={subjects.map((s) => ({ value: s, label: t.subjects[s] }))}
+            value={tab}
+            onChange={setTab}
+          />
+        )}
+        {bySubject.get(tab)?.map((g) => renderSection(g.section, t.sections[g.section], g.defs))}
       </div>
 
-      {selectedDef && (
+      {selected && (
         <BadgeDetailModal
-          badge={selectedDef}
+          badge={selected}
           earned={!!selectedEarned}
           earnedDate={selectedEarned?.earnedDate}
           profile={profile}
-          onClose={() => setSelectedId(null)}
+          onClose={() => setSelected(null)}
         />
       )}
     </div>

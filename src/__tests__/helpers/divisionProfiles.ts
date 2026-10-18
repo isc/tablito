@@ -1,4 +1,4 @@
-import type { BoxLevel, UserProfile } from '../../types';
+import { BADGE_IDS, type BoxLevel, type UserProfile } from '../../types';
 import { getDivisionFactKey } from '../../lib/divisionFacts';
 
 // Divisions introduites à la carte, pour les tests de composition. Partagé par
@@ -35,4 +35,14 @@ export function withDueDivisions(p: UserProfile, keys: string[]): UserProfile {
       : f,
   );
   return p;
+}
+
+/**
+ * Débloque le niveau 2 : les 8 badges de table (n=2..9). C'est le critère
+ * réel, pas « Génie de la multiplication » (boîte 5 partout).
+ */
+export function unlockDivision(p: UserProfile): void {
+  for (let n = 2; n <= 9; n++) {
+    p.badges.push({ id: `${BADGE_IDS.TABLE_PREFIX}${n}`, earnedDate: '2026-06-02', icon: '' });
+  }
 }
