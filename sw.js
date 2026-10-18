@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261014181246"
+const VERSION = "20261018192300"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
