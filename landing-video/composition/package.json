@@ -2,7 +2,7 @@
   "name": "tablito-landing-video-composition",
   "private": true,
   "type": "module",
-  "description": "HyperFrames composition for the Tablito landing hero (5 scenes + GSAP timeline).",
+  "description": "HyperFrames composition for the Tablito landing hero (scenes + GSAP timeline).",
   "scripts": {
     "dev": "npx --yes hyperframes@0.6.95 preview",
     "check": "npx --yes hyperframes@0.6.95 lint && npx --yes hyperframes@0.6.95 validate && npx --yes hyperframes@0.6.95 inspect",

@@ -103,6 +103,8 @@ const LOCALE = { fr: 'fr-FR', en: 'en-GB' };
 // Anchor date for seed data — single source of truth for every capture.
 const SEED_TODAY = '2026-04-12';
 const SEED_YESTERDAY = '2026-04-11';
+// Prochaine révision d'un fait qu'on veut hors de la séance du jour.
+const SEED_FUTURE = '2026-04-20';
 
 // Cache-busting suffix per screenshot. GitHub Pages serves PNGs with a
 // ~10 min default TTL, so without a query string a phone in UAT keeps
@@ -467,12 +469,14 @@ async function gotoHome(page) {
   await page.addStyleTag({ content: DISABLE_ANIMATIONS_CSS });
 }
 
-// Démarre la séance de maths depuis l'accueil. En FR, la matière conjugaison
-// est disponible : l'accueil montre deux tuiles (`.home-subject-btn`, maths en
-// premier) au lieu du bouton unique `.home-start-btn` que l'EN conserve.
-async function startMathsSession(page) {
+// Démarre la séance d'une matière depuis l'accueil. En FR, la conjugaison et
+// les verbes anglais sont disponibles : l'accueil montre une tuile par matière
+// (`.home-subject-btn`, dans l'ordre de SUBJECT_TILE) au lieu du bouton unique
+// `.home-start-btn` que l'EN conserve pour les maths.
+const SUBJECT_TILE = { maths: 0, conj: 1, irr: 2 };
+async function startSession(page, subject = 'maths') {
   await page.waitForSelector('.home-cta-wrap');
-  const tile = page.locator('.home-subjects .home-subject-btn').first();
+  const tile = page.locator('.home-subjects .home-subject-btn').nth(SUBJECT_TILE[subject]);
   if (await tile.count()) {
     await tile.click();
   } else {
@@ -624,7 +628,7 @@ async function captureSessionScreens(page) {
   // Source of truth for the no-strategy rule: src/lib/strategies.ts.
   const profile = buildSampleProfile();
   const longAgo = '2026-04-05';
-  const future = '2026-04-20';
+  const future = SEED_FUTURE;
   const hasNoStrategy = (f) =>
     f.a === 2 || f.b === 2 || (f.a === 3 && f.b === 3);
   for (const f of profile.facts) {
@@ -682,7 +686,7 @@ async function captureSessionScreens(page) {
   }
   await seedProfile(page, profile);
   await gotoHome(page);
-  await startMathsSession(page);
+  await startSession(page);
   await page.waitForSelector('.session-screen');
 
   if (await page.locator('.session-intro').count()) {
@@ -780,13 +784,12 @@ async function captureConjScreens(page) {
     introduced: true,
     box: i % 3 === 0 ? 2 : 3,
     lastSeen: SEED_YESTERDAY,
-    nextDue: i % 9 === 0 ? SEED_TODAY : '2026-04-20',
+    nextDue: i % 9 === 0 ? SEED_TODAY : SEED_FUTURE,
     history: [{ date: SEED_YESTERDAY, correct: true, responseTimeMs: 4000 }],
   }));
   await seedProfile(page, profile);
   await gotoHome(page);
-  await page.waitForSelector('.home-subjects');
-  await page.locator('.home-subjects .home-subject-btn').nth(1).click();
+  await startSession(page, 'conj');
   await page.waitForSelector('.conj-question .letterpad-keys');
 
   // La réponse attendue n'est pas dans le DOM : on retrouve la question
@@ -827,11 +830,14 @@ async function captureConjScreens(page) {
   await shot(page, '25-conj-feedback-correct');
 }
 
-async function captureVoiceInput(page) {
-  // Stubbe l'API Web Speech (absente en headless Chromium) pour que
-  // `isSpeechRecognitionSupported()` renvoie true. start() déclenche onstart
-  // au tick suivant → l'UI passe en état « listening » (ring + « Je t'écoute »)
-  // pour la capture. Le stub ne reconnaît rien, on prend juste le screenshot.
+// Stubbe l'API Web Speech (absente en headless Chromium) pour que
+// `isSpeechRecognitionSupported()` renvoie true. start() déclenche onstart
+// au tick suivant → l'UI passe en état « listening » (ring + « Je t'écoute »)
+// pour la capture. Le stub ne reconnaît rien de lui-même : la dernière
+// instance démarrée est exposée en `window.__speech`, pour qu'une capture lui
+// fasse « entendre » une phrase (cf. hearSpeech). L'init script vaut pour
+// toute la page : posé sur la page des captures vocales (cf. generateForLang).
+async function installSpeechStub(page) {
   await page.addInitScript(() => {
     // Sans constructor explicite, Playwright headless instancie bien la
     // classe mais la méthode start() ci-dessous ne s'exécute pas — l'écran
@@ -839,20 +845,37 @@ async function captureVoiceInput(page) {
     // ctor explicite débloque le binding ; cause exacte non identifiée.
     class FakeSpeechRecognition {
       constructor() {}
-      start() { setTimeout(() => this.onstart && this.onstart(), 0); }
+      start() {
+        window.__speech = this;
+        setTimeout(() => this.onstart && this.onstart(), 0);
+      }
       abort() { setTimeout(() => this.onend && this.onend(), 0); }
       stop() { setTimeout(() => this.onend && this.onend(), 0); }
     }
     window.webkitSpeechRecognition = FakeSpeechRecognition;
     window.SpeechRecognition = FakeSpeechRecognition;
-    localStorage.setItem('multiplix-input-mode', 'voice');
   });
+}
+
+// Fait entendre `transcript` au stub, comme un résultat intermédiaire (même
+// forme d'événement que la Web Speech API, cf. useSpeechRecognition).
+async function hearSpeech(page, transcript) {
+  await page.evaluate((text) => {
+    window.__speech.onresult({
+      resultIndex: 0,
+      results: [{ isFinal: false, length: 1, 0: { transcript: text, confidence: 1 } }],
+    });
+  }, transcript);
+}
+
+async function captureVoiceInput(page) {
+  await page.addInitScript(() => localStorage.setItem('multiplix-input-mode', 'voice'));
 
   // Profil minimal : tout introduit, un fait dû pour atterrir directement
   // sur une question (pas d'intro à cliquer).
   const profile = buildSampleProfile();
   const longAgo = '2026-04-05';
-  const future = '2026-04-20';
+  const future = SEED_FUTURE;
   let dueSet = false;
   for (const f of profile.facts) {
     f.introduced = true;
@@ -871,12 +894,44 @@ async function captureVoiceInput(page) {
   }
   await seedProfile(page, profile);
   await gotoHome(page);
-  await startMathsSession(page);
+  await startSession(page);
   await page.waitForSelector('.session-screen');
   await clickAllIntroSteps(page);
   await page.waitForSelector('.voice-mic.listening', { timeout: 3000 });
   await sleep(200);
   await shot(page, '07b-session-voice');
+}
+
+// Verbes irréguliers anglais (fr-only, specs §16) : les 64 verbes introduits,
+// quelques-uns dus, pour tomber directement sur une question. La voix est le
+// mode par défaut de la matière : on la capture en pleine récitation, le
+// prétérit déjà entendu dans sa case et le participe encore attendu.
+async function captureIrrScreens(page) {
+  const { createInitialIrrFacts, irrExpectedForms, requireIrrVerbDef } =
+    await importTs('src/lib/irregularVerbs.ts');
+  const profile = buildSampleProfile();
+  profile.hasDoneIrrPlacement = true;
+  profile.hasSeenIrrIntro = true;
+  // « go » en boîte 1 passe en tête (les plus fragiles d'abord) : go → went,
+  // gone, la récitation que tout le monde reconnaît.
+  profile.irrFacts = createInitialIrrFacts().map((f, i) => ({
+    ...f,
+    introduced: true,
+    box: f.key === 'go' ? 1 : 3,
+    lastSeen: SEED_YESTERDAY,
+    nextDue: f.key === 'go' || i % 16 === 0 ? SEED_TODAY : SEED_FUTURE,
+    history: [{ date: SEED_YESTERDAY, correct: true, responseTimeMs: 3000 }],
+  }));
+  await seedProfile(page, profile);
+  await gotoHome(page);
+  await startSession(page, 'irr');
+  await page.waitForSelector('.irr-voice-input .voice-mic.listening', { timeout: 5000 });
+
+  const verb = (await page.locator('.irr-form--base').textContent()).trim();
+  const [past] = irrExpectedForms(requireIrrVerbDef(verb));
+  await hearSpeech(page, `${verb} ${past}`);
+  await page.waitForSelector(`.irr-form--slot:text-is("${past}")`, { timeout: 3000 });
+  await shot(page, '26-irr-voice');
 }
 
 async function captureRecap(page) {
@@ -896,7 +951,7 @@ async function captureRecap(page) {
   }
   await seedProfile(page, profile);
   await gotoHome(page);
-  await startMathsSession(page);
+  await startSession(page);
 
   for (let i = 0; i < 60; i++) {
     await sleep(200);
@@ -953,7 +1008,7 @@ async function captureDivisionScreens(page) {
   // Séance de division : le seed n'a aucune table due → la séance du jour est
   // la division. On démarre la séance de maths (bouton unique en EN, tuile
   // maths en FR).
-  await startMathsSession(page);
+  await startSession(page);
   await page.waitForSelector('.session-screen');
   if (await page.locator('.session-intro').count()) {
     // Attend la révélation "lots" : grille remplie → paquets séparés → compte
@@ -990,7 +1045,7 @@ async function captureRemainderScreens(page) {
 
   // Séance : intro de zone (rangées pleines + points du reste en couleur),
   // puis la saisie en deux temps sur la question qui suit.
-  await startMathsSession(page);
+  await startSession(page);
   await page.waitForSelector('.session-screen');
   if (await page.locator('.session-intro').count()) {
     // La rangée du reste est dans le DOM dès le montage mais reste `.hidden`
@@ -1251,6 +1306,23 @@ const SECTIONS_FR = [
     shots: [
       { file: '24-conj-question', caption: 'Le verbe à conjuguer, puis la phrase à compléter : la réponse s\'écrit directement dans la phrase, au clavier de lettres.' },
       { file: '25-conj-feedback-correct', caption: 'Bonne réponse : la forme s\'affiche, radical et terminaison en deux couleurs.' },
+    ],
+  },
+  {
+    id: 'verbes-anglais',
+    title: 'Les verbes anglais',
+    body: `
+      <p>Une troisième matière : les verbes irréguliers anglais, comme on les récite en classe.</p>
+      <ul class="guide-list">
+        <li><strong>L'app donne l'infinitif</strong>, en anglais et à voix haute ; l'enfant répond les deux autres formes : « go » → « went, gone ».</li>
+        <li><strong>À voix haute par défaut</strong> (le dire aide à retenir), ou au clavier.</li>
+        <li><strong>64 verbes</strong>, des plus fréquents aux moins fréquents, deux nouveaux au plus par séance. Un court test au départ repère ceux qui sont déjà sus.</li>
+        <li><strong>Les verbes vus en classe</strong>, cochés dans l'espace parent, passent en premier.</li>
+        <li><strong>Une image mystère dédiée</strong>, et un badge par famille de verbes (sing, sang, sung…).</li>
+      </ul>
+    `,
+    shots: [
+      { file: '26-irr-voice', caption: 'Le prétérit entendu s\'inscrit dans sa case ; le micro attend encore le participe passé.' },
     ],
   },
   {
@@ -2027,16 +2099,19 @@ async function generateForLang(browser, lang) {
   await mkdir(SHOTS_DIR, { recursive: true });
   log(`=== generating ${lang} guide → ${OUT_DIR}`);
 
-  const context = await browser.newContext({
-    viewport: VIEWPORT,
-    deviceScaleFactor: DEVICE_SCALE,
-    locale: LOCALE[lang],
-    timezoneId: 'Europe/Paris',
-  });
-  const page = await context.newPage();
-
-  // Fail fast on unexpected page errors.
-  page.on('pageerror', (err) => log('PAGE ERROR:', err.message));
+  const newPage = async () => {
+    const context = await browser.newContext({
+      viewport: VIEWPORT,
+      deviceScaleFactor: DEVICE_SCALE,
+      locale: LOCALE[lang],
+      timezoneId: 'Europe/Paris',
+    });
+    const page = await context.newPage();
+    // Fail fast on unexpected page errors.
+    page.on('pageerror', (err) => log('PAGE ERROR:', err.message));
+    return page;
+  };
+  const page = await newPage();
 
   await captureWelcomeScreens(page);
   await captureHome(page);
@@ -2056,13 +2131,17 @@ async function generateForLang(browser, lang) {
   await captureMultiProfileScreens(page);
   // Matière fr-only : invisible en anglais, rien à capturer.
   if (lang === 'fr') await captureConjScreens(page);
-  // Voice capture runs LAST: it injects a SpeechRecognition stub and sets
-  // the input mode to 'voice' via addInitScript, both of which would
-  // pollute any subsequent capture (especially captureRecap which drives
-  // a full session via keyboard).
-  await captureVoiceInput(page);
+  await page.context().close();
 
-  await context.close();
+  // Voice captures get their own context: the SpeechRecognition stub (init
+  // script) and the maths 'voice' input mode (localStorage) would otherwise
+  // leak into every other capture (captureRecap drives a full keyboard
+  // session).
+  const voicePage = await newPage();
+  await installSpeechStub(voicePage);
+  await captureVoiceInput(voicePage);
+  if (lang === 'fr') await captureIrrScreens(voicePage);
+  await voicePage.context().close();
 
   const html = await buildHtml({
     generatedAt: new Date().toISOString().slice(0, 10),
