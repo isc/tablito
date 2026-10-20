@@ -51,7 +51,7 @@ bash build.sh en            # → ../public/video/hero.en.mp4 + poster
 ```
 
 `build.sh` copies the scene screenshots from the guide (the list is at its
-top, with the language-specific pair of scene `sc`), points `caps.active.js`
+top, with the two-beat pairs of scenes `sd` and `sc`), points `caps.active.js`
 at the language, renders, and encodes. It restores `caps.active.js` to `fr` at
 the end.
 
@@ -73,14 +73,23 @@ Commit the updated `../public/video/hero.{fr,en}.mp4` and
 
 ## Scenes
 
-1. La séance du jour (home) · 2. Bonne réponse → étoile dorée · 3. Propre à la
-langue (`sc`), deux captures qui se relaient et la fin du titre avec elles : les
-deux autres matières en fr (conjugaison, puis verbes irréguliers anglais dits à
-voix haute — toutes deux masquées en anglais), les niveaux suivants en en
-(division, puis division avec reste) · 4. L'image mystère qui se dévoile
-(signature) · 5. Progrès sans notes ni classement (badges) · 6. Pour les
-parents : le point de la semaine, suivi depuis son téléphone · 7. Lockup Piou +
-Tablito + tagline + `tablito.app`.
+1. La séance du jour (home) · 2. Bonne réponse → étoile dorée · 3. Les niveaux
+suivants (`sd`) : la division, puis la division avec reste · 4. Propre à la
+langue (`sc`) : les deux autres matières en fr (conjugaison, puis verbes
+irréguliers anglais dits à voix haute — toutes deux masquées en anglais), la
+réponse à voix haute en en (pavé numérique, puis micro) · 5. L'image mystère
+qui se dévoile (signature) · 6. Progrès sans notes ni classement (badges) ·
+7. Pour les parents : le point de la semaine, suivi depuis son téléphone ·
+8. Lockup Piou + Tablito + tagline + `tablito.app`.
+
+Scenes 3 and 4 have two beats: two screenshots in turn (`.next` over the
+first), and the end of the title changes with them, at half the scene.
+
+**Pacing.** A scene's words come first and its phone a beat later
+(`PHONE_IN` in the timeline), so they are read before the picture draws the
+eye; scenes are held long enough for the words to stay on screen about 4 s. At
+3.6 s per scene (until October 2026) they were readable for under 2 s — too
+short to both read and look.
 
 To add a scene: a `.scene.clip` in `index.html` (its `data-start` /
 `data-duration` drive the timeline; shift the following scenes and the root
