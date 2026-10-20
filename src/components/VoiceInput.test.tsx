@@ -25,6 +25,7 @@ class FakeRecognition {
     startCalls += 1;
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- le test émet des résultats sur l'instance vivante
     lastInstance = this;
+    this.onstart?.();
   }
 
   abort(): void {

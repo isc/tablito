@@ -91,6 +91,17 @@ const MAX_RAPID_RESTARTS = 5;
 // Délai laissé au navigateur entre deux tentatives quand un cycle à vide est
 // détecté, pour ne pas re-saturer la boucle d'événements.
 const RESTART_BACKOFF_MS = 400;
+// Sur Android, un abort() envoyé entre start() et onstart se perd : le
+// recognizer reste « démarré » sans plus jamais émettre onstart ni onend, et
+// chaque start() suivant lève InvalidStateError — le micro n'écoute plus
+// jusqu'à ce qu'on passe au clavier et revienne (journal vocal du 20/10/2026 :
+// les deux blocages suivent un abort arrivé 15 ms après le redémarrage, avant
+// onstart). Un abort demandé pendant le démarrage attend donc onstart. Filet
+// de sécurité : un navigateur qui se croit déjà démarré, ou qui ne confirme
+// jamais le démarrage, est remis à zéro puis relancé, quelques fois.
+const STUCK_RETRY_MS = 1000;
+const MAX_STUCK_RETRIES = 3;
+const START_TIMEOUT_MS = 4000;
 
 export function useSpeechRecognition({
   onFinal,
@@ -108,6 +119,11 @@ export function useSpeechRecognition({
   const lastStartAtRef = useRef(0);
   const emptyRestartCountRef = useRef(0);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Où en est la session du navigateur. « starting-then-abort » : un abort
+  // demandé pendant le démarrage, rejoué dans onstart.
+  const phaseRef = useRef<'idle' | 'starting' | 'starting-then-abort' | 'listening'>('idle');
+  const stuckRetriesRef = useRef(0);
+  const startTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -117,6 +133,65 @@ export function useSpeechRecognition({
   }, [onInterim]);
 
   const isSupported = typeof window !== 'undefined' && isSpeechRecognitionSupported();
+
+  const clearRestartTimer = useCallback(() => {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+  }, []);
+
+  /** Lance une session, maintenant ou après `delayMs` ; voir STUCK_RETRY_MS. */
+  const launch = useCallback(
+    (rec: SpeechRecognitionLike, delayMs = 0) => {
+      function later(ms: number) {
+        clearRestartTimer();
+        restartTimerRef.current = setTimeout(() => {
+          restartTimerRef.current = null;
+          if (wantListeningRef.current && phaseRef.current === 'idle') now();
+        }, ms);
+      }
+      function unstick(why: string) {
+        voiceLog('reco:stuck', why);
+        phaseRef.current = 'idle';
+        try {
+          rec.abort();
+        } catch {
+          // ignore
+        }
+        if (stuckRetriesRef.current >= MAX_STUCK_RETRIES) return;
+        stuckRetriesRef.current += 1;
+        later(STUCK_RETRY_MS);
+      }
+      function now() {
+        lastStartAtRef.current = Date.now();
+        // Avant start() : certains navigateurs émettent onstart dedans.
+        const before = phaseRef.current;
+        phaseRef.current = 'starting';
+        try {
+          rec.start();
+        } catch (e) {
+          phaseRef.current = before;
+          // Session vivante (ou abort en vol) : start() lève, c'est attendu,
+          // onend relancera. Au repos, le navigateur est désynchronisé.
+          if (before === 'idle') unstick(String(e));
+          else voiceLog('reco:start-threw', String(e));
+          return;
+        }
+        if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = setTimeout(() => {
+          startTimeoutRef.current = null;
+          if (phaseRef.current === 'starting' || phaseRef.current === 'starting-then-abort') unstick('no onstart');
+        }, START_TIMEOUT_MS);
+      }
+      if (delayMs > 0) later(delayMs);
+      else {
+        clearRestartTimer();
+        now();
+      }
+    },
+    [clearRestartTimer],
+  );
 
   const ensureRecognition = useCallback((): SpeechRecognitionLike | null => {
     if (recognitionRef.current) {
@@ -140,6 +215,15 @@ export function useSpeechRecognition({
 
     rec.onstart = () => {
       voiceLog('reco:onstart');
+      if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
+      stuckRetriesRef.current = 0;
+      const abortNow = phaseRef.current === 'starting-then-abort';
+      phaseRef.current = 'listening';
+      if (abortNow) {
+        voiceLog('reco:abort-on-start');
+        rec.abort();
+        return;
+      }
       setIsListening(true);
       setError(null);
     };
@@ -175,6 +259,8 @@ export function useSpeechRecognition({
     };
 
     rec.onend = () => {
+      phaseRef.current = 'idle';
+      if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
       setIsListening(false);
       if (!wantListeningRef.current) return;
 
@@ -197,35 +283,15 @@ export function useSpeechRecognition({
         return;
       }
 
-      const restart = () => {
-        if (!wantListeningRef.current) return;
-        lastStartAtRef.current = Date.now();
-        try {
-          rec.start();
-        } catch (e) {
-          // start() throws if already started — ignore
-          voiceLog('reco:start-threw', String(e));
-        }
-      };
-
-      if (emptyRestartCountRef.current > 0) {
-        // Cycle à vide détecté : on laisse respirer le navigateur avant de
-        // retenter, pour ne pas re-saturer la boucle d'événements.
-        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-        restartTimerRef.current = setTimeout(() => {
-          restartTimerRef.current = null;
-          restart();
-        }, RESTART_BACKOFF_MS);
-      } else {
-        // Chemin nominal : redémarrage immédiat pour ne pas manquer une
-        // réponse enchaînée rapidement entre deux questions.
-        restart();
-      }
+      // Cycle à vide : on laisse respirer le navigateur avant de retenter,
+      // pour ne pas re-saturer la boucle d'événements. Sinon, redémarrage
+      // immédiat pour ne pas manquer une réponse enchaînée entre deux questions.
+      launch(rec, emptyRestartCountRef.current > 0 ? RESTART_BACKOFF_MS : 0);
     };
 
     recognitionRef.current = rec;
     return rec;
-  }, [lang]);
+  }, [lang, launch]);
 
   const start = useCallback(() => {
     const rec = ensureRecognition();
@@ -238,22 +304,13 @@ export function useSpeechRecognition({
     // Démarrage explicite (geste utilisateur / nouvelle séance) : on repart
     // d'un compteur vierge pour le garde-fou anti-boucle.
     emptyRestartCountRef.current = 0;
-    lastStartAtRef.current = Date.now();
     setError(null);
-    try {
-      rec.start();
-    } catch (e) {
-      // Already started — ignore
-      voiceLog('reco:start-threw', String(e));
-    }
-  }, [ensureRecognition]);
-
-  const clearRestartTimer = useCallback(() => {
-    if (restartTimerRef.current) {
-      clearTimeout(restartTimerRef.current);
-      restartTimerRef.current = null;
-    }
-  }, []);
+    // Démarrage déjà en route : il suffit d'annuler l'abort qui l'attendait.
+    if (phaseRef.current === 'starting-then-abort') phaseRef.current = 'starting';
+    if (phaseRef.current === 'starting') return;
+    stuckRetriesRef.current = 0;
+    launch(rec);
+  }, [ensureRecognition, launch]);
 
   const abort = useCallback(() => {
     voiceLog('reco:abort');
@@ -261,6 +318,11 @@ export function useSpeechRecognition({
     clearRestartTimer();
     const rec = recognitionRef.current;
     if (!rec) return;
+    if (phaseRef.current === 'starting' || phaseRef.current === 'starting-then-abort') {
+      // Perdu par Android avant onstart : rejoué dans onstart.
+      phaseRef.current = 'starting-then-abort';
+      return;
+    }
     try {
       rec.abort();
     } catch {
@@ -268,20 +330,7 @@ export function useSpeechRecognition({
     }
   }, [clearRestartTimer]);
 
-  useEffect(() => {
-    return () => {
-      wantListeningRef.current = false;
-      clearRestartTimer();
-      const rec = recognitionRef.current;
-      if (rec) {
-        try {
-          rec.abort();
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, [clearRestartTimer]);
+  useEffect(() => abort, [abort]);
 
   return { start, abort, isListening, error, isSupported };
 }

@@ -69,7 +69,8 @@ export const irrStrings = {
   swappedHint: 'Attention à l’ordre : d’abord le prétérit, puis le participe.',
   /** Voix. */
   voiceUseMic: 'Répondre à voix haute',
-  voiceHint: 'Dis : go, went, gone',
+  /** L'infinitif de la question puis une case par forme : la récitation de la classe, sans la réponse. */
+  voiceHint: (key: string, slots: number) => `Dis : ${key}${', …'.repeat(slots)}`,
   voiceNotHeard: "Je n'ai pas bien entendu",
   voiceRestart: 'Recommencer',
   /** Placement (specs §16.8). */

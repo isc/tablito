@@ -18,7 +18,14 @@ import {
   isIrrAccepted,
   judgeIrrAnswer,
 } from '../lib/irregularComposer';
-import { irrHeardForms, irrSpokenAnswer, irrSpokenWords } from '../lib/parseSpokenIrregular';
+import {
+  irrAccumulate,
+  irrFinalAnswer,
+  irrHeardForms,
+  irrParticipleUnheard,
+  irrSpokenAnswer,
+  irrSpokenWords,
+} from '../lib/parseSpokenIrregular';
 import { irrPlacementProbes, seedIrrFromPlacement } from '../lib/irregularPlacement';
 import { MAX_LENGTH } from '../components/LetterKeyboard';
 
@@ -277,5 +284,70 @@ describe('réponse dite, appariement au son (specs §16.6)', () => {
     expect(answer('bring thought thought', 'bring')).toEqual(['thought', 'thought']);
     expect(answer('go goed goed', 'go')).toEqual(['goed', 'goed']);
     expect(answer('sing sung sang', 'sing')).toEqual(['sung', 'sang']);
+  });
+});
+
+// Transcriptions réelles d'un Pixel (journal vocal du 20/10/2026) : Android ne
+// renvoie qu'une hypothèse, avale les répétitions et coupe les énoncés.
+describe('réponse dite, transcriptions Android (specs §16.6)', () => {
+  /** Les énoncés successifs d'une même question, comme IrrVoiceInput. */
+  const heardAfter = (key: string, ...finals: string[]) => {
+    const def = requireIrrVerbDef(key);
+    const words = finals.reduce<string[]>((said, f) => irrAccumulate(said, f, def), []);
+    return { def, words };
+  };
+  const answer = (key: string, ...finals: string[]) => {
+    const { def, words } = heardAfter(key, ...finals);
+    return irrFinalAnswer(words, def);
+  };
+
+  it('une récitation qui repart de l’infinitif remplace les bribes d’avant', () => {
+    expect(answer('take', 'take to Taken', 'take toot taken')).toEqual(['took', 'taken']);
+    expect(heardAfter('begin', 'Begin Again', 'begin began').words).toEqual(['begin', 'began']);
+  });
+
+  it('un infinitif qui est aussi une réponse complète encore une réponse en deux fois', () => {
+    expect(answer('come', 'come came', 'come')).toEqual(['came', 'come']);
+    expect(answer('put', 'put', 'put put')).toEqual(['put', 'put']);
+  });
+
+  it('un énoncé sans aucun mot ne change rien', () => {
+    const def = requireIrrVerbDef('go');
+    const said = ['go', 'went'];
+    expect(irrAccumulate(said, 'um', def)).toBe(said);
+  });
+
+  it('complète une répétition avalée quand elle donne la bonne réponse', () => {
+    expect(answer('tell', 'tell told')).toEqual(['told', 'told']);
+    expect(answer('get', 'get god')).toEqual(['got', 'got']);
+    expect(answer('hold', 'cold health')).toEqual(['held', 'held']);
+  });
+
+  it('ne complète jamais vers une réponse fausse, ni sur l’infinitif seul', () => {
+    expect(answer('give', 'give gave')).toBeNull();
+    expect(answer('tell', 'tell tall')).toBeNull();
+    expect(answer('put', 'put')).toBeNull();
+    expect(answer('tell', 'told')).toBeNull();
+  });
+
+  it('prend le premier mot d’une récitation complète pour l’infinitif, même mal entendu', () => {
+    expect(answer('go', 'girl went gone')).toEqual(['went', 'gone']);
+    // … et elle remplace les bribes d'avant, comme une récitation bien entendue.
+    expect(answer('go', 'went', 'girl went gone')).toEqual(['went', 'gone']);
+    expect(answer('be', 'bee wars were being')).toEqual(['was', 'were', 'been']);
+  });
+
+  it('participe en u entendu comme l’infinitif ou le prétérit : la voix ne tranche pas', () => {
+    const unheard = (key: string, said: string) => {
+      const { def, words } = heardAfter(key, said);
+      return irrParticipleUnheard(irrSpokenAnswer(words, def)!, def);
+    };
+    expect(unheard('begin', 'begin began begin')).toEqual(['began']);
+    expect(unheard('begin', 'begin began began')).toEqual(['began']);
+    expect(unheard('sing', 'sing sang sing')).toEqual(['sang']);
+    // Un prétérit faux, ou un verbe hors i-a-u, reste jugé.
+    expect(unheard('begin', 'begin begin begin')).toBeNull();
+    expect(unheard('begin', 'begin begun began')).toBeNull();
+    expect(unheard('give', 'give gave gave')).toBeNull();
   });
 });

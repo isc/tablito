@@ -3,9 +3,15 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useLatestRef } from '../hooks/useLatestRef';
 import { isAndroid } from '../lib/install';
 import { voiceLog } from '../lib/voiceDebug';
-import { judgeIrrAnswer } from '../lib/irregularComposer';
-import { irrHeardForms, irrSpokenAnswer, irrSpokenWords } from '../lib/parseSpokenIrregular';
-import type { IrrVerbDef } from '../lib/irregularVerbs';
+import {
+  irrAccumulate,
+  irrHeardForms,
+  irrFinalAnswer,
+  irrParticipleUnheard,
+  irrSpokenAnswer,
+  irrVoiceCorrect,
+} from '../lib/parseSpokenIrregular';
+import { irrSlotCount, type IrrVerbDef } from '../lib/irregularVerbs';
 import { irrStrings as t } from '../i18n/irregular';
 // Mêmes réglages que le vocal des maths : ratés avant le clavier, fenêtre
 // d'écho après la voix de synthèse, attente du final après une validation à
@@ -38,8 +44,11 @@ interface IrrVoiceInputProps {
   onHeard: (heard: string[]) => void;
   /** Première forme entendue : la latence de rappel (specs §16.6). */
   onRecall?: () => void;
-  /** Trois ratés d'affilée : la question passe au clavier. */
-  onGiveUp: () => void;
+  /**
+   * Trois ratés d'affilée, ou un participe que la voix ne sait pas trancher :
+   * la question passe au clavier, avec les formes `keep` déjà dans leurs cases.
+   */
+  onGiveUp: (keep?: string[]) => void;
   /** L'enfant préfère le clavier (mémorisé). */
   onUseKeyboard: () => void;
   disabled?: boolean;
@@ -127,29 +136,22 @@ export default function IrrVoiceInput({
     [onSubmitRef],
   );
 
-  const isCorrect = useCallback(
-    (words: string[]) => {
-      const answer = irrSpokenAnswer(words, defRef.current);
-      return answer !== null && judgeIrrAnswer(defRef.current, answer, 'voice') === 'correct';
-    },
-    [defRef],
-  );
-
   const handleInterim = useCallback(
     (text: string) => {
       if (disabledRef.current || expectTrailingFinalRef.current) return;
-      const words = [...wordsRef.current, ...irrSpokenWords(text, defRef.current, wordsRef.current)];
+      const words = irrAccumulate(wordsRef.current, text, defRef.current);
       report(words);
       // Validation à la volée d'une réponse JUSTE : pas besoin d'attendre le
       // silence. Une réponse fausse, elle, attend le final.
-      if (isCorrect(words)) {
+      const answer = irrSpokenAnswer(words, defRef.current);
+      if (irrVoiceCorrect(answer, defRef.current)) {
         voiceLog('irr:submit-interim', text);
         expectTrailingFinalRef.current = true;
         trailingTimerRef.current = setTimeout(clearTrailing, TRAILING_FINAL_TIMEOUT_MS);
-        submit(irrSpokenAnswer(words, defRef.current)!);
+        submit(answer);
       }
     },
-    [defRef, disabledRef, report, isCorrect, submit, clearTrailing],
+    [defRef, disabledRef, report, submit, clearTrailing],
   );
 
   const handleFinal = useCallback(
@@ -161,22 +163,21 @@ export default function IrrVoiceInput({
       }
       if (disabledRef.current) return;
       const def = defRef.current;
-      const candidates = [transcript, ...alternatives].map((c) => [
-        ...wordsRef.current,
-        ...irrSpokenWords(c, def, wordsRef.current),
-      ]);
+      const said = wordsRef.current;
+      const candidates = [transcript, ...alternatives].map((c) => irrAccumulate(said, c, def));
+      const answers = candidates.map((words) => irrFinalAnswer(words, def));
       // L'alternative qui donne la bonne réponse l'emporte : la reconnaissance
       // classe souvent « eight » devant « ate ».
-      const correct = candidates.find(isCorrect);
-      const words = correct ?? candidates[0];
-      const added = words.length - wordsRef.current.length;
+      const best = Math.max(0, answers.findIndex((a) => irrVoiceCorrect(a, def)));
+      const [words, answer] = [candidates[best], answers[best]];
+      const correct = irrVoiceCorrect(answer, def);
       const withinGrace = !pauseMicDuringTTS && Date.now() - lastSpeakEndRef.current < POST_TTS_GRACE_MS;
       if (withinGrace && !correct) {
         // Écho de la voix de synthèse : ni réponse, ni raté.
         voiceLog('irr:drop-grace', transcript);
         return;
       }
-      if (added <= 0) {
+      if (words === said) {
         failsRef.current++;
         setNotHeard(true);
         if (failsRef.current >= MAX_PARSE_FAILS) onGiveUpRef.current();
@@ -185,13 +186,17 @@ export default function IrrVoiceInput({
       setNotHeard(false);
       wordsRef.current = words;
       report(words);
-      const answer = irrSpokenAnswer(words, def);
-      if (answer) {
-        voiceLog('irr:submit-final', words.join(' '));
-        submit(answer);
+      if (!answer) return;
+      const keep = irrParticipleUnheard(answer, def);
+      if (keep) {
+        voiceLog('irr:participle-unheard', words.join(' '));
+        onGiveUpRef.current(keep);
+        return;
       }
+      voiceLog('irr:submit-final', words.join(' '));
+      submit(answer);
     },
-    [defRef, disabledRef, isCorrect, report, submit, clearTrailing, pauseMicDuringTTS, onGiveUpRef],
+    [defRef, disabledRef, report, submit, clearTrailing, pauseMicDuringTTS, onGiveUpRef],
   );
 
   const { start, abort, isListening, error, isSupported } = useSpeechRecognition({
@@ -221,6 +226,7 @@ export default function IrrVoiceInput({
   }, [isSupported, onGiveUpRef]);
 
   const restart = () => {
+    voiceLog('irr:restart');
     wordsRef.current = [];
     shownRef.current = '';
     onHeardRef.current([]);
@@ -248,7 +254,7 @@ export default function IrrVoiceInput({
       </button>
 
       <div className="voice-transcript" aria-live="polite">
-        {notHeard ? t.voiceNotHeard : isListening ? t.voiceHint : v.tapToSpeak}
+        {notHeard ? t.voiceNotHeard : isListening ? t.voiceHint(def.key, irrSlotCount(def)) : v.tapToSpeak}
       </div>
 
       {permissionBlocked && <div className="voice-error">{v.micBlocked}</div>}
