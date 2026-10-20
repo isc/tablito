@@ -9,13 +9,21 @@ export default {
   's2.title': 'Right answer, <span class="accent">gold star.</span>',
   's2.body': 'We celebrate every win, never the misses.',
 
-  // Language-specific scene, see build.sh: the end of the title moves from
-  // sc.a to sc.b along with the screenshot.
-  'sc.chip': 'Step by step',
-  'sc.title': 'Then on to',
-  'sc.a': 'division.',
-  'sc.b': 'remainders.',
-  'sc.body': 'Each level opens once the one before is solid.',
+  // Two-beat scenes: the end of the title moves from .a to .b along with the
+  // screenshot.
+  'sd.chip': 'Step by step',
+  'sd.title': 'Then on to',
+  'sd.a': 'division.',
+  'sd.b': 'remainders.',
+  'sd.body': 'Each level opens once the one before is solid.',
+
+  // Language-specific, see build.sh: the French video shows its other two
+  // subjects here (hidden in an English UI), this one the spoken answer.
+  'sc.chip': 'Their choice',
+  'sc.title': 'Answer',
+  'sc.a': 'on the keypad…',
+  'sc.b': '…or out loud.',
+  'sc.body': 'Saying it is often quicker than typing it.',
 
   's3.chip': 'Mystery picture',
   's3.title': 'Each table mastered <span class="accent">reveals the picture.</span>',

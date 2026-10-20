@@ -105,11 +105,12 @@
       }
       .phone__screen img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-      /* Scène « sc » : deux captures et deux fins de titre qui se relaient
-         (cf. la bascule dans le timeline). La seconde se pose sur la première. */
+      /* Scènes à deux temps : deux captures et deux fins de titre qui se
+         relaient (cf. la bascule dans le timeline). La seconde se pose sur la
+         première. */
       .next { opacity: 0; }
       .phone__screen .next { position: absolute; inset: 0; }
-      #sc-copy h1 { max-width: none; }
+      .scene h1:has(.swap) { max-width: none; }
       .swap { display: grid; justify-items: center; }
       .swap > * { grid-area: 1 / 1; }
 
@@ -166,73 +167,90 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="25.4" style="position: relative; width: 1080px; height: 1920px; overflow: hidden">
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="46.1" style="position: relative; width: 1080px; height: 1920px; overflow: hidden">
       <div class="bg"></div>
 
+      <!-- Instants : chaque scène démarre 0,2 s avant la fin de la précédente
+           (fondu croisé) ; la durée du root est la fin de la dernière. Des
+           nombres, que HyperFrames lit tels quels : à recalculer à la main. -->
+
       <!-- Scene 1 — La séance du jour -->
-      <div class="scene clip" id="s1" data-start="0" data-duration="3.6" data-track-index="1">
-        <div class="copy" id="s1-copy">
+      <div class="scene clip" id="s1" data-start="0" data-duration="5.5" data-track-index="1">
+        <div class="copy">
           <span class="chip" data-cap="s1.chip">La séance du jour</span>
           <h1 data-cap="s1.title">Une multiplication <span class="accent">à la fois.</span></h1>
           <p data-cap="s1.body">Des séances courtes, jamais de surcharge.</p>
         </div>
-        <div class="phone" id="s1-phone"><div class="phone__screen"><img src="assets/s1.png" alt=""></div></div>
+        <div class="phone"><div class="phone__screen"><img src="assets/s1.png" alt=""></div></div>
       </div>
 
       <!-- Scene 2 — Bonne réponse, étoile dorée -->
-      <div class="scene clip" id="s2" data-start="3.4" data-duration="3.6" data-track-index="2">
-        <div class="copy" id="s2-copy">
+      <div class="scene clip" id="s2" data-start="5.3" data-duration="5.5" data-track-index="2">
+        <div class="copy">
           <span class="chip" data-cap="s2.chip">Sans pression</span>
           <h1 data-cap="s2.title">Bonne réponse, <span class="accent">étoile dorée.</span></h1>
           <p data-cap="s2.body">On célèbre chaque réussite, jamais l’échec.</p>
         </div>
-        <div class="phone" id="s2-phone"><div class="phone__screen"><img src="assets/s2.png" alt=""></div></div>
+        <div class="phone"><div class="phone__screen"><img src="assets/s2.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 3 (« sc ») — propre à chaque langue, cf. build.sh : deux
-           captures qui se relaient, la fin du titre change avec elles. -->
-      <div class="scene clip" id="sc" data-start="6.8" data-duration="4.8" data-track-index="6">
-        <div class="copy" id="sc-copy">
+      <!-- Scene 3 (« sd ») — les niveaux suivants : la division, puis le reste.
+           Deux temps : deux captures qui se relaient, la fin du titre change
+           avec elles. -->
+      <div class="scene clip" id="sd" data-start="10.6" data-duration="8" data-track-index="8">
+        <div class="copy">
+          <span class="chip" data-cap="sd.chip">Étape par étape</span>
+          <h1><span data-cap="sd.title">Ensuite,</span>
+            <span class="swap"><span class="accent" data-cap="sd.a">la division.</span><span class="accent next" data-cap="sd.b">la division avec reste.</span></span></h1>
+          <p data-cap="sd.body">Chaque niveau s’ouvre quand le précédent est solide.</p>
+        </div>
+        <div class="phone"><div class="phone__screen"><img src="assets/sd.png" alt=""><img class="next" src="assets/sd2.png" alt=""></div></div>
+      </div>
+
+      <!-- Scene 4 (« sc ») — propre à chaque langue, cf. build.sh. Deux temps,
+           comme « sd ». -->
+      <div class="scene clip" id="sc" data-start="18.4" data-duration="8" data-track-index="6">
+        <div class="copy">
           <span class="chip" data-cap="sc.chip">Trois matières</span>
           <h1><span data-cap="sc.title">Et aussi</span>
-            <span class="swap"><span class="accent" id="sc-title-first" data-cap="sc.a">la conjugaison.</span><span class="accent next" id="sc-title-next" data-cap="sc.b">les verbes anglais.</span></span></h1>
+            <span class="swap"><span class="accent" data-cap="sc.a">la conjugaison.</span><span class="accent next" data-cap="sc.b">les verbes anglais.</span></span></h1>
           <p data-cap="sc.body">Même méthode. Les verbes se récitent à voix haute.</p>
         </div>
-        <div class="phone" id="sc-phone"><div class="phone__screen"><img src="assets/sc.png" alt=""><img class="next" id="sc-screen-next" src="assets/sc2.png" alt=""></div></div>
+        <div class="phone"><div class="phone__screen"><img src="assets/sc.png" alt=""><img class="next" src="assets/sc2.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 4 — L'image mystère qui se dévoile — plan signature -->
-      <div class="scene clip" id="s3" data-start="11.4" data-duration="3.6" data-track-index="3">
-        <div class="copy" id="s3-copy">
+      <!-- Scene 5 — L'image mystère qui se dévoile — plan signature -->
+      <div class="scene clip" id="s3" data-start="26.2" data-duration="5.5" data-track-index="3">
+        <div class="copy">
           <span class="chip" data-cap="s3.chip">Image mystère</span>
           <h1 data-cap="s3.title">Chaque table maîtrisée <span class="accent">dévoile l’image.</span></h1>
           <p data-cap="s3.body">Un objectif visuel qui donne envie de continuer.</p>
         </div>
-        <div class="phone" id="s3-phone"><div class="phone__screen"><img src="assets/s3.png" alt=""></div></div>
+        <div class="phone"><div class="phone__screen"><img src="assets/s3.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 5 — Progrès sans notes ni classement -->
-      <div class="scene clip" id="s4" data-start="14.8" data-duration="3.6" data-track-index="4">
-        <div class="copy" id="s4-copy">
+      <!-- Scene 6 — Progrès sans notes ni classement -->
+      <div class="scene clip" id="s4" data-start="31.5" data-duration="5.5" data-track-index="4">
+        <div class="copy">
           <span class="chip" data-cap="s4.chip">Sans notes ni classement</span>
           <h1 data-cap="s4.title">Le progrès, <span class="accent">pas la performance.</span></h1>
           <p data-cap="s4.body">Badges et série du jour, à son rythme.</p>
         </div>
-        <div class="phone" id="s4-phone"><div class="phone__screen"><img src="assets/s4.png" alt=""></div></div>
+        <div class="phone"><div class="phone__screen"><img src="assets/s4.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 6 — Pour les parents : le point de la semaine -->
-      <div class="scene clip" id="sp" data-start="18.2" data-duration="3.6" data-track-index="7">
-        <div class="copy" id="sp-copy">
+      <!-- Scene 7 — Pour les parents : le point de la semaine -->
+      <div class="scene clip" id="sp" data-start="36.8" data-duration="5.5" data-track-index="7">
+        <div class="copy">
           <span class="chip" data-cap="sp.chip">Pour les parents</span>
           <h1 data-cap="sp.title">Sa semaine, <span class="accent">d’un&nbsp;coup&nbsp;d’œil.</span></h1>
           <p data-cap="sp.body">Sur votre téléphone, sans compte.</p>
         </div>
-        <div class="phone" id="sp-phone"><div class="phone__screen"><img src="assets/sp.png" alt=""></div></div>
+        <div class="phone"><div class="phone__screen"><img src="assets/sp.png" alt=""></div></div>
       </div>
 
-      <!-- Scene 7 — Lockup Piou + Tablito -->
-      <div class="brand clip" id="s5" data-start="21.6" data-duration="3.8" data-track-index="5">
+      <!-- Scene 8 — Lockup Piou + Tablito -->
+      <div class="brand clip" id="s5" data-start="42.1" data-duration="4" data-track-index="5">
         <div class="brand__lockup" id="s5-lockup">
           <div class="mascot" role="img" aria-label="Piou">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -280,35 +298,37 @@
 
       // Scènes contenu : même chorégraphie entrée / drift / sortie. Instants et
       // durées sont lus sur les data-start / data-duration des clips (source
-      // unique : ils pilotent déjà la visibilité de chaque scène).
-      const timing = (el) => ({ id: el.id, t: Number(el.dataset.start), d: Number(el.dataset.duration) });
+      // unique : ils pilotent déjà la visibilité de chaque scène). Le texte
+      // arrive d'abord, le téléphone ensuite : on lit, puis on regarde.
+      const PHONE_IN = 0.9, RISE = 0.95, FADE = 0.55;
+      const timing = (el) => ({ el, t: Number(el.dataset.start), d: Number(el.dataset.duration) });
       const SCENES = [...document.querySelectorAll(".scene.clip")].map(timing);
-      SCENES.forEach((scene, i) => {
+      SCENES.forEach(({ el, t, d }, i) => {
         const first = i === 0;
+        const q = gsap.utils.selector(el);
         // Crossfade d'entrée (sauf 1re scène, déjà visible au t=0).
-        if (!first) tl.fromTo("#" + scene.id, { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, scene.t + 0.05);
-        // Le téléphone monte + léger zoom.
-        tl.from("#" + scene.id + "-phone", { y: 80, scale: 0.96, opacity: first ? 0 : 1, duration: 0.95, ease: "power3.out" }, scene.t + (first ? 0.25 : 0.15));
+        if (!first) tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, t + 0.05);
         // Copie : chip → titre → sous-titre en cascade.
-        tl.from("#" + scene.id + "-copy .chip", { y: 38, opacity: 0, duration: 0.6, ease: "power3.out" }, scene.t + 0.32);
-        tl.from("#" + scene.id + "-copy h1", { y: 48, opacity: 0, duration: 0.7, ease: "power3.out" }, scene.t + 0.44);
-        tl.from("#" + scene.id + "-copy p", { y: 38, opacity: 0, duration: 0.6, ease: "power3.out" }, scene.t + 0.6);
-        // Drift Ken-Burns pendant le hold.
-        tl.to("#" + scene.id + "-phone", { y: -20, duration: scene.d - 1.3, ease: "sine.inOut" }, scene.t + 0.85);
-        // Sortie en fondu.
-        tl.to("#" + scene.id, { opacity: 0, duration: 0.55, ease: "power2.in" }, scene.t + scene.d - 0.55);
+        tl.from(q(".chip"), { y: 38, opacity: 0, duration: 0.6, ease: "power3.out" }, t + 0.15);
+        tl.from(q("h1"), { y: 48, opacity: 0, duration: 0.7, ease: "power3.out" }, t + 0.3);
+        tl.from(q(".copy p"), { y: 38, opacity: 0, duration: 0.6, ease: "power3.out" }, t + 0.5);
+        // Puis le téléphone monte + léger zoom, et dérive (Ken Burns) jusqu'à
+        // la sortie en fondu.
+        tl.from(q(".phone"), { y: 80, scale: 0.96, opacity: first ? 0 : 1, duration: RISE, ease: "power3.out" }, t + PHONE_IN);
+        tl.to(q(".phone"), { y: -20, duration: d - PHONE_IN - RISE - FADE, ease: "sine.inOut" }, t + PHONE_IN + RISE);
+        tl.to(el, { opacity: 0, duration: FADE, ease: "power2.in" }, t + d - FADE);
+        // Scène à deux temps : à mi-parcours, la seconde capture et la seconde
+        // fin de titre prennent le relais de la première.
+        if (q(".next").length) {
+          const swap = t + d / 2;
+          tl.to(q(".phone__screen .next"), { opacity: 1, duration: 0.5, ease: "power2.inOut" }, swap);
+          tl.to(q(".swap > :not(.next)"), { opacity: 0, y: -24, duration: 0.35, ease: "power2.in" }, swap);
+          tl.fromTo(q(".swap > .next"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, swap + 0.35);
+        }
       });
 
-      // Scène « sc » : à mi-parcours, la seconde capture et la seconde fin de
-      // titre prennent le relais de la première.
-      const sc = timing(document.getElementById("sc"));
-      const swap = sc.t + sc.d / 2;
-      tl.to("#sc-screen-next", { opacity: 1, duration: 0.5, ease: "power2.inOut" }, swap);
-      tl.to("#sc-title-first", { opacity: 0, y: -24, duration: 0.35, ease: "power2.in" }, swap);
-      tl.fromTo("#sc-title-next", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, swap + 0.35);
-
       // Scène marque.
-      const b = timing(document.getElementById("s5")).t;
+      const b = Number(document.getElementById("s5").dataset.start);
       tl.fromTo("#s5", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, b + 0.05);
       tl.from("#s5-lockup", { y: 48, opacity: 0, duration: 0.8, ease: "power3.out" }, b + 0.25);
       tl.from("#s5-tag", { y: 42, opacity: 0, duration: 0.7, ease: "power3.out" }, b + 0.5);

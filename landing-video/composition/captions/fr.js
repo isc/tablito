@@ -9,8 +9,14 @@ export default {
   's2.title': 'Bonne réponse, <span class="accent">étoile dorée.</span>',
   's2.body': 'On célèbre chaque réussite, jamais l’échec.',
 
-  // Scène propre à la langue, cf. build.sh : la fin du titre passe de sc.a à
-  // sc.b avec la capture.
+  // Scènes à deux temps : la fin du titre passe de .a à .b avec la capture.
+  'sd.chip': 'Étape par étape',
+  'sd.title': 'Ensuite,',
+  'sd.a': 'la division.',
+  'sd.b': 'la division avec reste.',
+  'sd.body': 'Chaque niveau s’ouvre quand le précédent est solide.',
+
+  // Propre à la langue, cf. build.sh.
   'sc.chip': 'Trois matières',
   'sc.title': 'Et aussi',
   'sc.a': 'la conjugaison.',
