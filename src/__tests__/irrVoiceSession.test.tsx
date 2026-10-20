@@ -175,6 +175,38 @@ describe('Dire le verbe (specs §16.6)', () => {
     say('put put put');
     expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
   });
+
+  it('la consigne montre l’infinitif de la question, pas une réponse', () => {
+    renderSession([irrItem('be')]);
+    promptEnds();
+    expect(document.querySelector('.voice-transcript')?.textContent).toBe('Dis : be, …, …, …');
+  });
+
+  // Transcriptions réelles d'un Pixel (journal vocal du 20/10/2026).
+  it('une répétition avalée par la reconnaissance complète la réponse', () => {
+    const onIrrAnswer = renderSession([irrItem('tell')]);
+    promptEnds();
+    say('tell told');
+    expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
+  });
+
+  it('une récitation reprise depuis l’infinitif remplace les bribes d’avant', () => {
+    const onIrrAnswer = renderSession([irrItem('take')]);
+    promptEnds();
+    say('take to Taken');
+    expect(onIrrAnswer).not.toHaveBeenCalled();
+    say('take toot taken');
+    expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
+  });
+
+  it('begun entendu begin : ni juste ni faux, le participe s’écrit au clavier', () => {
+    const onIrrAnswer = renderSession([irrItem('begin')]);
+    promptEnds();
+    say('begin began begin');
+    expect(onIrrAnswer).not.toHaveBeenCalled();
+    expect(slots()).toEqual(['began', '']);
+    expect(document.querySelector('.conj-keyboard-area')).not.toBeNull();
+  });
 });
 
 describe('Introduction d’un verbe (specs §16.7)', () => {

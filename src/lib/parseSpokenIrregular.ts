@@ -5,7 +5,7 @@ import {
   irrSlotCount,
   type IrrVerbDef,
 } from './irregularVerbs';
-import { editDistance } from './irregularComposer';
+import { editDistance, judgeIrrAnswer } from './irregularComposer';
 
 // === Réponse dite à voix haute, verbes irréguliers (specs §16.6) ===
 //
@@ -118,16 +118,28 @@ export function irrSpokenWords(transcript: string, def: IrrVerbDef, said: readon
 }
 
 /**
- * L'infinitif récité en tête est-il à retirer ? Toujours quand il n'est pas
- * lui-même une forme attendue. Quand il l'est (« put, put, put », « come,
- * came, come »), seulement s'il y a un mot de trop : « put put » est alors la
- * réponse complète, pas un infinitif suivi d'une moitié de réponse.
+ * Les mots commencent-ils par l'infinitif récité ? Toujours quand il y a un mot
+ * de trop pour les cases : c'est l'infinitif, même mal entendu (« girl went
+ * gone » pour go). Sinon, quand c'est bien lui et qu'il n'est pas lui-même une
+ * forme attendue — « put put » est la réponse complète, pas un infinitif suivi
+ * d'une moitié de réponse.
  */
-function stripBase(words: string[], def: IrrVerbDef): string[] {
-  if (words[0] !== def.key) return words;
-  const baseIsAnswer = irrExpectedForms(def).includes(def.key);
-  if (!baseIsAnswer || words.length > irrSlotCount(def)) return words.slice(1);
-  return words;
+function recitesBase(words: readonly string[], def: IrrVerbDef): boolean {
+  if (words.length > irrSlotCount(def)) return true;
+  return words[0] === def.key && !irrExpectedForms(def).includes(def.key);
+}
+
+/**
+ * Les mots entendus sur la question après un nouvel énoncé. Un énoncé qui
+ * récite l'infinitif est une nouvelle récitation : il remplace les bribes
+ * d'avant (« begin again »… « begin, began, begun ») au lieu de s'y ajouter.
+ * Les autres complètent une réponse dite en plusieurs fois (« went »…
+ * « gone »). Renvoie `said` lui-même quand l'énoncé n'apporte aucun mot.
+ */
+export function irrAccumulate(said: string[], transcript: string, def: IrrVerbDef): string[] {
+  const words = irrSpokenWords(transcript, def, said);
+  if (words.length === 0) return said;
+  return recitesBase(words, def) ? words : [...said, ...words];
 }
 
 /**
@@ -135,7 +147,7 @@ function stripBase(words: string[], def: IrrVerbDef): string[] {
  * dans les cases pendant que l'enfant parle. Peut être incomplet.
  */
 export function irrHeardForms(words: string[], def: IrrVerbDef): string[] {
-  return stripBase(words, def).slice(0, irrSlotCount(def));
+  return (recitesBase(words, def) ? words.slice(1) : words).slice(0, irrSlotCount(def));
 }
 
 /**
@@ -146,4 +158,40 @@ export function irrHeardForms(words: string[], def: IrrVerbDef): string[] {
 export function irrSpokenAnswer(words: string[], def: IrrVerbDef): string[] | null {
   const heard = irrHeardForms(words, def);
   return heard.length === irrSlotCount(def) ? heard : null;
+}
+
+/** La réponse dite est-elle juste ? */
+export function irrVoiceCorrect(answer: string[] | null, def: IrrVerbDef): answer is string[] {
+  return answer !== null && judgeIrrAnswer(def, answer, 'voice') === 'correct';
+}
+
+/**
+ * La réponse à la fin d'un énoncé : complète, ou incomplète mais rendue juste
+ * par sa dernière forme répétée — la reconnaissance avale les répétitions
+ * (« tell, told, told » transcrit « tell told », « get, got, got » transcrit
+ * « get god »). Il faut l'infinitif ET une forme : « put » seul, c'est l'enfant
+ * qui lit la question. Jamais une réponse fausse : celle-là attend la suite.
+ */
+export function irrFinalAnswer(words: string[], def: IrrVerbDef): string[] | null {
+  const heard = irrHeardForms(words, def);
+  if (heard.length === irrSlotCount(def)) return heard;
+  if (words.length < 2 || heard.length === 0) return null;
+  const padded = [...heard];
+  while (padded.length < irrSlotCount(def)) padded.push(heard[heard.length - 1]);
+  return irrVoiceCorrect(padded, def) ? padded : null;
+}
+
+/**
+ * Participe en u (begun, sung, swum, rung, drunk) entendu comme l'infinitif ou
+ * le prétérit, derrière un prétérit juste : la reconnaissance n'écrit pas
+ * « begun » (journal vocal du 20/10/2026 : « begin began begin » ou « begin
+ * began began », sept fois sur sept). La voix ne peut pas trancher : ni juste
+ * ni faux, la question passe au clavier. Renvoie les formes à y garder (le
+ * prétérit), ou null.
+ */
+export function irrParticipleUnheard(answer: readonly string[], def: IrrVerbDef): string[] | null {
+  const [preterite, participle] = answer;
+  const unheard =
+    def.family === 'iau' && preterite === def.preterite[0] && (participle === def.key || participle === preterite);
+  return unheard ? [preterite] : null;
 }

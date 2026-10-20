@@ -70,8 +70,9 @@ export default function IrrAnswerInput({
   // Réponse partie : plus de saisie jusqu'à la question suivante (une seconde
   // Entrée la renverrait).
   const [submitted, setSubmitted] = useState(false);
-  // Trois ratés de reconnaissance (ou pas de reconnaissance du tout) : cette
-  // question passe au clavier, sans toucher au réglage de l'enfant.
+  // Trois ratés de reconnaissance, un participe que la voix ne sait pas
+  // trancher (ou pas de reconnaissance du tout) : cette question passe au
+  // clavier, sans toucher au réglage de l'enfant.
   const [voiceGaveUp, setVoiceGaveUp] = useState(false);
   const [prevToken, setPrevToken] = useState(token);
   if (token !== prevToken) {
@@ -107,9 +108,10 @@ export default function IrrAnswerInput({
     [values, active, onSubmit],
   );
 
-  const resetKeyboard = () => {
-    setValues(blank());
-    setActive(0);
+  // `keep` : les formes déjà entendues justes, laissées dans leurs cases.
+  const resetKeyboard = (keep: readonly string[] = []) => {
+    setValues(blank().map((b, i) => keep[i] ?? b));
+    setActive(keep.length);
   };
 
   const switchToVoice = useCallback(async () => {
@@ -141,9 +143,9 @@ export default function IrrAnswerInput({
           onSubmit={(answers) => onSubmit(answers, 'voice')}
           onHeard={setHeard}
           onRecall={onRecall}
-          onGiveUp={() => {
+          onGiveUp={(keep) => {
             setVoiceGaveUp(true);
-            resetKeyboard();
+            resetKeyboard(keep);
           }}
           onUseKeyboard={() => {
             resetKeyboard();
