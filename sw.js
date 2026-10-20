@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261020191336"
+const VERSION = "20261020194124"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -240,7 +240,7 @@ const ASSETS = [
 // { groupe: [préfixes d'URL] } et { groupe: hash du contenu } — cf. LAZY_GROUPS
 // dans scripts/build.mjs, qui est la source unique de la liste.
 const LAZY_GROUPS = {"audio":["/audio/"],"media":["/mystery/"],"splash":["/splash/"],"landing":["/video/","/img/hero-poster"],"qrscan":["/vendor/qr-scanner/"],"phonetic":["/phonetic/"],"qrgen":["/vendor/lean-qr/"]}
-const LAZY_VERSIONS = {"audio":"fbe0825f6b76","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"f6f3f2f3455e","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
+const LAZY_VERSIONS = {"audio":"fbe0825f6b76","media":"451f226cdafa","splash":"7cd2da5fda63","landing":"ece39f6d51b0","qrscan":"1ddb9a3148cc","phonetic":"fa4ee22f5b55","qrgen":"6c1f3275c362"}
 
 // cf. STANDALONE_DOCS dans scripts/cache-config.mjs (source unique).
 const STANDALONE_DOCS = ["/guide/","/specs/","/previews/"]
