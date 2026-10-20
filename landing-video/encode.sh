@@ -18,9 +18,11 @@ echo "Encoding ($LANG_CODE) from: $SRC"
 mkdir -p ../public/video ../public/img
 
 # Portrait 9:16, downscaled to 720×1280 — small enough for a landing hero,
-# muted (no audio track: the landing autoplays it looping).
+# muted (no audio track: the landing autoplays it looping). CRF 31: the
+# screenshots' small text reads the same as at 28 (checked on still and moving
+# frames), for a quarter less weight.
 ffmpeg -y -i "$SRC" -vf "scale=720:1280:flags=lanczos" \
-  -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 28 -preset slow \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 31 -preset slow \
   -movflags +faststart -an "../public/video/hero.${LANG_CODE}.mp4"
 
 # Poster frame from the opening scene (home + headline) — the no-JS / reduced-motion fallback.

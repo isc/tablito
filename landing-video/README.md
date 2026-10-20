@@ -18,7 +18,7 @@ intermediate screenshots and renders are **gitignored** (derived, regenerable).
 ```
 landing-video/
   composition/
-    index.html          the HyperFrames composition (6 scenes + GSAP timeline)
+    index.html          the HyperFrames composition (scenes + GSAP timeline)
     design.md           brand/design system (Tablito tokens, Piou, motion)
     captions/{fr,en}.js  the on-screen copy per language (keys = data-cap)
     caps.active.js       re-exports the language being rendered (committed = fr)
@@ -50,11 +50,10 @@ bash build.sh fr            # → ../public/video/hero.fr.mp4 + poster
 bash build.sh en            # → ../public/video/hero.en.mp4 + poster
 ```
 
-`build.sh` copies the five scene screenshots (`05-home`,
-`08-session-feedback-correct`, `10-progress`, `11-badges`, plus the
-language-specific one: `24-conj-question` in fr, `13-parent-dashboard` in en), points
-`caps.active.js` at the language, renders, and encodes. It restores
-`caps.active.js` to `fr` at the end.
+`build.sh` copies the scene screenshots from the guide (the list is at its
+top, with the language-specific pair of scene `sc`), points `caps.active.js`
+at the language, renders, and encodes. It restores `caps.active.js` to `fr` at
+the end.
 
 Commit the updated `../public/video/hero.{fr,en}.mp4` and
 `../public/img/hero-poster.{fr,en}.jpg`.
@@ -75,6 +74,14 @@ Commit the updated `../public/video/hero.{fr,en}.mp4` and
 ## Scenes
 
 1. La séance du jour (home) · 2. Bonne réponse → étoile dorée · 3. Propre à la
-langue (`sc`) : la conjugaison en fr, l'espace parent en en (la conjugaison est
-fr-only) · 4. L'image mystère qui se dévoile (signature) · 5. Progrès sans notes
-ni classement (badges) · 6. Lockup Piou + Tablito + tagline + `tablito.app`.
+langue (`sc`), deux captures qui se relaient et la fin du titre avec elles : les
+deux autres matières en fr (conjugaison, puis verbes irréguliers anglais dits à
+voix haute — toutes deux masquées en anglais), les niveaux suivants en en
+(division, puis division avec reste) · 4. L'image mystère qui se dévoile
+(signature) · 5. Progrès sans notes ni classement (badges) · 6. Pour les
+parents : le point de la semaine, suivi depuis son téléphone · 7. Lockup Piou +
+Tablito + tagline + `tablito.app`.
+
+To add a scene: a `.scene.clip` in `index.html` (its `data-start` /
+`data-duration` drive the timeline; shift the following scenes and the root
+`data-duration`), its captions in both languages, its screenshot in `build.sh`.

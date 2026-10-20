@@ -9,10 +9,13 @@ export default {
   's2.title': 'Bonne réponse, <span class="accent">étoile dorée.</span>',
   's2.body': 'On célèbre chaque réussite, jamais l’échec.',
 
-  // Scène propre à la langue, cf. build.sh.
-  'sc.chip': 'Nouveau',
-  'sc.title': 'Et aussi <span class="accent">la conjugaison.</span>',
-  'sc.body': 'Présent, imparfait, futur : même méthode.',
+  // Scène propre à la langue, cf. build.sh : la fin du titre passe de sc.a à
+  // sc.b avec la capture.
+  'sc.chip': 'Trois matières',
+  'sc.title': 'Et aussi',
+  'sc.a': 'la conjugaison.',
+  'sc.b': 'les verbes anglais.',
+  'sc.body': 'Même méthode. Les verbes se récitent à voix haute.',
 
   's3.chip': 'Image mystère',
   's3.title': 'Chaque table maîtrisée <span class="accent">dévoile l’image.</span>',
@@ -21,6 +24,11 @@ export default {
   's4.chip': 'Sans notes ni classement',
   's4.title': 'Le progrès, <span class="accent">pas la performance.</span>',
   's4.body': 'Badges et série du jour, à son rythme.',
+
+  'sp.chip': 'Pour les parents',
+  // Insécables : « d’un coup / d’œil » se coupait au mauvais endroit.
+  'sp.title': 'Sa semaine, <span class="accent">d’un&nbsp;coup&nbsp;d’œil.</span>',
+  'sp.body': 'Sur votre téléphone, sans compte.',
 
   'brand.tag': 'Apprendre les tables de multiplication, en douceur.',
   'brand.cta': 'tablito.app',
