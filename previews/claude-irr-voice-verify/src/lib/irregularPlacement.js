@@ -1,0 +1,3 @@
+import{typedFastThresholdMs as s}from"../types.js";import{placeFact as p,placementBox as a}from"./leitner.js";import{irrExpectedLetters as m,irrVerbsInIntroOrder as f,requireIrrVerbDef as l}from"./irregularVerbs.js";const u=10,M=3;function R(r=[]){return f(r).slice(0,u).map(t=>t.key)}function x(r,t,n){const c=new Map(r.map(e=>[e.key,e]));for(const e of t){if(!e.correct)continue;const o=c.get(e.key);if(!o)continue;const i=s(m(l(e.key)),e.inputMode);p(o,a(e.timeMs,i),n)}}export{M as IRR_MAX_CONSECUTIVE_FAILURES,u as IRR_PLACEMENT_PROBE_COUNT,R as irrPlacementProbes,x as seedIrrFromPlacement};
+
+//# sourceMappingURL=irregularPlacement.js.map
