@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-21',
+    items: [
+      "Verbes anglais à voix haute : une récitation juste n'est plus comptée fausse parce que la reconnaissance vocale l'a mal écrite. Elle entendait « stand, Stuart, stood » ou « write, road, written » ; l'app vérifie désormais si ce qu'elle entend sonne comme la bonne réponse, et ne compte faux que sur une vraie erreur (« goed », « began, began »).",
+    ],
+  },
+  {
     date: '2026-10-14',
     items: [
       "Verbes anglais\u00a0: les verbes «\u00a0vus en classe\u00a0» se cochent avant même la première séance. Sur l'appareil de votre enfant, la carte «\u00a0Verbes anglais\u00a0» est dans l'espace parent dès le départ\u00a0: les verbes cochés ouvrent alors son test de départ. Elle n'apparaissait jusqu'ici qu'après une première séance.",
@@ -268,6 +274,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-21',
+    items: [
+      "English verbs, spoken answers: a correct recitation is no longer marked wrong because speech recognition wrote it down badly. It heard \"stand, Stuart, stood\" or \"write, road, written\"; the app now checks whether what it hears sounds like the right answer, and only marks it wrong on a real mistake (\"goed\", \"began, began\").",
+    ],
+  },
   {
     date: '2026-10-14',
     items: [

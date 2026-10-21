@@ -287,28 +287,30 @@ describe('réponse dite, appariement au son (specs §16.6)', () => {
   });
 });
 
+/** Les énoncés successifs d'une même question, comme IrrVoiceInput. */
+function heardAfter(key: string, ...finals: string[]) {
+  const def = requireIrrVerbDef(key);
+  const words = finals.reduce<string[]>((said, f) => irrAccumulate(said, f, def), []);
+  return { def, words };
+}
+
+/** La réponse retenue à la fin du dernier énoncé. */
+function finalAnswer(key: string, ...finals: string[]) {
+  const { def, words } = heardAfter(key, ...finals);
+  return irrFinalAnswer(words, def);
+}
+
 // Transcriptions réelles d'un Pixel (journal vocal du 20/10/2026) : Android ne
 // renvoie qu'une hypothèse, avale les répétitions et coupe les énoncés.
 describe('réponse dite, transcriptions Android (specs §16.6)', () => {
-  /** Les énoncés successifs d'une même question, comme IrrVoiceInput. */
-  const heardAfter = (key: string, ...finals: string[]) => {
-    const def = requireIrrVerbDef(key);
-    const words = finals.reduce<string[]>((said, f) => irrAccumulate(said, f, def), []);
-    return { def, words };
-  };
-  const answer = (key: string, ...finals: string[]) => {
-    const { def, words } = heardAfter(key, ...finals);
-    return irrFinalAnswer(words, def);
-  };
-
   it('une récitation qui repart de l’infinitif remplace les bribes d’avant', () => {
-    expect(answer('take', 'take to Taken', 'take toot taken')).toEqual(['took', 'taken']);
+    expect(finalAnswer('take', 'take to Taken', 'take toot taken')).toEqual(['took', 'taken']);
     expect(heardAfter('begin', 'Begin Again', 'begin began').words).toEqual(['begin', 'began']);
   });
 
   it('un infinitif qui est aussi une réponse complète encore une réponse en deux fois', () => {
-    expect(answer('come', 'come came', 'come')).toEqual(['came', 'come']);
-    expect(answer('put', 'put', 'put put')).toEqual(['put', 'put']);
+    expect(finalAnswer('come', 'come came', 'come')).toEqual(['came', 'come']);
+    expect(finalAnswer('put', 'put', 'put put')).toEqual(['put', 'put']);
   });
 
   it('un énoncé sans aucun mot ne change rien', () => {
@@ -318,36 +320,80 @@ describe('réponse dite, transcriptions Android (specs §16.6)', () => {
   });
 
   it('complète une répétition avalée quand elle donne la bonne réponse', () => {
-    expect(answer('tell', 'tell told')).toEqual(['told', 'told']);
-    expect(answer('get', 'get god')).toEqual(['got', 'got']);
-    expect(answer('hold', 'cold health')).toEqual(['held', 'held']);
+    expect(finalAnswer('tell', 'tell told')).toEqual(['told', 'told']);
+    expect(finalAnswer('get', 'get god')).toEqual(['got', 'got']);
+    expect(finalAnswer('hold', 'cold health')).toEqual(['held', 'held']);
   });
 
   it('ne complète jamais vers une réponse fausse, ni sur l’infinitif seul', () => {
-    expect(answer('give', 'give gave')).toBeNull();
-    expect(answer('tell', 'tell tall')).toBeNull();
-    expect(answer('put', 'put')).toBeNull();
-    expect(answer('tell', 'told')).toBeNull();
+    expect(finalAnswer('give', 'give gave')).toBeNull();
+    expect(finalAnswer('tell', 'tell tall')).toBeNull();
+    expect(finalAnswer('put', 'put')).toBeNull();
+    expect(finalAnswer('tell', 'told')).toBeNull();
   });
 
   it('prend le premier mot d’une récitation complète pour l’infinitif, même mal entendu', () => {
-    expect(answer('go', 'girl went gone')).toEqual(['went', 'gone']);
+    expect(finalAnswer('go', 'girl went gone')).toEqual(['went', 'gone']);
     // … et elle remplace les bribes d'avant, comme une récitation bien entendue.
-    expect(answer('go', 'went', 'girl went gone')).toEqual(['went', 'gone']);
-    expect(answer('be', 'bee wars were being')).toEqual(['was', 'were', 'been']);
+    expect(finalAnswer('go', 'went', 'girl went gone')).toEqual(['went', 'gone']);
+    expect(finalAnswer('be', 'bee wars were being')).toEqual(['was', 'were', 'been']);
   });
 
-  it('participe en u entendu comme l’infinitif ou le prétérit : la voix ne tranche pas', () => {
+  it('participe en u entendu comme l’infinitif : compté pour le participe', () => {
+    expect(finalAnswer('begin', 'begin began begin')).toEqual(['began', 'begun']);
+    expect(finalAnswer('sing', 'sing sang sing')).toEqual(['sang', 'sung']);
+    expect(finalAnswer('begin', 'began begin')).toEqual(['began', 'begun']);
+    // Un prétérit faux reste jugé.
+    expect(finalAnswer('begin', 'begin begin begin')).toEqual(['begin', 'begin']);
+  });
+
+  it('participe en u entendu comme le prétérit : la voix ne tranche pas', () => {
     const unheard = (key: string, said: string) => {
       const { def, words } = heardAfter(key, said);
       return irrParticipleUnheard(irrSpokenAnswer(words, def)!, def);
     };
-    expect(unheard('begin', 'begin began begin')).toEqual(['began']);
     expect(unheard('begin', 'begin began began')).toEqual(['began']);
-    expect(unheard('sing', 'sing sang sing')).toEqual(['sang']);
+    expect(unheard('sing', 'sing sang sang')).toEqual(['sang']);
     // Un prétérit faux, ou un verbe hors i-a-u, reste jugé.
     expect(unheard('begin', 'begin begin begin')).toBeNull();
     expect(unheard('begin', 'begin begun began')).toBeNull();
     expect(unheard('give', 'give gave gave')).toBeNull();
+  });
+});
+
+// Journal vocal du 21/10/2026, même Pixel : la reconnaissance garde les
+// consonnes et invente le reste, ou prend le mot d'un autre verbe qui sonne
+// pareil. Chaque énoncé ci-dessous a été dit juste.
+describe('réponse dite, vérifiée contre la réponse attendue (specs §16.6)', () => {
+  it('un mot inventé qui a les consonnes de la forme attendue compte pour elle', () => {
+    expect(finalAnswer('stand', 'stand Stuart stood')).toEqual(['stood', 'stood']);
+    expect(finalAnswer('write', 'right Road written')).toEqual(['wrote', 'written']);
+    expect(finalAnswer('write', 'Red Road written')).toEqual(['wrote', 'written']);
+    expect(finalAnswer('take', 'take tooth taken')).toEqual(['took', 'taken']);
+    expect(finalAnswer('do', 'do deed done')).toEqual(['did', 'done']);
+  });
+
+  it('la forme d’un autre verbe qui sonne pareil compte pour la forme attendue', () => {
+    expect(finalAnswer('write', 'right Road ridden')).toEqual(['wrote', 'written']);
+    expect(finalAnswer('write', 'write rode ridden')).toEqual(['wrote', 'written']);
+    expect(finalAnswer('ride', 'ride wrote written')).toEqual(['rode', 'ridden']);
+    expect(finalAnswer('hide', 'hide hit hidden')).toEqual(['hid', 'hidden']);
+  });
+
+  it('une erreur dite reste une erreur', () => {
+    // Formes du verbe interrogé, sur-régularisations, autre verbe qui ne sonne
+    // pas pareil (la consonne initiale s'entend : « got » n'est pas « caught »).
+    expect(finalAnswer('send', 'send send send')).toEqual(['send', 'send']);
+    expect(finalAnswer('stand', 'stand standed standed')).toEqual(['standed', 'standed']);
+    expect(finalAnswer('catch', 'catch got got')).toEqual(['got', 'got']);
+    expect(finalAnswer('bring', 'bring bought bought')).toEqual(['bought', 'bought']);
+    expect(finalAnswer('teach', 'teach thought taught')).toEqual(['thought', 'taught']);
+  });
+
+  it('une réponse incomplète attend la suite', () => {
+    // « do, did, done » transcrit « do dead » : le participe est perdu.
+    expect(finalAnswer('do', 'do dead')).toBeNull();
+    const { def, words } = heardAfter('do', 'do dead');
+    expect(irrHeardForms(words, def)).toEqual(['did']);
   });
 });

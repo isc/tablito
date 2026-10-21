@@ -145,7 +145,7 @@ export default function IrrVoiceInput({
       // silence. Une réponse fausse, elle, attend le final.
       const answer = irrSpokenAnswer(words, defRef.current);
       if (irrVoiceCorrect(answer, defRef.current)) {
-        voiceLog('irr:submit-interim', text);
+        voiceLog('irr:submit-interim', `${defRef.current.key}: ${text}`);
         expectTrailingFinalRef.current = true;
         trailingTimerRef.current = setTimeout(clearTrailing, TRAILING_FINAL_TIMEOUT_MS);
         submit(answer);
@@ -186,14 +186,18 @@ export default function IrrVoiceInput({
       setNotHeard(false);
       wordsRef.current = words;
       report(words);
-      if (!answer) return;
+      const heard = `${def.key}: ${words.join(' ')}`;
+      if (!answer) {
+        voiceLog('irr:incomplete', heard);
+        return;
+      }
       const keep = irrParticipleUnheard(answer, def);
       if (keep) {
-        voiceLog('irr:participle-unheard', words.join(' '));
+        voiceLog('irr:participle-unheard', heard);
         onGiveUpRef.current(keep);
         return;
       }
-      voiceLog('irr:submit-final', words.join(' '));
+      voiceLog('irr:submit-final', heard);
       submit(answer);
     },
     [defRef, disabledRef, report, submit, clearTrailing, pauseMicDuringTTS, onGiveUpRef],

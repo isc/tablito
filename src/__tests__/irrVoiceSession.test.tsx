@@ -199,10 +199,17 @@ describe('Dire le verbe (specs §16.6)', () => {
     expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
   });
 
-  it('begun entendu begin : ni juste ni faux, le participe s’écrit au clavier', () => {
+  it('begun entendu begin : compté juste', () => {
     const onIrrAnswer = renderSession([irrItem('begin')]);
     promptEnds();
     say('begin began begin');
+    expect((onIrrAnswer.mock.calls[0] as [unknown, IrrVerdict])[1]).toBe('correct');
+  });
+
+  it('begun entendu began : ni juste ni faux, le participe s’écrit au clavier', () => {
+    const onIrrAnswer = renderSession([irrItem('begin')]);
+    promptEnds();
+    say('begin began began');
     expect(onIrrAnswer).not.toHaveBeenCalled();
     expect(slots()).toEqual(['began', '']);
     expect(document.querySelector('.conj-keyboard-area')).not.toBeNull();
