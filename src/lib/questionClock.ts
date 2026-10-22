@@ -18,19 +18,34 @@
 // moyenne bénéficie aux trois usages d'un coup, et n'écrit jamais dans
 // l'historique une durée que l'enfant n'a pas vécue.
 //
+// Même soustraction pour une pause demandée par l'app (la confirmation d'arrêt
+// de séance, cf. setQuestionClockPaused) : un enfant qui hésite puis continue
+// ne perd pas sa montée de boîte.
+//
 // Ce que la soustraction ne voit pas : l'enfant qui s'éloigne en laissant
 // l'écran allumé. Rien ne distingue ça d'une longue réflexion sur UNE question,
 // et on ne tronque donc rien ici — c'est au niveau de la séance, qui a une norme
 // à quoi comparer, que l'aberration se repère (cf. lib/sessionTiming).
 
-/** Total du temps passé caché depuis le chargement de la page. */
+/** Total du temps qui ne compte pas (caché ou en pause) depuis le chargement de la page. */
 let hiddenTotalMs = 0;
-/** Instant de passage en caché, `null` quand la page est visible. */
+/** Début de la période qui ne compte pas en cours, `null` quand le chrono tourne. */
 let hiddenSince: number | null = null;
 let listening = false;
+let paused = false;
 
 function isHidden(): boolean {
   return typeof document !== 'undefined' && document.visibilityState === 'hidden';
+}
+
+// Caché et en pause en même temps : une seule période, comptée une fois.
+function sync(): void {
+  const off = paused || isHidden();
+  if (off && hiddenSince === null) hiddenSince = Date.now();
+  if (!off && hiddenSince !== null) {
+    hiddenTotalMs += Date.now() - hiddenSince;
+    hiddenSince = null;
+  }
 }
 
 // Écoute posée au premier usage, jamais retirée : un seul écouteur pour toute
@@ -38,17 +53,8 @@ function isHidden(): boolean {
 function listen(): void {
   if (listening || typeof document === 'undefined') return;
   listening = true;
-  if (isHidden()) hiddenSince = Date.now();
-  document.addEventListener('visibilitychange', () => {
-    if (isHidden()) {
-      hiddenSince = Date.now();
-      return;
-    }
-    if (hiddenSince !== null) {
-      hiddenTotalMs += Date.now() - hiddenSince;
-      hiddenSince = null;
-    }
-  });
+  sync();
+  document.addEventListener('visibilitychange', sync);
 }
 
 function hiddenMsSoFar(): number {
@@ -83,8 +89,20 @@ export function activeMsSince(start: QuestionStart): number {
   return Math.max(0, Date.now() - start.at - hidden);
 }
 
+/**
+ * Suspend (ou relance) le chrono de toutes les questions, comme un écran
+ * verrouillé. Une question ouverte pendant la pause part donc de zéro à la
+ * reprise.
+ */
+export function setQuestionClockPaused(value: boolean): void {
+  listen();
+  paused = value;
+  sync();
+}
+
 /** Remise à zéro du compteur global — réservée aux tests. */
 export function resetHiddenTimeForTests(): void {
   hiddenTotalMs = 0;
+  paused = false;
   hiddenSince = isHidden() ? Date.now() : null;
 }

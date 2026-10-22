@@ -8,7 +8,7 @@ import type {
 } from '../types';
 import {
   isDue,
-  shouldIntroduceNew,
+  newFactBudget,
   prioritizeByBoxLevel,
   pickBonusReviewFacts,
   allMastered,
@@ -256,7 +256,8 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   );
 
   const newFacts: ConjFact[] = [];
-  if (shouldIntroduceNew(facts)) {
+  const introBudget = newFactBudget(facts, today, CONJ_MAX_NEW_FACTS);
+  if (introBudget > 0) {
     const candidates = facts
       .filter((f) => !f.introduced)
       .map((f) => ({ fact: f, def: conjFactDef(f.key) }))
@@ -265,7 +266,7 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
       .sort((a, b) => conjIntroRank(a.def) - conjIntroRank(b.def));
 
     for (const { fact, def } of candidates) {
-      if (newFacts.length >= CONJ_MAX_NEW_FACTS) break;
+      if (newFacts.length >= introBudget) break;
       // 48 h d'écart entre deux introductions de faits en interférence (§3.4).
       const clashesWithRecent = recentlyIntroduced.some((recent) => {
         const recentDef = conjFactDef(recent.key);

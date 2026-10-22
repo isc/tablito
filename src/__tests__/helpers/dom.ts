@@ -87,6 +87,9 @@ export function childChip(name: string): HTMLButtonElement {
 }
 
 /** Tout le texte rendu, pour les assertions « l'écran dit … ». */
+/** Sur l'accueil de l'enfant (son bouton « espace parent » est affiché). */
+export const onHome = (): boolean => document.querySelector('.home-parent-btn') !== null;
+
 export function text(): string {
   return document.body.textContent ?? '';
 }

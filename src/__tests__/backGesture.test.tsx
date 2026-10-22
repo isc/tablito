@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/preac
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import App from '../App';
-import { flushMicrotasks, openParentDashboard, requireButton, settingsPageTitle } from './helpers/dom';
+import { flushMicrotasks, onHome, openParentDashboard, requireButton, settingsPageTitle } from './helpers/dom';
 import { addProfile, createNewProfile } from '../lib/storage';
 // Préchauffe les chunks lazy pour que le React.lazy() d'App se résolve vite.
 import '../screens/ParentDashboard';
@@ -15,7 +15,6 @@ import '../screens/ChangelogScreen';
 // popstate asynchrone qu'un vrai retour système.
 // ---------------------------------------------------------------------------
 
-const onHome = () => document.querySelector('.home-parent-btn') !== null;
 const onParent = () => document.querySelector('.parent-back-btn') !== null;
 // Page d'une matière de l'espace parent (elle a aussi son `.parent-back-btn`).
 const onSubject = () => document.querySelector('.parent-dashboard--subject') !== null;

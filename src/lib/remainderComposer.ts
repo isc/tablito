@@ -1,5 +1,5 @@
 import type { UserProfile, RemainderFact, RemainderSessionQuestion } from '../types';
-import { isDue, shouldIntroduceNew, vanDeWalleStage, prioritizeByBoxLevel } from './leitner';
+import { isDue, newFactBudget, vanDeWalleStage, prioritizeByBoxLevel } from './leitner';
 import { getDivisionFactKey } from './divisionFacts';
 import { parentDivisionKey, introRemainder, drawRemainder } from './remainderFacts';
 import { MAX_QUESTIONS, MAX_NEW_FACTS } from './sessionComposer';
@@ -57,7 +57,8 @@ export function selectRemainderQuestions(
   // Intros : zones non introduites dont la division parente est prête. Même
   // pacing que les niveaux précédents (specs §12.3, §3.4bis).
   const newFacts: RemainderFact[] = [];
-  if (shouldIntroduceNew(remainderFacts)) {
+  const introBudget = newFactBudget(remainderFacts, today, MAX_NEW_FACTS);
+  if (introBudget > 0) {
     const eligible = remainderFacts
       .filter((f) => !f.introduced && parentReadyKeys.has(parentDivisionKey(f)))
       .sort(
@@ -67,7 +68,7 @@ export function selectRemainderQuestions(
       );
 
     for (const fact of eligible) {
-      if (newFacts.length >= MAX_NEW_FACTS) break;
+      if (newFacts.length >= introBudget) break;
       // Ne pas introduire ensemble deux zones de même diviseur.
       if (newFacts.some((nf) => nf.divisor === fact.divisor)) continue;
       newFacts.push(fact);

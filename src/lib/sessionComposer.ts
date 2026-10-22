@@ -1,7 +1,7 @@
 import type { MultiFact, UserProfile, SessionQuestion } from '../types';
 import {
   isDue,
-  shouldIntroduceNew,
+  newFactBudget,
   vanDeWalleStage,
   prioritizeByBoxLevel,
   pickBonusReviewFacts,
@@ -69,7 +69,7 @@ function isAdjacentConflict(prev: SessionQuestion, candidate: SessionQuestion): 
  * Constraints (§6.2):
  *   - Anti-interference: no two facts with strong similarity adjacent
  *   - Interleaving: never two consecutive questions from the same table
- *   - Max 2 new facts introduced per session
+ *   - Max 2 new facts introduced per day (newFactBudget)
  *   - Vary display order (a*b vs b*a)
  */
 export function composeSession(profile: UserProfile, now: string): SessionQuestion[] {
@@ -92,7 +92,8 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   );
 
   const newFacts: MultiFact[] = [];
-  if (shouldIntroduceNew(facts)) {
+  const introBudget = newFactBudget(facts, today, MAX_NEW_FACTS);
+  if (introBudget > 0) {
     const notIntroduced = facts.filter((f) => !f.introduced);
     const sorted = [...notIntroduced].sort(
       (a, b) =>
@@ -100,7 +101,7 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
     );
 
     for (const fact of sorted) {
-      if (newFacts.length >= MAX_NEW_FACTS) break;
+      if (newFacts.length >= introBudget) break;
 
       const hasSimilarRecent = recentlyIntroduced.some(
         (recent) => computeSimilarity(recent, fact) !== 'none',

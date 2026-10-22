@@ -146,6 +146,7 @@ describe('Division avec reste en vocal', () => {
       <SessionScreen
         questions={[remainderQuestion()]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={onAnswer}
         onConjAnswer={() => {}}
       />,
@@ -188,6 +189,7 @@ describe('Division avec reste en vocal', () => {
       <SessionScreen
         questions={[remainderQuestion()]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={onAnswer}
         onConjAnswer={() => {}}
       />,
@@ -217,6 +219,7 @@ describe('Division avec reste en vocal', () => {
       <SessionScreen
         questions={[question]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={onAnswer}
         onConjAnswer={() => {}}
       />,

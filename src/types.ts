@@ -44,6 +44,9 @@ export interface DivisionFact {
   nextDue: string;     // ISO date
   history: Attempt[];
   introduced: boolean;
+  // Date de l'écran d'intro réel : sert au plafond journalier des intros
+  // (newFactBudget), pas à une fenêtre 48 h, absente en division (§11.6).
+  introducedAt?: string;
 }
 
 // === Niveau 3 — division avec reste (cf. specs §12) ===
@@ -61,6 +64,8 @@ export interface RemainderFact {
   nextDue: string;     // ISO date
   history: Attempt[];
   introduced: boolean;
+  // Comme DivisionFact : ne sert qu'au plafond journalier des intros.
+  introducedAt?: string;
 }
 
 // === Matière conjugaison (cf. spec Verbito) ===

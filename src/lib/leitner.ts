@@ -172,6 +172,36 @@ export function shouldIntroduceNew(facts: { introduced: boolean; box: BoxLevel }
   return introduced.filter((f) => f.box === 1).length <= MAX_FRAGILE;
 }
 
+/**
+ * Nombre de faits neufs à introduire dans la séance composée aujourd'hui : 0 si
+ * `shouldIntroduceNew` refuse, sinon le plafond moins les faits déjà introduits
+ * dans la journée. Le plafond est JOURNALIER, pas par séance : une séance
+ * arrêtée en route (specs §3.2) puis relancée offrait sinon deux intros de plus
+ * à chaque relance. Les faits sans `introducedAt` (ensemencés au placement, ou
+ * introduits avant ce champ) ne comptent pas.
+ */
+export function newFactBudget(
+  facts: { introduced: boolean; box: BoxLevel; introducedAt?: string }[],
+  today: string,
+  maxPerDay: number,
+): number {
+  if (!shouldIntroduceNew(facts)) return 0;
+  let introducedToday = 0;
+  for (const f of facts) if (f.introducedAt === today) introducedToday++;
+  return Math.max(0, maxPerDay - introducedToday);
+}
+
+/**
+ * Marque un fait introduit à sa première réponse, avec la date qui pilote le
+ * plafond journalier (newFactBudget) et, selon la matière, l'espacement 48 h des
+ * intros en interférence.
+ */
+export function markIntroduced(fact: { introduced: boolean; introducedAt?: string }, today: string): void {
+  if (fact.introduced) return;
+  fact.introduced = true;
+  fact.introducedAt = today;
+}
+
 // Seuil de « maîtrise » partagé : un fait est considéré maîtrisé dès la boîte 4
 // (1ère case quasi-nette de l'image mystère ; cf. badge « Première case »).
 export const MASTERY_BOX: BoxLevel = 4;
