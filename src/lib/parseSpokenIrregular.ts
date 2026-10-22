@@ -21,22 +21,29 @@ const FILLERS = new Set(['to', 'and', 'then', 'um', 'uh', 'er', 'erm', 'hmm', 't
 // --- Appariement au son -------------------------------------------------------
 //
 // La reconnaissance vocale cherche des PHRASES plausibles : « go, went, gone »
-// n'en est pas une, et elle le réécrit volontiers en « go when gone » ou « go
-// went gun ». La table d'homophones ne couvre que les cas connus d'avance.
-// Chaque mot entendu qui n'est pas une forme de l'inventaire est donc ramené à
-// la forme qui SONNE le plus près, parmi toutes celles de l'inventaire et les
-// sur-régularisations du verbe interrogé (« goed ») — jamais seulement parmi
-// les bonnes réponses : « thought » pour « bring » reste « thought », une
-// erreur. Une forme dite telle quelle n'est jamais déplacée.
+// n'en est pas une, et elle le réécrit volontiers en « go when gone », « stand
+// Stuart stood » ou « write road written ». La table d'homophones ne couvre que
+// les cas connus d'avance. On ne cherche donc pas à reconnaître le mot entendu
+// parmi toutes les formes de l'inventaire, mais à VÉRIFIER la réponse attendue :
+// un mot qui n'est pas une forme et qui en a à peu près le son compte pour elle.
+// Une réponse n'est fausse que sur une preuve d'erreur : une forme du verbe
+// interrogé (« began, began »), une sur-régularisation (« goed »), ou la forme
+// d'un autre verbe qui ne sonne pas comme la bonne (« thought » pour « bring »).
+// Ces trois-là, dites telles quelles, ne sont jamais déplacées.
 
 /**
  * Clé de prononciation approchée d'un mot anglais : graphies muettes ou
  * équivalentes ramenées à une seule (gh, kn, wr, ph, c dur, e final muet,
  * consonnes doublées), voyelles gardées — elles seules séparent sing, sang et
- * sung.
+ * sung. Sonores et sourdes sont confondues après la première lettre : un enfant
+ * français dévoise la consonne finale, et l'anglais américain fait de « tt » et
+ * « dd » le même battement — « wrote » et « rode », « written » et « ridden »
+ * s'entendent pareil. La consonne initiale, elle, s'entend bien (« got » n'est
+ * pas « caught »).
  */
-export function irrSoundKey(word: string): string {
+function soundKey(word: string): string {
   let w = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (w === '') return '';
   w = w
     .replace(/^kn/, 'n')
     .replace(/^wr/, 'r')
@@ -56,10 +63,14 @@ export function irrSoundKey(word: string): string {
     .replace(/oo/g, 'u');
   // E final muet (« gone », « made ») : la voyelle d'avant porte le son.
   if (w.length > 3 && /[^aeiou]e$/.test(w)) w = w.slice(0, -1);
+  w = w[0] + w.slice(1).replace(/d/g, 't').replace(/b/g, 'p').replace(/g/g, 'k').replace(/v/g, 'f');
   return w.replace(/(.)\1+/g, '$1');
 }
 
-let inventory: { form: string; key: string }[] | null = null;
+/** Les consonnes seules : ce que la reconnaissance garde d'un mot mal entendu. */
+function skeleton(key: string): string {
+  return key.replace(/[aeiou]/g, '');
+}
 
 /** Écart toléré entre deux clés : une lettre, deux à partir de quatre. */
 function tolerance(key: string): number {
@@ -67,38 +78,67 @@ function tolerance(key: string): number {
 }
 
 /**
- * Le mot entendu, ou la forme de l'inventaire qui sonne le plus près. À écart
- * égal, on préfère dans l'ordre : une forme ATTENDUE du verbe interrogé (c'est
- * elle que l'enfant cherchait à dire, plutôt que son infinitif), puis une forme
- * pas encore dite dans la phrase — « sing sang song » : « song » est aussi
- * près de sang que de sung, mais sang vient d'être dit.
+ * Le mot entendu a-t-il les consonnes de la forme attendue ? Toutes, ou toutes
+ * à une près quand il y en a au moins trois (« Stuart » pour « stood »).
+ */
+function soundsLike(key: string, expectedKey: string): boolean {
+  const [a, b] = [skeleton(key), skeleton(expectedKey)];
+  return editDistance(a, b) <= (Math.max(a.length, b.length) >= 3 ? 1 : 0);
+}
+
+const withKey = (form: string) => ({ form, key: soundKey(form) });
+type Keyed = ReturnType<typeof withKey>;
+
+let inventory: Keyed[] | null = null;
+
+/**
+ * Le mot entendu, ou la forme qu'il était censé être.
+ *
+ * - Une forme du verbe interrogé, ou sa sur-régularisation, reste telle quelle.
+ * - La forme d'un autre verbe reste telle quelle, sauf si elle sonne
+ *   exactement comme une forme attendue (« ridden » pour « written »).
+ * - Tout autre mot est une invention de la reconnaissance : il devient la
+ *   forme du verbe la plus proche — une forme attendue dès qu'il en a les
+ *   consonnes, les autres à une ou deux lettres de clé près —, et seulement à
+ *   défaut celle d'un autre verbe. À écart égal, une forme attendue l'emporte
+ *   (c'est elle que l'enfant cherchait à dire, plutôt que son infinitif), puis
+ *   une forme pas encore dite — « sing sang song » : « song » est aussi près
+ *   de sang que de sung, mais sang vient d'être dit.
  */
 function snapToForm(word: string, def: IrrVerbDef, said: readonly string[]): string {
-  inventory ??= [...allIrrForms()].map((form) => ({ form, key: irrSoundKey(form) }));
-  const own = new Set([def.key, ...def.preterite, ...def.participle]);
-  const expected = new Set(irrExpectedForms(def));
   // Sur-régularisations du verbe : « goed » doit rester « goed ».
-  const regular = [`${def.key}ed`, `${def.key}d`];
-  if (own.has(word) || regular.includes(word) || inventory.some((c) => c.form === word)) return word;
-  const key = irrSoundKey(word);
-  // Rang lexicographique : écart, puis forme attendue, puis forme du verbe,
-  // puis forme pas encore dite.
-  const rank = (form: string, formKey: string) => [
-    editDistance(key, formKey),
-    expected.has(form) ? 0 : 1,
-    own.has(form) ? 0 : 1,
-    said.includes(form) ? 1 : 0,
-  ];
-  let best: { form: string; rank: number[] } | null = null;
-  for (const { form, key: formKey } of [
-    ...inventory,
-    ...regular.map((form) => ({ form, key: irrSoundKey(form) })),
-  ]) {
-    const r = rank(form, formKey);
-    const i = best ? r.findIndex((x, j) => x !== best!.rank[j]) : 0;
-    if (!best || (i >= 0 && r[i] < best.rank[i])) best = { form, rank: r };
-  }
-  return best && best.rank[0] <= tolerance(key) ? best.form : word;
+  const own = [def.key, ...def.preterite, ...def.participle, `${def.key}ed`, `${def.key}d`];
+  if (own.includes(word)) return word;
+  const expected = irrExpectedForms(def);
+  const key = soundKey(word);
+  inventory ??= [...allIrrForms()].map(withKey);
+  if (inventory.some((c) => c.form === word)) return expected.find((form) => soundKey(form) === key) ?? word;
+
+  const closest = (candidates: Keyed[]) => {
+    let best: { form: string; rank: number[] } | null = null;
+    for (const { form, key: formKey } of candidates) {
+      const distance = editDistance(key, formKey);
+      const isExpected = expected.includes(form);
+      if (distance > tolerance(key) && !(isExpected && soundsLike(key, formKey))) continue;
+      const rank = [distance, isExpected ? 0 : 1, said.includes(form) ? 1 : 0];
+      const i = best ? rank.findIndex((x, j) => x !== best!.rank[j]) : 0;
+      if (!best || (i >= 0 && rank[i] < best.rank[i])) best = { form, rank };
+    }
+    return best?.form;
+  };
+  return closest(own.map(withKey)) ?? closest(inventory) ?? word;
+}
+
+/**
+ * Participe en u (begun, sung, swum, rung, drunk) : la reconnaissance ne
+ * l'écrit pas, elle écrit l'infinitif ou le prétérit (journaux vocaux des 20 et
+ * 21/10/2026 : « begin began begin » ou « begin began began », à chaque fois).
+ * Juste derrière le prétérit, dans le même énoncé, l'infinitif compte pour le
+ * participe : réciter « began, begin » n'est pas une erreur qu'on fait, alors
+ * que « began, began » en est une (cf. irrParticipleUnheard).
+ */
+function participleHeardAsBase(word: string, previous: string | undefined, def: IrrVerbDef): boolean {
+  return def.family === 'iau' && word === def.key && previous === def.preterite[0];
 }
 
 /**
@@ -112,7 +152,7 @@ export function irrSpokenWords(transcript: string, def: IrrVerbDef, said: readon
   for (const raw of transcript.split(/[\s,.;!?-]+/)) {
     const w = canonicalizeIrrWord(raw, def);
     if (w === '' || FILLERS.has(w)) continue;
-    out.push(snapToForm(w, def, [...said, ...out]));
+    out.push(participleHeardAsBase(w, out.at(-1), def) ? def.participle[0] : snapToForm(w, def, [...said, ...out]));
   }
   return out;
 }
@@ -182,16 +222,13 @@ export function irrFinalAnswer(words: string[], def: IrrVerbDef): string[] | nul
 }
 
 /**
- * Participe en u (begun, sung, swum, rung, drunk) entendu comme l'infinitif ou
- * le prétérit, derrière un prétérit juste : la reconnaissance n'écrit pas
- * « begun » (journal vocal du 20/10/2026 : « begin began begin » ou « begin
- * began began », sept fois sur sept). La voix ne peut pas trancher : ni juste
- * ni faux, la question passe au clavier. Renvoie les formes à y garder (le
- * prétérit), ou null.
+ * Participe en u entendu comme le prétérit, derrière un prétérit juste
+ * (« begin began began ») : c'est l'erreur classique, ou « begun » mal
+ * transcrit. La voix ne peut pas trancher : ni juste ni faux, la question passe
+ * au clavier. Renvoie les formes à y garder (le prétérit), ou null.
  */
 export function irrParticipleUnheard(answer: readonly string[], def: IrrVerbDef): string[] | null {
   const [preterite, participle] = answer;
-  const unheard =
-    def.family === 'iau' && preterite === def.preterite[0] && (participle === def.key || participle === preterite);
+  const unheard = def.family === 'iau' && preterite === def.preterite[0] && participle === preterite;
   return unheard ? [preterite] : null;
 }
