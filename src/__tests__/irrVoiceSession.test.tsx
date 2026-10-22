@@ -81,6 +81,7 @@ function renderSession(questions: IrrSessionItem[], onIrrAnswer = vi.fn()) {
     <SessionScreen
       questions={questions}
       onComplete={() => {}}
+      onQuit={() => {}}
       onAnswer={() => {}}
       onConjAnswer={() => {}}
       onIrrAnswer={onIrrAnswer}

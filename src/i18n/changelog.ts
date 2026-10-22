@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-22',
+    items: [
+      "Une séance peut s'arrêter en route\u00a0: la croix en haut à gauche, puis «\u00a0Arrêter\u00a0», ramène à l'accueil sans quitter l'app (sur Android, le geste retour fait de même). Les réponses déjà données sont gardées, mais une séance arrêtée ne compte pas dans la série\u00a0: votre enfant peut la relancer depuis l'accueil, avec ce qui lui reste à revoir.",
+    ],
+  },
+  {
     date: '2026-10-21',
     items: [
       "Verbes anglais à voix haute : une récitation juste n'est plus comptée fausse parce que la reconnaissance vocale l'a mal écrite. Elle entendait « stand, Stuart, stood » ou « write, road, written » ; l'app vérifie désormais si ce qu'elle entend sonne comme la bonne réponse, et ne compte faux que sur une vraie erreur (« goed », « began, began »).",
@@ -274,6 +280,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-22',
+    items: [
+      "A session can now be stopped partway: the cross at the top left, then \"Stop\", brings your child back to the home screen without leaving the app (on Android, the back gesture does the same). Answers already given are kept, but a stopped session doesn't count toward the streak: your child can start it again from the home screen, with whatever is left to review.",
+    ],
+  },
   {
     date: '2026-10-21',
     items: [

@@ -31,6 +31,12 @@ interface SessionStrings {
   signSlipTitle: string;
   signSlip: (dividend: number, divisor: number) => string;
   useMic: string;
+  // Arrêter la séance en cours (specs §3.2) : le ×, puis sa confirmation.
+  quitLabel: string;
+  quitTitle: string;
+  quitBody: string;
+  quitContinue: string;
+  quitStop: string;
 }
 
 const sessionFr: SessionStrings = {
@@ -52,6 +58,11 @@ const sessionFr: SessionStrings = {
   signSlip: (dividend, divisor) =>
     `${dividend} × ${divisor} = ${dividend * divisor}, mais ici c'est une division\u00a0: ${dividend} ÷ ${divisor}.`,
   useMic: 'Utiliser le micro',
+  quitLabel: 'Arrêter la séance',
+  quitTitle: 'Arrêter la séance\u00a0?',
+  quitBody: 'Tes réponses sont gardées. Une séance arrêtée ne compte pas dans ta série.',
+  quitContinue: 'Continuer',
+  quitStop: 'Arrêter',
 };
 
 const sessionEn: SessionStrings = {
@@ -73,6 +84,11 @@ const sessionEn: SessionStrings = {
   signSlip: (dividend, divisor) =>
     `${dividend} × ${divisor} = ${dividend * divisor}, but this one is a division: ${dividend} ÷ ${divisor}.`,
   useMic: 'Use the mic',
+  quitLabel: 'Stop the session',
+  quitTitle: 'Stop the session?',
+  quitBody: "Your answers are saved. A stopped session doesn't count toward your streak.",
+  quitContinue: 'Keep going',
+  quitStop: 'Stop',
 };
 
 export const sessionStrings = { fr: sessionFr, en: sessionEn };

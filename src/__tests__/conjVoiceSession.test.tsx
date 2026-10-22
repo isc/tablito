@@ -84,6 +84,7 @@ function renderSession(
     <SessionScreen
       questions={questions}
       onComplete={() => {}}
+      onQuit={() => {}}
       onAnswer={() => {}}
       onConjAnswer={onConjAnswer as never}
     />,

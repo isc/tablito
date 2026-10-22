@@ -58,6 +58,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -77,6 +78,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       <SessionScreen
         questions={[conjItem('pres-etre-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -95,6 +97,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       <SessionScreen
         questions={[conjItem('fut-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -118,6 +121,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       <SessionScreen
         questions={[conjItem('fut-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -139,6 +143,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -164,6 +169,7 @@ describe('Question de conjugaison — rendu (spec §4.1, §4.2)', () => {
       <SessionScreen
         questions={[conjItem('fut-aller', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -190,6 +196,7 @@ describe('Mini-clavier de lettres (spec §4.2)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -210,6 +217,7 @@ describe('Mini-clavier de lettres (spec §4.2)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -229,6 +237,7 @@ describe('Mini-clavier de lettres (spec §4.2)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -248,6 +257,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -268,6 +278,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -293,6 +304,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('fut-etre', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -328,6 +340,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -355,6 +368,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -370,6 +384,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 0, { box: 2 })]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -391,6 +406,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 0, { box: 3 })]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -406,6 +422,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('fut-etre', 1)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -424,6 +441,7 @@ describe('Feedback — les quatre cas (spec §5.3)', () => {
       <SessionScreen
         questions={[conjItem('pres-g1-nous', 0)]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -444,6 +462,7 @@ describe('Nom du temps — pastille', () => {
       <SessionScreen
         questions={[item]}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -494,6 +513,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
     render(<SessionScreen
         questions={intro()}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />);
@@ -511,6 +531,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
     render(<SessionScreen
         questions={intro()}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />);
@@ -531,6 +552,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
     render(<SessionScreen
         questions={intro()}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />);
@@ -562,6 +584,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
       <SessionScreen
         questions={intro()}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,
@@ -589,6 +612,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
       <SessionScreen
         questions={intro()}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,
@@ -612,6 +636,7 @@ describe('Introduction d’un fait nouveau — 5 étapes (spec §5.2)', () => {
       <SessionScreen
         questions={intro()}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={onConjAnswer}
       />,

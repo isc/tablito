@@ -45,6 +45,7 @@ describe('Séance mixte — lecture audio des questions', () => {
       <SessionScreen
         questions={questions}
         onComplete={() => {}}
+        onQuit={() => {}}
         onAnswer={() => {}}
         onConjAnswer={() => {}}
       />,

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   activeMsSince,
   resetHiddenTimeForTests,
+  setQuestionClockPaused,
   startQuestion,
 } from '../lib/questionClock';
 
@@ -92,6 +93,43 @@ describe('questionClock', () => {
     vi.advanceTimersByTime(14 * 60_000);
 
     expect(activeMsSince(start)).toBe(14 * 60_000);
+  });
+
+  it('ne compte pas une pause demandée par l’app (confirmation d’arrêt de séance)', () => {
+    const start = startQuestion();
+    vi.advanceTimersByTime(1_000);
+    setQuestionClockPaused(true);
+    vi.advanceTimersByTime(30_000);
+    setQuestionClockPaused(false);
+    vi.advanceTimersByTime(1_000);
+
+    expect(activeMsSince(start)).toBe(2_000);
+  });
+
+  it('ne retire qu’une fois une veille qui chevauche la pause', () => {
+    const start = startQuestion();
+    vi.advanceTimersByTime(1_000);
+    setQuestionClockPaused(true);
+    vi.advanceTimersByTime(5_000);
+    setVisibility('hidden');
+    vi.advanceTimersByTime(60_000);
+    setQuestionClockPaused(false);
+    vi.advanceTimersByTime(10_000);
+    setVisibility('visible');
+    vi.advanceTimersByTime(1_000);
+
+    expect(activeMsSince(start)).toBe(2_000);
+  });
+
+  it('fait partir de zéro, à la reprise, une question ouverte pendant la pause', () => {
+    setQuestionClockPaused(true);
+    vi.advanceTimersByTime(5_000);
+    const start = startQuestion();
+    vi.advanceTimersByTime(20_000);
+    setQuestionClockPaused(false);
+    vi.advanceTimersByTime(3_000);
+
+    expect(activeMsSince(start)).toBe(3_000);
   });
 
   it('ne renvoie jamais de durée négative si l’horloge recule', () => {

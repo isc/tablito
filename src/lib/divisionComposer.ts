@@ -1,5 +1,5 @@
 import type { UserProfile, DivisionFact, DivisionSessionQuestion } from '../types';
-import { isDue, shouldIntroduceNew, vanDeWalleStage, prioritizeByBoxLevel } from './leitner';
+import { isDue, newFactBudget, vanDeWalleStage, prioritizeByBoxLevel } from './leitner';
 import { getFactKey } from './facts';
 import { parentMultiplicationKey } from './divisionFacts';
 import { MIN_QUESTIONS, MAX_QUESTIONS, MAX_NEW_FACTS } from './sessionComposer';
@@ -81,11 +81,12 @@ export function selectDivisionQuestions(
   );
 
   // Intros : faits non introduits dont le parent multiplicatif est prêt.
-  // Même pacing que la multiplication : la règle vit dans shouldIntroduceNew
+  // Même pacing que la multiplication : la règle vit dans newFactBudget
   // (specs §11.6, §3.4bis). Ne pas la paraphraser ici — un recalibrage se
   // ferait sinon par search-and-replace sur les quatre composeurs.
   const newFacts: DivisionFact[] = [];
-  if (shouldIntroduceNew(divisionFacts)) {
+  const introBudget = newFactBudget(divisionFacts, today, MAX_NEW_FACTS);
+  if (introBudget > 0) {
     const eligible = divisionFacts
       .filter((f) => !f.introduced && parentReadyKeys.has(parentMultiplicationKey(f)))
       .sort(
@@ -95,7 +96,7 @@ export function selectDivisionQuestions(
       );
 
     for (const fact of eligible) {
-      if (newFacts.length >= MAX_NEW_FACTS) break;
+      if (newFacts.length >= introBudget) break;
       // Ne pas introduire ensemble deux faits qui interfèrent.
       if (newFacts.some((nf) => divisionConflict(nf, fact))) continue;
       newFacts.push(fact);

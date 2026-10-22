@@ -30,7 +30,7 @@ import {
 } from './lib/irregularComposer';
 import { createInitialIrrFacts } from './lib/irregularVerbs';
 import { seedIrrFromPlacement, type IrrPlacementResult } from './lib/irregularPlacement';
-import { factsOf, processAnswer } from './lib/leitner';
+import { factsOf, markIntroduced, processAnswer } from './lib/leitner';
 import {
   checkBadges,
   getCompletedTables,
@@ -73,6 +73,7 @@ import { listWatched } from './lib/watchStore';
 import type { WatchPairing } from './lib/watch';
 import type { ParentPage } from './screens/ParentDashboard';
 import { isIrrVoiceMode, isVoiceMode } from './hooks/useInputMode';
+import { useBackGesture } from './hooks/useBackGesture';
 import { useLang } from './i18n/lang';
 import { useAppStrings } from './i18n/app';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
@@ -185,8 +186,8 @@ const PARENT_PAGE_BACK: Partial<Record<ParentPage, ParentPage>> = {
 
 // Où mènent le bouton retour de l'UI et le geste « retour » du système
 // (Android) — une seule table pour que les deux ne divergent jamais. null = on laisse faire le navigateur (sortie de
-// l'app) — écrans racine, et séance/récap où un retour involontaire ferait
-// perdre du travail.
+// l'app) — écrans racine, et récap où un retour involontaire ferait perdre du
+// travail. La séance gère elle-même le geste : il ouvre sa confirmation d'arrêt.
 function backTarget({ screen, parentPage }: Nav, hasProfile: boolean): Nav | null {
   // Une page de l'espace parent ramène à son accueil (ou à la page qui l'a
   // ouverte), y compris sur un appareil qui ne fait que suivre, où cet accueil
@@ -429,33 +430,14 @@ export default function App({
   }, []);
 
   // Geste retour Android : sans entrée d'historique, il ferme la PWA même
-  // depuis l'espace parent. Tant qu'un écran a une cible de retour, une entrée
-  // factice est empilée ; le popstate qui la consomme ramène à la cible, et
-  // `backPops` force le ré-empilement si la cible a elle-même un retour
-  // (Nouveautés → aide → espace parent → accueil). Quitter l'écran par l'UI
-  // retire l'entrée.
+  // depuis l'espace parent (cf. useBackGesture).
   const back = backTarget(nav, profile !== null);
   const backRef = useRef(back);
   backRef.current = back;
-  const [backPops, setBackPops] = useState(0);
   const goBack = useCallback(() => {
     if (backRef.current) setScreen(backRef.current);
   }, []);
-  const hasBack = back !== null;
-  useEffect(() => {
-    if (!hasBack) return;
-    window.history.pushState({ tablitoBack: true }, '');
-    const onPop = () => {
-      goBack();
-      setBackPops((n) => n + 1);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => {
-      window.removeEventListener('popstate', onPop);
-      // Entrée encore là = sortie par l'UI, pas par le geste : la dépiler.
-      if (window.history.state?.tablitoBack) window.history.back();
-    };
-  }, [hasBack, backPops, goBack]);
+  useBackGesture(back ? goBack : null);
 
   // Welcome: create new profile with optional placement test results.
   // addProfile persiste tout de suite sous un NOUVEL id (qui devient actif) :
@@ -819,7 +801,7 @@ export default function App({
           const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs, {
             answeredWith: answered,
           });
-          if (!updated.introduced) updated.introduced = true;
+          markIntroduced(updated, today);
           trackPromotion(getRemainderFactKey(divisor, quotient), current.box, updated.box);
           return {
             ...prev,
@@ -838,9 +820,9 @@ export default function App({
           const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs, {
             answeredWith: answered,
           });
-          // Pas d'`introducedAt` côté division : pas de fenêtre 48h ici (§11.6),
-          // l'anti-interférence passe par `questionConflict` (même dividende).
-          if (!updated.introduced) updated.introduced = true;
+          // Pas de fenêtre 48h côté division (§11.6) : l'anti-interférence
+          // passe par `questionConflict` (même dividende).
+          markIntroduced(updated, today);
           trackPromotion(getDivisionFactKey(dividend, divisor), current.box, updated.box);
           return {
             ...prev,
@@ -855,10 +837,7 @@ export default function App({
         const updated = processAnswer(current, correct, timeMs, today, inputMode, fastMs, {
           answeredWith: answered,
         });
-        if (!updated.introduced) {
-          updated.introduced = true;
-          updated.introducedAt = today; // date d'intro réelle (cf. §1.2)
-        }
+        markIntroduced(updated, today); // date d'intro réelle (cf. §1.2)
         trackPromotion(getFactKey(a, b), current.box, updated.box);
         return {
           ...prev,
@@ -969,12 +948,9 @@ export default function App({
           // présenté. Le marquer introduit le sortirait à jamais des candidats
           // à l'introduction (§5.2) et le montrerait découvert sur l'image
           // mystère sans qu'il ait été enseigné.
-          if (isPosed && !updated.introduced) {
-            updated.introduced = true;
-            // Date d'intro RÉELLE, qui pilote l'espacement 48 h des intros de
-            // faits en interférence (§3.4).
-            updated.introducedAt = today;
-          }
+          // Date d'intro RÉELLE, qui pilote l'espacement 48 h des intros de
+          // faits en interférence (§3.4).
+          if (isPosed) markIntroduced(updated, today);
           if (isPosed) trackPromotion(fact.key, fact.box, updated.box);
           return updated;
         });
@@ -1029,12 +1005,9 @@ export default function App({
             answeredWith,
             expectedForm,
           });
-          if (!updated.introduced) {
-            updated.introduced = true;
-            // Date d'intro réelle : l'espacement 48 h des verbes en
-            // interférence (§16.4).
-            updated.introducedAt = today;
-          }
+          // Date d'intro réelle : l'espacement 48 h des verbes en
+          // interférence (§16.4).
+          markIntroduced(updated, today);
           trackPromotion(`irr:${key}`, fact.box, updated.box);
           return updated;
         });
@@ -1167,6 +1140,10 @@ export default function App({
     },
     [profile, divisionUnlocked, remainderUnlocked, sessionMode, sessionItems],
   );
+
+  // Séance arrêtée en route (specs §3.2) : les réponses sont déjà dans le
+  // profil, et l'accueil recompose la séance du jour à partir de l'état à jour.
+  const handleSessionQuit = useCallback(() => setScreen('home'), []);
 
   const exitRecap = useCallback((next: Screen) => {
     setSessionResult(null);
@@ -1346,6 +1323,7 @@ export default function App({
         <SessionScreen
           questions={sessionItems}
           onComplete={handleSessionComplete}
+          onQuit={handleSessionQuit}
           onAnswer={handleSessionItemAnswer}
           onConjAnswer={handleConjAnswer}
           onIrrAnswer={handleIrrAnswer}

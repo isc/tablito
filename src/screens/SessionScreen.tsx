@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import type {
   AnySessionItem,
   ConjSessionItem,
@@ -28,6 +28,8 @@ import StrategyHint from '../components/StrategyHint';
 import StrategyHintShell from '../components/StrategyHintShell';
 import DivisionStrategyHint from '../components/DivisionStrategyHint';
 import RemainderStrategyHint from '../components/RemainderStrategyHint';
+import Modal from '../components/Modal';
+import { CloseCross } from '../components/BackChevron';
 import {
   FAST_THRESHOLD_MS,
   DIVISION_FAST_THRESHOLD_MS,
@@ -80,7 +82,7 @@ import { getFactKey } from '../lib/facts';
 import { itemDisplay } from '../lib/sessionItemView';
 import { MATH_RETRY_GAPS } from '../lib/dailyComposer';
 import { MAX_SESSION_QUESTIONS, scheduleRetry, todayISO } from '../lib/utils';
-import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock';
+import { activeMsSince, NOT_STARTED, setQuestionClockPaused, startQuestion } from '../lib/questionClock';
 import { normalizedAverageMs } from '../lib/sessionTiming';
 import { useSound } from '../hooks/useSound';
 import { useTTS } from '../hooks/useTTS';
@@ -89,6 +91,7 @@ import { isSpeechRecognitionSupported } from '../hooks/useSpeechRecognition';
 import { preflightMicPermission } from '../lib/micPreflight';
 import { isMultiplicationSlip } from '../lib/divisionStrategies';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { useBackGesture } from '../hooks/useBackGesture';
 import { useSessionStrings } from '../i18n/session';
 
 const STT_SUPPORTED = isSpeechRecognitionSupported();
@@ -146,6 +149,8 @@ export interface MathAnswer {
 interface SessionScreenProps {
   questions: AnySessionItem[];
   onComplete: (result: Omit<SessionResult, 'factsPromoted'>) => void;
+  /** Séance arrêtée en route, après confirmation (specs §3.2). */
+  onQuit: () => void;
   onAnswer: (answer: MathAnswer) => void;
   /**
    * Réponse à une question de conjugaison. Canal SÉPARÉ d'`onAnswer` (et non un
@@ -256,6 +261,7 @@ function introKey(item: AnySessionItem): string {
 export default function SessionScreen({
   questions: initialQuestions,
   onComplete,
+  onQuit,
   onAnswer,
   onConjAnswer,
   onIrrAnswer,
@@ -350,6 +356,26 @@ export default function SessionScreen({
   /** Temps de réponse de la séance, un par question posée — cf. lib/sessionTiming. */
   const answerTimesMs = useRef<number[]>([]);
   const introducedFacts = useRef(new Set<string>());
+
+  // Arrêter la séance (avis du 21/10/2026 : « How can I leave a running lecture
+  // w/o leaving the app? » — rien ne ramenait à l'accueil). Le × demande
+  // confirmation : un tap ne doit pas suffire à fuir une question difficile.
+  // Pendant la confirmation, la saisie est coupée et le chrono ne compte pas.
+  const [quitAsked, setQuitAsked] = useState(false);
+  const askQuit = useCallback(() => {
+    stopSpeech();
+    setQuitAsked(true);
+  }, [stopSpeech]);
+  const resumeSession = useCallback(() => setQuitAsked(false), []);
+  useLayoutEffect(() => {
+    if (!quitAsked) return;
+    setQuestionClockPaused(true);
+    return () => setQuestionClockPaused(false);
+  }, [quitAsked]);
+  // Le geste retour du système (Android) fermait l'app en pleine séance. Il
+  // ouvre la confirmation, ou la referme si elle est ouverte, comme pour tout
+  // dialogue.
+  useBackGesture(quitAsked ? resumeSession : askQuit);
 
   const currentItem = questions[currentIndex] as AnySessionItem | undefined;
 
@@ -860,7 +886,7 @@ export default function SessionScreen({
         onSubmit={onSubmitTyped}
         onInput={onInput}
         endingOnly={q.endingOnly}
-        disabled={numpadDisabled}
+        disabled={inputDisabled}
         isSpeaking={isSpeaking}
         questionToken={token}
         onSpeechStart={handleConjSpeechStart}
@@ -871,7 +897,7 @@ export default function SessionScreen({
         <LetterKeyboard
           key={token}
           onSubmit={onSubmitTyped}
-          disabled={numpadDisabled}
+          disabled={inputDisabled}
           onInput={onInput}
         />
         {STT_SUPPORTED && (
@@ -879,7 +905,7 @@ export default function SessionScreen({
             type="button"
             className="session-input-switch"
             onClick={switchToVoice}
-            disabled={numpadDisabled}
+            disabled={inputDisabled}
           >
             {'🎤'} {tc.voiceUseMic}
           </button>
@@ -894,6 +920,8 @@ export default function SessionScreen({
   const answerToken = `answer-${currentIndex}`;
   const copyToken = `copy-${currentIndex}-${conjCopyAttempts.current}`;
 
+  const inputDisabled = numpadDisabled || quitAsked;
+
   const maxDots = Math.min(questions.length, MAX_SESSION_QUESTIONS);
   const progressDots = Array.from({ length: maxDots }, (_, i) => {
     if (i < results.length) return results[i].correct ? 'correct' : 'incorrect';
@@ -903,6 +931,10 @@ export default function SessionScreen({
 
   return (
     <div className="session-screen">
+      <button type="button" className="session-quit-btn" onClick={askQuit} aria-label={t.quitLabel}>
+        <CloseCross />
+      </button>
+
       {!showIntro && (
         <div className="session-header">
           <div className="session-progress">
@@ -1150,7 +1182,7 @@ export default function SessionScreen({
               def={irrDef}
               onSubmit={handleIrrSubmit}
               onRecall={handleConjSpeechStart}
-              disabled={numpadDisabled}
+              disabled={inputDisabled}
               isSpeaking={isSpeaking}
               token={`answer-${currentIndex}`}
             >
@@ -1196,7 +1228,7 @@ export default function SessionScreen({
             {inputMode === 'voice' ? (
               <VoiceInput
                 onSubmit={handleAnswer}
-                disabled={numpadDisabled}
+                disabled={inputDisabled}
                 isSpeaking={isSpeaking}
                 questionToken={`${v.token}-${currentIndex}-${inputStep}`}
                 expectedValue={
@@ -1221,14 +1253,14 @@ export default function SessionScreen({
                 <NumPad
                   key={inputStep}
                   onSubmit={handleAnswer}
-                  disabled={numpadDisabled}
+                  disabled={inputDisabled}
                 />
                 {STT_SUPPORTED && (
                   <button
                     type="button"
                     className="session-input-switch"
                     onClick={switchToVoice}
-                    disabled={numpadDisabled}
+                    disabled={inputDisabled}
                   >
                     {'🎤'} {t.useMic}
                   </button>
@@ -1272,6 +1304,19 @@ export default function SessionScreen({
           onDismiss={handleIrrFeedbackDismiss}
           onSpeak={speak}
         />
+      )}
+
+      {quitAsked && (
+        <Modal onClose={resumeSession} labelledBy="session-quit-title" className="session-quit-modal">
+          <h2 id="session-quit-title" className="modal-title">{t.quitTitle}</h2>
+          <p className="modal-text">{t.quitBody}</p>
+          <button type="button" className="btn btn--indigo" onClick={resumeSession}>
+            {t.quitContinue}
+          </button>
+          <button type="button" className="modal-close-btn" onClick={onQuit}>
+            {t.quitStop}
+          </button>
+        </Modal>
       )}
     </div>
   );

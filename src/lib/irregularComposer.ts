@@ -1,6 +1,6 @@
 import type { BoxLevel, IrrFact, IrrSessionQuestion, UserProfile } from '../types';
 import { BADGE_IDS } from '../types';
-import { isDue, shouldIntroduceNew, prioritizeByBoxLevel, pickBonusReviewFacts } from './leitner';
+import { isDue, newFactBudget, prioritizeByBoxLevel, pickBonusReviewFacts } from './leitner';
 import {
   IRR_FAMILIES,
   allIrrForms,
@@ -139,12 +139,13 @@ export function composeIrrSession(profile: IrrProfile, now: string): IrrSessionQ
   );
 
   const newFacts: IrrFact[] = [];
-  if (shouldIntroduceNew(facts)) {
+  const introBudget = newFactBudget(facts, today, IRR_MAX_NEW_FACTS);
+  if (introBudget > 0) {
     const candidates = facts
       .filter((f) => !f.introduced)
       .sort((a, b) => irrIntroPriority(a.key, classVerbs) - irrIntroPriority(b.key, classVerbs));
     for (const fact of candidates) {
-      if (newFacts.length >= IRR_MAX_NEW_FACTS) break;
+      if (newFacts.length >= introBudget) break;
       if (recentlyIntroduced.some((r) => irrKeysInterfere(r.key, fact.key))) continue;
       if (newFacts.some((n) => irrKeysInterfere(n.key, fact.key))) continue;
       newFacts.push(fact);

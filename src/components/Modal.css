@@ -33,6 +33,24 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+/* Titre et texte d'une modale simple (cf. la confirmation d'arrêt de séance). */
+.modal-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 10px;
+  letter-spacing: -0.3px;
+}
+
+.modal-text {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
 .modal-close-btn {
   width: 100%;
   padding: 12px 16px;

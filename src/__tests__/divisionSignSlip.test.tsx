@@ -20,6 +20,7 @@ function renderSession() {
     <SessionScreen
       questions={[divItem(9, 3), divItem(8, 4)]}
       onComplete={() => {}}
+      onQuit={() => {}}
       onAnswer={onAnswer}
       onConjAnswer={() => {}}
     />,
