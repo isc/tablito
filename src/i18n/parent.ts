@@ -211,6 +211,9 @@ interface ParentDashboardStrings {
   whatsNew: string;
   privacy: string;
   appVersionLabel: string;
+  // Easter egg : 7 touches sur la version basculent le journal vocal.
+  voiceDebugOn: string;
+  voiceDebugOff: string;
   shareText: string;
   // formats de date / durée / pourcentage / opérande
   formatSeconds: (seconds: number) => string;
@@ -417,6 +420,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   whatsNew: 'Nouveautés',
   privacy: 'Confidentialité',
   appVersionLabel: "Version de l'app",
+  voiceDebugOn: "Journal vocal activé : il s'affiche en bas de l'écran pendant les réponses à voix haute.",
+  voiceDebugOff: 'Journal vocal désactivé.',
   shareText: 'Tablito — pour apprendre les tables de multiplication.',
   formatSeconds: (seconds) =>
     `${seconds.toLocaleString(localeFor('fr'), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}\u00a0s`,
@@ -618,6 +623,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   whatsNew: "What's new",
   privacy: 'Privacy',
   appVersionLabel: 'App version',
+  voiceDebugOn: 'Voice log on: it shows at the bottom of the screen during spoken answers.',
+  voiceDebugOff: 'Voice log off.',
   shareText: 'Tablito — to learn the multiplication tables.',
   formatSeconds: (seconds) => `${seconds.toFixed(1)}s`,
   formatPercent: (percent) => `${percent}%`,

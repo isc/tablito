@@ -12,6 +12,7 @@ import ParentWatchPage from '../components/ParentWatchPage';
 import { useParentDashboardStrings } from '../i18n/parent';
 import type { Subject } from '../lib/hardestFacts';
 import { APP_VERSION } from '../lib/version';
+import { isVoiceDebugOn, setVoiceDebug } from '../lib/voiceDebug';
 import { setPushPref } from '../lib/push';
 import { getActiveProfileId, listProfiles, loadProfileById } from '../lib/storage';
 import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
@@ -388,10 +389,45 @@ export default function ParentDashboard({
         </div>
       )}
 
-      <div className="parent-version" aria-label={t.appVersionLabel}>
-        v{APP_VERSION}
-      </div>
+      <VersionLine t={t} />
     </div>
+  );
+}
+
+const VERSION_TAPS = 7;
+const VERSION_TAP_GAP_MS = 1000;
+
+/**
+ * Le numéro de version, et l'easter egg du journal vocal : comme les options
+ * pour les développeurs d'Android, 7 touches rapprochées l'activent, 7 autres
+ * le coupent (le bandeau du journal a aussi son bouton « Désactiver »).
+ */
+function VersionLine({ t }: { t: ReturnType<typeof useParentDashboardStrings> }) {
+  const taps = useRef({ count: 0, last: 0 });
+  // L'état choisi au dernier geste, null avant le premier.
+  const [toggled, setToggled] = useState<boolean | null>(null);
+  const tap = () => {
+    const now = Date.now();
+    const tapped = taps.current;
+    tapped.count = now - tapped.last > VERSION_TAP_GAP_MS ? 1 : tapped.count + 1;
+    tapped.last = now;
+    if (tapped.count < VERSION_TAPS) return;
+    tapped.count = 0;
+    const on = !isVoiceDebugOn();
+    setVoiceDebug(on);
+    setToggled(on);
+  };
+  return (
+    <>
+      <button type="button" className="parent-version" aria-label={t.appVersionLabel} onClick={tap}>
+        v{APP_VERSION}
+      </button>
+      {toggled !== null && (
+        <p className="parent-version-notice" role="status">
+          {toggled ? t.voiceDebugOn : t.voiceDebugOff}
+        </p>
+      )}
+    </>
   );
 }
 

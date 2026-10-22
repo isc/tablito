@@ -5,6 +5,7 @@ import App from '../App';
 import { LangProvider } from '../i18n/LangProvider';
 import { applyLang } from '../i18n/lang';
 import { addProfile, createNewProfile, exportProfile, loadProfile, setActiveProfile } from '../lib/storage';
+import { isVoiceDebugOn, setVoiceDebug, voiceLog } from '../lib/voiceDebug';
 import { loadWatchCredentials } from '../lib/watchStore';
 import {
   findButton,
@@ -203,5 +204,53 @@ describe('langue', () => {
     expect(document.querySelector('.parent-settings-start .parent-overline')?.textContent).toBe(
       'Settings and info',
     );
+  });
+});
+
+describe('journal vocal : easter egg de la version', () => {
+  afterEach(() => setVoiceDebug(false));
+
+  const tapVersion = (times: number) => {
+    const version = document.querySelector<HTMLButtonElement>('.parent-version')!;
+    for (let i = 0; i < times; i++) fireEvent.click(version);
+  };
+  const overlay = () => findButton(/Copier le journal vocal/);
+
+  it('7 touches sur la version l’activent, 7 autres le coupent', async () => {
+    render(<App />);
+    await openParentArea();
+
+    tapVersion(6);
+    expect(isVoiceDebugOn()).toBe(false);
+    tapVersion(1);
+    expect(isVoiceDebugOn()).toBe(true);
+    expect(localStorage.getItem('multiplix-voice-debug')).toBe('1');
+    expect(text()).toContain('Journal vocal activé');
+
+    tapVersion(7);
+    expect(isVoiceDebugOn()).toBe(false);
+    expect(localStorage.getItem('multiplix-voice-debug')).toBeNull();
+    expect(text()).toContain('Journal vocal désactivé');
+  });
+
+  it('des touches espacées ne comptent pas', async () => {
+    render(<App />);
+    await openParentArea();
+    const now = vi.spyOn(Date, 'now');
+    for (let i = 0; i < 7; i++) {
+      now.mockReturnValue(i * 2000);
+      tapVersion(1);
+    }
+    expect(isVoiceDebugOn()).toBe(false);
+  });
+
+  it('le bandeau du journal se coupe par son bouton « Désactiver »', () => {
+    setVoiceDebug(true);
+    voiceLog('reco:start');
+    expect(overlay()).not.toBeNull();
+    fireEvent.click(requireButton(/^Désactiver$/));
+    expect(overlay()).toBeNull();
+    expect(isVoiceDebugOn()).toBe(false);
+    expect(localStorage.getItem('multiplix-voice-debug')).toBeNull();
   });
 });
