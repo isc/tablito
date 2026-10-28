@@ -208,13 +208,15 @@ describe('Leitner réutilisé pour la division (specs §11.6)', () => {
     expect(isDue({ ...fact, nextDue: '2026-12-31' }, NOW)).toBe(false);
   });
 
-  it('seuil de vitesse division plus généreux (§11.6) : 5,5 s au clavier fait monter de boîte', () => {
+  it('seuil de vitesse division plus généreux (§11.6) : 3,5 s en voix fait monter de boîte', () => {
     const fact = createInitialDivisionFacts()[0]; // boîte 1
-    // 5500 ms : trop lent pour la multiplication (seuil 5000), mais sous le
-    // seuil division (6000) → la boîte doit monter.
-    const mult = processAnswer(fact, true, 5500, NOW, 'keypad');
+    // 3500 ms : trop lent pour la multiplication (seuil 3000), mais sous le
+    // seuil division (4000) → la boîte doit monter. En voix, où la longueur de
+    // la réponse ne coûte rien ; au clavier, les deux seuils valent 6 s, mais
+    // la division a un chiffre de moins à taper.
+    const mult = processAnswer(fact, true, 3500, NOW, 'voice');
     expect(mult.box).toBe(1); // seuil multiplication par défaut → pas de montée
-    const div = processAnswer(fact, true, 5500, NOW, 'keypad', DIVISION_FAST_THRESHOLD_MS.keypad);
+    const div = processAnswer(fact, true, 3500, NOW, 'voice', DIVISION_FAST_THRESHOLD_MS.voice);
     expect(div.box).toBe(2); // seuil division → montée
   });
 });

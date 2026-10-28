@@ -44,7 +44,7 @@ export function isDue(fact: { nextDue: string }, now: string): boolean {
  *   enregistré et nextDue recalculé depuis aujourd'hui
  * - Incorrect : retour boîte 1
  *
- * Le seuil dépend du mode de saisie : 5 s en clavier (compense le surcoût
+ * Le seuil dépend du mode de saisie : 6 s en clavier (compense le surcoût
  * moteur du pavé numérique chez un enfant), 3 s en voix (proche de la mesure
  * d'automaticité de la littérature, l'output STT étant rapide).
  */

@@ -11,6 +11,7 @@ const fr: ChangelogEntry[] = [
   {
     date: '2026-10-28',
     items: [
+      "Maths au pavé numérique\u00a0: une réponse se valide toujours avec «\u00a0OK\u00a0», même à deux chiffres. Le pavé validait seul dès le deuxième chiffre\u00a0: une faute de frappe partait sans pouvoir être effacée, et une séance qui mêle multiplications et divisions (un seul chiffre, donc «\u00a0OK\u00a0») changeait de geste d'une question à l'autre. Le temps de ce geste en plus est compté\u00a0: une réponse rapide le reste.",
       "Conjugaison au clavier\u00a0: une faute de frappe évidente n'est plus comptée fausse. Quand le doigt tombe sur la touche d'à côté («\u00a0alljz\u00a0» pour «\u00a0allez\u00a0», le j étant sous le e), la réponse est acceptée et la bonne forme réaffichée. Une vraie erreur de conjugaison reste une erreur, même à une touche près («\u00a0vous chantes\u00a0», «\u00a0vous aller\u00a0»).",
     ],
   },
@@ -289,6 +290,7 @@ const en: ChangelogEntry[] = [
   {
     date: '2026-10-28',
     items: [
+      "Maths on the number pad: an answer is always confirmed with \"OK\", even with two digits. The pad used to submit on its own at the second digit: a typo went through with no way to erase it, and a session mixing multiplications and divisions (always one digit, so \"OK\") switched gestures from one question to the next. The time for this extra tap is allowed for: a quick answer still counts as quick.",
       "French conjugation on the keypad: an obvious typo is no longer counted wrong. When a finger lands on the next key (\"alljz\" for \"allez\", the j sits under the e), the answer is accepted and the correct form shown again. A real conjugation mistake still counts as one, even one key away (\"vous chantes\", \"vous aller\").",
     ],
   },

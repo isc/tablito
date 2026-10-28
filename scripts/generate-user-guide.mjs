@@ -498,11 +498,10 @@ async function readQuestion(page) {
   return { a: nums[0], b: nums[1] };
 }
 
-// The numpad auto-submits at 2 digits; single-digit answers need Enter.
+// The numpad never submits on its own: type the digits, then Enter.
 async function answerWith(page, value) {
-  const s = String(value);
-  for (const ch of s) await page.keyboard.press(ch);
-  if (s.length === 1) await page.keyboard.press('Enter');
+  for (const ch of String(value)) await page.keyboard.press(ch);
+  await page.keyboard.press('Enter');
 }
 
 async function clickAllIntroSteps(page) {
