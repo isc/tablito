@@ -1,0 +1,3 @@
+import{useStrings as t}from"./lang.js";const e={title:"Espace parent",subtitle:"Une petite multiplication pour confirmer que vous \xEAtes un adulte.",resultLabel:"R\xE9sultat",wrongAttempt:"Pas tout \xE0 fait. Essayez avec cette nouvelle question.",cancel:"Annuler",validate:"Valider"},n={title:"Parent area",subtitle:"A quick multiplication to confirm you're an adult.",resultLabel:"Result",wrongAttempt:"Not quite. Try this new question.",cancel:"Cancel",validate:"Confirm"},r={fr:e,en:n};function i(){return t(r)}export{r as parentGateStrings,i as useParentGateStrings};
+
+//# sourceMappingURL=parentGate.js.map
