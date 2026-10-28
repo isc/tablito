@@ -361,10 +361,14 @@
 .home-subjects--3 .home-subject-btn {
   padding: 14px 4px;
   gap: 6px;
+  container-type: inline-size;
 }
 
+/* « Conjugaison », un seul mot, ne peut pas passer à la ligne : la taille suit
+   la largeur de la tuile, sans quoi il débordait sous
+   ~400 px d'écran (99 px de texte pour 89 px de tuile à 360 px). */
 .home-subjects--3 .home-subject-label {
-  font-size: 15px;
+  font-size: clamp(10px, 13.5cqi, 15px);
   line-height: 1.15;
   text-align: center;
 }
@@ -401,6 +405,16 @@
   font-family: var(--serif);
   font-size: 17px;
   font-weight: 700;
+}
+
+/* Le libellé prend la hauteur libre et s'y centre, l'état se cale en bas : les
+   tuiles d'une rangée ont la même hauteur, mais un libellé sur deux lignes
+   (« Verbes anglais ») décalait vers le bas son « C'est parti ! » (avis parent
+   du 26/10/2026). */
+.home-subjects--3 .home-subject-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .home-subject-state {
