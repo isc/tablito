@@ -813,16 +813,18 @@ interface ConjTtsEntry {
  * de chaque fait (63), lue à l'étape 1 de l'introduction.
  */
 export function allConjCarrierSentences(): ConjTtsEntry[] {
-  return conjFactDefs().flatMap((def) =>
-    def.carriers.flatMap((_, i) => {
-      const view = resolveConjQuestion(def, i);
-      const entries: ConjTtsEntry[] = [
-        { key: view.promptTtsKey, text: view.prompt, hide: view.promptHiddenWord },
-      ];
-      if (view.sentenceTtsKey) entries.push({ key: view.sentenceTtsKey, text: view.sentence });
-      return entries;
-    }),
-  );
+  return allConjQuestionViews().flatMap((view) => {
+    const entries: ConjTtsEntry[] = [
+      { key: view.promptTtsKey, text: view.prompt, hide: view.promptHiddenWord },
+    ];
+    if (view.sentenceTtsKey) entries.push({ key: view.sentenceTtsKey, text: view.sentence });
+    return entries;
+  });
+}
+
+/** Chaque question de l'inventaire : tous les faits, toutes leurs porteuses. */
+export function allConjQuestionViews(): ConjQuestionView[] {
+  return conjFactDefs().flatMap((def) => def.carriers.map((_, i) => resolveConjQuestion(def, i)));
 }
 
 // --- Comparaison phonétique (spec §4.5, cas « presque ») --------------------

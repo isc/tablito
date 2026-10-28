@@ -17,9 +17,12 @@ import {
   CONJ_IRREGULAR_VERBS,
   CONJ_PERSONS,
   CONJ_TENSES,
+  allConjQuestionViews,
   conjFactDef,
+  conjWrittenForm,
   isPhoneticallyClose,
   normalizeConjAnswer,
+  regularStem,
   stripAccents,
   type ConjCarrier,
   type ConjFactDef,
@@ -33,6 +36,7 @@ import {
   conjFactsInterfere,
   isConjContrastPair,
 } from './conjugationInterference';
+import { areNeighborKeys } from './letterKeys';
 import { daysBetween, firstFreeSlot, interleaveOrder } from './utils';
 
 // === Séance de conjugaison (spec Verbito §5, §6.2) ===
@@ -412,10 +416,11 @@ export function conjRetryQuestion<T extends ConjSessionQuestion>(question: T): T
  *
  * - `correct` : la réponse attendue, au caractère près ;
  * - `almost`  : terminaison juste, coquille phonétiquement plausible dans le
- *               radical (« cerons » pour « serons ») → ACCEPTÉ pour le Leitner,
- *               forme correcte réaffichée en couleurs, sans commentaire. On ne
- *               pénalise jamais l'orthographe lexicale dans un jeu de
- *               conjugaison ;
+ *               radical (« cerons » pour « serons »), ou faute de frappe — une
+ *               lettre remplacée par sa voisine du clavier (« alljz » pour
+ *               « allez ») → ACCEPTÉ pour le Leitner, forme correcte réaffichée
+ *               en couleurs, sans commentaire. On ne pénalise jamais
+ *               l'orthographe lexicale dans un jeu de conjugaison ;
  * - `ending`  : erreur de terminaison (« seron » pour « serons ») ;
  * - `stem`    : erreur de radical (« saurons » pour « serons ») — pour les
  *               formes irrégulières insécables (sommes, êtes…), toute erreur
@@ -459,6 +464,57 @@ export function conjEndingFactKeyFor(view: ConjQuestionView): string | null {
 }
 
 /**
+ * Ce qu'un enfant peut écrire EXPRÈS en se trompant de conjugaison : les
+ * formes de l'inventaire et leurs terminaisons, plus celles de l'infinitif
+ * (-er) et du participe (-é). Calculé une fois, à la première réponse.
+ */
+let conjInventory: { forms: Set<string>; endings: string[] } | null = null;
+
+function getConjInventory() {
+  if (!conjInventory) {
+    const views = allConjQuestionViews();
+    conjInventory = {
+      forms: new Set(views.map((v) => normalizeConjAnswer(v.form))),
+      endings: [...new Set([...views.map((v) => v.segment[1]), 'er', 'é'])].filter(Boolean),
+    };
+  }
+  return conjInventory;
+}
+
+/**
+ * Faute de frappe (avis parent du 26/10/2026 : « alljz » pour « allez ») : une
+ * seule lettre remplacée par sa voisine sur le clavier de l'app (lib/letterKeys),
+ * et un résultat que personne n'écrirait exprès. Sans cette dernière condition,
+ * la tolérance accepterait les erreurs que le jeu doit justement relever :
+ *
+ * - une autre forme de l'inventaire (« chantes » pour « chantez », s et z) ;
+ * - une terminaison de conjugaison qui n'est pas la sienne (« alles » pour
+ *   « allez » : l'enfant a mis le -s du pluriel) ;
+ * - une forme bâtie sur l'infinitif quand l'attendue ne l'est pas : le futur
+ *   (« dirons » pour « disons ») ou l'infinitif lui-même (« voir » pour « vois ») ;
+ * - e, é et ê entre eux : « joué » pour « joue », c'est le participe ;
+ * - un mot de moins de 3 lettres, qu'une lettre changée rend méconnaissable.
+ *
+ * Validé sur les profils joints aux avis : sur 25 réponses fausses distinctes,
+ * seules « alljz », « disonz » et « var » (pour « vas ») passent.
+ */
+function isKeyboardSlip(written: string, view: ConjQuestionView): boolean {
+  const form = normalizeConjAnswer(view.form);
+  if (written.length !== form.length || form.length < 3) return false;
+  const diffs = [...form].flatMap((c, i) => (c === written[i] ? [] : [i]));
+  if (diffs.length !== 1) return false;
+  const typed = written[diffs[0]];
+  const meant = form[diffs[0]];
+  if (!areNeighborKeys(typed, meant) || stripAccents(typed) === stripAccents(meant)) return false;
+
+  const { forms, endings } = getConjInventory();
+  if (forms.has(written)) return false;
+  if (endings.some((e) => written.endsWith(e) && !form.endsWith(e))) return false;
+  const builtOnInfinitive = [view.verb, regularStem(view.verb, 'futur')];
+  return !builtOnInfinitive.some((s) => written.startsWith(s) && !form.startsWith(s));
+}
+
+/**
  * Attribue une réponse (§4.5). La segmentation radical|terminaison rend le
  * diagnostic possible dès que la forme entière est tapée ; quand seule la
  * terminaison est saisie (radical affiché), il n'y a rien à attribuer.
@@ -470,15 +526,18 @@ export function judgeConjAnswer(view: ConjQuestionView, typed: string): ConjJudg
 
   if (answer === expected) return { verdict: 'correct', blamedKeys: [] };
 
-  if (view.endingOnly) {
-    // Tolérance : l'enfant qui tape la forme entière alors que le radical est
-    // affiché sait ce qu'on lui demande — on ne pénalise pas un malentendu de
-    // consigne.
-    if (answer === normalizeConjAnswer(view.form)) {
-      return { verdict: 'correct', blamedKeys: [] };
-    }
-    return { verdict: 'ending', blamedKeys: [ownKey] };
+  // Tolérance : l'enfant qui tape la forme entière alors que le radical est
+  // affiché sait ce qu'on lui demande — on ne pénalise pas un malentendu de
+  // consigne.
+  if (view.endingOnly && answer === normalizeConjAnswer(view.form)) {
+    return { verdict: 'correct', blamedKeys: [] };
   }
+
+  if (isKeyboardSlip(conjWrittenForm(view, typed), view)) {
+    return { verdict: 'almost', blamedKeys: [] };
+  }
+
+  if (view.endingOnly) return { verdict: 'ending', blamedKeys: [ownKey] };
 
   const [stem, ending] = view.segment.map(normalizeConjAnswer) as [string, string];
 
