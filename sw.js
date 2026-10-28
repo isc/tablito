@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261022160442"
+const VERSION = "20261028082653"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -126,6 +126,7 @@ const ASSETS = [
   "/src/components/StreakDetailModal.js",
   "/src/components/VoiceInput.js",
   "/src/components/conjHintLine.js",
+  "/src/hooks/useBackGesture.js",
   "/src/hooks/useConfetti.js",
   "/src/hooks/useCopyFeedback.js",
   "/src/hooks/useInputMode.js",
@@ -182,6 +183,7 @@ const ASSETS = [
   "/src/lib/irregularPlacement.js",
   "/src/lib/irregularVerbs.js",
   "/src/lib/leitner.js",
+  "/src/lib/letterKeys.js",
   "/src/lib/letterNames.js",
   "/src/lib/micPreflight.js",
   "/src/lib/parseEnglishNumber.js",
