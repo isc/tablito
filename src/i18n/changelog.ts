@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-28',
+    items: [
+      "Conjugaison au clavier\u00a0: une faute de frappe évidente n'est plus comptée fausse. Quand le doigt tombe sur la touche d'à côté («\u00a0alljz\u00a0» pour «\u00a0allez\u00a0», le j étant sous le e), la réponse est acceptée et la bonne forme réaffichée. Une vraie erreur de conjugaison reste une erreur, même à une touche près («\u00a0vous chantes\u00a0», «\u00a0vous aller\u00a0»).",
+    ],
+  },
+  {
     date: '2026-10-22',
     items: [
       "Une séance peut s'arrêter en route\u00a0: la croix en haut à gauche, puis «\u00a0Arrêter\u00a0», ramène à l'accueil sans quitter l'app (sur Android, le geste retour fait de même). Les réponses déjà données sont gardées, mais une séance arrêtée ne compte pas dans la série\u00a0: votre enfant peut la relancer depuis l'accueil, avec ce qui lui reste à revoir.",
@@ -280,6 +286,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-28',
+    items: [
+      "French conjugation on the keypad: an obvious typo is no longer counted wrong. When a finger lands on the next key (\"alljz\" for \"allez\", the j sits under the e), the answer is accepted and the correct form shown again. A real conjugation mistake still counts as one, even one key away (\"vous chantes\", \"vous aller\").",
+    ],
+  },
   {
     date: '2026-10-22',
     items: [

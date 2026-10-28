@@ -12,10 +12,12 @@
 }
 
 /* Les 28 touches sont identiques : la grille exprime « 4 rangées de 7 » en
-   une déclaration, comme .numpad-grid le fait pour le pavé numérique. */
+   une déclaration, comme .numpad-grid le fait pour le pavé numérique. Le 7
+   vient de lib/letterKeys (le juge de la conjugaison s'en sert pour savoir
+   quelles touches se touchent). */
 .letterpad-keys {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(var(--letterpad-cols), 1fr);
   gap: 4px;
   width: 100%;
 }

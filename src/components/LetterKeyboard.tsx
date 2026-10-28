@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { conjStrings as t } from '../i18n/conjugation';
 import { useLatestRef } from '../hooks/useLatestRef';
+import { LETTER_KEYS as KEYS, LETTER_KEY_COLUMNS } from '../lib/letterKeys';
 
 // Mini-clavier ALPHABÉTIQUE à grosses touches (spec Verbito §4.2). L'AZERTY
 // a été essayé puis abandonné (test en conditions réelles, 17/08/2026) : à
@@ -17,16 +18,6 @@ import { useLatestRef } from '../hooks/useLatestRef';
 // numérique auto-valide à 2 chiffres parce que la longueur d'un produit est
 // bornée et prévisible ; ici la réponse fait de 1 (« a ») à 11 caractères
 // (« regarderons »), on ne peut donc pas deviner qu'elle est finie.
-
-// Tableau de chaînes (pas un spread de littéral) : é et ê doivent rester des
-// clés d'un caractère quelle que soit la forme Unicode du fichier source.
-// La grille CSS (repeat(7, 1fr)) en fait 4 rangées de 7 touches identiques.
-const KEYS = [
-  'a', 'b', 'c', 'd', 'e', 'é', 'ê',
-  'f', 'g', 'h', 'i', 'j', 'k', 'l',
-  'm', 'n', 'o', 'p', 'q', 'r', 's',
-  't', 'u', 'v', 'w', 'x', 'y', 'z',
-];
 
 // Verbes irréguliers anglais (specs §16.6) : les 26 lettres, sans é ni ê —
 // même ordre alphabétique, même grille de 7 (la dernière rangée en a 5).
@@ -183,7 +174,9 @@ export default function LetterKeyboard({
   return (
     <div className="pad-container letterpad-container">
       <div className="letterpad-rows">
-        <div className="letterpad-keys">{keys.map(key)}</div>
+        <div className="letterpad-keys" style={{ '--letterpad-cols': LETTER_KEY_COLUMNS } as React.CSSProperties}>
+          {keys.map(key)}
+        </div>
         <div className="letterpad-row--actions">
           <button
             type="button"

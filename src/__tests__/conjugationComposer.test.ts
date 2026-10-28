@@ -207,6 +207,34 @@ describe('judgeConjAnswer — coquilles de radical sur « nous verrons »', () =
   });
 });
 
+describe('judgeConjAnswer — fautes de frappe, la touche voisine du clavier', () => {
+  const judge = (key: string, carrier: number, typed: string) =>
+    judgeConjAnswer(resolveConjQuestion(requireConjFactDef(key), carrier), typed);
+
+  it.each([
+    ['pres-g1-vous', 0, 'jz', 'parljz : le j est sous le e'],
+    ['pres-dire-nous', 0, 'disonz', 'le z est sous le s'],
+    ['pres-aller-tu', 0, 'var', 'le r est à gauche du s'],
+  ])('%s « %s » → presque, sans blâme (%s)', (key, carrier, typed) => {
+    const j = judge(key, carrier, typed);
+    expect(j.verdict).toBe('almost');
+    expect(j.blamedKeys).toEqual([]);
+  });
+
+  it.each([
+    ['pres-g1-vous', 0, 'es', 'parles : une autre forme de l’inventaire'],
+    ['pres-g1-vous', 1, 'es', 'aimes : le -s du pluriel, une terminaison'],
+    ['pres-g1-je', 0, 'é', 'chanté : le participe'],
+    ['pres-dire-nous', 0, 'dirons', 'le futur, bâti sur l’infinitif'],
+    ['pres-voir-jetu', 0, 'voir', 'l’infinitif'],
+    ['pres-avoir-je', 0, 'ah', 'trop court pour juger'],
+    ['pres-g1-vous', 0, 'jj', 'deux lettres changées'],
+    ['pres-g1-vous', 0, 'ex', 'x et z ne se touchent pas'],
+  ])('%s « %s » → refusé (%s)', (key, carrier, typed) => {
+    expect(isConjAccepted(judge(key, carrier, typed).verdict)).toBe(false);
+  });
+});
+
 describe('contraste futur -ai / imparfait -ais (§3.4)', () => {
   const keysOf = (profile: UserProfile) => composeConjSession(profile, TODAY).map((q) => q.fact.key);
   const adjacent = (keys: string[]) => Math.abs(keys.indexOf('fut-je') - keys.indexOf('imp-je')) === 1;
