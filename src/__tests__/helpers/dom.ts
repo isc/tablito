@@ -140,13 +140,22 @@ export function tapLetters(letters: string): void {
   tapValidate();
 }
 
-/** Tape un nombre sur le pavé numérique ; « OK » n'est nécessaire qu'à un chiffre. */
-export function typeAnswer(value: number): void {
-  const digits = value.toString();
-  for (const d of digits) {
+/** Tape un nombre sur le pavé numérique, SANS valider. */
+export function typeDigits(value: number): void {
+  for (const d of value.toString()) {
     const btn = document.querySelector<HTMLButtonElement>(`.numpad-btn[aria-label="${d}"]`);
     if (!btn) throw new Error(`NumPad ${d} introuvable`);
     fireEvent.click(btn);
   }
-  if (digits.length === 1) fireEvent.click(document.querySelector<HTMLButtonElement>('.numpad-btn-ok')!);
+}
+
+/** Appuie sur « OK » — le pavé ne valide jamais seul, même à 2 chiffres. */
+export function tapOk(): void {
+  fireEvent.click(document.querySelector<HTMLButtonElement>('.numpad-btn-ok')!);
+}
+
+/** Le geste complet d'une réponse : taper, puis « OK ». */
+export function typeAnswer(value: number): void {
+  typeDigits(value);
+  tapOk();
 }

@@ -14,10 +14,8 @@ import { LETTER_KEYS as KEYS, LETTER_KEY_COLUMNS } from '../lib/letterKeys';
 // le e. L'argument du transfert vers l'AZERTY réel pèse peu face au mode
 // vocal épelé (§15.10) et à l'usage grandissant du STT.
 //
-// Différence de fond avec NumPad : la validation est EXPLICITE. Le pavé
-// numérique auto-valide à 2 chiffres parce que la longueur d'un produit est
-// bornée et prévisible ; ici la réponse fait de 1 (« a ») à 11 caractères
-// (« regarderons »), on ne peut donc pas deviner qu'elle est finie.
+// Comme sur NumPad, la validation est EXPLICITE : la réponse fait de 1 (« a »)
+// à 11 caractères (« regarderons »), on ne peut pas deviner qu'elle est finie.
 
 // Verbes irréguliers anglais (specs §16.6) : les 26 lettres, sans é ni ê —
 // même ordre alphabétique, même grille de 7 (la dernière rangée en a 5).

@@ -282,27 +282,30 @@ export const BOX_INTERVALS: Record<BoxLevel, number> = {
 };
 
 // Seuils de temps de réponse (ms) — utilisés par le test de placement (qui
-// est clavier-only et a sa propre logique de notation).
+// est clavier-only et a sa propre logique de notation). Comptés jusqu'à
+// « OK », comme FAST_THRESHOLD_MS ci-dessous.
 export const RESPONSE_TIME = {
-  FAST: 3000,
-  SLOW: 5000,
+  FAST: 4000,
+  SLOW: 6000,
 } as const;
 
 // Seuil unique par mode pour les séances : décrocher l'étoile rayonnante ET
 // faire monter la boîte (cf. spec §3.3 + §3.7). En voix le seuil est plus bas
 // car la prononciation et le STT introduisent peu de latence d'output ; au
-// clavier on tolère ~2 s de plus pour absorber le surcoût moteur du pavé
-// numérique chez un enfant de 7-9 ans.
+// clavier on tolère ~1 s par touche pour absorber le surcoût moteur du pavé
+// numérique chez un enfant de 7-9 ans : 2 chiffres et « OK », d'où 3 s de plus.
 export const FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
-  keypad: 5000,
+  keypad: 6000,
   voice: 3000,
 };
 
 // Niveau 2 — division : seuil plus généreux que la multiplication (specs §11.6).
 // La division reste plus lente même maîtrisée (effet de taille du problème plus
 // marqué, Curtis et al. 2016) : on tolère ~1 s de plus avant de retirer l'étoile
-// rayonnante / bloquer la montée de boîte. La magnitude (+1 s) est un choix
-// d'implémentation, la spec ne fixant que « plus généreux ».
+// rayonnante / bloquer la montée de boîte. Au clavier, le chiffre est le même
+// qu'en multiplication, mais la réponse a un chiffre de moins à taper (toujours
+// 2 à 9) : la seconde gagnée sur la frappe va à la réflexion. La magnitude
+// (+1 s) est un choix d'implémentation, la spec ne fixant que « plus généreux ».
 export const DIVISION_FAST_THRESHOLD_MS: Record<'keypad' | 'voice', number> = {
   keypad: 6000,
   voice: 4000,

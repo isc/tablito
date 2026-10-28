@@ -6,7 +6,7 @@ import { getCompletedTables } from '../lib/badges';
 import { MASTERY_BOX } from '../lib/leitner';
 import { loadProfile } from '../lib/storage';
 import { BADGE_IDS } from '../types';
-import { openParentDashboard } from './helpers/dom';
+import { openParentDashboard, typeAnswer } from './helpers/dom';
 // Préchauffe le chunk de ParentDashboard pour que le React.lazy() côté App.tsx
 // se résolve en synchrone dans les tests qui ouvrent le dashboard.
 import '../screens/ParentDashboard';
@@ -69,22 +69,6 @@ function readPlacementQuestion(): [number, number] | null {
   const match = text.match(QUESTION_RE);
   if (!match) return null;
   return [parseInt(match[1], 10), parseInt(match[2], 10)];
-}
-
-function typeAnswer(value: number): void {
-  const digits = value.toString();
-  for (const d of digits) {
-    const btn = document.querySelector<HTMLButtonElement>(
-      `.numpad-btn[aria-label="${d}"]`,
-    );
-    if (!btn) throw new Error(`NumPad button ${d} introuvable`);
-    fireEvent.click(btn);
-  }
-  if (digits.length === 1) {
-    const okBtn = findButton('OK');
-    if (!okBtn) throw new Error('Bouton OK introuvable après saisie 1 chiffre');
-    fireEvent.click(okBtn);
-  }
 }
 
 // Joue les 15 questions du test de placement, toutes correctes et rapides

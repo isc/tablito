@@ -35,9 +35,9 @@ function boxFromResult(result: PlacementResult): BoxLevel {
 // si eA ≥ a ET eB ≥ b. Repose sur l'invariant a ≤ b côté facts et evidence.
 //
 // La boîte de départ dépend de la qualité de la dominance :
-// - boîte 3 si au moins un dominant a été répondu correct *et rapide* (< 3s),
+// - boîte 3 si au moins un dominant a été répondu correct *et rapide* (< 4 s),
 //   équivalent au niveau d'un fait testé directement et réussi rapidement ;
-// - boîte 2 sinon (dominance par corrects lents 3-5s seulement).
+// - boîte 2 sinon (dominance par corrects plus lents seulement).
 type DominanceEvidence = { a: number; b: number; isFast: boolean };
 
 function markDominated(

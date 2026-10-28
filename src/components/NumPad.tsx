@@ -1,6 +1,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNumPadStrings } from '../i18n/session';
 
+/**
+ * La plus longue réponse attendue : 81 (9 × 9). La validation passe toujours
+ * par « OK », même à 2 chiffres (specs §3.3) : une faute de frappe s'efface,
+ * et le geste est le même en multiplication qu'en division.
+ */
+const MAX_DIGITS = 2;
+
 interface NumPadProps {
   onSubmit: (value: number) => void;
   disabled?: boolean;
@@ -35,14 +42,10 @@ export default function NumPad({ onSubmit, disabled = false }: NumPadProps) {
 
   const handleDigit = useCallback(
     (digit: number) => {
-      if (disabled) return;
-      const newInput = inputRef.current + digit.toString();
-      setInputBoth(newInput);
-      if (newInput.length >= 2) {
-        onSubmit(parseInt(newInput, 10));
-      }
+      if (disabled || inputRef.current.length >= MAX_DIGITS) return;
+      setInputBoth(inputRef.current + digit.toString());
     },
-    [disabled, onSubmit, setInputBoth],
+    [disabled, setInputBoth],
   );
 
   const handleBackspace = useCallback(() => {

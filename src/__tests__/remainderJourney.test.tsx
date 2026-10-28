@@ -6,6 +6,7 @@ import App from '../App';
 import '../screens/ProgressScreen';
 import { createNewProfile, saveProfile } from '../lib/storage';
 import { BADGE_IDS } from '../types';
+import { typeAnswer } from './helpers/dom';
 
 // Test d'intégration du niveau 3 (specs §12) : monte le vrai <App /> et
 // vérifie, via le DOM, que la séance du jour bascule sur la division avec
@@ -18,17 +19,6 @@ function findByText(re: RegExp): HTMLButtonElement | null {
       re.test((b.textContent ?? '').trim()),
     ) as HTMLButtonElement | undefined) ?? null
   );
-}
-
-function tapDigit(d: number): void {
-  const btn = Array.from(document.querySelectorAll('.numpad-btn')).find(
-    (b) => b.getAttribute('aria-label') === String(d),
-  ) as HTMLButtonElement;
-  fireEvent.click(btn);
-}
-
-function tapOk(): void {
-  fireEvent.click(document.querySelector('.numpad-btn-ok') as HTMLButtonElement);
 }
 
 // Profil niveau 3 : tables ET divisions en boîte 5 (rien de dû), badges de
@@ -77,15 +67,13 @@ describe('Niveau 3 — séance du jour et saisie en deux temps', () => {
     expect(document.body.textContent).toContain('Combien de fois');
 
     // Étape 1 : quotient.
-    tapDigit(2);
-    tapOk();
+    typeAnswer(2);
     await waitFor(() => {
       expect(document.body.textContent).toContain('Il reste combien');
     });
 
     // Étape 2 : reste → feedback positif.
-    tapDigit(1);
-    tapOk();
+    typeAnswer(1);
     await waitFor(() => {
       expect(document.querySelector('.feedback-overlay.correct')).not.toBeNull();
     });
@@ -97,8 +85,7 @@ describe('Niveau 3 — séance du jour et saisie en deux temps', () => {
     fireEvent.click(findByText(/C'est parti/)!);
     fireEvent.click(findByText(/J'ai compris/)!);
 
-    tapDigit(9); // 5 ÷ 2 → quotient attendu 2
-    tapOk();
+    typeAnswer(9); // 5 ÷ 2 → quotient attendu 2
     await waitFor(() => {
       expect(document.querySelector('.feedback-overlay.incorrect')).not.toBeNull();
     });
