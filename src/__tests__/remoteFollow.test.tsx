@@ -12,6 +12,8 @@ import { mockSupabaseServer, mockWatchServer, stubSupabaseEnv } from './helpers/
 // leur React.lazy() se résolve en synchrone dans les tests qui les ouvrent.
 import '../screens/ParentDashboard';
 import '../screens/ChangelogScreen';
+// Idem pour la synchro, chargée au clic sur « Faire jouer … ici aussi ».
+import '../lib/sync';
 
 // Le pwa-register, espionné : il dit si une mise à jour de l'app peut recharger
 // la page (cf. setBusy).
