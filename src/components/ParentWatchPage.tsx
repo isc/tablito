@@ -1,7 +1,8 @@
 // Page « Suivi à distance » de l'espace parent. Les deux sens du suivi, chacun
 // à sa place : partager la progression d'un enfant qui pratique ICI (un bloc
 // par profil de l'appareil, et non plus seulement le profil actif), et suivre
-// un enfant qui pratique ailleurs.
+// un enfant qui pratique ailleurs. Le même QR sert à faire jouer l'enfant sur
+// un autre appareil : c'est celui qui scanne qui choisit (specs §14.4).
 
 import { useState } from 'react';
 import type { UserProfile } from '../types';
@@ -9,6 +10,7 @@ import { startWatch, stopWatch, type WatchPairing } from '../lib/watch';
 import { listProfiles, loadProfileById } from '../lib/storage';
 import {
   loadWatchCredentials,
+  otherPlayersCount,
   watchLink,
   type WatchCredentials,
   type WatchedProfile,
@@ -40,6 +42,13 @@ export default function ParentWatchPage({
   const [creds, setCreds] = useState<Record<string, WatchCredentials | null>>(() =>
     Object.fromEntries(profiles.map((p) => [p.id, loadWatchCredentials(p.id)])),
   );
+  // Autres appareils où joue chaque enfant partagé (profil synchronisé), lus
+  // une fois : ils ne changent pas pendant qu'on regarde cette page.
+  const [elsewhere] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      profiles.filter((p) => creds[p.id]).map((p) => [p.id, otherPlayersCount(loadProfileById(p.id) ?? {})]),
+    ),
+  );
   // Un seul QR déplié à la fois.
   const [open, setOpen] = useState<{ id: string; state: QrPanelState } | null>(null);
   const settle = (id: string, state: QrPanelState) =>
@@ -70,7 +79,9 @@ export default function ParentWatchPage({
     settle(id, { link });
   };
 
-  const stopSharing = async (id: string) => {
+  const stopSharing = async (id: string, name: string) => {
+    // Arrêter le partage coupe aussi la synchro avec ses autres appareils.
+    if ((elsewhere[id] ?? 0) > 0 && !window.confirm(t.watchStopSharingConfirm(name))) return;
     setOpen((current) => (current?.id === id ? null : current));
     setCreds((c) => ({ ...c, [id]: null }));
     await stopWatch(id);
@@ -97,7 +108,7 @@ export default function ParentWatchPage({
                     <span className="parent-share-titles">
                       <span className="parent-share-name">{name}</span>
                       <span className={`parent-share-status${shared ? ' is-on' : ''}`}>
-                        {shared ? t.watchShared : t.watchNotShared}
+                        {!shared ? t.watchNotShared : elsewhere[id] ? t.watchSyncedWith(elsewhere[id]) : t.watchShared}
                       </span>
                     </span>
                   </div>
@@ -115,7 +126,7 @@ export default function ParentWatchPage({
                     />
                   )}
                   {shared && (
-                    <button className="parent-watch-remove" onClick={() => void stopSharing(id)}>
+                    <button className="parent-watch-remove" onClick={() => void stopSharing(id, name)}>
                       {t.watchStopSharing}
                     </button>
                   )}

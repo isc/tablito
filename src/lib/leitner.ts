@@ -18,6 +18,9 @@ type Schedulable = {
 // ici pour les appelants historiques.
 export { addDays };
 
+/** Tentatives gardées par fait : les plus anciennes tombent au-delà. */
+export const ATTEMPT_HISTORY_CAP = 30;
+
 /**
  * Computes the next due date for a fact based on its box level.
  */
@@ -68,7 +71,7 @@ export function processAnswer<T extends Schedulable>(
     ...answer,
   };
 
-  const updatedHistory = [...fact.history, attempt].slice(-30);
+  const updatedHistory = [...fact.history, attempt].slice(-ATTEMPT_HISTORY_CAP);
 
   if (!correct) {
     const newBox: BoxLevel = 1;

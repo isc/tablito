@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-10-30',
+    items: [
+      "Un enfant peut jouer sur deux appareils, par exemple le téléphone de chaque parent\u00a0: ses séances se synchronisent dans les deux sens, même faites hors ligne, sans rien perdre. Dans l'espace parent → Suivi à distance, affichez le QR de l'enfant et scannez-le avec l'autre téléphone, qui propose de le faire jouer là aussi.",
+    ],
+  },
+  {
     date: '2026-10-28',
     items: [
       "Maths au pavé numérique\u00a0: une réponse se valide toujours avec «\u00a0OK\u00a0», même à deux chiffres. Le pavé validait seul dès le deuxième chiffre\u00a0: une faute de frappe partait sans pouvoir être effacée, et une séance qui mêle multiplications et divisions (un seul chiffre, donc «\u00a0OK\u00a0») changeait de geste d'une question à l'autre. Le temps de ce geste en plus est compté\u00a0: une réponse rapide le reste.",
@@ -287,6 +293,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-10-30',
+    items: [
+      'A child can now play on two devices, for instance each parent\'s phone: their sessions sync both ways, even when played offline, without losing anything. In Parent area → Remote follow, show the child\'s QR code and scan it with the other phone, which offers to let them play there too.',
+    ],
+  },
   {
     date: '2026-10-28',
     items: [

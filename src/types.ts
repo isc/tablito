@@ -196,6 +196,19 @@ export interface UserProfile {
   // qu'elle tournait encore sur l'ancien code, alors que l'appareil du parent
   // qui envoyait l'avis, lui, était à jour.
   appVersion?: string;
+  // Format de fusion de l'instantané, posé comme `appVersion` au dépôt et
+  // jamais stocké : un appareil qui reçoit un format plus récent que le sien
+  // ne fusionne pas, il attend sa mise à jour (cf. lib/sync).
+  syncFormat?: number;
+  // Identité stable de l'enfant d'un appareil à l'autre, tirée à la création.
+  // Absente des profils antérieurs : on retombe alors sur prénom + date de
+  // début (cf. lib/sync, sameChild).
+  childId?: string;
+  // Appareils qui font jouer ce profil, quand il est synchronisé (specs §14.4),
+  // par identifiant d'appareil (cf. watchStore.getDeviceId). Sert à savoir,
+  // quand on retire l'enfant d'un appareil, s'il en reste un autre — sinon on
+  // arrête aussi le partage.
+  players?: Record<string, PlayerEntry>;
   startDate: string;
   facts: MultiFact[];
   totalSessions: number;
@@ -269,6 +282,13 @@ export interface UserProfile {
   hasSeenIrrIntro?: boolean;
   hasDoneIrrPlacement?: boolean;
   lastIrrSessionDate?: string | null;
+}
+
+/** Un appareil qui fait jouer un profil synchronisé. Horodatages ISO complets :
+ *  il est actif tant qu'il n'est pas parti, ou s'il est revenu depuis. */
+export interface PlayerEntry {
+  joined: string;
+  left?: string;
 }
 
 export type BoxLevel = 1 | 2 | 3 | 4 | 5;
@@ -514,6 +534,10 @@ export interface ConjWrittenAnswer {
 }
 
 export interface SessionResult {
+  // Identifiant tiré en fin de séance : c'est ce qui dédoublonne une séance
+  // présente sur deux appareils synchronisés (cf. lib/syncMerge). Absent des
+  // séances antérieures, qui se comparent alors au contenu.
+  id?: string;
   date: string;
   // Matière de la séance : une séance n'en mélange jamais deux (§15.1). Sans
   // elle, l'espace parent traçait le temps de réponse moyen des maths et de la

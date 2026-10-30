@@ -8,7 +8,6 @@ import { addProfile, createNewProfile, listProfiles } from '../lib/storage';
 import {
   startWatch,
   stopWatch,
-  publishWatchSnapshot,
   addWatched,
   fetchWatched,
   importWatchFromUrl,
@@ -19,6 +18,7 @@ import {
   parseWatchLink,
   removeWatched,
 } from '../lib/watchStore';
+import { syncProfile } from '../lib/sync';
 import { mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
 
 function makeProfile(name = 'Zoé') {
@@ -83,14 +83,14 @@ describe('côté publieur (appareil de l’enfant)', () => {
     const id = addProfile(profile);
 
     // Non partagé : aucun appel réseau.
-    await publishWatchSnapshot(id, profile);
+    await syncProfile(id, profile);
     expect(rows.size).toBe(0);
 
     await startWatch(id, profile);
     const { code } = loadWatchCredentials(id)!;
     const firstBlob = rows.get(code)!.payload;
 
-    await publishWatchSnapshot(id, { ...profile, totalSessions: 8 });
+    await syncProfile(id, { ...profile, totalSessions: 8 });
     expect(rows.get(code)!.payload).not.toBe(firstBlob);
     expect(rows.size).toBe(1); // rafraîchi, pas empilé
   });
@@ -135,7 +135,7 @@ describe('côté suiveur (appareil du parent)', () => {
 
     // Deux relectures d'affilée : rien n'est consommé côté serveur.
     expect(await fetchWatched(creds)).not.toBe('error');
-    await publishWatchSnapshot(id, { ...profile, totalSessions: 42 });
+    await syncProfile(id, { ...profile, totalSessions: 42 });
 
     const result = await fetchWatched(creds);
     expect(typeof result).toBe('object');
@@ -162,7 +162,7 @@ describe('côté suiveur (appareil du parent)', () => {
     expect(listWatched()).toHaveLength(1);
 
     // L'enfant corrige son prénom sur son appareil → le libellé suit.
-    await publishWatchSnapshot(id, { ...profile, name: 'Zoé' });
+    await syncProfile(id, { ...profile, name: 'Zoé' });
     await fetchWatched(parseWatchLink(link)!);
     expect(listWatched()[0].name).toBe('Zoé');
   });

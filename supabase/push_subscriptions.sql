@@ -197,3 +197,47 @@ $$;
 
 revoke all on function public.mark_reminder_session(text, text) from public;
 grant execute on function public.mark_reminder_session(text, text) to anon, authenticated;
+
+-- === Enfant qui joue sur plusieurs appareils (specs §14.4) ===
+-- Les appareils qui font jouer un même enfant forment un groupe : une séance
+-- faite sur l'un rend caduc le rappel du soir des autres. Sans ça, le téléphone
+-- qui n'a pas servi relance l'enfant alors qu'il a déjà joué. `sync_group` est
+-- une empreinte du code de synchro (jamais le code lui-même) : elle relie les
+-- souscriptions d'une même famille, sans rien dire de leur contenu.
+alter table public.push_subscriptions add column if not exists sync_group text;
+create index if not exists push_subscriptions_sync_group_idx on public.push_subscriptions (sync_group);
+
+-- `p_endpoint`, s'il est donné, rattache d'abord la souscription de l'appareil
+-- au groupe ; `p_session_date` (date locale 'YYYY-MM-DD'), s'il est donné,
+-- marque la séance sur tout le groupe — le cron (send-reminders.mjs) lit
+-- last_session_date sans rien savoir des groupes. Appelable par un appareil
+-- sans souscription push : c'est souvent celui où l'enfant joue.
+create or replace function public.mark_group_session(p_group text, p_endpoint text, p_session_date text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if length(p_group) < 16 or length(p_group) > 64 then
+    raise exception 'invalid group';
+  end if;
+  if p_session_date is not null and p_session_date !~ '^\d{4}-\d{2}-\d{2}$' then
+    raise exception 'invalid date';
+  end if;
+  if p_endpoint is not null then
+    update public.push_subscriptions
+       set sync_group = p_group, updated_at = now()
+     where endpoint = p_endpoint;
+  end if;
+  if p_session_date is not null then
+    update public.push_subscriptions
+       set last_session_date = p_session_date, updated_at = now()
+     where sync_group = p_group
+       and (last_session_date is null or last_session_date < p_session_date);
+  end if;
+end;
+$$;
+
+revoke all on function public.mark_group_session(text, text, text) from public;
+grant execute on function public.mark_group_session(text, text, text) to anon, authenticated;

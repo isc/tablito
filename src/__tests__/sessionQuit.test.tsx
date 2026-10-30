@@ -5,7 +5,7 @@ import App from '../App';
 import SessionScreen, { type MathAnswer } from '../screens/SessionScreen';
 import { addProfile, createNewProfile, loadProfile } from '../lib/storage';
 import { todayISO } from '../lib/utils';
-import { advance, onHome, requireButton, typeAnswer } from './helpers/dom';
+import { advance, currentProduct, onHome, passIntro, requireButton, typeAnswer } from './helpers/dom';
 import { multItem } from './helpers/mathItems';
 
 // ---------------------------------------------------------------------------
@@ -18,17 +18,9 @@ import { multItem } from './helpers/mathItems';
 const inSession = () => document.querySelector('.session-screen') !== null;
 const quitDialog = () => document.querySelector('.session-quit-modal');
 
-function passIntro(): void {
-  for (let i = 0; i < 5 && document.querySelector('.session-intro'); i++) {
-    fireEvent.click(document.querySelector<HTMLButtonElement>('.session-intro-btn')!);
-  }
+function passAllIntros(): void {
+  passIntro();
   expect(document.querySelector('.session-intro')).toBeNull();
-}
-
-/** Réponse juste à la multiplication affichée. */
-function currentProduct(): number {
-  const [, a, b] = document.querySelector('.session-question-text')!.textContent!.match(/(\d+)\s*×\s*(\d+)/)!;
-  return Number(a) * Number(b);
 }
 
 describe('arrêter une séance en cours', () => {
@@ -50,7 +42,7 @@ describe('arrêter une séance en cours', () => {
   it('« Continuer » referme la confirmation et laisse la séance où elle était', () => {
     render(<App />);
     fireEvent.click(requireButton(/C'est parti/));
-    passIntro();
+    passAllIntros();
 
     fireEvent.click(requireButton(/^Arrêter la séance$/));
     expect(quitDialog()?.textContent).toContain('Tes réponses sont gardées');
@@ -68,7 +60,7 @@ describe('arrêter une séance en cours', () => {
   it("« Arrêter » ramène à l'accueil : les réponses sont gardées, la séance ne compte pas", async () => {
     render(<App />);
     fireEvent.click(requireButton(/C'est parti/));
-    passIntro();
+    passAllIntros();
     typeAnswer(currentProduct());
     fireEvent.click(document.querySelector('.feedback-overlay')!);
 

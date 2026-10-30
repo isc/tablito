@@ -74,6 +74,13 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   et parsing des nombres parlés branchés sur la langue (`lib/parseSpokenNumber`).
   Les specs publiques et le guide utilisateur restent FR pour l'instant.
 - localStorage pour la persistance (pas de backend).
+- **Un enfant sur plusieurs appareils** (specs §14.4) : synchro par le canal
+  chiffré du suivi à distance (`watches`, même code et même clé). `lib/sync`
+  relit, fusionne et redépose sous condition (`publish_watch_if`) ;
+  `lib/syncMerge` est la fusion, pure, par fait (union des tentatives, boîte la
+  plus basse si les deux côtés ont répondu) et rejoue la série depuis la base.
+  Un champ ajouté au profil doit y trouver sa règle de fusion, sinon il est
+  recopié tel quel, côté local d'abord (`syncMerge.test.ts`).
 - Déploiement : GitHub Pages via GitHub Actions (`BASE=/`), voir
   « Déploiement et previews » plus bas.
 - Node minimum : 22.12+ (CI utilise Node 22).

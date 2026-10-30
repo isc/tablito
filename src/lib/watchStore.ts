@@ -10,6 +10,9 @@
 // requêtes HTTP et un niveau de waterfall à TOUS les boots, y compris ceux qui
 // ne touchent jamais au suivi. Ici, rien que des lectures localStorage.
 
+import type { PlayerEntry, UserProfile } from '../types';
+import { generateProfileId, listProfiles } from './storage';
+import type { SyncBase } from './syncMerge';
 import { supabaseEnv } from './supabase';
 
 /** Identifiants d'un suivi : la ligne serveur (`code`) et de quoi la déchiffrer
@@ -34,6 +37,45 @@ export interface WatchedProfile extends WatchCredentials {
 const WATCH_KEY_PREFIX = 'multiplix-watch:';
 // Liste des profils suivis à distance sur cet appareil.
 const WATCHED_KEY = 'multiplix-watched';
+// Identifiant de cet appareil parmi ceux qui font jouer un profil synchronisé.
+const DEVICE_ID_KEY = 'multiplix-device-id';
+
+/** Identifiant de cet appareil, tiré au premier appel. */
+export function getDeviceId(): string {
+  try {
+    const known = localStorage.getItem(DEVICE_ID_KEY);
+    if (known) return known;
+  } catch {
+    // ignore : un identifiant non mémorisé reste valable le temps de l'appel
+  }
+  const id = generateProfileId();
+  write(DEVICE_ID_KEY, id);
+  return id;
+}
+
+/** Un appareil fait jouer le profil tant qu'il n'est pas parti, ou s'il est
+ *  revenu depuis. */
+export function isActivePlayer(entry: PlayerEntry): boolean {
+  return !entry.left || entry.joined > entry.left;
+}
+
+/** Nombre d'autres appareils qui font jouer ce profil (synchronisé). */
+export function otherPlayersCount(profile: Pick<UserProfile, 'players'>): number {
+  const me = getDeviceId();
+  return Object.entries(profile.players ?? {}).filter(([id, p]) => id !== me && isActivePlayer(p)).length;
+}
+
+/** Le profil local, partagé, joue aussi sur un autre appareil : le retirer
+ *  d'ici ne doit pas arrêter son partage (cf. lib/sync, leaveSync). */
+export function playsElsewhere(profileId: string, profile: Pick<UserProfile, 'players'>): boolean {
+  return loadWatchCredentials(profileId) !== null && otherPlayersCount(profile) > 0;
+}
+
+/** L'appareil suit un enfant ou en partage un : le recap du dimanche a un
+ *  objet (cf. ParentSettingsList). */
+export function hasRemoteLinks(): boolean {
+  return listWatched().length > 0 || listProfiles().some((p) => loadWatchCredentials(p.id) !== null);
+}
 
 export function watchConfigured(): boolean {
   return supabaseEnv() !== null;
@@ -94,9 +136,30 @@ export function saveWatchCredentials(profileId: string, creds: WatchCredentials)
 export function clearWatchCredentials(profileId: string): void {
   try {
     localStorage.removeItem(WATCH_KEY_PREFIX + profileId);
+    // La base de fusion de la synchro (cf. lib/sync) n'a plus d'objet.
+    localStorage.removeItem(SYNC_BASE_PREFIX + profileId);
   } catch {
     // ignore
   }
+}
+
+// === Synchro : base de fusion d'un profil partagé ===
+// Le dernier dépôt fusionné, réduit à ce que la fusion lui demande (cf.
+// lib/syncMerge, SyncBase) : gardé ici, avec les identifiants qu'il
+// accompagne, pour s'effacer avec eux.
+const SYNC_BASE_PREFIX = 'multiplix-sync-base:';
+
+export function loadSyncBase(profileId: string): SyncBase | null {
+  try {
+    const raw = localStorage.getItem(SYNC_BASE_PREFIX + profileId);
+    return raw ? (JSON.parse(raw) as SyncBase) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveSyncBase(profileId: string, base: SyncBase): void {
+  write(SYNC_BASE_PREFIX + profileId, JSON.stringify(base));
 }
 
 // === Côté suiveur : liste des enfants suivis sur cet appareil ===

@@ -4,9 +4,12 @@
 //
 // Ce qui est listé dépend de l'APPAREIL, pas du profil affiché : les
 // profils et le rappel quotidien n'existent qu'avec un profil local, le recap
-// du dimanche qu'avec au moins un enfant suivi.
+// du dimanche qu'avec au moins un enfant suivi ou partagé (un parent dont le
+// téléphone fait jouer l'enfant, synchronisé avec un autre, le veut aussi) —
+// ou tant qu'il est allumé, pour qu'on puisse toujours l'éteindre.
 
 import type { ParentPage } from '../screens/ParentDashboard';
+import { peekPushPrefs } from '../lib/push';
 import { listProfiles } from '../lib/storage';
 import { loadWatchCredentials, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 import { dailyReminderStrings, useParentDashboardStrings, weeklyRecapStrings } from '../i18n/parent';
@@ -50,7 +53,7 @@ export default function ParentSettingsList({ hasLocalProfile, watched, onOpenPag
           <PushPrefRow pref="daily" icon={<BellIcon />} strings={dailyReminderStrings} />
         </>
       )}
-      {watched.length > 0 && <PushPrefRow pref="weekly" icon={<CalendarIcon />} strings={weeklyRecapStrings} />}
+      {(watched.length > 0 || sharedNames.length > 0 || peekPushPrefs()?.weekly) && <PushPrefRow pref="weekly" icon={<CalendarIcon />} strings={weeklyRecapStrings} />}
       <LanguageToggle />
       <SettingRow icon={<HelpIcon />} title={t.helpTitle} sub={t.helpRowSubtitle} onClick={() => onOpenPage('help')} />
     </SettingList>

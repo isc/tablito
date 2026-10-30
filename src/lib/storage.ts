@@ -62,7 +62,11 @@ function profileKey(id: string): string {
   return PROFILE_KEY_PREFIX + id;
 }
 
-function generateProfileId(): string {
+/** Séances gardées dans l'historique d'un profil : les plus anciennes tombent. */
+export const SESSION_HISTORY_CAP = 50;
+
+/** Identifiant aléatoire (profil, enfant, séance, appareil). */
+export function generateProfileId(): string {
   try {
     return crypto.randomUUID();
   } catch {
@@ -291,17 +295,32 @@ export async function importProfileFromUrl(): Promise<void> {
 }
 
 /**
+ * Le même enfant, déjà sur cet appareil : même identité si les deux copies en
+ * ont une (cf. UserProfile.childId), sinon même prénom ET même date de début.
+ */
+export function findSameChild(profile: UserProfile): { id: string; profile: UserProfile } | null {
+  for (const { id } of listProfiles()) {
+    const other = loadProfileById(id);
+    if (!other) continue;
+    const same =
+      other.childId && profile.childId
+        ? other.childId === profile.childId
+        : other.name === profile.name && other.startDate === profile.startDate;
+    if (same) return { id, profile: other };
+  }
+  return null;
+}
+
+/**
  * Installe un profil reçu d'un autre appareil (transfert par QR) : si le même
- * enfant existe déjà ici — même prénom ET même date de début, cas du
- * re-transfert — son profil est mis à jour au lieu d'être dupliqué ; sinon le
- * profil est ajouté. Dans les deux cas il devient le profil actif. (L'import
- * par collage depuis le Welcome, lui, crée toujours un nouveau profil : on ne
- * devine pas l'identité sur une sauvegarde éditable à la main.)
+ * enfant existe déjà ici (cas du re-transfert), son profil est mis à jour au
+ * lieu d'être dupliqué ; sinon le profil est ajouté. Dans les deux cas il
+ * devient le profil actif. (L'import par collage depuis le Welcome, lui, crée
+ * toujours un nouveau profil : on ne devine pas l'identité sur une sauvegarde
+ * éditable à la main.)
  */
 export function installProfile(profile: UserProfile): void {
-  const existing = listProfiles().find(
-    (p) => p.name === profile.name && loadProfileById(p.id)?.startDate === profile.startDate,
-  );
+  const existing = findSameChild(profile);
   if (existing) {
     setActiveProfile(existing.id);
     saveProfile(profile);
@@ -343,6 +362,7 @@ export function createNewProfile(name: string): UserProfile {
   const conjMysteryTheme = pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme]);
   return {
     name,
+    childId: generateProfileId(),
     startDate: now,
     facts: createInitialFacts(),
     totalSessions: 0,
@@ -398,9 +418,17 @@ export function createNewProfile(name: string): UserProfile {
 // publication / à l'envoi), mais il peut arriver d'une sauvegarde éditée à la
 // main ou d'un transfert : on le jette s'il n'est pas une chaîne, comme tout le
 // reste de la normalisation.
-function normalizeProfile(profile: UserProfile): UserProfile {
+export function normalizeProfile(profile: UserProfile): UserProfile {
   if ('appVersion' in profile && typeof profile.appVersion !== 'string') {
     delete profile.appVersion;
+  }
+  if ('syncFormat' in profile && typeof profile.syncFormat !== 'number') {
+    delete profile.syncFormat;
+  }
+  // Appareils d'un profil synchronisé : la liste arrive d'un autre appareil,
+  // une forme bancale la retire (elle se reconstitue à la synchro suivante).
+  if (profile.players !== undefined && !isPlayerMap(profile.players)) {
+    delete profile.players;
   }
   if (!Array.isArray(profile.sessionHistory)) {
     profile.sessionHistory = [];
@@ -554,6 +582,17 @@ function normalizeProfile(profile: UserProfile): UserProfile {
   // ne se déclenchent pas ici, faute de stats de séance.
   profile.badges = [...profile.badges, ...checkBadges(profile)];
   return profile;
+}
+
+function isPlayerMap(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every(
+      (p) => typeof p?.joined === 'string' && (p.left === undefined || typeof p.left === 'string'),
+    )
+  );
 }
 
 /**

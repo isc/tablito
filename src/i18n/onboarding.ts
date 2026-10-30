@@ -39,6 +39,7 @@ interface WelcomeStrings {
   scanPrompt: string;
   scanCameraError: string;
   scanTransferError: string;
+  scanWatchError: string;
   transferFetching: string;
   pasteFromClipboard: string;
   pasteManually: string;
@@ -66,7 +67,7 @@ const welcomeFr: WelcomeStrings = {
   cancel: 'Annuler',
   importTitle: 'Ta progression',
   importSubtitle:
-    "Sur l'ancien appareil, ouvre Espace parent → Profils et sauvegarde → « Changer d'appareil », puis scanne le QR affiché avec le bouton ci-dessous. Ou colle une sauvegarde exportée.",
+    "Sur l'ancien appareil, ouvre Espace parent → Profils et sauvegarde → « Changer d'appareil », puis scanne le QR affiché avec le bouton ci-dessous. Pour jouer sur les deux appareils, scanne plutôt celui de « Suivi à distance ». Ou colle une sauvegarde exportée.",
   scanQr: "Scanner le QR de l'ancien appareil",
   scanPrompt: "Vise le QR code affiché sur l'ancien appareil.",
   scanCameraError:
@@ -75,6 +76,8 @@ const welcomeFr: WelcomeStrings = {
   // chemin lien ouvert au boot) — garder le diagnostic en phase.
   scanTransferError:
     "Le transfert n'a pas abouti : le QR a peut-être expiré ou déjà servi. Relance un transfert sur l'ancien appareil et réessaie.",
+  scanWatchError:
+    "Ce QR de partage n'est pas lisible : le partage a peut-être été arrêté. Affiche-le à nouveau sur l'autre appareil et réessaie.",
   transferFetching: transferFetchingStrings.fr,
   pasteFromClipboard: 'Coller depuis le presse-papiers',
   pasteManually: 'Coller à la main',
@@ -104,13 +107,15 @@ const welcomeEn: WelcomeStrings = {
   cancel: 'Cancel',
   importTitle: 'Your progress',
   importSubtitle:
-    'On the old device, open Parent area → Profiles and backup → "Move to another device", then scan the QR it shows using the button below. Or paste an exported backup.',
+    'On the old device, open Parent area → Profiles and backup → "Move to another device", then scan the QR it shows using the button below. To play on both devices, scan the "Remote follow" one instead. Or paste an exported backup.',
   scanQr: "Scan the old device's QR code",
   scanPrompt: 'Point at the QR code shown on the old device.',
   scanCameraError: 'Camera unavailable or access denied. You can paste the backup instead.',
   // ⚠ Variant of appStrings.transferFailed (i18n/app.ts) — keep the diagnosis in sync.
   scanTransferError:
     "The transfer didn't go through: the QR may have expired or already been used. Start a new transfer on the old device and try again.",
+  scanWatchError:
+    "This sharing QR can't be read: sharing may have been turned off. Show it again on the other device and try again.",
   transferFetching: transferFetchingStrings.en,
   pasteFromClipboard: 'Paste from clipboard',
   pasteManually: 'Paste by hand',
