@@ -14,9 +14,9 @@ import type { Subject } from '../lib/hardestFacts';
 import { APP_VERSION } from '../lib/version';
 import { isVoiceDebugOn, setVoiceDebug } from '../lib/voiceDebug';
 import { setPushPref } from '../lib/push';
-import { getActiveProfileId, installProfile, listProfiles, loadProfileById } from '../lib/storage';
+import { getActiveProfileId, listProfiles, loadProfileById } from '../lib/storage';
 import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
-import { listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
+import { hasRemoteLinks, listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 
 // Pages d'information d'« Aide et infos », rarement ouvertes : chargées à la
 // demande, comme l'espace parent lui-même.
@@ -209,8 +209,15 @@ export default function ParentDashboard({
     />
   );
 
+  // Suivi qu'on vient d'appairer (au démarrage ou par le scanner) : l'appareil
+  // demande ce qu'il doit faire de l'enfant, le suivre ou le faire jouer ici
+  // aussi. Un seul QR côté enfant, et c'est l'appareil qui scanne qui choisit
+  // (specs §14.4).
+  const [justPaired, setJustPaired] = useState<string | null>(initialWatch?.entry.code ?? null);
+
   // Appairage réussi depuis la page du suivi à distance (cf. ParentWatchPairing).
   const handlePaired = (paired: WatchPairing) => {
+    setJustPaired(paired.entry.code);
     setWatched(listWatched());
     // L'instantané est déjà déchiffré : on l'étiquette, et marquer le code comme
     // servi évite que l'effet relance une relecture inutile juste après.
@@ -225,20 +232,23 @@ export default function ParentDashboard({
   const handleStopWatching = (code: string) => {
     const list = removeWatched(code);
     setWatched(list);
-    // Plus aucun enfant suivi : le recap hebdomadaire n'a plus rien à annoncer,
-    // et sa ligne disparaît avec la liste — le laisser actif condamnerait le
+    // Plus aucun enfant suivi ni partagé : le recap hebdomadaire n'a plus rien
+    // à annoncer, et sa ligne disparaît avec la liste — le laisser actif condamnerait le
     // parent à une notification hebdomadaire qu'il ne pourrait plus éteindre
     // depuis l'app.
-    if (list.length === 0) void setPushPref('weekly', false);
+    if (!hasRemoteLinks()) void setPushPref('weekly', false);
   };
 
-  // L'appareil qui suit devient celui de l'enfant (QR du suivi scanné à la
-  // place de celui du transfert) : l'instantané affiché est le profil complet,
-  // on l'installe et on cesse de suivre l'ancien appareil, qui garde sa copie.
-  const installHere = (code: string, installed: UserProfile) => {
-    if (!window.confirm(t.installHereConfirm(installed.name))) return;
-    installProfile(installed);
-    handleStopWatching(code);
+  // L'enfant suivi joue aussi sur cet appareil : l'instantané affiché est le
+  // profil complet, installé ici comme profil synchronisé avec son autre
+  // appareil (cf. lib/sync). C'est aussi le chemin d'un changement de
+  // téléphone : on retire ensuite l'enfant de l'ancien. Le choix fait juste
+  // après l'appairage vaut confirmation ; le bouton permanent en demande une.
+  const playHere = async (entry: WatchedProfile, snapshot: UserProfile, confirm: boolean) => {
+    if (confirm && !window.confirm(t.playHereConfirm(snapshot.name))) return;
+    const { joinAsPlayer } = await import('../lib/sync');
+    const installed = joinAsPlayer(entry, snapshot);
+    setWatched(listWatched());
     onProfileInstalled(installed);
   };
 
@@ -365,6 +375,24 @@ export default function ParentDashboard({
         </div>
       )}
 
+      {watchedEntry && remoteSnapshot && justPaired === watchedEntry.code && (
+        <div className="parent-section">
+          <div className="parent-card parent-empty">
+            <p className="parent-empty-text">{t.pairChoice(shownName)}</p>
+            <button
+              className="parent-action-btn"
+              onClick={() => void playHere(watchedEntry, remoteSnapshot.profile, false)}
+            >
+              {t.playHere(shownName)}
+            </button>
+            <button className="parent-action-btn" onClick={() => setJustPaired(null)}>
+              {t.followOnly}
+            </button>
+            <p className="parent-section-subtitle">{t.pairChoiceHint}</p>
+          </div>
+        </div>
+      )}
+
       {shown ? (
         <ParentOverview profile={shown} onOpenSubject={onOpenPage} editable={editable} />
       ) : watchedEntry ? (
@@ -394,18 +422,18 @@ export default function ParentDashboard({
         <ParentSettingsList hasLocalProfile={profile !== null} watched={watched} onOpenPage={onOpenPage} />
       </div>
 
-      {/* Appareil qui ne fait que suivre : les portes de sortie vers un profil
-          local, à la place de la ligne « Profils et sauvegarde ». D'abord celle
-          de l'enfant affiché, s'il pratique désormais ici. */}
-      {!profile && watchedEntry && remoteSnapshot && (
+      {/* L'enfant suivi pratique aussi ici : le faire jouer sur cet appareil.
+          Puis, sur un appareil qui ne fait que suivre, la porte vers un profil
+          local, à la place de la ligne « Profils et sauvegarde ». */}
+      {watchedEntry && remoteSnapshot && justPaired !== watchedEntry.code && (
         <div className="parent-section">
-          <p className="parent-section-subtitle">{t.installHereHint(shownName)}</p>
+          <p className="parent-section-subtitle">{t.playHereHint(shownName)}</p>
           <div className="parent-actions">
             <button
               className="parent-action-btn"
-              onClick={() => installHere(watchedEntry.code, remoteSnapshot.profile)}
+              onClick={() => void playHere(watchedEntry, remoteSnapshot.profile, true)}
             >
-              {t.installHere(shownName)}
+              {t.playHere(shownName)}
             </button>
           </div>
         </div>

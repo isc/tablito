@@ -17,8 +17,10 @@
 //
 // Même conventions réseau que src/lib/feedback.ts (PostgREST + publishable key).
 
-import { urlBase64ToUint8Array } from './codec';
-import { supabaseEnv, supabaseHeaders } from './supabase';
+import { bytesToBase64url, urlBase64ToUint8Array } from './codec';
+import { getActiveProfileId } from './storage';
+import { supabaseEnv, supabaseHeaders, supabaseRpc } from './supabase';
+import { loadWatchCredentials } from './watchStore';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -233,6 +235,9 @@ export async function setPushPref(
       return 'ok';
     }
     writeMirror(prefs);
+    // Appareil qui fait jouer un enfant synchronisé : sa souscription rejoint
+    // tout de suite le groupe, sans attendre qu'une séance soit jouée ici.
+    if (created) void attachPushGroup();
     return 'ok';
   } catch {
     return 'error';
@@ -280,18 +285,58 @@ async function dismissDailyReminder(): Promise<void> {
   }
 }
 
+// === Enfant qui joue sur plusieurs appareils (specs §14.4) ===
+// Les appareils qui font jouer un même enfant forment un groupe côté serveur :
+// une séance jouée sur l'un marque la date sur tous, et le cron saute le rappel
+// du soir partout. Le groupe est celui de l'enfant actif, dérivé de ses
+// identifiants de partage : une empreinte du code, jamais le code lui-même
+// (cf. supabase/push_subscriptions.sql).
+async function activePushGroup(): Promise<string | null> {
+  const id = getActiveProfileId();
+  const creds = id ? loadWatchCredentials(id) : null;
+  if (!creds) return null;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`tablito-push-group:${creds.code}`));
+  return bytesToBase64url(new Uint8Array(digest).slice(0, 16));
+}
+
+async function currentEndpoint(): Promise<string | null> {
+  if (!pushConfigured || !pushSupported() || Notification.permission !== 'granted') return null;
+  try {
+    const sub = await activeSubscription();
+    return sub ? serialize(sub).endpoint : null;
+  } catch {
+    return null;
+  }
+}
+
+// Rattache la souscription donnée au groupe (si elle existe), et marque la
+// séance du jour sur tout le groupe (si la date est donnée). Best-effort.
+async function markGroupSession(group: string, endpoint: string | null, date: string | null): Promise<void> {
+  await supabaseRpc('mark_group_session', { p_group: group, p_endpoint: endpoint, p_session_date: date });
+}
+
+/** Rattache la souscription de cet appareil au groupe de l'enfant actif. */
+export async function attachPushGroup(): Promise<void> {
+  const [group, endpoint] = await Promise.all([activePushGroup(), currentEndpoint()]);
+  if (group && endpoint) await markGroupSession(group, endpoint, null);
+}
+
 /**
  * Signale que la séance du jour a eu lieu : marque la date côté serveur
- * (anti-nag : le cron saute l'envoi du soir) et retire le rappel déjà affiché.
- * Best-effort, jamais bloquant.
+ * (anti-nag : le cron saute l'envoi du soir), sur cet appareil et sur ceux qui
+ * font jouer le même enfant, et retire le rappel déjà affiché. Best-effort,
+ * jamais bloquant.
  */
 export async function syncLastSession(): Promise<void> {
   await dismissDailyReminder();
-  if (!pushConfigured || !pushSupported() || Notification.permission !== 'granted') return;
+  const [group, endpoint] = await Promise.all([activePushGroup(), currentEndpoint()]);
+  // Le groupe comprend cet appareil, que l'appel y rattache.
+  if (group) {
+    await markGroupSession(group, endpoint, localToday());
+    return;
+  }
+  if (!endpoint) return;
   try {
-    const sub = await activeSubscription();
-    if (!sub) return;
-    const { endpoint } = serialize(sub);
     // On passe par un RPC SECURITY DEFINER (pas un PATCH direct) : sous RLS, un
     // UPDATE filtré par `WHERE endpoint = …` lit la table, donc les policies
     // SELECT s'appliquent — or on en refuse exprès une (anti-énumération). Sans

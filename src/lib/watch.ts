@@ -4,7 +4,9 @@
 // Deux rôles, non exclusifs sur un même appareil :
 //  - PUBLIEUR (appareil de l'enfant) : après chaque séance, dépose un
 //    instantané du profil — gzippé puis chiffré CÔTÉ CLIENT (AES-GCM) — dans la
-//    table Supabase `watches`, sous un code haute entropie.
+//    table Supabase `watches`, sous un code haute entropie. Ce dépôt passe par
+//    lib/sync, qui le fusionne d'abord avec celui d'un autre appareil où
+//    l'enfant joue aussi (specs §14.4).
 //  - SUIVEUR (appareil du parent) : détient code + clé, scannés une fois à
 //    l'appairage, relit le blob et le déchiffre localement.
 //
@@ -48,16 +50,27 @@ import {
 
 // === Côté publieur (appareil de l'enfant) ===
 
+/** Format de fusion : à monter quand une version ne doit plus fusionner avec
+ *  les précédentes (cf. UserProfile.syncFormat, lib/sync). */
+export const SYNC_FORMAT = 1;
+
+/**
+ * L'instantané chiffré à déposer. Estampilles posées ICI : c'est l'appareil de
+ * l'enfant, au moment où il dépose, donc la seule mesure honnête du code qui
+ * vient de jouer la séance (cf. UserProfile.appVersion). Lève si le
+ * chiffrement est indisponible (contexte non sécurisé).
+ */
+export function packSnapshot(profile: UserProfile, key: string): Promise<string> {
+  return packProfileWithKey({ ...profile, appVersion: APP_VERSION, syncFormat: SYNC_FORMAT }, key);
+}
+
 async function publish(creds: WatchCredentials, profile: UserProfile): Promise<boolean> {
   try {
-    // Estampille posée ICI : c'est l'appareil de l'enfant, au moment où il
-    // publie, donc la seule mesure honnête du code qui vient de jouer la
-    // séance (cf. UserProfile.appVersion).
-    const payload = await packProfileWithKey({ ...profile, appVersion: APP_VERSION }, creds.key);
+    const payload = await packSnapshot(profile, creds.key);
     const res = await supabaseRpc('publish_watch', { p_code: creds.code, p_payload: payload });
     return res?.ok ?? false;
   } catch {
-    return false; // chiffrement indisponible (contexte non sécurisé)
+    return false;
   }
 }
 
@@ -78,19 +91,6 @@ export async function startWatch(
   if (!(await publish(creds, profile))) return null;
   if (!existing) saveWatchCredentials(profileId, creds);
   return watchLink(creds);
-}
-
-/**
- * Rafraîchit l'instantané publié de ce profil. No-op si le profil n'est pas
- * partagé. Best-effort et jamais bloquant : appelé en fin de séance, un échec
- * (hors-ligne) sera rattrapé par la séance suivante.
- */
-export async function publishWatchSnapshot(
-  profileId: string,
-  profile: UserProfile,
-): Promise<void> {
-  const creds = loadWatchCredentials(profileId);
-  if (creds) await publish(creds, profile);
 }
 
 /**
@@ -117,16 +117,25 @@ export interface WatchSnapshot {
 // message affiché diffère.
 export type WatchFetchResult = WatchSnapshot | 'revoked' | 'error';
 
-/** Relit et déchiffre l'instantané d'un profil suivi. */
-export async function fetchWatched(creds: WatchCredentials): Promise<WatchFetchResult> {
-  const res = await supabaseRpc('read_watch', { p_code: creds.code });
+/** Une ligne du dépôt : le contenu chiffré (null s'il n'a pas changé depuis
+ *  `since`) et sa date ; null si le partage a été arrêté. */
+export type WatchRow = { payload: string | null; updated_at: string };
+
+/** Relit la ligne d'un suivi, sans la déchiffrer. Partagé avec lib/sync. */
+export async function readWatchRow(code: string, since: string | null): Promise<WatchRow | null | 'error'> {
+  const res = await supabaseRpc('read_watch_since', { p_code: code, p_since: since });
   if (!res?.ok) return 'error';
-  let row: { payload?: string; updated_at?: string } | null = null;
   try {
-    row = await res.json();
+    return (await res.json()) as WatchRow | null;
   } catch {
     return 'error';
   }
+}
+
+/** Relit et déchiffre l'instantané d'un profil suivi. */
+export async function fetchWatched(creds: WatchCredentials): Promise<WatchFetchResult> {
+  const row = await readWatchRow(creds.code, null);
+  if (row === 'error') return 'error';
   if (!row) return 'revoked';
   const profile = await unpackProfile(row.payload ?? '', creds.key);
   if (!profile) return 'error';

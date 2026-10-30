@@ -159,3 +159,16 @@ export function typeAnswer(value: number): void {
   typeDigits(value);
   tapOk();
 }
+
+/** Passe les écrans d'introduction de la séance, jusqu'à la première question. */
+export function passIntro(): void {
+  for (let i = 0; i < 5 && document.querySelector('.session-intro'); i++) {
+    fireEvent.click(document.querySelector<HTMLButtonElement>('.session-intro-btn')!);
+  }
+}
+
+/** Réponse juste à la multiplication affichée. */
+export function currentProduct(): number {
+  const [, a, b] = document.querySelector('.session-question-text')!.textContent!.match(/(\d+)\s*×\s*(\d+)/)!;
+  return Number(a) * Number(b);
+}

@@ -1,7 +1,7 @@
 // Serveurs `watches` et `transfers` en mémoire, avec la sémantique exacte des
 // RPC de supabase/watches.sql et supabase/transfers.sql : un suivi se dépose de
-// façon idempotente par code, se relit sans être consommé et se révoque ; un
-// transfert, lui, ne se lit qu'une fois.
+// façon idempotente par code (ou sous condition, pour la synchro), se relit
+// sans être consommé et se révoque ; un transfert, lui, ne se lit qu'une fois.
 //
 // Partagé par les tests du suivi et du transfert pour que le contrat de fil
 // (`p_code`, `p_payload`, `updated_at`, codes de statut) n'ait qu'un seul endroit
@@ -30,12 +30,33 @@ export function mockSupabaseServer({ otherCalls = 'throw' }: MockOptions = {}): 
 } {
   const watches = new Map<string, WatchRow>();
   const transfers = new Map<string, string>();
-  const rpc: Record<string, (body: { p_code: string; p_payload?: string }) => Response> = {
+  // Dates de dépôt toutes distinctes, comme le now() de Postgres d'une
+  // transaction à l'autre : le dépôt conditionnel s'y fie.
+  const start = Date.now();
+  let deposits = 0;
+  const stamp = () => new Date(start + ++deposits).toISOString();
+  const json = (value: unknown) => new Response(JSON.stringify(value), { status: 200 });
+  type Body = { p_code: string; p_payload?: string; p_since?: string | null; p_expected?: string | null };
+  const rpc: Record<string, (body: Body) => Response> = {
     publish_watch: (body) => {
-      watches.set(body.p_code, { payload: body.p_payload!, updated_at: new Date().toISOString() });
+      watches.set(body.p_code, { payload: body.p_payload!, updated_at: stamp() });
       return new Response(null, { status: 204 });
     },
-    read_watch: (body) => new Response(JSON.stringify(watches.get(body.p_code) ?? null), { status: 200 }),
+    read_watch: (body) => json(watches.get(body.p_code) ?? null),
+    read_watch_since: (body) => {
+      const row = watches.get(body.p_code);
+      if (!row) return json(null);
+      return json({ updated_at: row.updated_at, payload: body.p_since === row.updated_at ? null : row.payload });
+    },
+    publish_watch_if: (body) => {
+      const row = watches.get(body.p_code);
+      if (body.p_expected == null ? row : row?.updated_at !== body.p_expected) {
+        return json({ status: row ? 'conflict' : 'missing' });
+      }
+      const updated_at = stamp();
+      watches.set(body.p_code, { payload: body.p_payload!, updated_at });
+      return json({ status: 'ok', updated_at });
+    },
     revoke_watch: (body) => {
       watches.delete(body.p_code);
       return new Response(null, { status: 204 });

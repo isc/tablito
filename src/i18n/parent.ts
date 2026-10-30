@@ -178,9 +178,14 @@ interface ParentDashboardStrings {
   watchPasteConfirm: string;
   watchStopFollowing: string;
   // Installer ici l'enfant suivi, sur un appareil qui ne faisait que suivre.
-  installHere: (name: string) => string;
-  installHereHint: (name: string) => string;
-  installHereConfirm: (name: string) => string;
+  playHere: (name: string) => string;
+  playHereHint: (name: string) => string;
+  playHereConfirm: (name: string) => string;
+  pairChoice: (name: string) => string;
+  followOnly: string;
+  pairChoiceHint: string;
+  watchSyncedWith: (count: number) => string;
+  watchStopSharingConfirm: (name: string) => string;
   cancel: string;
   // Profils et sauvegarde
   profilesTitle: string;
@@ -363,9 +368,10 @@ const parentDashboardFr: ParentDashboardStrings = {
     return parts.length > 0 ? parts.join(' · ') : 'Partager ou suivre une progression';
   },
   watchIntro:
-    "Suivez la progression d'un enfant depuis le téléphone d'un parent. Chaque séance met le suivi à jour, et tout est chiffré\u00a0: seuls vos appareils peuvent la lire.",
+    "Suivez la progression d'un enfant depuis le téléphone d'un parent, ou faites-le jouer sur plusieurs appareils. Chaque séance met tout à jour, et tout est chiffré\u00a0: seuls vos appareils peuvent lire sa progression.",
   watchShareHeading: 'Partager depuis cet appareil',
-  watchShareSubtitle: 'Un QR code par enfant, à scanner avec le téléphone du parent.',
+  watchShareSubtitle:
+    "Un QR code par enfant, à scanner avec un autre appareil\u00a0: pour y suivre sa progression, ou pour l'y faire jouer aussi.",
   watchShared: 'Progression partagée',
   watchNotShared: 'Progression non partagée',
   watchShare: (name) => `Partager la progression de ${name}`,
@@ -375,7 +381,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchShareError:
     'Partage impossible pour le moment. Vérifiez la connexion internet, puis réessayez.',
   watchShareHint:
-    "Scannez ce QR code depuis l'appareil du parent\u00a0: la progression y apparaîtra, et se mettra à jour après chaque séance. Le partage reste ouvert jusqu'à ce que vous l'arrêtiez. Pour passer à un nouvel appareil, utilisez plutôt «\u00a0Changer d'appareil\u00a0» (Profils et sauvegarde).",
+    "Scannez ce QR code avec l'autre appareil. Il proposera de suivre la progression, ou de faire jouer l'enfant là aussi\u00a0: ses séances se synchroniseront alors entre les deux appareils. Le partage reste ouvert jusqu'à ce que vous l'arrêtiez.",
   watchQrAlt: 'QR code de suivi à distance',
   watchFollow: 'Suivre un enfant à distance',
   watchFollowSubtitle:
@@ -389,11 +395,18 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchPastePlaceholder: 'https://tablito.app/#watch=…',
   watchPasteConfirm: 'Suivre',
   watchStopFollowing: 'Ne plus suivre',
-  installHere: (name) => `Installer la progression de ${name} ici`,
-  installHereHint: (name) =>
-    `${name} va maintenant pratiquer sur cet appareil\u00a0? Installez sa progression ici pour reprendre là où elle en était.`,
-  installHereConfirm: (name) =>
-    `Installer la progression de ${name} sur cet appareil\u00a0?\n\nLes séances pourront continuer ici, et cet appareil cessera de suivre l'ancien. La progression reste aussi sur l'ancien appareil.`,
+  playHere: (name) => `Faire jouer ${name} ici aussi`,
+  playHereHint: (name) =>
+    `${name} pratique aussi sur cet appareil\u00a0? Ses séances se synchroniseront avec son autre appareil, dans les deux sens.`,
+  playHereConfirm: (name) =>
+    `Faire jouer ${name} sur cet appareil aussi\u00a0?\n\nSes séances pourront se faire ici comme sur son autre appareil\u00a0: la progression se synchronise entre les deux.`,
+  pairChoice: (name) => `Que faire de ${name} sur cet appareil\u00a0?`,
+  followOnly: 'Seulement suivre sa progression',
+  pairChoiceHint: "Vous pourrez changer d'avis plus tard, depuis cette page.",
+  watchSyncedWith: (count) =>
+    `Progression synchronisée avec ${count} autre${count > 1 ? 's' : ''} appareil${count > 1 ? 's' : ''}`,
+  watchStopSharingConfirm: (name) =>
+    `Ne plus partager la progression de ${name}\u00a0?\n\nSes autres appareils ne recevront plus ses séances, et ceux qui suivent sa progression ne la verront plus.`,
   cancel: 'Annuler',
   profilesTitle: 'Profils et sauvegarde',
   profilesRowSubtitle: (names) => `${formatList(names, 'fr')} · sauvegarde`,
@@ -572,9 +585,9 @@ const parentDashboardEn: ParentDashboardStrings = {
     return parts.length > 0 ? parts.join(' · ') : 'Share or follow progress';
   },
   watchIntro:
-    "Follow a child's progress from a parent's phone. Every session updates it, and everything is encrypted: only your devices can read it.",
+    "Follow a child's progress from a parent's phone, or let them play on several devices. Every session updates everything, and it's all encrypted: only your devices can read their progress.",
   watchShareHeading: 'Share from this device',
-  watchShareSubtitle: "One QR code per child, to scan with the parent's phone.",
+  watchShareSubtitle: 'One QR code per child, to scan with another device: to follow their progress there, or to let them play there too.',
   watchShared: 'Progress shared',
   watchNotShared: 'Progress not shared',
   watchShare: (name) => `Share ${name}'s progress`,
@@ -583,7 +596,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchPreparing: 'Setting up sharing…',
   watchShareError: 'Cannot set up sharing right now. Check the internet connection, then try again.',
   watchShareHint:
-    "Scan this QR code from the parent's device: the progress will show up there, and refresh after every session. Sharing stays on until you stop it. To move to a new device, use \"Move to another device\" (Profiles and backup) instead.",
+    'Scan this QR code with the other device. It will offer to follow the progress, or to let the child play there too: sessions then sync between both devices. Sharing stays on until you stop it.',
   watchQrAlt: 'Remote follow QR code',
   watchFollow: 'Follow a child remotely',
   watchFollowSubtitle:
@@ -597,11 +610,17 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchPastePlaceholder: 'https://tablito.app/#watch=…',
   watchPasteConfirm: 'Follow',
   watchStopFollowing: 'Stop following',
-  installHere: (name) => `Install ${name}'s progress here`,
-  installHereHint: (name) =>
-    `Will ${name} practise on this device from now on? Install their progress here to pick up where it left off.`,
-  installHereConfirm: (name) =>
-    `Install ${name}'s progress on this device?\n\nSessions can continue here, and this device will stop following the old one. The progress also stays on the old device.`,
+  playHere: (name) => `Let ${name} play here too`,
+  playHereHint: (name) =>
+    `Does ${name} also practise on this device? Their sessions will sync with their other device, both ways.`,
+  playHereConfirm: (name) =>
+    `Let ${name} play on this device too?\n\nSessions can happen here as well as on their other device: progress syncs between the two.`,
+  pairChoice: (name) => `What should this device do for ${name}?`,
+  followOnly: 'Only follow their progress',
+  pairChoiceHint: 'You can change your mind later, from this page.',
+  watchSyncedWith: (count) => `Progress synced with ${count} other device${count === 1 ? '' : 's'}`,
+  watchStopSharingConfirm: (name) =>
+    `Stop sharing ${name}'s progress?\n\nTheir other devices will no longer receive their sessions, and those following their progress will no longer see it.`,
   cancel: 'Cancel',
   profilesTitle: 'Profiles and backup',
   profilesRowSubtitle: (names) => `${formatList(names, 'en')} · backup`,

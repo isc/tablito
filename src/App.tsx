@@ -56,7 +56,9 @@ import {
   getActiveProfileId,
   createNewProfile,
   exportProfile,
+  generateProfileId,
   importProfile,
+  SESSION_HISTORY_CAP,
 } from './lib/storage';
 import { getFactKey } from './lib/facts';
 import { LAST_SESSION_DATE_FIELD, subjectOf } from './lib/hardestFacts';
@@ -69,11 +71,13 @@ import { applySettlement, applyStreakUpdate, settleStreak } from './lib/streak';
 import { isStandalone, clearInstallSkipped } from './lib/install';
 import { preflightMicPermission } from './lib/micPreflight';
 import { syncLastSession } from './lib/push';
-import { listWatched } from './lib/watchStore';
+import { listWatched, loadWatchCredentials, playsElsewhere } from './lib/watchStore';
+import type { SyncOutcome } from './lib/sync';
 import type { WatchPairing } from './lib/watch';
 import type { ParentPage } from './screens/ParentDashboard';
 import { isIrrVoiceMode, isVoiceMode } from './hooks/useInputMode';
 import { useBackGesture } from './hooks/useBackGesture';
+import { useLatestRef } from './hooks/useLatestRef';
 import { useLang } from './i18n/lang';
 import { useAppStrings } from './i18n/app';
 // Eager : parcours principal (onboarding + boucle quotidienne). Ces
@@ -153,6 +157,21 @@ function initialScreen(profile: UserProfile | null, profileCount: number): Scree
 // navigation parent…), interrompre casserait le travail en cours.
 function isDisposableScreen(screen: Screen): boolean {
   return screen === 'home' || screen === 'welcome' || screen === 'profiles';
+}
+
+// Écrans où la progression peut changer sous les yeux de l'enfant — ce
+// qu'apporte la synchro d'un autre appareil (specs §14.4). Pas en pleine
+// séance ni dans un placement, ni sur le récap, qui affiche la série de la
+// séance qui vient de finir.
+function acceptsRemoteProgress(screen: Screen): boolean {
+  return (
+    screen === 'home' ||
+    screen === 'profiles' ||
+    screen === 'parent' ||
+    screen === 'progress' ||
+    screen === 'badges' ||
+    screen === 'rules'
+  );
 }
 
 // Écran affiché, et page ouverte par-dessus l'accueil de l'espace parent (null
@@ -407,6 +426,107 @@ export default function App({
       window.removeEventListener('focus', refresh);
     };
   }, []);
+
+  // === Synchro d'un enfant qui joue sur plusieurs appareils (specs §14.4) ===
+  // Un profil partagé relit son dépôt au démarrage, au retour au premier plan
+  // et au retour du réseau, et y dépose chaque séance (cf. lib/sync). Ce que la
+  // fusion rapporte attend un écran où l'appliquer (cf. acceptsRemoteProgress).
+  const profileRef = useLatestRef(profile);
+  const incomingSync = useRef<{ id: string; apply: (current: UserProfile) => UserProfile } | null>(null);
+  const [syncTick, setSyncTick] = useState(0);
+  // Synchro en cours. Une demande pendant qu'elle tourne en relance une seule
+  // à la fin, sur le profil d'alors : déverrouiller le téléphone émet à la fois
+  // le retour au premier plan et celui du réseau.
+  const syncRun = useRef<Promise<void> | null>(null);
+  const syncAgain = useRef(false);
+  const lastSyncAt = useRef(0);
+  // Prénom de l'enfant dont le partage a été arrêté depuis un autre appareil.
+  const [syncStopped, setSyncStopped] = useState<string | null>(null);
+  const runSync = useCallback(
+    (snapshot?: UserProfile) => {
+      if (syncRun.current) {
+        syncAgain.current = true;
+        return;
+      }
+      const firstId = getActiveProfileId();
+      if (!firstId || !loadWatchCredentials(firstId)) return;
+      syncRun.current = (async () => {
+        let local = snapshot ?? profileRef.current;
+        do {
+          syncAgain.current = false;
+          lastSyncAt.current = Date.now();
+          const id = getActiveProfileId();
+          if (!id || !local) return;
+          // Import dynamique : la synchro tire le chiffrement et la fusion,
+          // hors du graphe eager du boot pour un chemin qui ne sert qu'aux
+          // profils partagés.
+          const { syncProfile } = await import('./lib/sync');
+          const outcome: SyncOutcome = await syncProfile(id, local);
+          // L'enfant actif a changé entre-temps : ce résultat n'est plus le sien.
+          if (getActiveProfileId() === id) {
+            if (outcome.status === 'merged') {
+              incomingSync.current = { id, apply: outcome.apply };
+              setSyncTick((n) => n + 1);
+            } else if (outcome.status === 'revoked') {
+              setSyncStopped(local.name);
+            }
+          }
+          local = profileRef.current;
+        } while (syncAgain.current);
+      })()
+        .catch(() => {})
+        .finally(() => {
+          syncRun.current = null;
+        });
+    },
+    [profileRef],
+  );
+
+  const syncApplicable = acceptsRemoteProgress(screen);
+  useEffect(() => {
+    const incoming = incomingSync.current;
+    if (!incoming || !syncApplicable) return;
+    incomingSync.current = null;
+    if (getActiveProfileId() !== incoming.id) return;
+    setProfile((prev) => (prev ? incoming.apply(prev) : prev));
+  }, [syncTick, syncApplicable]);
+
+  // Au démarrage et à chaque changement d'enfant actif, puis au retour au
+  // premier plan (pas plus d'une fois toutes les 30 s) ou du réseau.
+  const activeProfileId = profile ? getActiveProfileId() : null;
+  useEffect(() => {
+    runSync();
+  }, [activeProfileId, runSync]);
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastSyncAt.current > 30_000) runSync();
+    };
+    const onOnline = () => runSync();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', onOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [runSync]);
+
+  // Avant une séance, la synchro en cours a deux secondes pour finir. Si elle a
+  // rapporté du neuf (la séance du jour faite sur l'autre appareil, par
+  // exemple), on ne lance rien : l'accueil se met à jour, et l'enfant repart de
+  // là. Sans synchro en cours, la séance part sans attendre un seul tour de
+  // boucle.
+  const whenSynced = useCallback(
+    (start: () => Promise<void>) => async () => {
+      const pending = syncRun.current;
+      if (pending) {
+        const seen = profileRef.current;
+        await Promise.race([pending, new Promise((resolve) => setTimeout(resolve, 2000))]);
+        if (incomingSync.current || profileRef.current !== seen) return;
+      }
+      await start();
+    },
+    [profileRef],
+  );
 
   // Repropose « Qui joue ? » au retour au premier plan après une longue
   // absence (cf. RESHOW_PICKER_AFTER_HIDDEN_MS), s'il y a plusieurs profils.
@@ -1036,6 +1156,7 @@ export default function App({
       const mode: FactKind = first && isWordItem(first) ? first.kind : sessionMode;
       const result: SessionResult = {
         ...partial,
+        id: generateProfileId(),
         kind: mode,
         factsPromoted: sessionPromoted.current.size,
         // Log par-question persisté pour diagnostic (cf. SessionResult.questions).
@@ -1049,8 +1170,7 @@ export default function App({
       const streakUpdate = applyStreakUpdate(profile, today);
       const longestStreak = Math.max(profile.longestStreak, streakUpdate.currentStreak);
 
-      // Append session result to history, capped at 50
-      const sessionHistory = [...profile.sessionHistory, result].slice(-50);
+      const sessionHistory = [...profile.sessionHistory, result].slice(-SESSION_HISTORY_CAP);
 
       const updatedProfile: UserProfile = {
         ...profile,
@@ -1127,24 +1247,22 @@ export default function App({
       // (no-op si non abonné / push non configuré), jamais bloquant pour le recap.
       void syncLastSession();
 
-      // Suivi à distance : rafraîchit l'instantané chiffré que consulte le
-      // parent sur son propre appareil. Même esprit que ci-dessus — no-op si le
-      // profil n'est pas partagé, et un échec (hors-ligne) sera rattrapé par la
-      // séance suivante, donc jamais bloquant pour le recap.
-      // Import dynamique : lib/watch tire le chiffrement (et transfer.ts) —
-      // hors de question de les faire entrer dans le graphe eager du boot pour
-      // un chemin qui ne sert qu'aux profils partagés.
-      const activeId = getActiveProfileId();
-      if (activeId) {
-        void import('./lib/watch').then((m) => m.publishWatchSnapshot(activeId, updatedProfile));
-      }
+      // Synchro (specs §14.4) : dépose la séance pour les autres appareils de
+      // l'enfant et pour ceux qui le suivent, après l'avoir fusionnée avec ce
+      // qu'ils ont déposé. No-op si le profil n'est pas partagé ; hors ligne,
+      // la synchro suivante rattrape, donc jamais bloquant pour le récap.
+      runSync(updatedProfile);
     },
-    [profile, divisionUnlocked, remainderUnlocked, sessionMode, sessionItems],
+    [profile, divisionUnlocked, remainderUnlocked, sessionMode, sessionItems, runSync],
   );
 
   // Séance arrêtée en route (specs §3.2) : les réponses sont déjà dans le
   // profil, et l'accueil recompose la séance du jour à partir de l'état à jour.
-  const handleSessionQuit = useCallback(() => setScreen('home'), []);
+  // Les réponses déjà données partent aussi aux autres appareils.
+  const handleSessionQuit = useCallback(() => {
+    setScreen('home');
+    runSync();
+  }, [runSync]);
 
   const exitRecap = useCallback((next: Screen) => {
     setSessionResult(null);
@@ -1214,19 +1332,26 @@ export default function App({
     setProfile(imported);
     setScreen(profileHome(imported));
     setTransferNotice('imported');
-  }, []);
+    // Profil synchronisé (« Faire jouer ici aussi ») : premier dépôt tout de
+    // suite, qui inscrit cet appareil parmi ceux de l'enfant.
+    runSync(imported);
+  }, [runSync]);
 
   const handleDeleteProfile = useCallback(() => {
     if (!profile) return;
-    const ok = window.confirm(appStrings.confirmDeleteProfile(profile.name));
-    if (!ok) return;
-    // Le profil part d'ici, donc son suivi à distance n'a plus d'objet : on
-    // révoque le dépôt AVANT de perdre l'id qui porte ses identifiants, sinon un
-    // instantané relisible survivrait à l'enfant (purgé au mieux après 6 mois).
     const deletedId = getActiveProfileId();
-    if (deletedId) {
-      void import('./lib/watch').then((m) => m.stopWatch(deletedId));
-    }
+    // L'enfant joue aussi sur un autre appareil : on ne le retire que d'ici.
+    const ok = window.confirm(
+      deletedId && playsElsewhere(deletedId, profile)
+        ? appStrings.confirmRemoveSyncedProfile(profile.name)
+        : appStrings.confirmDeleteProfile(profile.name),
+    );
+    if (!ok) return;
+    // Le profil part d'ici. S'il joue encore ailleurs, on s'en retire et le
+    // dépôt reste ; sinon on le révoque AVANT de perdre l'id qui porte ses
+    // identifiants, faute de quoi un instantané relisible survivrait à
+    // l'enfant (purgé au mieux après 6 mois).
+    if (deletedId) void import('./lib/sync').then((m) => m.leaveSync(deletedId, profile));
     deleteActiveProfile();
     // Même décision qu'au boot : plusieurs enfants → « Qui joue ? » ; un seul
     // → son accueil directement ; aucun → onboarding complet.
@@ -1250,6 +1375,14 @@ export default function App({
             onClick={() => setTransferNotice(null)}
             aria-label={appStrings.dismiss}
           >
+            ✕
+          </button>
+        </div>
+      )}
+      {syncStopped && (
+        <div className="app-boot-banner app-boot-banner--error" role="alert">
+          <span>{appStrings.syncStopped(syncStopped)}</span>
+          <button className="app-boot-banner-close" onClick={() => setSyncStopped(null)} aria-label={appStrings.dismiss}>
             ✕
           </button>
         </div>
@@ -1295,12 +1428,12 @@ export default function App({
           conjAvailable={conjAvailable}
           hasConjSessionAvailable={hasConjSessionAvailable}
           conjVisible={conjVisible}
-          onStartConj={handleStartConj}
+          onStartConj={whenSynced(handleStartConj)}
           irrAvailable={irrAvailable}
           hasIrrSessionAvailable={hasIrrSessionAvailable}
           irrVisible={irrVisible}
-          onStartIrr={handleStartIrr}
-          onStart={handleStart}
+          onStartIrr={whenSynced(handleStartIrr)}
+          onStart={whenSynced(handleStart)}
           onShowProgress={() => {
             // Post-déblocage, les images des niveaux passés sont complètes :
             // on ouvre directement sur celle du niveau actif, à dévoiler.

@@ -11,12 +11,14 @@ import {
 import { useTTS } from '../hooks/useTTS';
 import { useWelcomeStrings } from '../i18n/onboarding';
 import { activeMsSince, NOT_STARTED, startQuestion } from '../lib/questionClock';
+import { parseWatchLink } from '../lib/watchStore';
 
 export type { PlacementResult };
 
-// États du scan de QR de transfert (caméra in-app). 'on' filme, 'fetching'
+// États du scan de QR (caméra in-app) : celui du transfert, ou celui du
+// partage pour faire jouer l'enfant ici aussi. 'on' filme, 'fetching'
 // récupère/déchiffre après détection, les erreurs ramènent aux options.
-type ScanState = 'off' | 'on' | 'fetching' | 'cameraError' | 'transferError';
+type ScanState = 'off' | 'on' | 'fetching' | 'cameraError' | 'transferError' | 'watchError';
 
 interface WelcomeScreenProps {
   onComplete: (name: string, placementResults: PlacementResult[]) => void;
@@ -52,10 +54,24 @@ export default function WelcomeScreen({
 
   // Scan du QR de transfert affiché par l'ancien appareil. On ignore les QR
   // étrangers, et on ne consomme le code — lecture unique côté serveur —
-  // qu'après avoir reconnu un lien de transfert.
+  // qu'après avoir reconnu un lien de transfert. Le QR du partage (suivi à
+  // distance) est accepté aussi : scanné d'ici, il fait jouer l'enfant sur cet
+  // appareil, synchronisé avec l'autre (specs §14.4).
   const scanVideoRef = useQrScan({
     active: scan === 'on',
     onCode: async (data) => {
+      const watch = parseWatchLink(data);
+      if (watch) {
+        setScan('fetching');
+        const [{ fetchWatched }, { joinAsPlayer }] = await Promise.all([
+          import('../lib/watch'),
+          import('../lib/sync'),
+        ]);
+        const snapshot = await fetchWatched(watch);
+        if (typeof snapshot === 'object') onTransferImported(joinAsPlayer(watch, snapshot.profile));
+        else setScan('watchError');
+        return true;
+      }
       const transfer = await import('../lib/transfer');
       if (!transfer.parseTransferLink(data)) return false;
       setScan('fetching');
@@ -318,6 +334,7 @@ export default function WelcomeScreen({
               {scan === 'transferError' && (
                 <div className="welcome-import-error">{t.scanTransferError}</div>
               )}
+              {scan === 'watchError' && <div className="welcome-import-error">{t.scanWatchError}</div>}
               <button className="btn btn--ink welcome-btn" onClick={() => setScan('on')}>
                 {t.scanQr}
               </button>

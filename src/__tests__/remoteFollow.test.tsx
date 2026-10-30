@@ -2,16 +2,18 @@ import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../App';
-import { addProfile, createNewProfile, listProfiles, loadProfile } from '../lib/storage';
+import { addProfile, createNewProfile, getActiveProfileId, listProfiles, loadProfile } from '../lib/storage';
 import { createTransfer } from '../lib/transfer';
-import { startWatch, addWatched, type WatchPairing } from '../lib/watch';
-import { listWatched } from '../lib/watchStore';
+import { startWatch, addWatched, fetchWatched, type WatchPairing } from '../lib/watch';
+import { listWatched, loadWatchCredentials } from '../lib/watchStore';
 import { childChip, childChips, sessionsShown } from './helpers/dom';
 import { mockSupabaseServer, mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
 // Préchauffe les chunks lazy (espace parent, et sa page Nouveautés) pour que
 // leur React.lazy() se résolve en synchrone dans les tests qui les ouvrent.
 import '../screens/ParentDashboard';
 import '../screens/ChangelogScreen';
+// Idem pour la synchro, chargée au clic sur « Faire jouer … ici aussi ».
+import '../lib/sync';
 
 // Le pwa-register, espionné : il dit si une mise à jour de l'app peut recharger
 // la page (cf. setBusy).
@@ -185,6 +187,34 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
     expect(sessionsShown()).toBe('21');
   });
 
+  // Un seul QR côté enfant : c'est l'appareil qui scanne qui dit ce qu'il en
+  // fait (specs §14.4).
+  it('demande, juste après l’appairage, de suivre ou de faire jouer ici', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    const { paired } = await seedWatcherOnly('Nino', 21);
+    const confirm = vi.spyOn(window, 'confirm');
+
+    await renderApp({ watchPairing: paired });
+    expect(document.body.textContent).toContain('Que faire de Nino sur cet appareil');
+    await act(async () => {
+      fireEvent.click(findButton(/^Seulement suivre sa progression$/)!);
+    });
+    expect(document.body.textContent).not.toContain('Que faire de Nino');
+    expect(listWatched()).toHaveLength(1);
+
+    // Le choix reste possible ensuite, avec une confirmation.
+    cleanup();
+    await renderApp({ watchPairing: paired });
+    await act(async () => {
+      fireEvent.click(findButton(/^Faire jouer Nino ici aussi$/)!);
+    });
+    await flush();
+    // Le choix fait juste après l'appairage vaut confirmation.
+    expect(confirm).not.toHaveBeenCalled();
+    expect(listProfiles().map((p) => p.name)).toEqual(['Nino']);
+    expect(document.querySelector('.home-parent-btn')).not.toBeNull();
+  });
+
   it('reste sur l’espace parent si l’appairage a échoué, pour pouvoir réessayer', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await seedWatcherOnly();
@@ -244,21 +274,28 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
 
   // Vécu en octobre 2026 : pour changer de téléphone, une utilisatrice a
   // scanné le QR du suivi au lieu de celui du transfert. Le nouveau téléphone
-  // suivait l'enfant, sans rien pour reprendre ses séances.
-  it('installe ici la progression de l’enfant suivi, et cesse de le suivre', async () => {
-    mockWatchServer({ otherCalls: 'ignore' });
-    await seedWatcherOnly('Zoé', 9);
+  // suivait l'enfant, sans rien pour reprendre ses séances. Désormais l'enfant
+  // y joue, synchronisé avec son autre appareil (specs §14.4).
+  it('fait jouer ici l’enfant suivi, synchronisé, et cesse de le suivre', async () => {
+    const rows = mockWatchServer({ otherCalls: 'ignore' });
+    const { paired } = await seedWatcherOnly('Zoé', 9);
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     await renderApp();
     await act(async () => {
-      fireEvent.click(findButton(/^Installer la progression de Zoé ici$/)!);
+      fireEvent.click(findButton(/^Faire jouer Zoé ici aussi$/)!);
     });
     await flush();
 
     expect(listProfiles().map((p) => p.name)).toEqual(['Zoé']);
     expect(loadProfile()?.totalSessions).toBe(9);
     expect(listWatched()).toHaveLength(0);
+    // Synchronisé : mêmes identifiants que le suivi, et l'appareil s'est inscrit
+    // parmi ceux de l'enfant par un premier dépôt.
+    expect(loadWatchCredentials(getActiveProfileId()!)?.code).toBe(paired.entry.code);
+    const deposited = await fetchWatched(paired.entry);
+    expect(typeof deposited === 'object' && Object.keys(deposited.profile.players ?? {})).toHaveLength(1);
+    expect(rows.size).toBe(1);
     // L'accueil de l'enfant, prêt pour une séance, et la même confirmation
     // qu'après un transfert.
     expect(document.querySelector('.parent-dashboard')).toBeNull();
@@ -273,7 +310,7 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
 
     await renderApp();
     await act(async () => {
-      fireEvent.click(findButton(/^Installer la progression de Zoé ici$/)!);
+      fireEvent.click(findButton(/^Faire jouer Zoé ici aussi$/)!);
     });
 
     expect(listProfiles()).toHaveLength(0);

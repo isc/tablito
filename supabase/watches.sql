@@ -115,3 +115,82 @@ $$;
 
 revoke all on function public.revoke_watch(text) from public;
 grant execute on function public.revoke_watch(text) to anon, authenticated;
+
+-- === Synchro : un enfant qui joue sur plusieurs appareils (specs §14.4) ===
+-- Le même dépôt, le même code et la même clé que le suivi : chaque appareil
+-- qui fait jouer l'enfant relit le dépôt, le fusionne avec sa copie
+-- (src/lib/syncMerge.ts) et redépose le résultat. Les appareils qui suivent
+-- lisent toujours un profil complet, donc rien ne change pour eux.
+--
+-- Conséquence sur la note d'intégrité plus haut : qui détient le lien peut
+-- désormais faire entrer des données dans le vrai profil de l'enfant, et la
+-- fusion est cumulative (une réponse ou un badge déposé ne s'efface plus). Le
+-- modèle de confiance est celui d'un QR montré en famille.
+
+-- Relecture conditionnelle : le contenu seulement s'il a changé depuis
+-- `p_since` (le updated_at du dernier dépôt connu de l'appareil), la date
+-- toujours. Un appareil qui relit à chaque retour au premier plan ne
+-- retélécharge pas un profil (jusqu'à ~110 Ko chiffré) qu'il a déjà. NULL si
+-- le code est inconnu (partage arrêté).
+create or replace function public.read_watch_since(p_code text, p_since timestamptz)
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+           'updated_at', updated_at,
+           'payload', case when p_since is null or updated_at <> p_since then payload end)
+    from public.watches
+   where code = p_code;
+$$;
+
+revoke all on function public.read_watch_since(text, timestamptz) from public;
+grant execute on function public.read_watch_since(text, timestamptz) to anon, authenticated;
+
+-- Dépôt conditionnel : n'écrit que si la ligne n'a pas bougé depuis la
+-- relecture de l'appareil (`p_expected` = son updated_at d'alors ; NULL = la
+-- ligne ne doit pas encore exister). Sinon l'appareil relit, refusionne et
+-- réessaie — sans quoi deux appareils qui déposent coup sur coup
+-- s'écraseraient, et le second n'apprendrait la séance du premier qu'au dépôt
+-- suivant de celui-ci. Renvoie {status: 'ok', updated_at} | {status:
+-- 'conflict'} | {status: 'missing'} (partage arrêté entre-temps : on ne le
+-- recrée pas).
+create or replace function public.publish_watch_if(p_code text, p_payload text, p_expected timestamptz)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_updated timestamptz;
+begin
+  if length(p_code) < 16 or length(p_code) > 64 then
+    raise exception 'invalid code';
+  end if;
+  if length(p_payload) < 1 or length(p_payload) > 1000000 then
+    raise exception 'invalid payload';
+  end if;
+  delete from public.watches where updated_at < now() - interval '180 days';
+  if p_expected is null then
+    insert into public.watches (code, payload) values (p_code, p_payload)
+    on conflict (code) do nothing
+    returning updated_at into v_updated;
+  else
+    update public.watches
+       set payload = p_payload, updated_at = now()
+     where code = p_code and updated_at = p_expected
+    returning updated_at into v_updated;
+  end if;
+  if v_updated is not null then
+    return jsonb_build_object('status', 'ok', 'updated_at', v_updated);
+  end if;
+  if exists (select 1 from public.watches where code = p_code) then
+    return jsonb_build_object('status', 'conflict');
+  end if;
+  return jsonb_build_object('status', 'missing');
+end;
+$$;
+
+revoke all on function public.publish_watch_if(text, text, timestamptz) from public;
+grant execute on function public.publish_watch_if(text, text, timestamptz) to anon, authenticated;
