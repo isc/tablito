@@ -47,7 +47,9 @@ App d'apprentissage des tables de multiplication (PWA, sans backend).
   jour juste après un déploiement figeait les anciennes copies. Un nouveau SW fait `skipWaiting()` + `clients.claim()`
   immédiatement (robuste même si le page-side est dégradé) ; c'est le
   **reload** qui est différé par `pwa-register.js`/`setBusy` tant que
-  `App` n'est pas sur un écran "safe" (`home` uniquement). Détection
+  `App` n'est pas sur un écran "safe" (accueil, bienvenue, « Qui joue ? »,
+  et l'accueil de l'espace parent d'un appareil qui ne fait que suivre) ou
+  qu'une saisie le retient (avis en cours : `setBusy(true, 'feedback')`). Détection
   des updates : fetch de `/sw.js` au boot (`updateViaCache: 'none'`)
   + `reg.update()` à chaque retour en foreground (cooldown 1 min).
   Évite tout reload mid-séance. **Caches séparés par cycle de vie** :

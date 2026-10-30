@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import { submitFeedback, buildContext, feedbackEnabled, type FeedbackSource } from '../lib/feedback';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
@@ -25,6 +26,13 @@ export default function FeedbackModal({ profile, source, onClose }: FeedbackModa
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const t = useFeedbackModalStrings();
+
+  // Une mise à jour de l'app ne recharge pas la page sous un avis en cours de
+  // saisie : l'accueil parent d'un appareil qui ne fait que suivre l'autorise.
+  useEffect(() => {
+    setSwBusy(true, 'feedback');
+    return () => setSwBusy(false, 'feedback');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
