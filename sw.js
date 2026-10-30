@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261030211834"
+const VERSION = "20261030220455"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -208,6 +208,8 @@ const ASSETS = [
   "/src/lib/strategies.js",
   "/src/lib/streak.js",
   "/src/lib/supabase.js",
+  "/src/lib/sync.js",
+  "/src/lib/syncMerge.js",
   "/src/lib/transfer.js",
   "/src/lib/utils.js",
   "/src/lib/version.js",
