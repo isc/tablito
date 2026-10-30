@@ -2,11 +2,12 @@ import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import App from '../App';
-import { addProfile, createNewProfile, listProfiles } from '../lib/storage';
+import { addProfile, createNewProfile, listProfiles, loadProfile } from '../lib/storage';
+import { createTransfer } from '../lib/transfer';
 import { startWatch, addWatched, type WatchPairing } from '../lib/watch';
 import { listWatched } from '../lib/watchStore';
 import { childChip, childChips, sessionsShown } from './helpers/dom';
-import { mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
+import { mockSupabaseServer, mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
 // Préchauffe les chunks lazy (espace parent, et sa page Nouveautés) pour que
 // leur React.lazy() se résolve en synchrone dans les tests qui les ouvrent.
 import '../screens/ParentDashboard';
@@ -20,11 +21,17 @@ import '../screens/ChangelogScreen';
 // placement), qui n'a aucun sens pour lui.
 // ---------------------------------------------------------------------------
 
-// Joue le côté enfant : un profil pratiquant, partagé, et le lien à scanner.
-async function shareChildProgress(name: string, totalSessions = 9) {
+// Un enfant qui pratique déjà, sur son appareil.
+function practisingChild(name: string, totalSessions: number) {
   const profile = createNewProfile(name);
   profile.hasSeenRulesIntro = true;
   profile.totalSessions = totalSessions;
+  return profile;
+}
+
+// Joue le côté enfant : un profil pratiquant, partagé, et le lien à scanner.
+async function shareChildProgress(name: string, totalSessions = 9) {
+  const profile = practisingChild(name, totalSessions);
   const id = addProfile(profile);
   const link = (await startWatch(id, profile))!;
   return { link, id, profile };
@@ -199,7 +206,90 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
     });
     expect(findButton(/^Scanner un QR code$/)).not.toBeNull();
   });
+
+  // Vécu en octobre 2026 : pour changer de téléphone, une utilisatrice a
+  // scanné le QR du suivi au lieu de celui du transfert. Le nouveau téléphone
+  // suivait l'enfant, sans rien pour reprendre ses séances.
+  it('installe ici la progression de l’enfant suivi, et cesse de le suivre', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await seedWatcherOnly('Zoé', 9);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    await renderApp();
+    await act(async () => {
+      fireEvent.click(findButton(/^Installer la progression de Zoé ici$/)!);
+    });
+    await flush();
+
+    expect(listProfiles().map((p) => p.name)).toEqual(['Zoé']);
+    expect(loadProfile()?.totalSessions).toBe(9);
+    expect(listWatched()).toHaveLength(0);
+    // L'accueil de l'enfant, prêt pour une séance, et la même confirmation
+    // qu'après un transfert.
+    expect(document.querySelector('.parent-dashboard')).toBeNull();
+    expect(document.querySelector('.home-parent-btn')).not.toBeNull();
+    expect(document.querySelector('.app-boot-banner--success')).not.toBeNull();
+  });
+
+  it('n’installe rien si le parent annule la confirmation', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await seedWatcherOnly('Zoé', 9);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    await renderApp();
+    await act(async () => {
+      fireEvent.click(findButton(/^Installer la progression de Zoé ici$/)!);
+    });
+
+    expect(listProfiles()).toHaveLength(0);
+    expect(listWatched()).toHaveLength(1);
+    expect(document.querySelector('.parent-dashboard')).not.toBeNull();
+  });
+
+  it('le scanner du suivi importe un QR de transfert au lieu de l’ignorer', async () => {
+    mockSupabaseServer({ otherCalls: 'ignore' });
+    const link = (await createTransfer(practisingChild('Lina', 7)))!;
+    await seedWatcherOnly('Lina', 7);
+
+    await renderApp();
+    await pasteInWatchScanner(link);
+
+    expect(listProfiles().map((p) => p.name)).toEqual(['Lina']);
+    expect(loadProfile()?.totalSessions).toBe(7);
+    expect(document.querySelector('.home-parent-btn')).not.toBeNull();
+    expect(document.querySelector('.app-boot-banner--success')).not.toBeNull();
+  });
+
+  it('dit pourquoi un QR de transfert déjà servi n’a rien installé', async () => {
+    const { transfers } = mockSupabaseServer({ otherCalls: 'ignore' });
+    const link = (await createTransfer(practisingChild('Lina', 7)))!;
+    await seedWatcherOnly('Lina', 7);
+    transfers.clear(); // consommé ailleurs, ou expiré
+
+    await renderApp();
+    await pasteInWatchScanner(link);
+
+    expect(listProfiles()).toHaveLength(0);
+    expect(document.querySelector('.parent-transfer-status--error')?.textContent).toMatch(
+      /Le transfert n'a pas abouti/,
+    );
+  });
 });
+
+// Le scanner de « Suivre un enfant à distance », par son repli sans caméra.
+async function pasteInWatchScanner(link: string) {
+  await act(async () => {
+    fireEvent.click(findButton(/^Suivi à distance/)!);
+  });
+  await act(async () => {
+    fireEvent.click(findButton(/^Coller un lien$/)!);
+  });
+  fireEvent.change(document.querySelector('.parent-import-textarea')!, { target: { value: link } });
+  await act(async () => {
+    fireEvent.click(findButton(/^Suivre$/)!);
+  });
+  await flush();
+}
 
 // Crée un profil via le vrai parcours Welcome (prénom + « Passer le test »),
 // puis ferme l'intro des règles. Même helper que multiProfile.test.tsx.

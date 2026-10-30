@@ -13,6 +13,7 @@ import {
   importTransferFromLink,
   parseTransferLink,
 } from '../lib/transfer';
+import { mockSupabaseServer } from './helpers/watchServer';
 
 // jsdom expose parfois un `crypto` sans SubtleCrypto : on garantit l'API
 // WebCrypto complète de Node (même implémentation que les navigateurs).
@@ -62,23 +63,7 @@ describe('packProfile / unpackProfile', () => {
 
 describe('createTransfer + importTransferFromUrl', () => {
   it('transfère un profil de bout en bout via les RPC', async () => {
-    const store = new Map<string, string>();
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init?: RequestInit) => {
-        const body = JSON.parse(String(init?.body));
-        if (String(url).endsWith('/rpc/create_transfer')) {
-          store.set(body.p_code, body.p_payload);
-          return new Response(null, { status: 204 });
-        }
-        if (String(url).endsWith('/rpc/read_transfer')) {
-          const payload = store.get(body.p_code) ?? null;
-          store.delete(body.p_code); // lecture unique, comme côté SQL
-          return new Response(JSON.stringify(payload), { status: 200 });
-        }
-        throw new Error(`unexpected fetch ${url}`);
-      }),
-    );
+    mockSupabaseServer();
 
     const link = await createTransfer(makeProfile('Nino'));
     expect(link).toMatch(/#transfer=[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]+$/);

@@ -177,6 +177,10 @@ interface ParentDashboardStrings {
   watchPastePlaceholder: string;
   watchPasteConfirm: string;
   watchStopFollowing: string;
+  // Installer ici l'enfant suivi, sur un appareil qui ne faisait que suivre.
+  installHere: (name: string) => string;
+  installHereHint: (name: string) => string;
+  installHereConfirm: (name: string) => string;
   cancel: string;
   // Profils et sauvegarde
   profilesTitle: string;
@@ -371,7 +375,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchShareError:
     'Partage impossible pour le moment. Vérifiez la connexion internet, puis réessayez.',
   watchShareHint:
-    "Scannez ce QR code depuis l'appareil du parent\u00a0: la progression y apparaîtra, et se mettra à jour après chaque séance. Le partage reste ouvert jusqu'à ce que vous l'arrêtiez.",
+    "Scannez ce QR code depuis l'appareil du parent\u00a0: la progression y apparaîtra, et se mettra à jour après chaque séance. Le partage reste ouvert jusqu'à ce que vous l'arrêtiez. Pour passer à un nouvel appareil, utilisez plutôt «\u00a0Changer d'appareil\u00a0» (Profils et sauvegarde).",
   watchQrAlt: 'QR code de suivi à distance',
   watchFollow: 'Suivre un enfant à distance',
   watchFollowSubtitle:
@@ -385,6 +389,11 @@ const parentDashboardFr: ParentDashboardStrings = {
   watchPastePlaceholder: 'https://tablito.app/#watch=…',
   watchPasteConfirm: 'Suivre',
   watchStopFollowing: 'Ne plus suivre',
+  installHere: (name) => `Installer la progression de ${name} ici`,
+  installHereHint: (name) =>
+    `${name} va maintenant pratiquer sur cet appareil\u00a0? Installez sa progression ici pour reprendre là où elle en était.`,
+  installHereConfirm: (name) =>
+    `Installer la progression de ${name} sur cet appareil\u00a0?\n\nLes séances pourront continuer ici, et cet appareil cessera de suivre l'ancien. La progression reste aussi sur l'ancien appareil.`,
   cancel: 'Annuler',
   profilesTitle: 'Profils et sauvegarde',
   profilesRowSubtitle: (names) => `${formatList(names, 'fr')} · sauvegarde`,
@@ -574,7 +583,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchPreparing: 'Setting up sharing…',
   watchShareError: 'Cannot set up sharing right now. Check the internet connection, then try again.',
   watchShareHint:
-    "Scan this QR code from the parent's device: the progress will show up there, and refresh after every session. Sharing stays on until you stop it.",
+    "Scan this QR code from the parent's device: the progress will show up there, and refresh after every session. Sharing stays on until you stop it. To move to a new device, use \"Move to another device\" (Profiles and backup) instead.",
   watchQrAlt: 'Remote follow QR code',
   watchFollow: 'Follow a child remotely',
   watchFollowSubtitle:
@@ -588,6 +597,11 @@ const parentDashboardEn: ParentDashboardStrings = {
   watchPastePlaceholder: 'https://tablito.app/#watch=…',
   watchPasteConfirm: 'Follow',
   watchStopFollowing: 'Stop following',
+  installHere: (name) => `Install ${name}'s progress here`,
+  installHereHint: (name) =>
+    `Will ${name} practise on this device from now on? Install their progress here to pick up where it left off.`,
+  installHereConfirm: (name) =>
+    `Install ${name}'s progress on this device?\n\nSessions can continue here, and this device will stop following the old one. The progress also stays on the old device.`,
   cancel: 'Cancel',
   profilesTitle: 'Profiles and backup',
   profilesRowSubtitle: (names) => `${formatList(names, 'en')} · backup`,

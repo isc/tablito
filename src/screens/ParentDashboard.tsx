@@ -14,7 +14,7 @@ import type { Subject } from '../lib/hardestFacts';
 import { APP_VERSION } from '../lib/version';
 import { isVoiceDebugOn, setVoiceDebug } from '../lib/voiceDebug';
 import { setPushPref } from '../lib/push';
-import { getActiveProfileId, listProfiles, loadProfileById } from '../lib/storage';
+import { getActiveProfileId, installProfile, listProfiles, loadProfileById } from '../lib/storage';
 import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
 import { listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 
@@ -63,6 +63,8 @@ interface ParentDashboardProps {
   onOpenPage: (page: ParentPage | null) => void;
   // Réglage du profil actif depuis une page de matière (« vus en classe »).
   onUpdateProfile: (update: (profile: UserProfile) => UserProfile) => void;
+  // Une progression vient d'être installée, et rendue active, sur cet appareil.
+  onProfileInstalled: (profile: UserProfile) => void;
 }
 
 // État de la relecture du suivi sélectionné ('loading' + les trois issues de
@@ -91,6 +93,7 @@ export default function ParentDashboard({
   page,
   onOpenPage,
   onUpdateProfile,
+  onProfileInstalled,
 }: ParentDashboardProps) {
   const t = useParentDashboardStrings();
 
@@ -229,6 +232,16 @@ export default function ParentDashboard({
     if (list.length === 0) void setPushPref('weekly', false);
   };
 
+  // L'appareil qui suit devient celui de l'enfant (QR du suivi scanné à la
+  // place de celui du transfert) : l'instantané affiché est le profil complet,
+  // on l'installe et on cesse de suivre l'ancien appareil, qui garde sa copie.
+  const installHere = (code: string, installed: UserProfile) => {
+    if (!window.confirm(t.installHereConfirm(installed.name))) return;
+    installProfile(installed);
+    handleStopWatching(code);
+    onProfileInstalled(installed);
+  };
+
   // Page d'une matière, sur le profil affiché. Une page ne s'ouvre que depuis
   // une carte de l'accueil, qui n'existe qu'avec un profil affiché ; la clé
   // repart de zéro (niveau actif, bascules) si la source changeait dessous.
@@ -278,7 +291,12 @@ export default function ParentDashboard({
       <div className="parent-dashboard parent-dashboard--settings">
         <Header onBack={onBack} backLabel={t.backToOverview} eyebrow={t.settingsEyebrow} title={title[page]} />
         {page === 'watch' && (
-          <ParentWatchPage watched={watched} onPaired={handlePaired} onStopWatching={handleStopWatching} />
+          <ParentWatchPage
+            watched={watched}
+            onPaired={handlePaired}
+            onStopWatching={handleStopWatching}
+            onProfileInstalled={onProfileInstalled}
+          />
         )}
         {page === 'profiles' && profile && (
           <ParentProfilesPage
@@ -376,8 +394,22 @@ export default function ParentDashboard({
         <ParentSettingsList hasLocalProfile={profile !== null} watched={watched} onOpenPage={onOpenPage} />
       </div>
 
-      {/* Appareil qui ne fait que suivre : la porte de sortie vers un profil
-          local, à la place de la ligne « Profils et sauvegarde ». */}
+      {/* Appareil qui ne fait que suivre : les portes de sortie vers un profil
+          local, à la place de la ligne « Profils et sauvegarde ». D'abord celle
+          de l'enfant affiché, s'il pratique désormais ici. */}
+      {!profile && watchedEntry && remoteSnapshot && (
+        <div className="parent-section">
+          <p className="parent-section-subtitle">{t.installHereHint(shownName)}</p>
+          <div className="parent-actions">
+            <button
+              className="parent-action-btn"
+              onClick={() => installHere(watchedEntry.code, remoteSnapshot.profile)}
+            >
+              {t.installHere(shownName)}
+            </button>
+          </div>
+        </div>
+      )}
       {!profile && (
         <div className="parent-section">
           <div className="parent-actions">

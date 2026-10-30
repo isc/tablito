@@ -1,8 +1,9 @@
-// Serveur `watches` en mémoire pour les tests du suivi à distance, avec la
-// sémantique exacte des RPC de supabase/watches.sql : dépôt idempotent par code,
-// lecture NON consommante (à l'inverse de read_transfer), révocation destructive.
+// Serveurs `watches` et `transfers` en mémoire, avec la sémantique exacte des
+// RPC de supabase/watches.sql et supabase/transfers.sql : un suivi se dépose de
+// façon idempotente par code, se relit sans être consommé et se révoque ; un
+// transfert, lui, ne se lit qu'une fois.
 //
-// Partagé par watch.test.ts et remoteFollow.test.tsx pour que le contrat de fil
+// Partagé par les tests du suivi et du transfert pour que le contrat de fil
 // (`p_code`, `p_payload`, `updated_at`, codes de statut) n'ait qu'un seul endroit
 // à corriger le jour où le SQL bouge. Ce fichier n'est pas un `*.test.ts` : il
 // n'est donc pas collecté comme suite par la config vitest par défaut.
@@ -15,39 +16,55 @@ export interface WatchRow {
 }
 
 interface MockOptions {
-  // Que faire des appels hors `watches`. 'throw' pour les tests unitaires (tout
-  // appel inattendu est un bug du test) ; 'ignore' pour les tests d'intégration,
-  // où l'app émet aussi des appels push / feedback qui ne sont pas le sujet.
+  // Que faire des appels hors de ces tables. 'throw' pour les tests unitaires
+  // (tout appel inattendu est un bug du test) ; 'ignore' pour les tests
+  // d'intégration, où l'app émet aussi des appels push / feedback qui ne sont
+  // pas le sujet.
   otherCalls?: 'throw' | 'ignore';
 }
 
-/** Stub `fetch` et renvoie la table, pour inspection dans les assertions. */
-export function mockWatchServer({ otherCalls = 'throw' }: MockOptions = {}): Map<string, WatchRow> {
-  const rows = new Map<string, WatchRow>();
+/** Stub `fetch` et renvoie les deux tables, pour inspection dans les assertions. */
+export function mockSupabaseServer({ otherCalls = 'throw' }: MockOptions = {}): {
+  watches: Map<string, WatchRow>;
+  transfers: Map<string, string>;
+} {
+  const watches = new Map<string, WatchRow>();
+  const transfers = new Map<string, string>();
+  const rpc: Record<string, (body: { p_code: string; p_payload?: string }) => Response> = {
+    publish_watch: (body) => {
+      watches.set(body.p_code, { payload: body.p_payload!, updated_at: new Date().toISOString() });
+      return new Response(null, { status: 204 });
+    },
+    read_watch: (body) => new Response(JSON.stringify(watches.get(body.p_code) ?? null), { status: 200 }),
+    revoke_watch: (body) => {
+      watches.delete(body.p_code);
+      return new Response(null, { status: 204 });
+    },
+    create_transfer: (body) => {
+      transfers.set(body.p_code, body.p_payload!);
+      return new Response(null, { status: 204 });
+    },
+    read_transfer: (body) => {
+      const payload = transfers.get(body.p_code) ?? null;
+      transfers.delete(body.p_code); // lecture unique
+      return new Response(JSON.stringify(payload), { status: 200 });
+    },
+  };
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
-      const name = String(url).split('/rpc/')[1];
-      if (name === 'publish_watch' || name === 'read_watch' || name === 'revoke_watch') {
-        const body = JSON.parse(String(init?.body));
-        if (name === 'publish_watch') {
-          rows.set(body.p_code, {
-            payload: body.p_payload,
-            updated_at: new Date().toISOString(),
-          });
-          return new Response(null, { status: 204 });
-        }
-        if (name === 'read_watch') {
-          return new Response(JSON.stringify(rows.get(body.p_code) ?? null), { status: 200 });
-        }
-        rows.delete(body.p_code);
-        return new Response(null, { status: 204 });
-      }
+      const handler = rpc[String(url).split('/rpc/')[1]];
+      if (handler) return handler(JSON.parse(String(init?.body)));
       if (otherCalls === 'ignore') return new Response(null, { status: 204 });
       throw new Error(`unexpected fetch ${url}`);
     }),
   );
-  return rows;
+  return { watches, transfers };
+}
+
+/** Le serveur, vu du suivi seul : sa table `watches`. */
+export function mockWatchServer(options: MockOptions = {}): Map<string, WatchRow> {
+  return mockSupabaseServer(options).watches;
 }
 
 /** Config Supabase minimale attendue par lib/watch (à appeler en beforeEach). */

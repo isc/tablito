@@ -8,10 +8,12 @@
 //  - SUIVEUR (appareil du parent) : détient code + clé, scannés une fois à
 //    l'appairage, relit le blob et le déchiffre localement.
 //
-// Le profil suivi n'est JAMAIS installé sur l'appareil du parent : il ne vit
-// qu'en mémoire, le temps de l'afficher. C'est délibéré — installé, il se
+// Le profil suivi n'est jamais installé sur l'appareil du parent à son insu : il
+// ne vit qu'en mémoire, le temps de l'afficher. C'est délibéré — installé, il se
 // mêlerait aux profils locaux (« Qui joue ? »), et une séance faite par erreur
 // dessus divergerait de l'appareil de l'enfant, que le dépôt suivant écraserait.
+// Seule exception, explicite : « Installer la progression ici », sur un appareil
+// sans profil local, qui cesse alors de suivre (cf. ParentDashboard).
 //
 // Même primitive que lib/transfer : la clé voyage dans le fragment d'URL
 //

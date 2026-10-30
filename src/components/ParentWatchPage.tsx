@@ -4,6 +4,7 @@
 // un enfant qui pratique ailleurs.
 
 import { useState } from 'react';
+import type { UserProfile } from '../types';
 import { startWatch, stopWatch, type WatchPairing } from '../lib/watch';
 import { listProfiles, loadProfileById } from '../lib/storage';
 import {
@@ -22,9 +23,15 @@ interface ParentWatchPageProps {
   watched: WatchedProfile[];
   onPaired: (pairing: WatchPairing) => void;
   onStopWatching: (code: string) => void;
+  onProfileInstalled: (profile: UserProfile) => void;
 }
 
-export default function ParentWatchPage({ watched, onPaired, onStopWatching }: ParentWatchPageProps) {
+export default function ParentWatchPage({
+  watched,
+  onPaired,
+  onStopWatching,
+  onProfileInstalled,
+}: ParentWatchPageProps) {
   const t = useParentDashboardStrings();
   const [profiles] = useState(listProfiles);
   // Identifiants du partage de chaque profil. En state et non relus à chaque
@@ -138,7 +145,7 @@ export default function ParentWatchPage({ watched, onPaired, onStopWatching }: P
             ))}
           </SettingList>
         )}
-        <ParentWatchPairing onPaired={onPaired} />
+        <ParentWatchPairing onPaired={onPaired} onProfileInstalled={onProfileInstalled} />
       </div>
     </>
   );

@@ -1205,12 +1205,14 @@ export default function App({
     return true;
   }, []);
 
-  // Transfert scanné depuis le Welcome (QR de l'ancien appareil) : le profil
-  // est déjà installé et actif (lib/transfer → storage.installProfile), il ne
-  // reste qu'à refléter l'état et naviguer.
+  // Progression installée sans recharger l'app — QR de transfert scanné depuis
+  // le Welcome ou l'espace parent, enfant suivi installé ici : le profil est
+  // déjà en stockage et actif, il reste à refléter l'état, naviguer, et
+  // confirmer l'arrivée comme pour un lien de transfert ouvert au boot.
   const handleTransferImported = useCallback((imported: UserProfile) => {
     setProfile(imported);
     setScreen(profileHome(imported));
+    setTransferNotice('imported');
   }, []);
 
   const handleDeleteProfile = useCallback(() => {
@@ -1389,6 +1391,7 @@ export default function App({
           page={nav.parentPage}
           onOpenPage={openParentPage}
           onUpdateProfile={handleParentProfileUpdate}
+          onProfileInstalled={handleTransferImported}
         />
       )}
       </Suspense>
