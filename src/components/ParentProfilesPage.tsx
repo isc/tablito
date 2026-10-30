@@ -102,7 +102,7 @@ export default function ParentProfilesPage({
           {transferConfigured() && (
             <SettingRow
               title={t.transferRowTitle}
-              sub={t.transferRowSubtitle(TRANSFER_TTL_MINUTES)}
+              sub={t.transferRowSubtitle}
               onClick={() => void handleTransfer()}
             />
           )}

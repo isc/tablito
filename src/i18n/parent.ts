@@ -189,7 +189,7 @@ interface ParentDashboardStrings {
   profilesSubtitleWatcher: string;
   backupHeading: (name: string) => string;
   transferRowTitle: string;
-  transferRowSubtitle: (minutes: number) => string;
+  transferRowSubtitle: string;
   exportRowTitle: string;
   exportRowSubtitle: string;
   importRowTitle: string;
@@ -397,7 +397,7 @@ const parentDashboardFr: ParentDashboardStrings = {
     "Cet appareil ne sert qu'à suivre la progression d'un enfant qui pratique ailleurs. Vous pouvez aussi créer un profil ici, par exemple pour vous entraîner vous-même\u00a0: les deux coexistent, et vous basculez de l'un à l'autre en haut de cette page.",
   backupHeading: (name) => `Sauvegarde de ${name}`,
   transferRowTitle: "Changer d'appareil",
-  transferRowSubtitle: (minutes) => `Transfert par QR code, valable ${minutes} minutes`,
+  transferRowSubtitle: 'Transfert par QR code',
   exportRowTitle: 'Exporter une sauvegarde',
   exportRowSubtitle: 'Un fichier .json à garder',
   importRowTitle: 'Importer une sauvegarde',
@@ -600,7 +600,7 @@ const parentDashboardEn: ParentDashboardStrings = {
     'This device only follows the progress of a child practising elsewhere. You can also create a profile here — to practise yourself, for instance: the two coexist, and you switch between them at the top of this page.',
   backupHeading: (name) => `${name}'s backup`,
   transferRowTitle: 'Move to another device',
-  transferRowSubtitle: (minutes) => `Transfer by QR code, valid for ${minutes} minutes`,
+  transferRowSubtitle: 'Transfer by QR code',
   exportRowTitle: 'Export a backup',
   exportRowSubtitle: 'A .json file to keep',
   importRowTitle: 'Import a backup',
