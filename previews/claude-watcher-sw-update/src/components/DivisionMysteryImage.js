@@ -1,0 +1,3 @@
+import{jsx as c}from"preact/jsx-runtime";import{useMemo as a}from"react";import d from"./MysteryGrid.js";import{useFactCellStrings as y}from"../i18n/progress.js";function m({facts:r,theme:o}){const s=y(),n=a(()=>{const t=new Map;for(const i of r)t.set(`${i.divisor},${i.quotient}`,i);return t},[r]);return c(d,{theme:o,cellFor:(t,i)=>{const e=n.get(`${t},${i}`);return{level:e?.introduced?e.box:0,introduced:e?.introduced??!1,ariaLabel:s.divLabel(t*i,t),detailHeading:e?`${e.dividend} \xF7 ${e.divisor} = ${e.quotient}`:"",gridA:e?.divisor??t,gridB:e?.quotient??i,box:e?.box??1}}})}export{m as default};
+
+//# sourceMappingURL=DivisionMysteryImage.js.map
