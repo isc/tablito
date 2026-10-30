@@ -31,7 +31,8 @@
 //     `/sw.js` (cooldown 1 min pour éviter le spam sur les bascules
 //     rapides).
 
-let busy = false
+// Raisons de retenir le reload (cf. setBusy) : occupé tant qu'il en reste une.
+const busyReasons = new Set()
 let pendingReload = false
 let refreshing = false
 let currentRegistration = null
@@ -47,7 +48,7 @@ function triggerReload() {
 // Applique une mise à jour SW déjà active : reload, sauf si une séance est en
 // cours (busy) — dans ce cas on diffère jusqu'au retour sur home (setBusy).
 function applyUpdate() {
-  if (busy) {
+  if (busyReasons.size > 0) {
     pendingReload = true
     return
   }
@@ -122,13 +123,13 @@ export function registerSW() {
   return () => {}
 }
 
-// Appelé par App.tsx quand l'écran courant change. Tant que busy=true,
-// on n'applique pas une mise à jour qui forcerait un reload (= perte de
-// l'état mémoire). Dès que busy repasse à false (retour vers home/landing),
+// Appelé par App.tsx quand l'écran courant change (raison 'screen'), et par
+// les fenêtres qui tiennent une saisie (raison 'feedback'). Tant qu'une raison
+// reste posée, on n'applique pas une mise à jour qui forcerait un reload (=
+// perte de l'état mémoire). Quand la dernière tombe (retour vers home/landing),
 // si un nouveau SW a pris le contrôle entre-temps, on déclenche le reload.
-export function setBusy(v) {
-  const next = !!v
-  if (next === busy) return
-  busy = next
-  if (!busy && pendingReload) triggerReload()
+export function setBusy(v, reason) {
+  if (v) busyReasons.add(reason)
+  else busyReasons.delete(reason)
+  if (busyReasons.size === 0 && pendingReload) triggerReload()
 }
