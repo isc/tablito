@@ -13,6 +13,15 @@ import { mockSupabaseServer, mockWatchServer, stubSupabaseEnv } from './helpers/
 import '../screens/ParentDashboard';
 import '../screens/ChangelogScreen';
 
+// Le pwa-register, espionné : il dit si une mise à jour de l'app peut recharger
+// la page (cf. setBusy).
+const sw = vi.hoisted(() => ({ setBusy: vi.fn() }));
+vi.mock('virtual:pwa-register', () => ({ registerSW: () => () => {}, setBusy: sw.setBusy }));
+// Dernier état « occupé » signalé pour une raison donnée.
+function swBusy(reason = 'screen'): boolean | undefined {
+  return sw.setBusy.mock.calls.filter(([, r]) => r === reason).at(-1)?.[0];
+}
+
 // ---------------------------------------------------------------------------
 // Suivi à distance, vu de l'app entière : l'appareil du parent affiche la
 // progression d'un enfant qui pratique ailleurs. Le cas nerveux est l'appareil
@@ -205,6 +214,32 @@ describe('appareil qui ne fait que suivre (aucun profil local)', () => {
       fireEvent.click(findButton(/^Suivre un enfant à distance$/)!);
     });
     expect(findButton(/^Scanner un QR code$/)).not.toBeNull();
+  });
+
+  // Son seul écran est l'accueil de l'espace parent : s'il retenait le reload
+  // comme sur un appareil d'enfant, ce téléphone ne se mettrait à jour qu'à un
+  // redémarrage complet de l'app.
+  it('laisse une mise à jour recharger l’accueil, pas une page ni un avis en cours', async () => {
+    mockWatchServer({ otherCalls: 'ignore' });
+    await seedWatcherOnly();
+    sw.setBusy.mockClear();
+
+    await renderApp();
+    expect(swBusy()).toBe(false);
+
+    await act(async () => {
+      fireEvent.click(findButton(/^Envoyer un avis$/)!);
+    });
+    expect(swBusy('feedback')).toBe(true);
+    await act(async () => {
+      fireEvent.click(findButton(/^Annuler$/)!);
+    });
+    expect(swBusy('feedback')).toBe(false);
+
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('.parent-subject-card--math')!);
+    });
+    expect(swBusy()).toBe(true);
   });
 
   // Vécu en octobre 2026 : pour changer de téléphone, une utilisatrice a

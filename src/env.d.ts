@@ -24,5 +24,5 @@ interface ImportMeta {
 
 declare module 'virtual:pwa-register' {
   export function registerSW(): () => void
-  export function setBusy(busy: boolean): void
+  export function setBusy(busy: boolean, reason: string): void
 }

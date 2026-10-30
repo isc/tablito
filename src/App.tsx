@@ -384,10 +384,12 @@ export default function App({
   // une mise à jour SW (= reload) — cf. isDisposableScreen. `welcome` est
   // inclus car une install neuve (sans profil) y reste bloquée — sans ça, ces
   // utilisateurs ne recevraient JAMAIS de mise à jour (ex. l'écran d'import
-  // lui-même).
-  const safeForReload = isDisposableScreen(screen);
+  // lui-même). Même raison pour l'accueil de l'espace parent d'un appareil qui
+  // ne fait que suivre : c'est son seul écran.
+  const safeForReload =
+    isDisposableScreen(screen) || (screen === 'parent' && !profile && !nav.parentPage);
   useEffect(() => {
-    setSwBusy(!safeForReload);
+    setSwBusy(!safeForReload, 'screen');
   }, [safeForReload]);
 
   // Rafraîchir `today` quand l'app revient au premier plan : sans ça, un user
@@ -408,9 +410,8 @@ export default function App({
 
   // Repropose « Qui joue ? » au retour au premier plan après une longue
   // absence (cf. RESHOW_PICKER_AFTER_HIDDEN_MS), s'il y a plusieurs profils.
-  // Uniquement depuis un écran sans état précieux (même notion que le reload
-  // SW) : on n'interrompt jamais une séance, un récap ou une navigation
-  // parent. Un ajout d'enfant laissé en plan > 15 min, lui, est périmé —
+  // Uniquement depuis un écran sans état précieux (cf. isDisposableScreen) :
+  // on n'interrompt jamais une séance, un récap ou une navigation parent. Un ajout d'enfant laissé en plan > 15 min, lui, est périmé —
   // retour au choix du joueur, comme le ferait une mise à jour SW.
   useEffect(() => {
     let hiddenAt = 0;
