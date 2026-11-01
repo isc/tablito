@@ -1,3 +1,0 @@
-import{jsx as o,jsxs as b}from"preact/jsx-runtime";import{useMemo as i}from"react";import c from"./MysteryGrid.js";import n from"./IrrForms.js";import{irrGridIndex as f,irrRecitation as p,irrVerbDefs as M}from"../lib/irregularVerbs.js";function I({facts:a,theme:l}){const m=i(()=>new Map(a.map(e=>[e.key,e])),[a]),y=i(()=>M().map(e=>({def:e,label:p(e)})),[]);return o(c,{theme:l,cellFor:(e,d)=>{const{def:t,label:s}=y[f(e,d)],r=m.get(t.key);return{level:r?.introduced?r.box:0,introduced:r?.introduced??!1,ariaLabel:s,detailHeading:s,detailBody:b("div",{className:"irr-mystery-detail",children:[o(n,{def:t}),o("div",{className:"irr-translation",children:t.fr})]}),box:r?.box??1}},showHeaders:!1})}export{I as default};
-
-//# sourceMappingURL=IrrMysteryImage.js.map

@@ -1,3 +1,0 @@
-import{jsx as F}from"preact/jsx-runtime";import{useMemo as c}from"react";import f from"./LeitnerGrid.js";import{getRemainderFactKey as a,remainderZoneBounds as p}from"../lib/remainderFacts.js";import{useFactCellStrings as u}from"../i18n/progress.js";function g({facts:o}){const i=u(),d=c(()=>{const r=new Map;for(const t of o)r.set(a(t.divisor,t.quotient),t);return r},[o]);return F(f,{operator:"\xF7",cellFor:(r,t)=>{const e=d.get(a(r,t)),l=e?e.history.filter(m=>m.correct).length:0,[n,s]=p({divisor:r,quotient:t});return{box:e?.box??1,introduced:e?.introduced??!1,ariaLabel:i.remLabel(n,s,r),diagonal:!1,modal:{title:e?i.remTitle(n,s,e.divisor):"",correctCount:l,totalAttempts:e?.history.length??0}}}})}export{g as default};
-
-//# sourceMappingURL=RemainderProgressGrid.js.map
