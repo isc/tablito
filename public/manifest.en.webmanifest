@@ -3,7 +3,7 @@
   "short_name": "Tablito",
   "lang": "en",
   "description": "Learn the times tables, gently.",
-  "theme_color": "#4F46BA",
+  "theme_color": "#FBF6EC",
   "background_color": "#FBF6EC",
   "display": "standalone",
   "orientation": "portrait",
