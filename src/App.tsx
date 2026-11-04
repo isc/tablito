@@ -18,7 +18,12 @@ import type {
 import { isWordItem } from './types';
 import { composeSession } from './lib/sessionComposer';
 import { composeDailySession } from './lib/dailyComposer';
-import { composeConjSession, isConjAccepted, type ConjJudgement } from './lib/conjugationComposer';
+import {
+  composeConjSession,
+  hasNewConjLevel,
+  isConjAccepted,
+  type ConjJudgement,
+} from './lib/conjugationComposer';
 import { createInitialConjFacts } from './lib/conjugationFacts';
 import { seedConjFromPlacement, type ConjPlacementResult } from './lib/conjugationPlacement';
 import { metConjRules } from './lib/conjugationStrategies';
@@ -32,6 +37,7 @@ import { createInitialIrrFacts } from './lib/irregularVerbs';
 import { seedIrrFromPlacement, type IrrPlacementResult } from './lib/irregularPlacement';
 import { factsOf, markIntroduced, processAnswer } from './lib/leitner';
 import {
+  addBadges,
   checkBadges,
   getCompletedTables,
   getCompletedDivisionTables,
@@ -1201,7 +1207,7 @@ export default function App({
       const previousBadgeIds = new Set(profile.badges.map((b) => b.id));
       const brandNewBadges = earned.filter((b) => !previousBadgeIds.has(b.id));
 
-      updatedProfile.badges = [...profile.badges, ...brandNewBadges];
+      addBadges(updatedProfile, brandNewBadges);
 
       // Tables fraîchement complétées (tous faits en boîte 5) de l'opération de
       // la séance : tables × en mode mult, « divisions par N » en mode div,
@@ -1428,6 +1434,7 @@ export default function App({
           conjAvailable={conjAvailable}
           hasConjSessionAvailable={hasConjSessionAvailable}
           conjVisible={conjVisible}
+          conjHasNewLevel={!!profile && hasNewConjLevel(profile)}
           onStartConj={whenSynced(handleStartConj)}
           irrAvailable={irrAvailable}
           hasIrrSessionAvailable={hasIrrSessionAvailable}

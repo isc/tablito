@@ -49,6 +49,7 @@ export interface BadgeI18n {
   // conjugaison sont masqués quand la langue d'interface est l'anglais).
   conjTense: (tense: ConjTense) => BadgeText;
   conjVerb: (verb: string) => BadgeText;
+  conjGroup2: BadgeText;
   // Verbes irréguliers anglais (specs §16.9) : un badge par famille. Matière
   // masquée en anglais, l'entrée `en` n'est là que pour que la table reste
   // totale.
@@ -159,6 +160,11 @@ const fr: BadgeI18n = {
     description: `Maîtriser le verbe ${verb}`,
     conditionText: `Place toutes les formes du verbe « ${verb} » dans la boîte 4 ou 5.`,
   }),
+  conjGroup2: {
+    name: 'Les verbes comme finir',
+    description: 'Maîtriser le présent des verbes comme finir',
+    conditionText: 'Place les 6 terminaisons des verbes comme finir dans la boîte 4 ou 5.',
+  },
   irrFamily: (family) => ({
     name: IRR_FAMILY_NAMES[family],
     description: `Maîtriser les verbes anglais « ${IRR_FAMILY_NAMES[family]} »`,
@@ -273,6 +279,11 @@ const en: BadgeI18n = {
     description: `Master the verb ${verb}`,
     conditionText: `Move every form of the verb “${verb}” to box 4 or 5.`,
   }),
+  conjGroup2: {
+    name: 'Verbs like finir',
+    description: 'Master the present tense of verbs like finir',
+    conditionText: 'Move the 6 endings of verbs like finir to box 4 or 5.',
+  },
   irrFamily: (family) => ({
     name: `Irregular verbs: ${family}`,
     description: `Master the “${family}” irregular verbs`,

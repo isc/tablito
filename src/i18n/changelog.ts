@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-11-04',
+    items: [
+      "Conjugaison\u00a0: un deuxième niveau s'ouvre une fois les trois temps maîtrisés, avec les verbes comme finir, puis pouvoir, vouloir et prendre. 23 nouvelles formes du programme de CM1, une nouvelle image mystère et de nouveaux badges. Les formes déjà acquises continuent d'être révisées dans les mêmes séances.",
+    ],
+  },
+  {
     date: '2026-10-30',
     items: [
       "Un enfant peut jouer sur deux appareils, par exemple le téléphone de chaque parent\u00a0: ses séances se synchronisent dans les deux sens, même faites hors ligne, sans rien perdre. Dans l'espace parent → Suivi à distance, affichez le QR de l'enfant et scannez-le avec l'autre téléphone, qui propose de le faire jouer là aussi.",
@@ -293,6 +299,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-11-04',
+    items: [
+      "Conjugation: a second level opens once all three tenses are mastered, with verbs like finir, then pouvoir, vouloir and prendre. 23 new forms from the French year 5 curriculum, a new mystery picture and new badges. Forms already learned keep being reviewed in the same sessions.",
+    ],
+  },
   {
     date: '2026-10-30',
     items: [

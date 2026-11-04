@@ -33,11 +33,13 @@ function formsOf(key: string): string[] {
   return def.carriers.map((_, i) => resolveConjQuestion(def, i).form);
 }
 
-const DEFS = conjFactDefs();
+const ALL_DEFS = conjFactDefs();
+const DEFS = ALL_DEFS.filter((d) => d.level === 1);
 
 describe('inventaire — la structure de la spec §3.3', () => {
-  it('compte exactement 63 faits', () => {
+  it('compte 63 faits au niveau 1, 86 en tout', () => {
     expect(DEFS).toHaveLength(63);
+    expect(ALL_DEFS).toHaveLength(86);
   });
 
   it('respecte la répartition par bloc', () => {
@@ -98,12 +100,12 @@ describe('inventaire — la structure de la spec §3.3', () => {
     }
   });
 
-  it('borne le volume TTS (une clé unique par texte, ~200 MP3)', () => {
-    // Un énoncé par porteuse (151) + la phrase complète de l'intro, porteuse 0
-    // seulement (63) : le budget annoncé par la spec (« environ 200 »).
+  it('borne le volume TTS (une clé unique par texte, ~300 MP3)', () => {
+    // Un énoncé par porteuse + la phrase complète de l'intro, porteuse 0
+    // seulement : 214 au niveau 1, 77 au niveau 2.
     const sentences = allConjCarrierSentences();
     expect(new Set(sentences.map((s) => s.key)).size).toBe(sentences.length);
-    expect(sentences.length).toBeLessThanOrEqual(220);
+    expect(sentences.length).toBeLessThanOrEqual(300);
     for (const { key, text, hide } of sentences) {
       // Énoncé : « Chanter. Demain, je chanterai à la fête. » — le verbe, puis
       // la phrase entière, dont la forme sera couverte d'un bip. Phrase

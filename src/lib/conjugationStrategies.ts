@@ -1,15 +1,19 @@
 import type { ConjFact } from '../types';
 import {
   conjFactDef,
+  isConjGroup2Def,
   regularStem,
   resolveConjQuestion,
   type ConjQuestionView,
 } from './conjugationFacts';
 import {
   CONJ_RULES,
+  FINIR_RULE,
   FUTUR_RULE,
   IMPARFAIT_RULE,
   PERSON_MARKS,
+  POUVOIR_VOULOIR_RULE,
+  PRENDRE_RULE,
   SON_DOUX_RULE,
   type ConjStrategy,
 } from './conjugationRules';
@@ -27,6 +31,10 @@ import {
  * pas la règle générale du temps.
  */
 export function getConjStrategy(view: ConjQuestionView): ConjStrategy {
+  // Niveau 2 : chaque famille a sa règle, à tous les temps qu'elle couvre.
+  if (isConjGroup2Def(view.def)) return FINIR_RULE;
+  if (view.def.verb === 'pouvoir' || view.def.verb === 'vouloir') return POUVOIR_VOULOIR_RULE;
+  if (view.def.verb === 'prendre') return PRENDRE_RULE;
   // Le radical affiché a-t-il été raboté par l'euphonie (man|geons) ?
   const euphonyApplies =
     view.def.kind === 'ending' && view.segment[0] !== regularStem(view.verb, view.def.tense);

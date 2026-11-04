@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, type CSSProperties } from 'react';
 import type { BoxLevel } from '../types';
 import Modal from './Modal';
 import { useBoxLevelStrings, useLeitnerGridStrings } from '../i18n/progress';
@@ -24,36 +24,39 @@ interface LeitnerGridProps {
   operator?: string;
   cellFor: (row: number, col: number) => LeitnerGridCell;
   /**
-   * Grille SANS en-têtes de ligne/colonne : les 64 cases ne sont alors qu'un
-   * rang (matière conjugaison — un fait n'y est pas indexé par un couple de
-   * nombres). `cellFor` reçoit dans ce cas des indices 0..7, dans l'ordre de
-   * lecture, exactement comme l'image mystère de la matière.
+   * Grille SANS en-têtes de ligne/colonne, de ce côté : les cases ne sont alors
+   * qu'un rang (matière conjugaison — un fait n'y est pas indexé par un couple de
+   * nombres). `cellFor` reçoit dans ce cas des indices à partir de 0, dans l'ordre
+   * de lecture, exactement comme l'image mystère de la matière.
    */
-  showHeaders?: boolean;
+  size?: number;
 }
 
 const HEADERS = [2, 3, 4, 5, 6, 7, 8, 9];
-const PLAIN = [0, 1, 2, 3, 4, 5, 6, 7];
 
 function getBoxClass(cell: LeitnerGridCell): string {
   return cell.introduced ? `box-${cell.box}` : 'box-0';
 }
 
 /**
- * Grille Leitner générique (8×8) pour l'espace parent (specs §5.1 / §11.5).
+ * Grille Leitner générique (8×8 par défaut) pour l'espace parent (specs §5.1 / §11.5).
  * Chaque case est colorée selon sa boîte et ouvre une modale. La multiplication
  * et la division fournissent leur propre mapping case→fait via `cellFor` —
  * pas de duplication de la grille (cf. dédup MysteryGrid).
  */
-export default function LeitnerGrid({ operator, cellFor, showHeaders = true }: LeitnerGridProps) {
+export default function LeitnerGrid({ operator, cellFor, size }: LeitnerGridProps) {
   const t = useLeitnerGridStrings();
   const boxLevel = useBoxLevelStrings();
   const [selected, setSelected] = useState<LeitnerGridCell | null>(null);
-  const values = showHeaders ? HEADERS : PLAIN;
+  const showHeaders = size === undefined;
+  const values = showHeaders ? HEADERS : Array.from({ length: size }, (_, i) => i);
 
   return (
     <div className="progress-grid-container">
-      <div className={`progress-grid${showHeaders ? '' : ' progress-grid--plain'}`}>
+      <div
+        className={`progress-grid${showHeaders ? '' : ' progress-grid--plain'}`}
+        style={{ '--leitner-size': values.length } as CSSProperties}
+      >
         {showHeaders && (
           <>
             <div className="progress-grid-header progress-grid-corner">{operator}</div>

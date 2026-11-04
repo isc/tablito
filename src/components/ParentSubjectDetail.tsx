@@ -18,6 +18,7 @@
 import { memo, useMemo, useState, type ReactNode } from 'react';
 import type { FactKind, SessionResult, UserProfile } from '../types';
 import { activeLevel, hasOpenedIrr, unlockedMathLevels, type MathLevel } from '../lib/badges';
+import { isConjLevel2Unlocked } from '../lib/conjugationComposer';
 import { countMastered, factsOf } from '../lib/leitner';
 import {
   getHardestFacts,
@@ -192,7 +193,17 @@ function ParentSubjectDetail({ profile, subject, onUpdateProfile }: ParentSubjec
       case 'rem':
         return <RemainderProgressGrid facts={profile.remainderFacts ?? []} />;
       case 'conj':
-        return <ConjProgressGrid facts={profile.conjFacts ?? []} />;
+        return (
+          <>
+            <ConjProgressGrid facts={profile.conjFacts ?? []} />
+            {isConjLevel2Unlocked(profile.badges) && (
+              <>
+                <p className="parent-section-subtitle">{t.conjLevel2Grid}</p>
+                <ConjProgressGrid facts={profile.conjFacts ?? []} level={2} />
+              </>
+            )}
+          </>
+        );
       case 'irr':
         return <IrrProgressGrid facts={profile.irrFacts ?? []} />;
     }

@@ -7,13 +7,16 @@ import ConjMysteryImage from '../components/ConjMysteryImage';
 import IrrMysteryImage from '../components/IrrMysteryImage';
 import BackChevron from '../components/BackChevron';
 import { isConjVisible, isDivisionUnlocked, isIrrVisible, isRemainderUnlocked } from '../lib/badges';
+import { isConjLevel2Unlocked } from '../lib/conjugationComposer';
+import { conjFactsOfLevel } from '../lib/conjugationFacts';
 import { useLang } from '../i18n/lang';
 import { useProgressScreenStrings } from '../i18n/progress';
 
 // La conjugaison est une MATIÈRE, pas un niveau : son onglet ne s'ouvre pas par
 // la progression des maths mais par le simple fait d'avoir ouvert la matière —
-// et jamais en anglais (matière fr-only, cf. isConjVisible).
-type ProgressView = FactKind;
+// et jamais en anglais (matière fr-only, cf. isConjVisible). Son niveau 2 a son
+// image à lui, donc son onglet : `conj2`, qui n'est pas un type de question.
+type ProgressView = FactKind | 'conj2';
 
 // Tout ce qui change d'un onglet à l'autre, en un seul endroit.
 interface ProgressViewDescriptor {
@@ -39,10 +42,13 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
   const remUnlocked = isRemainderUnlocked(profile);
   const conjVisible = isConjVisible(profile, lang);
   const irrVisible = isIrrVisible(profile, lang);
+  const conj2Visible = conjVisible && isConjLevel2Unlocked(profile.badges);
   const [view, setView] = useState<ProgressView>(() => {
     if (initialView === 'rem' && !remUnlocked) return 'mult';
     if (initialView === 'div' && !divUnlocked) return 'mult';
     if (initialView === 'conj' && !conjVisible) return 'mult';
+    // Le niveau en cours, comme l'onglet du niveau de maths actif.
+    if (initialView === 'conj' && conj2Visible) return 'conj2';
     if (initialView === 'irr' && !irrVisible) return 'mult';
     return initialView;
   });
@@ -89,7 +95,7 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
       ),
     }),
     conj: () => ({
-      facts: conjFacts,
+      facts: conjFactsOfLevel(conjFacts, 1),
       discovered: t.discoveredConj,
       mastered: t.masteredConj,
       legend: t.legendConj,
@@ -97,6 +103,19 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
         <ConjMysteryImage
           facts={conjFacts}
           theme={profile.conjMysteryTheme ?? profile.mysteryTheme}
+        />
+      ),
+    }),
+    conj2: () => ({
+      facts: conjFactsOfLevel(conjFacts, 2),
+      discovered: t.discoveredConj,
+      mastered: t.masteredConj,
+      legend: t.legendConj2,
+      image: (
+        <ConjMysteryImage
+          level={2}
+          facts={conjFacts}
+          theme={profile.conj2MysteryTheme ?? profile.mysteryTheme}
         />
       ),
     }),
@@ -119,6 +138,7 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
   // route — mais la garde reste la seule source de la retombée sur 'mult'.
   const active =
     (view === 'conj' && !conjVisible) ||
+    (view === 'conj2' && !conj2Visible) ||
     (view === 'irr' && !irrVisible) ||
     (view === 'div' && !divUnlocked) ||
     (view === 'rem' && !remUnlocked)
@@ -142,6 +162,7 @@ export default function ProgressScreen({ profile, onBack, initialView = 'mult' }
         ? [{ key: 'mult' as const, label: t.multiplications }]
         : []),
     ...(conjVisible ? [{ key: 'conj' as const, label: t.conjugations }] : []),
+    ...(conj2Visible ? [{ key: 'conj2' as const, label: t.conjugations2 }] : []),
     ...(irrVisible ? [{ key: 'irr' as const, label: t.irregularVerbs }] : []),
   ];
 

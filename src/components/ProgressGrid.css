@@ -12,11 +12,11 @@
   margin: 0 auto;
 }
 
-/* Variante sans en-têtes (matière conjugaison) : 8 colonnes pleines, pas de
+/* Variante sans en-têtes (matière conjugaison) : colonnes pleines, pas de
    gouttière de 32px pour les numéros de table. */
 .progress-grid--plain {
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(var(--leitner-size), 1fr);
+  grid-template-rows: repeat(var(--leitner-size), 1fr);
 }
 
 .progress-grid-header {

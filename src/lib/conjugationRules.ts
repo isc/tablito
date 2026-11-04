@@ -239,17 +239,112 @@ export const SON_DOUX_RULE: ConjStrategy = {
     'Avec un c, on met une cédille : nous lançons.',
 };
 
+/** Niveau 2 : le présent du 2e groupe, et ce qui change au pluriel (specs §15.3). */
+export const FINIR_RULE: ConjStrategy = {
+  id: 'finir',
+  title: 'Les verbes comme finir',
+  badge: '*iss*',
+  blocks: [
+    {
+      kind: 'table',
+      label: 'Au présent',
+      forms: [
+        'je _fin_*is*',
+        'tu _fin_*is*',
+        'il _fin_*it*',
+        'nous _fin_*issons*',
+        'vous _fin_*issez*',
+        'ils _fin_*issent*',
+      ],
+    },
+  ],
+  more: [
+    {
+      kind: 'chips',
+      label: 'Ils se conjuguent pareil',
+      forms: ['choisir', 'grandir', 'remplir', 'réussir', 'obéir', 'rougir'],
+    },
+    { kind: 'note', label: 'À l’imparfait, avec nous', form: 'nous _finiss_*ons* → je _finiss_*ais*' },
+    { kind: 'note', label: 'Au futur, avec l’infinitif', form: 'je _finir_*ai*' },
+  ],
+  tip: 'Au pluriel, on ajoute deux s : nous finissons.',
+  speech:
+    'Les verbes comme finir. ' +
+    'Je finis et tu finis, avec i, s. Il finit, avec i, t. ' +
+    'Au pluriel, on ajoute deux s : nous finissons, vous finissez, ils finissent. ' +
+    'Choisir, grandir et réussir se conjuguent pareil.',
+};
+
+/** Niveau 2 : pouvoir et vouloir, qui vont de pair (specs §15.3). */
+export const POUVOIR_VOULOIR_RULE: ConjStrategy = {
+  id: 'pouvoir-vouloir',
+  title: 'Pouvoir et vouloir',
+  badge: '*x*',
+  blocks: [
+    {
+      kind: 'columns',
+      columns: [
+        { label: 'Pouvoir', forms: ['je _peu_*x*', 'il _peu_*t*', 'nous _pouv_*ons*', 'ils _peuv_*ent*'] },
+        { label: 'Vouloir', forms: ['je _veu_*x*', 'il _veu_*t*', 'nous _voul_*ons*', 'ils _veul_*ent*'] },
+      ],
+    },
+    {
+      kind: 'chips',
+      label: 'Au futur, le début change aussi',
+      forms: ['pouvoir → je _pourr_*ai*', 'vouloir → je _voudr_*ai*'],
+    },
+  ],
+  tip: 'Je peux, tu peux, je veux, tu veux : un x à la place du s.',
+  speech:
+    'Pouvoir et vouloir. ' +
+    'Avec je et tu, ça finit par un x : je peux, tu veux. ' +
+    'Avec il et elle, ça finit par un t : il peut, elle veut. ' +
+    'Avec nous et vous, on entend ou : nous pouvons, vous voulez. ' +
+    'Avec ils et elles, on revient à e, u : ils peuvent, ils veulent. ' +
+    'Au futur, le début change aussi : je pourrai, avec deux r, et je voudrai.',
+};
+
+/** Niveau 2 : prendre (specs §15.3). */
+export const PRENDRE_RULE: ConjStrategy = {
+  id: 'prendre',
+  title: 'Le verbe prendre',
+  badge: '*nn*',
+  blocks: [
+    {
+      kind: 'table',
+      label: 'Au présent',
+      forms: [
+        'je _prend_*s*',
+        'tu _prend_*s*',
+        'il _prend_',
+        'nous _pren_*ons*',
+        'vous _pren_*ez*',
+        'ils _prenn_*ent*',
+      ],
+    },
+  ],
+  tip: 'Le d reste au singulier, il disparaît au pluriel, et ils prennent a deux n.',
+  speech:
+    'Le verbe prendre. ' +
+    'Au singulier, le d reste, même s’il ne s’entend pas : je prends, tu prends, il prend. ' +
+    'Au pluriel, il disparaît : nous prenons, vous prenez. ' +
+    'Et ils prennent, avec deux n.',
+};
+
 /**
  * Les règles de la matière, dans l'ordre de l'écran « Mes règles » — celui de
  * la spec (§15.3) : les marques de personne, ancre de tout le reste, puis la
- * fabrication des temps dans l'ordre du programme, et le piège de son, règle
- * annexe, en dernier.
+ * fabrication des temps dans l'ordre du programme, le piège de son, règle
+ * annexe, et enfin celles du niveau 2.
  */
 export const CONJ_RULES: readonly ConjStrategy[] = [
   PERSON_MARKS,
   IMPARFAIT_RULE,
   FUTUR_RULE,
   SON_DOUX_RULE,
+  FINIR_RULE,
+  POUVOIR_VOULOIR_RULE,
+  PRENDRE_RULE,
 ];
 
 /** La clé du MP3 qui lit la règle (bouton « Écouter »). */

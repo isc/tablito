@@ -25,14 +25,14 @@ function keysOfTense(tense: ConjTense): string[] {
 }
 
 describe('CONJ_RULES', () => {
-  it('range les quatre règles dans l’ordre de la spec : marques, imparfait, futur, piège de son', () => {
+  it('range les règles dans l’ordre de la spec : marques, imparfait, futur, piège de son, puis le niveau 2', () => {
     // Les mêmes objets que ceux de la séance : l'écran n'en réécrit aucune.
     const strategyOf = (key: string) => getConjStrategy(resolveConjQuestion(requireConjFactDef(key), 0));
     expect(strategyOf('pres-g1-je')).toBe(MARKS);
     expect(strategyOf('imp-je')).toBe(IMPARFAIT);
     expect(strategyOf('fut-je')).toBe(FUTUR);
     expect(strategyOf('pres-g1-nous')).toBe(SON_DOUX);
-    expect(CONJ_RULES).toHaveLength(4);
+    expect(CONJ_RULES).toHaveLength(7);
   });
 
   it('contient toutes les règles que la séance peut montrer, et elles seules', () => {
@@ -81,13 +81,13 @@ describe('metConjRules', () => {
     expect(metConjRules(facts)).toEqual([MARKS, IMPARFAIT, FUTUR, SON_DOUX]);
   });
 
-  it('tout l’inventaire introduit : les quatre règles', () => {
+  it('tout l’inventaire introduit : toutes les règles', () => {
     expect(metConjRules(conjFactDefs().map((def) => ({ key: def.key, introduced: true })))).toEqual(
       CONJ_RULES,
     );
   });
 
   it('ignore une clé inconnue (profil d’une version future)', () => {
-    expect(metConjRules([{ key: 'pres-g2-je', introduced: true }])).toEqual([]);
+    expect(metConjRules([{ key: 'pres-g9-je', introduced: true }])).toEqual([]);
   });
 });

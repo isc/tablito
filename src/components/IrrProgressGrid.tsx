@@ -33,5 +33,5 @@ export default function IrrProgressGrid({ facts }: IrrProgressGridProps) {
     };
   };
 
-  return <LeitnerGrid cellFor={cellFor} showHeaders={false} />;
+  return <LeitnerGrid cellFor={cellFor} size={8} />;
 }

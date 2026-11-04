@@ -1,6 +1,7 @@
 import type {
   UserProfile,
   Badge,
+  BoxLevel,
   MultiFact,
   DivisionFact,
   RemainderFact,
@@ -9,15 +10,24 @@ import type {
   FactKind,
 } from '../types';
 import { BADGE_IDS } from '../types';
-import { CONJ_TENSE_BADGE_ID, allConjMastered, conjVerbBadgeId } from './conjugationComposer';
+import {
+  CONJ_GROUP2_BADGE_ID,
+  CONJ_TENSE_BADGE_ID,
+  allConjMastered,
+  conjVerbBadgeId,
+  isConjLevel2Unlocked,
+  withConjLevel2Facts,
+} from './conjugationComposer';
 import {
   CONJ_IRREGULAR_VERBS,
+  CONJ_LEVEL2_VERBS,
   CONJ_TENSES,
   conjFactDef,
   conjFactsOfTense,
   conjFactsOfVerb,
+  isConjGroup2Def,
 } from './conjugationFacts';
-import { MASTERY_BOX, allMastered, countMastered } from './leitner';
+import { allMastered, countMastered } from './leitner';
 import { IRR_FAMILIES, type IrrFamily } from './irregularVerbs';
 import { irrFactsOfFamily, irrFamilyBadgeId } from './irregularComposer';
 import { todayISO, daysBetween } from './utils';
@@ -506,7 +516,13 @@ const CONJ_VERB_ICON: Record<string, string> = {
   'dire': '💬',
   'venir': '🚪',
   'voir': '👁️',
+  'pouvoir': '💪',
+  'vouloir': '🙋',
+  'prendre': '✊',
 };
+
+// Le 2e groupe : le drapeau d'arrivée, comme son verbe modèle, finir.
+const CONJ_GROUP2_ICON = '🏁';
 
 // Badges des verbes irréguliers (specs §16.9) : un par famille consolidée.
 // Un pictogramme par famille, tiré d'un de ses verbes (sing → 🎵, sleep → 😴).
@@ -523,6 +539,10 @@ const IRR_FAMILY_ICON: Record<IrrFamily, string> = {
   unique: '⭐',
 };
 
+function masteryProgress(facts: { box: BoxLevel }[], unitLabel: string) {
+  return { current: countMastered(facts), target: facts.length, unitLabel };
+}
+
 function buildIrrBadgeDefinitions(): BadgeDefinition[] {
   const i = getBadgeI18n();
   const u = i.units;
@@ -531,50 +551,48 @@ function buildIrrBadgeDefinitions(): BadgeDefinition[] {
     ...i.irrFamily(family),
     icon: IRR_FAMILY_ICON[family],
     color: 'var(--coral)',
-    progressFor: (p: UserProfile) => {
-      const facts = irrFactsOfFamily(p.irrFacts ?? [], family);
-      return {
-        current: countMastered(facts),
-        target: facts.length,
-        unitLabel: u.box4plus,
-      };
-    },
+    progressFor: (p: UserProfile) => masteryProgress(irrFactsOfFamily(p.irrFacts ?? [], family), u.box4plus),
   }));
+}
+
+function buildConjVerbBadge(verb: string): BadgeDefinition {
+  const i = getBadgeI18n();
+  return {
+    id: conjVerbBadgeId(verb),
+    ...i.conjVerb(verb),
+    icon: CONJ_VERB_ICON[verb] ?? '🪶',
+    color: 'var(--sage)',
+    progressFor: (p: UserProfile) => masteryProgress(conjFactsOfVerb(p.conjFacts ?? [], verb), i.units.box4plus),
+  };
+}
+
+// Les badges du niveau 2 sont à part : on ne les montre pas tant qu'il n'est pas
+// ouvert, comme ceux d'un niveau de maths (cf. visibleBadges).
+function buildConjLevel2BadgeDefinitions(): BadgeDefinition[] {
+  const i = getBadgeI18n();
+  return [
+    {
+      id: CONJ_GROUP2_BADGE_ID,
+      ...i.conjGroup2,
+      icon: CONJ_GROUP2_ICON,
+      color: 'var(--indigo)',
+      progressFor: (p: UserProfile) => masteryProgress((p.conjFacts ?? []).filter(isConjGroup2Def), i.units.box4plus),
+    },
+    ...CONJ_LEVEL2_VERBS.map(buildConjVerbBadge),
+  ];
 }
 
 function buildConjBadgeDefinitions(): BadgeDefinition[] {
   const i = getBadgeI18n();
-  const u = i.units;
-  const conjFactsOf = (p: UserProfile) => p.conjFacts ?? [];
   return [
     ...CONJ_TENSES.map((tense) => ({
       id: CONJ_TENSE_BADGE_ID[tense],
       ...i.conjTense(tense),
       icon: CONJ_TENSE_ICON[tense],
       color: 'var(--indigo)',
-      progressFor: (p: UserProfile) => {
-        const facts = conjFactsOfTense(conjFactsOf(p), tense);
-        return {
-          current: facts.filter((f) => f.box >= MASTERY_BOX).length,
-          target: facts.length,
-          unitLabel: u.box4plus,
-        };
-      },
+      progressFor: (p: UserProfile) => masteryProgress(conjFactsOfTense(p.conjFacts ?? [], tense), i.units.box4plus),
     })),
-    ...CONJ_IRREGULAR_VERBS.map((verb) => ({
-      id: conjVerbBadgeId(verb),
-      ...i.conjVerb(verb),
-      icon: CONJ_VERB_ICON[verb] ?? '🪶',
-      color: 'var(--sage)',
-      progressFor: (p: UserProfile) => {
-        const facts = conjFactsOfVerb(conjFactsOf(p), verb);
-        return {
-          current: facts.filter((f) => f.box >= MASTERY_BOX).length,
-          target: facts.length,
-          unitLabel: u.box4plus,
-        };
-      },
-    })),
+    ...CONJ_IRREGULAR_VERBS.map(buildConjVerbBadge),
   ];
 }
 
@@ -589,6 +607,7 @@ let cachedMult: BadgeDefinition[] = [];
 let cachedDivision: BadgeDefinition[] = [];
 let cachedRemainder: BadgeDefinition[] = [];
 let cachedConj: BadgeDefinition[] = [];
+let cachedConjLevel2: BadgeDefinition[] = [];
 let cachedIrr: BadgeDefinition[] = [];
 let cachedMap: Map<string, BadgeDefinition> = new Map();
 
@@ -600,6 +619,7 @@ function ensureCache(): void {
   cachedDivision = buildDivisionBadgeDefinitions();
   cachedRemainder = buildRemainderBadgeDefinitions();
   cachedConj = buildConjBadgeDefinitions();
+  cachedConjLevel2 = buildConjLevel2BadgeDefinitions();
   cachedIrr = buildIrrBadgeDefinitions();
   cachedMap = new Map(
     [
@@ -608,6 +628,7 @@ function ensureCache(): void {
       ...cachedDivision,
       ...cachedRemainder,
       ...cachedConj,
+      ...cachedConjLevel2,
       ...cachedIrr,
     ].map((d) => [d.id, d]),
   );
@@ -637,6 +658,11 @@ export function getRemainderBadgeDefinitions(): BadgeDefinition[] {
 export function getConjBadgeDefinitions(): BadgeDefinition[] {
   ensureCache();
   return cachedConj;
+}
+
+function getConjLevel2BadgeDefinitions(): BadgeDefinition[] {
+  ensureCache();
+  return cachedConjLevel2;
 }
 
 export function getIrrBadgeDefinitions(): BadgeDefinition[] {
@@ -685,7 +711,8 @@ export function visibleBadges(profile: UserProfile): VisibleBadges {
   // Conjugaison : visible seulement une fois la matière ouverte, et jamais en
   // anglais (matière fr-only) — même révélation différée que ci-dessus.
   if (isConjVisible(profile)) {
-    bySubject.set('conj', [{ section: 'conj', defs: getConjBadgeDefinitions() }]);
+    const level2 = isConjLevel2Unlocked(profile.badges) ? getConjLevel2BadgeDefinitions() : [];
+    bySubject.set('conj', [{ section: 'conj', defs: [...getConjBadgeDefinitions(), ...level2] }]);
   }
   // Verbes irréguliers : même révélation différée, jamais en anglais.
   if (isIrrVisible(profile)) {
@@ -697,6 +724,17 @@ export function visibleBadges(profile: UserProfile): VisibleBadges {
 export function visibleBadgeDefinitions(profile: UserProfile): BadgeDefinition[] {
   const { general, bySubject } = visibleBadges(profile);
   return [...general, ...[...bySubject.values()].flat().flatMap((g) => g.defs)];
+}
+
+/**
+ * Ajoute des badges au profil, avec ce qu'ils ouvrent : le dernier badge de temps
+ * fait entrer dans le profil les faits du niveau 2 de la conjugaison. Passer par
+ * ici garantit qu'un profil qui a ces badges a aussi ces faits (specs §15.7).
+ */
+export function addBadges(profile: UserProfile, earned: Badge[]): void {
+  profile.badges = [...profile.badges, ...earned];
+  const conjFacts = withConjLevel2Facts(profile);
+  if (conjFacts) profile.conjFacts = conjFacts;
 }
 
 /**
@@ -789,21 +827,25 @@ export function checkBadges(
   const conjFacts = profile.conjFacts;
   if (conjFacts?.some((f) => f.introduced)) {
     // UN passage sur les faits, regroupés à la fois par temps et par verbe, au
-    // lieu de 3 + 7 filtrages de l'inventaire complet.
+    // lieu d'un filtrage de l'inventaire complet par badge. Les temps ne comptent
+    // que le niveau 1, comme conjFactsOfTense.
     const byTense = new Map<ConjTense, ConjFact[]>();
     const byVerb = new Map<string, ConjFact[]>();
+    const group2: ConjFact[] = [];
     for (const fact of conjFacts) {
       const def = conjFactDef(fact.key);
       if (!def) continue;
-      pushTo(byTense, def.tense, fact);
+      if (def.level === 1) pushTo(byTense, def.tense, fact);
       if (def.verb) pushTo(byVerb, def.verb, fact);
+      if (isConjGroup2Def(def)) group2.push(fact);
     }
     for (const tense of CONJ_TENSES) {
       if (allConjMastered(byTense.get(tense) ?? [])) earn(CONJ_TENSE_BADGE_ID[tense]);
     }
-    for (const verb of CONJ_IRREGULAR_VERBS) {
-      if (allConjMastered(byVerb.get(verb) ?? [])) earn(conjVerbBadgeId(verb));
+    for (const [verb, facts] of byVerb) {
+      if (allConjMastered(facts)) earn(conjVerbBadgeId(verb));
     }
+    if (allConjMastered(group2)) earn(CONJ_GROUP2_BADGE_ID);
   }
 
   // Verbes irréguliers — un badge par famille consolidée. Même court-circuit
