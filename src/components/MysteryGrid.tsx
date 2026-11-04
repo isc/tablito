@@ -56,7 +56,14 @@ export default function MysteryGrid({ theme, cellFor, size }: MysteryGridProps) 
   return (
     <div className="mystery-image-container">
       <div className="mystery-image">
-        <div className="mystery-cells" style={{ '--mystery-size': side } as CSSProperties}>
+        {/* La transition de fond sert à une case qui change de boîte. Une autre image
+            ou une autre taille, c'est une autre grille : réutiliser ses boutons ferait
+            glisser chaque tranche de l'ancienne image vers la nouvelle. */}
+        <div
+          key={`${theme}/${side}`}
+          className="mystery-cells"
+          style={{ '--mystery-size': side } as CSSProperties}
+        >
           {values.map((row, rowIdx) =>
             values.map((col, colIdx) => {
               const cell = cellFor(row, col);
