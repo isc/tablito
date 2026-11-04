@@ -1,4 +1,4 @@
-import type { ConjFact, ConjFactKind, ConjPerson, ConjTense } from '../types';
+import type { ConjFact, ConjFactKind, ConjLevel, ConjPerson, ConjTense } from '../types';
 
 // === Matière conjugaison — l'inventaire (spec Verbito §3) ===
 //
@@ -7,6 +7,12 @@ import type { ConjFact, ConjFactKind, ConjPerson, ConjTense } from '../types';
 //   présent irréguliers  7 verbes × 6 personnes − 4 fusions je/tu          → 38
 //   imparfait            6 terminaisons + 1 radical irrégulier (ét-)       →  7
 //   futur                6 terminaisons + 6 radicaux irréguliers           → 12
+//
+// Le niveau 2 (specs §15.3) ajoute 23 faits du programme de CM1, ouverts une fois
+// les trois temps maîtrisés :
+//   présent 2e groupe    6 terminaisons                                    →  6
+//   présent irréguliers  3 verbes × 6 personnes − 3 fusions je/tu          → 15
+//   futur                2 radicaux irréguliers (pourr-, voudr-)           →  2
 //
 // Deux systèmes cohabitent (Pinker 1999, spec §2.1) : les RÈGLES productives
 // (terminaisons, marques de personne — cf. conjugationRules.ts) et les
@@ -45,6 +51,10 @@ export const CONJ_IRREGULAR_VERBS: readonly string[] = [
   'voir',
 ];
 
+// Les 3 irréguliers du niveau 2 (specs §15.3), à la suite des précédents dans
+// le même ordre d'introduction.
+export const CONJ_LEVEL2_VERBS: readonly string[] = ['pouvoir', 'vouloir', 'prendre'];
+
 // Terminaisons régulières, par temps. Les deux tables imparfait/futur sont
 // universelles (elles s'appliquent à TOUS les verbes du périmètre, y compris
 // aux radicaux irréguliers ser-, ét-… — c'est tout l'intérêt de la
@@ -56,6 +66,17 @@ export const CONJ_PRESENT_G1_ENDINGS: Record<ConjPerson, string> = {
   nous: 'ons',
   vous: 'ez',
   ils: 'ent',
+};
+
+// Niveau 2 : le présent du 2e groupe. Le -iss- du pluriel appartient à la
+// terminaison à taper : le radical affiché reste celui de l'infinitif (fin-).
+const CONJ_PRESENT_G2_ENDINGS: Record<ConjPerson, string> = {
+  je: 'is',
+  tu: 'is',
+  il: 'it',
+  nous: 'issons',
+  vous: 'issez',
+  ils: 'issent',
 };
 
 export const CONJ_IMPARFAIT_ENDINGS: Record<ConjPerson, string> = {
@@ -117,6 +138,8 @@ export interface ConjCarrier {
  */
 export interface ConjFactDef {
   key: string;
+  /** Niveau de la matière : le 2 s'ouvre une fois le 1 maîtrisé (§15.3, §15.7). */
+  level: ConjLevel;
   kind: ConjFactKind;
   tense: ConjTense;
   /** Verbe du fait ('irregular'/'stem') ; null pour les terminaisons. */
@@ -153,6 +176,7 @@ function endingFact(
   const key = tense === 'present' ? `pres-g1-${person}` : `${TENSE_SLUG[tense]}-${person}`;
   return {
     key,
+    level: 1,
     kind: 'ending',
     tense,
     verb: null,
@@ -174,6 +198,7 @@ function irregularFact(
 ): ConjFactDef {
   return {
     key: `pres-${stripAccents(verb)}-${persons.join('')}`,
+    level: 1,
     kind: 'irregular',
     tense: 'present',
     verb,
@@ -194,6 +219,7 @@ function stemFact(
 ): ConjFactDef {
   return {
     key: `${TENSE_SLUG[tense]}-${stripAccents(verb)}`,
+    level: 1,
     kind: 'stem',
     tense,
     verb,
@@ -206,9 +232,25 @@ function stemFact(
   };
 }
 
+const GROUP2_KEY_PREFIX = 'pres-g2-';
+
+/** Terminaison du présent du 2e groupe : même forme qu'une terminaison du 1er. */
+function group2Fact(person: ConjPerson, carriers: readonly CarrierSpec[]): ConjFactDef {
+  return {
+    ...endingFact('present', person, carriers),
+    key: `${GROUP2_KEY_PREFIX}${person}`,
+    ending: CONJ_PRESENT_G2_ENDINGS[person],
+  };
+}
+
+/** Le fait est-il une terminaison du 2e groupe (badge dédié, règle dédiée) ? */
+export function isConjGroup2Def(def: Pick<ConjFactDef, 'key'>): boolean {
+  return def.key.startsWith(GROUP2_KEY_PREFIX);
+}
+
 /**
  * Construit l'inventaire. Appelé au plus une fois, à la PREMIÈRE lecture de
- * `conjFactDefs()` : les 63 définitions et leurs ~151 phrases porteuses ne
+ * `conjFactDefs()` : les 86 définitions et leurs ~205 phrases porteuses ne
  * s'évaluent pas au chargement du module. La conjugaison est une matière qu'on
  * n'ouvre pas tous les jours (et jamais en anglais) — un boot qui ne la touche
  * pas ne paie rien.
@@ -547,6 +589,138 @@ const FUTUR: ConjFactDef[] = [
 // fabrique par la règle (infinitif moins le e des verbes en -re, §3.2). C'est
 // pourquoi le bloc futur compte 6 radicaux pour 7 verbes irréguliers.
 
+// --- Niveau 2 (specs §15.3) -------------------------------------------------
+//
+// Le programme de CM1 après les 63 faits du socle : 2e groupe, pouvoir, vouloir,
+// prendre. Leur imparfait et le futur de finir et prendre ne sont PAS des faits :
+// ils se fabriquent par les règles déjà apprises, comme « je faisais » ou
+// « je dirai » au niveau 1.
+
+const PRESENT_G2: ConjFactDef[] = [
+  group2Fact('je', [
+    ['finir', 'En ce moment,', 'mes devoirs.'],
+    ['choisir', 'Aujourd’hui,', 'un livre.'],
+    ['grandir', 'Maintenant,', 'très vite.'],
+  ]),
+  group2Fact('tu', [
+    ['choisir', 'En ce moment,', 'ton dessert.'],
+    ['réussir', 'Aujourd’hui,', 'ton gâteau.'],
+    ['remplir', 'Maintenant,', 'ton verre.'],
+  ]),
+  group2Fact('il', [
+    ['finir', 'En ce moment,', 'son assiette.'],
+    ['obéir', 'Aujourd’hui,', 'à son père.'],
+    ['rougir', 'Maintenant,', 'de plaisir.'],
+  ]),
+  group2Fact('nous', [
+    ['finir', 'En ce moment,', 'le puzzle.'],
+    ['choisir', 'Aujourd’hui,', 'nos places.'],
+    ['applaudir', 'Maintenant,', 'très fort.'],
+  ]),
+  group2Fact('vous', [
+    ['finir', 'En ce moment,', 'votre dessin.'],
+    ['choisir', 'Aujourd’hui,', 'votre équipe.'],
+    ['remplir', 'Maintenant,', 'la fiche.'],
+  ]),
+  group2Fact('ils', [
+    ['grandir', 'En ce moment,', 'très vite.'],
+    ['finir', 'Aujourd’hui,', 'à midi.'],
+    ['applaudir', 'Maintenant,', 'le chanteur.'],
+  ]),
+];
+
+// « peux », « veux » : le x n'est pas la marque -s de tu, donc la forme reste
+// insécable, comme « sommes ». Fusions je/tu : peux, veux, prends.
+const PRESENT_POUVOIR: ConjFactDef[] = [
+  irregularFact('pouvoir', ['je', 'tu'], 'peux', ['peux', ''], [
+    ['je', 'Aujourd’hui,', 'venir avec toi.'],
+    ['tu', 'En ce moment,', 'jouer dehors.'],
+  ]),
+  irregularFact('pouvoir', ['il'], 'peut', ['peut', ''], [
+    ['il', 'Aujourd’hui,', 'rester ici.'],
+    ['il', 'En ce moment,', 'nager seul.'],
+  ]),
+  irregularFact('pouvoir', ['nous'], 'pouvons', ['pouv', 'ons'], [
+    ['nous', 'Aujourd’hui,', 'rentrer à pied.'],
+    ['nous', 'En ce moment,', 'jouer aux cartes.'],
+  ]),
+  irregularFact('pouvoir', ['vous'], 'pouvez', ['pouv', 'ez'], [
+    ['vous', 'Aujourd’hui,', 'entrer.'],
+    ['vous', 'En ce moment,', 'lire.'],
+  ]),
+  irregularFact('pouvoir', ['ils'], 'peuvent', ['peuv', 'ent'], [
+    ['ils', 'Aujourd’hui,', 'partir plus tôt.'],
+    ['ils', 'En ce moment,', 'regarder la télé.'],
+  ]),
+];
+
+const PRESENT_VOULOIR: ConjFactDef[] = [
+  irregularFact('vouloir', ['je', 'tu'], 'veux', ['veux', ''], [
+    ['je', 'Aujourd’hui,', 'une glace.'],
+    ['tu', 'En ce moment,', 'un chien.'],
+  ]),
+  irregularFact('vouloir', ['il'], 'veut', ['veut', ''], [
+    ['il', 'Aujourd’hui,', 'du chocolat.'],
+    ['il', 'En ce moment,', 'un vélo rouge.'],
+  ]),
+  irregularFact('vouloir', ['nous'], 'voulons', ['voul', 'ons'], [
+    ['nous', 'Aujourd’hui,', 'une histoire.'],
+    ['nous', 'En ce moment,', 'un nouveau jeu.'],
+  ]),
+  irregularFact('vouloir', ['vous'], 'voulez', ['voul', 'ez'], [
+    ['vous', 'Aujourd’hui,', 'de l’eau.'],
+    ['vous', 'En ce moment,', 'un chat.'],
+  ]),
+  irregularFact('vouloir', ['ils'], 'veulent', ['veul', 'ent'], [
+    ['ils', 'Aujourd’hui,', 'des frites.'],
+    ['ils', 'En ce moment,', 'un ballon.'],
+  ]),
+];
+
+const PRESENT_PRENDRE: ConjFactDef[] = [
+  irregularFact('prendre', ['je', 'tu'], 'prends', ['prend', 's'], [
+    ['je', 'Aujourd’hui,', 'le bus.'],
+    ['tu', 'En ce moment,', 'ton goûter.'],
+  ]),
+  irregularFact('prendre', ['il'], 'prend', ['prend', ''], [
+    ['il', 'Aujourd’hui,', 'son manteau.'],
+    ['il', 'En ce moment,', 'sa douche.'],
+  ]),
+  irregularFact('prendre', ['nous'], 'prenons', ['pren', 'ons'], [
+    ['nous', 'Aujourd’hui,', 'le train.'],
+    ['nous', 'En ce moment,', 'des photos.'],
+  ]),
+  irregularFact('prendre', ['vous'], 'prenez', ['pren', 'ez'], [
+    ['vous', 'Aujourd’hui,', 'vos cahiers.'],
+    ['vous', 'En ce moment,', 'une pause.'],
+  ]),
+  irregularFact('prendre', ['ils'], 'prennent', ['prenn', 'ent'], [
+    ['ils', 'Aujourd’hui,', 'le métro.'],
+    ['ils', 'En ce moment,', 'leur temps.'],
+  ]),
+];
+
+const FUTUR_LEVEL2: ConjFactDef[] = [
+  stemFact('futur', 'pouvoir', 'pourr', [
+    ['je', 'Demain,', 'venir chez toi.'],
+    ['nous', 'Bientôt,', 'nager.'],
+    ['ils', 'La semaine prochaine,', 'partir.'],
+  ]),
+  stemFact('futur', 'vouloir', 'voudr', [
+    ['je', 'Demain,', 'une glace.'],
+    ['tu', 'Bientôt,', 'un vélo.'],
+    ['ils', 'La semaine prochaine,', 'jouer dehors.'],
+  ]),
+];
+
+const LEVEL2: ConjFactDef[] = [
+  ...PRESENT_G2,
+  ...PRESENT_POUVOIR,
+  ...PRESENT_VOULOIR,
+  ...PRESENT_PRENDRE,
+  ...FUTUR_LEVEL2,
+].map((def) => ({ ...def, level: 2 }));
+
   return [
     ...PRESENT_G1,
     ...PRESENT_ETRE,
@@ -558,13 +732,14 @@ const FUTUR: ConjFactDef[] = [
     ...PRESENT_VOIR,
     ...IMPARFAIT,
     ...FUTUR,
+    ...LEVEL2,
   ];
 }
 
 let cachedDefs: readonly ConjFactDef[] | null = null;
 let cachedByKey: Map<string, ConjFactDef> | null = null;
 
-/** L'inventaire complet : 63 faits (spec §3.3), construit à la demande. */
+/** L'inventaire complet, les 2 niveaux : 86 faits, construit à la demande. */
 export function conjFactDefs(): readonly ConjFactDef[] {
   return (cachedDefs ??= buildConjFactDefs());
 }
@@ -577,16 +752,34 @@ export function conjFactDef(key: string): ConjFactDef | undefined {
   return defsByKey().get(key);
 }
 
+/** Les faits d'un niveau, dans l'ordre de l'inventaire : celui de sa grille. */
+export function conjFactDefsOfLevel(level: ConjLevel): ConjFactDef[] {
+  return conjFactDefs().filter((def) => def.level === level);
+}
+
+/** Les faits du profil qui appartiennent à un niveau. */
+export function conjFactsOfLevel<T extends { key: string }>(facts: readonly T[], level: ConjLevel): T[] {
+  return facts.filter((f) => conjFactDef(f.key)?.level === level);
+}
+
+export interface ConjGrid {
+  size: number;
+  /** Une question par fait du niveau, porteuse 0, dans l'ordre de l'inventaire. */
+  views: ConjQuestionView[];
+  /** Le fait de la case (row, col), indices à partir de 0 ; rien pour une case bonus. */
+  viewAt: (row: number, col: number) => ConjQuestionView | undefined;
+}
+
 /**
- * Rang du fait occupant la case (row, col) d'une grille 8×8 de la matière,
- * indices 0..7 en ordre de lecture. L'image mystère de l'enfant et la grille de
- * l'espace parent partagent l'ordre de l'inventaire (§7.1) — donc cette
- * formule, écrite une seule fois : le parent qui regarde la grille et l'enfant
- * qui regarde son image voient la même chose au même endroit. Le rang 63 ne
- * désigne aucun fait (63 faits, 64 cases).
+ * La grille d'un niveau : le plus petit carré qui contient ses faits (8×8 pour 63,
+ * 5×5 pour 23), en ordre de lecture. L'image mystère de l'enfant et la grille de
+ * l'espace parent la partagent (§7.1) : le parent qui regarde la grille et
+ * l'enfant qui regarde son image voient la même chose au même endroit.
  */
-export function conjGridIndex(row: number, col: number): number {
-  return row * 8 + col;
+export function conjGrid(level: ConjLevel): ConjGrid {
+  const views = conjFactDefsOfLevel(level).map((def) => resolveConjQuestion(def, 0));
+  const size = Math.ceil(Math.sqrt(views.length));
+  return { size, views, viewAt: (row, col) => views[row * size + col] };
 }
 
 /** Variante stricte, pour les appelants qui savent la clé valide (tests, UI). */
@@ -596,24 +789,40 @@ export function requireConjFactDef(key: string): ConjFactDef {
   return def;
 }
 
-/** Les 63 faits, en boîte 1, non introduits. */
-export function createInitialConjFacts(): ConjFact[] {
-  return conjFactDefs().map((def) => ({
+/** Un fait neuf : en boîte 1, non introduit. */
+export function createConjFact(def: Pick<ConjFactDef, 'key'>): ConjFact {
+  return {
     key: def.key,
-    box: 1 as const,
+    box: 1,
     lastSeen: '',
     nextDue: '',
     history: [],
     introduced: false,
-  }));
+  };
 }
 
-/** Faits d'un temps donné (badges « temps », déblocages, image mystère). */
+/**
+ * Les 63 faits du niveau 1. Ceux du niveau 2 n'entrent dans le profil qu'à son
+ * ouverture (cf. `withConjLevel2Facts`) : tant qu'ils n'y sont pas, aucun compteur,
+ * aucune grille et aucun plafond d'introduction n'a à les écarter.
+ */
+export function createInitialConjFacts(): ConjFact[] {
+  return conjFactDefsOfLevel(1).map(createConjFact);
+}
+
+/**
+ * Faits d'un temps du niveau 1 (badges « temps », déblocages). Le niveau 2 n'y
+ * entre pas : « le présent, c'est fait » reste le présent du socle, et sa barre de
+ * progression ne recule pas quand s'ouvrent les nouveaux verbes.
+ */
 export function conjFactsOfTense<T extends { key: string }>(facts: T[], tense: ConjTense): T[] {
-  return facts.filter((f) => conjFactDef(f.key)?.tense === tense);
+  return facts.filter((f) => {
+    const def = conjFactDef(f.key);
+    return def?.level === 1 && def.tense === tense;
+  });
 }
 
-/** Faits portés par un verbe irrégulier (badges « par verbe », 7 badges). */
+/** Faits portés par un verbe irrégulier (badges « par verbe »). */
 export function conjFactsOfVerb<T extends { key: string }>(facts: T[], verb: string): T[] {
   return facts.filter((f) => conjFactDef(f.key)?.verb === verb);
 }
@@ -708,7 +917,7 @@ export interface ConjQuestionView {
    * « la phrase en contexte, affichée et lue à voix haute, forme complète
    * visible »). `null` hors de la 1ʳᵉ porteuse : une introduction utilise
    * toujours la porteuse 0 (cf. composeConjSession), donc les autres n'ont pas
-   * de MP3 de forme complète — 63 fichiers au lieu de 151.
+   * de MP3 de forme complète : un par fait, au lieu d'un par porteuse.
    */
   sentenceTtsKey: string | null;
 }
@@ -809,8 +1018,8 @@ interface ConjTtsEntry {
 
 /**
  * Toutes les entrées TTS de l'inventaire, pour la génération des MP3 :
- * l'énoncé de chaque porteuse (151), plus la phrase complète de la porteuse 0
- * de chaque fait (63), lue à l'étape 1 de l'introduction.
+ * l'énoncé de chaque porteuse, plus la phrase complète de la porteuse 0 de chaque
+ * fait, lue à l'étape 1 de l'introduction.
  */
 export function allConjCarrierSentences(): ConjTtsEntry[] {
   return allConjQuestionViews().flatMap((view) => {

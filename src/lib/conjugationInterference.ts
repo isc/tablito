@@ -25,12 +25,21 @@ export const CONJ_INTRO_SPACING_DAYS = 2;
  *   famille (ils → -nt) est présenté comme une régularité APRÈS maîtrise
  *   individuelle, jamais avant ;
  * - tu es / il est ;
+ * - niveau 2 : peux / peut / veux / veut, quatre monosyllabes en -eu dont deux
+ *   homophones par verbe ; peuvent / veulent ; prends / prend et finis / finit,
+ *   homophones comme tu es / il est ; les radicaux du futur à double consonne ou
+ *   en -dr : pourr- / voudr- / verr- / viendr- ;
  * - le groupe vous → -ez est traité à part (cf. `ezRole`) : il oppose trois
  *   formes à une RÈGLE, pas trois clés à trois clés.
  */
 export const CONJ_INTERFERENCE_GROUPS: readonly (readonly string[])[] = [
   ['pres-etre-ils', 'pres-avoir-ils', 'pres-aller-ils', 'pres-faire-ils'],
   ['pres-etre-tu', 'pres-etre-il'],
+  ['pres-pouvoir-jetu', 'pres-pouvoir-il', 'pres-vouloir-jetu', 'pres-vouloir-il'],
+  ['pres-pouvoir-ils', 'pres-vouloir-ils'],
+  ['pres-prendre-jetu', 'pres-prendre-il'],
+  ['pres-g2-tu', 'pres-g2-il'],
+  ['fut-pouvoir', 'fut-vouloir', 'fut-voir', 'fut-venir'],
 ];
 
 /**
@@ -45,7 +54,7 @@ export const CONJ_CONTRAST_PAIR: readonly [string, string] = ['fut-je', 'imp-je'
 /**
  * Rôle d'un fait vis-à-vis de la règle « vous → -ez » :
  * - 'regular'   : le fait porte bien la marque -ez (vous chantez, vous avez,
- *                 vous irez…) ;
+ *                 vous irez, vous finissez…) ;
  * - 'exception' : le fait est une des trois formes qui violent la règle
  *                 (vous êtes, vous faites, vous dites) ;
  * - 'none'      : le fait ne concerne pas la 2e personne du pluriel, ou porte
@@ -54,7 +63,7 @@ export const CONJ_CONTRAST_PAIR: readonly [string, string] = ['fut-je', 'imp-je'
  */
 export function ezRole(def: ConjFactDef): 'regular' | 'exception' | 'none' {
   if (!def.persons.includes('vous')) return 'none';
-  if (def.kind === 'ending') return def.ending === 'ez' ? 'regular' : 'none';
+  if (def.kind === 'ending') return def.ending === 'ez' || def.ending === 'issez' ? 'regular' : 'none';
   if (def.kind === 'stem') return 'regular'; // radical + terminaison régulière -ez
   const mark = def.segment?.[1] ?? '';
   if (mark === 'ez') return 'regular';

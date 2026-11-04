@@ -27,6 +27,7 @@ interface ProgressScreenStrings {
   // l'entrée `en` existe pour que la table reste totale — elle n'est jamais
   // rendue : l'onglet est masqué quand la langue d'interface est l'anglais.
   conjugations: string;
+  conjugations2: string;
   // Verbes irréguliers anglais (specs §16.9) : même réserve, masqués en anglais.
   irregularVerbs: string;
   discoveredIrr: string;
@@ -43,6 +44,7 @@ interface ProgressScreenStrings {
   legendDiv: string;
   legendRem: string;
   legendConj: string;
+  legendConj2: string;
 }
 
 const progressScreenFr: ProgressScreenStrings = {
@@ -53,6 +55,7 @@ const progressScreenFr: ProgressScreenStrings = {
   divisions: 'Divisions',
   remainders: 'Avec reste',
   conjugations: 'Conjugaison',
+  conjugations2: 'Conjugaison 2',
   irregularVerbs: 'Verbes anglais',
   discoveredIrr: 'découverts',
   masteredIrr: 'maîtrisés',
@@ -73,6 +76,8 @@ const progressScreenFr: ProgressScreenStrings = {
     "Chaque division avec reste que tu connais mieux dévoile un peu plus de cette image. Et si une case a besoin d'être revue, elle se brouille à nouveau : l'image montre toujours où tu en es. Continue, et elle se complétera !",
   legendConj:
     "Une seule image pour les trois temps : chaque forme que tu connais mieux en dévoile un morceau. Et si un fait a besoin d'être revu, sa case se brouille à nouveau — pas d'échec, juste la brume qui revient. Continue, et elle se complétera !",
+  legendConj2:
+    "Une nouvelle image pour tes nouveaux verbes : chaque forme que tu connais mieux en dévoile un morceau. Et si un fait a besoin d'être revu, sa case se brouille à nouveau — pas d'échec, juste la brume qui revient. Continue, et elle se complétera !",
 };
 
 const progressScreenEn: ProgressScreenStrings = {
@@ -83,6 +88,7 @@ const progressScreenEn: ProgressScreenStrings = {
   divisions: 'Divisions',
   remainders: 'Remainders',
   conjugations: 'Conjugation',
+  conjugations2: 'Conjugation 2',
   irregularVerbs: 'English verbs',
   discoveredIrr: 'discovered',
   masteredIrr: 'mastered',
@@ -103,6 +109,8 @@ const progressScreenEn: ProgressScreenStrings = {
     'Every division with remainder you know better reveals a bit more of this picture. And if a square needs reviewing, it blurs again: the picture always shows where you are right now. Keep going, and it will be complete!',
   legendConj:
     'One picture for all three tenses: every form you know better reveals a piece of it. And if a fact needs reviewing, its square blurs again. Keep going, and it will be complete!',
+  legendConj2:
+    'A new picture for your new verbs: every form you know better reveals a piece of it. And if a fact needs reviewing, its square blurs again. Keep going, and it will be complete!',
 };
 
 export const progressScreenStrings = { fr: progressScreenFr, en: progressScreenEn };

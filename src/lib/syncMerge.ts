@@ -23,6 +23,7 @@
 // vus en classe), d'où sa forme réduite (SyncBase).
 
 import type { Attempt, Badge, BoxLevel, PlayerEntry, SessionResult, UserProfile } from '../types';
+import { MYSTERY_THEME_FIELDS } from '../types';
 import { getDivisionFactKey } from './divisionFacts';
 import { getFactKey } from './facts';
 import { LAST_SESSION_DATE_FIELD } from './hardestFacts';
@@ -263,14 +264,6 @@ const SEEN_FLAGS = [
   'hasDoneIrrPlacement',
 ] as const;
 
-const THEMES = [
-  'mysteryTheme',
-  'divisionMysteryTheme',
-  'remainderMysteryTheme',
-  'conjMysteryTheme',
-  'irrMysteryTheme',
-] as const;
-
 /**
  * Fusionne la copie locale d'un profil avec la copie distante. `base` est le
  * dernier dépôt fusionné par cet appareil (null au premier appairage, ou pour
@@ -329,7 +322,7 @@ export function mergeProfiles(local: UserProfile, remote: UserProfile, base: Syn
   // Image mystère : celle déjà déposée. Les deux copies la partagent depuis
   // l'appairage ; elles ne diffèrent que si chacune a tiré la sienne pour un
   // champ ajouté après coup, et l'image ne doit pas changer d'un dépôt à l'autre.
-  for (const theme of THEMES) {
+  for (const theme of MYSTERY_THEME_FIELDS) {
     const deposited = remote[theme];
     if (deposited) merged[theme] = deposited;
   }

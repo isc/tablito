@@ -1,6 +1,6 @@
 import type { UserProfile, MysteryTheme } from '../types';
-import { MYSTERY_POOL } from '../types';
-import { checkBadges } from './badges';
+import { MYSTERY_POOL, MYSTERY_THEME_FIELDS } from '../types';
+import { addBadges, checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
 import { createInitialRemainderFacts } from './remainderFacts';
@@ -33,6 +33,11 @@ function pickRemainderTheme(multTheme: MysteryTheme, divTheme: MysteryTheme | un
 function pickDistinctTheme(taken: (MysteryTheme | undefined)[]): MysteryTheme {
   const others = MYSTERY_POOL.filter((t) => !taken.includes(t));
   return pickRandom(others.length > 0 ? others : MYSTERY_POOL);
+}
+
+/** Pour un champ ajouté après coup : une image qu'aucun autre niveau du profil n'a. */
+function pickUnusedTheme(profile: UserProfile): MysteryTheme {
+  return pickDistinctTheme(MYSTERY_THEME_FIELDS.map((field) => profile[field]));
 }
 
 // === Multi-profils ===
@@ -360,6 +365,7 @@ export function createNewProfile(name: string): UserProfile {
   const divisionMysteryTheme = pickDivisionTheme(mysteryTheme);
   const remainderMysteryTheme = pickRemainderTheme(mysteryTheme, divisionMysteryTheme);
   const conjMysteryTheme = pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme]);
+  const conj2MysteryTheme = pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme, conjMysteryTheme]);
   return {
     name,
     childId: generateProfileId(),
@@ -387,6 +393,7 @@ export function createNewProfile(name: string): UserProfile {
     // Les porter dès la création coûtait ~6 Ko sérialisés à CHAQUE réponse,
     // y compris pour un enfant qui ne fera jamais de conjugaison.
     conjMysteryTheme,
+    conj2MysteryTheme,
     hasSeenConjIntro: false,
     hasDoneConjPlacement: false,
     lastMathSessionDate: null,
@@ -394,7 +401,7 @@ export function createNewProfile(name: string): UserProfile {
     // Verbes irréguliers (specs §16) : même statut que la conjugaison —
     // `irrFacts` absent jusqu'à la première entrée dans la matière, image tirée
     // distincte de toutes les autres.
-    irrMysteryTheme: pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme, conjMysteryTheme]),
+    irrMysteryTheme: pickDistinctTheme([mysteryTheme, divisionMysteryTheme, remainderMysteryTheme, conjMysteryTheme, conj2MysteryTheme]),
     hasSeenIrrIntro: false,
     hasDoneIrrPlacement: false,
     lastIrrSessionDate: null,
@@ -489,13 +496,8 @@ export function normalizeProfile(profile: UserProfile): UserProfile {
   // les lire coûterait ~6 Ko de sérialisation à chaque réponse d'un enfant qui
   // ne fait que des maths. Seule l'image de la matière est backfillée : elle
   // est tirée une fois, en évitant les thèmes déjà pris par les maths.
-  if (profile.conjMysteryTheme === undefined) {
-    profile.conjMysteryTheme = pickDistinctTheme([
-      profile.mysteryTheme,
-      profile.divisionMysteryTheme,
-      profile.remainderMysteryTheme,
-    ]);
-  }
+  profile.conjMysteryTheme ??= pickUnusedTheme(profile);
+  profile.conj2MysteryTheme ??= pickUnusedTheme(profile);
   if (typeof profile.hasSeenConjIntro !== 'boolean') {
     profile.hasSeenConjIntro = false;
   }
@@ -523,14 +525,7 @@ export function normalizeProfile(profile: UserProfile): UserProfile {
   }
   // Verbes irréguliers (specs §16) : même traitement que la conjugaison, pas
   // de backfill des faits, seulement l'image et les drapeaux.
-  if (profile.irrMysteryTheme === undefined) {
-    profile.irrMysteryTheme = pickDistinctTheme([
-      profile.mysteryTheme,
-      profile.divisionMysteryTheme,
-      profile.remainderMysteryTheme,
-      profile.conjMysteryTheme,
-    ]);
-  }
+  profile.irrMysteryTheme ??= pickUnusedTheme(profile);
   if (profile.irrClassVerbs !== undefined) {
     profile.irrClassVerbs = sanitizeIrrClassVerbs(profile.irrClassVerbs);
   }
@@ -580,7 +575,10 @@ export function normalizeProfile(profile: UserProfile): UserProfile {
   // sans ça, un nouveau badge ajouté après coup demande une séance de plus
   // pour se débloquer. Les badges contextuels (MACHINE/VELOCE/PERSEVERANCE)
   // ne se déclenchent pas ici, faute de stats de séance.
-  profile.badges = [...profile.badges, ...checkBadges(profile)];
+  // Y compris sans badge neuf : un profil qui avait déjà les trois badges de temps
+  // à la mise en ligne du niveau 2 de la conjugaison, ou qui les reçoit d'un autre
+  // appareil par la synchro, reçoit ici les faits de ce niveau.
+  addBadges(profile, checkBadges(profile));
   return profile;
 }
 

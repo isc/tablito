@@ -15,11 +15,15 @@ import {
 } from './leitner';
 import {
   CONJ_IRREGULAR_VERBS,
+  CONJ_LEVEL2_VERBS,
   CONJ_PERSONS,
   CONJ_TENSES,
   allConjQuestionViews,
   conjFactDef,
+  conjFactDefsOfLevel,
+  conjFactsOfLevel,
   conjWrittenForm,
+  createConjFact,
   isPhoneticallyClose,
   normalizeConjAnswer,
   regularStem,
@@ -90,7 +94,10 @@ export const CONJ_TENSE_BADGE_ID: Record<ConjTense, string> = {
   futur: 'conj-temps-futur',
 };
 
-/** Badge par verbe irrégulier (7 badges, §7.2) : `conj-verbe-etre`, … */
+/** Badge du présent du 2e groupe (niveau 2, specs §15.8). */
+export const CONJ_GROUP2_BADGE_ID = 'conj-groupe-2';
+
+/** Badge par verbe irrégulier (§7.2, specs §15.8) : `conj-verbe-etre`, … */
 export const CONJ_VERB_BADGE_PREFIX = 'conj-verbe-';
 
 export function conjVerbBadgeId(verb: string): string {
@@ -122,8 +129,37 @@ export function unlockedConjTenses(badges: Badge[]): ConjTense[] {
   return unlocked;
 }
 
+/**
+ * Le niveau 2 est-il ouvert ? Les trois badges de temps, comme chaque temps
+ * s'ouvre sur le badge du précédent : permanents, ils ne se referment pas sur une
+ * mauvaise journée (specs §15.7).
+ */
+export function isConjLevel2Unlocked(badges: Badge[]): boolean {
+  const owned = new Set(badges.map((b) => b.id));
+  return CONJ_TENSES.every((tense) => owned.has(CONJ_TENSE_BADGE_ID[tense]));
+}
+
 /** Tout ce que la composition lit d'un profil. */
 export type ConjProfile = Pick<UserProfile, 'conjFacts' | 'badges'>;
+
+/**
+ * Les faits du profil, complétés de ceux du niveau 2 s'il est ouvert. Rend le
+ * même tableau quand il n'y a rien à ajouter : une matière jamais ouverte reste
+ * absente du profil (cf. lib/storage), un profil à jour n'est pas recopié.
+ */
+export function withConjLevel2Facts(profile: ConjProfile): ConjFact[] | undefined {
+  const facts = profile.conjFacts;
+  if (!facts || !isConjLevel2Unlocked(profile.badges)) return facts;
+  const known = new Set(facts.map((f) => f.key));
+  const missing = conjFactDefsOfLevel(2).filter((def) => !known.has(def.key));
+  return missing.length > 0 ? [...facts, ...missing.map(createConjFact)] : facts;
+}
+
+/** Niveau 2 ouvert et encore jamais commencé : la pastille de la tuile d'accueil. */
+export function hasNewConjLevel(profile: ConjProfile): boolean {
+  if (!isConjLevel2Unlocked(profile.badges)) return false;
+  return !conjFactsOfLevel(profile.conjFacts ?? [], 2).some((f) => f.introduced);
+}
 
 // --- Ordre d'introduction à l'intérieur d'un temps --------------------------
 
@@ -134,8 +170,10 @@ function personRank(person: ConjPerson): number {
   return CONJ_PERSONS.indexOf(person);
 }
 
+const VERB_ORDER: readonly string[] = [...CONJ_IRREGULAR_VERBS, ...CONJ_LEVEL2_VERBS];
+
 function verbRank(verb: string | null): number {
-  const i = verb ? CONJ_IRREGULAR_VERBS.indexOf(verb) : -1;
+  const i = verb ? VERB_ORDER.indexOf(verb) : -1;
   return i === -1 ? 0 : i;
 }
 
@@ -252,6 +290,9 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   const unlocked = new Set(unlockedTenses);
   // Temps ACTIF du jour : le dernier temps débloqué (§6.2, « un seul bouton »).
   const active = unlockedTenses[unlockedTenses.length - 1];
+  // Niveau 2 ouvert : c'est lui le travail du jour, tout le niveau 1 devient de
+  // l'entretien, plafonné comme celui des temps précédents (specs §15.7).
+  const hasLevel2 = isConjLevel2Unlocked(profile.badges);
 
   // Intros choisies AVANT les révisions (même raison que sessionComposer : les
   // révisions saturent sinon le budget et affament l'introduction).
@@ -260,7 +301,9 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
   );
 
   const newFacts: ConjFact[] = [];
-  const introBudget = newFactBudget(facts, today, CONJ_MAX_NEW_FACTS);
+  // Mesuré sur le seul niveau en cours, comme en maths : la fin de parcours est le
+  // dernier cinquième de CE jeu de faits, pas des 86.
+  const introBudget = newFactBudget(hasLevel2 ? conjFactsOfLevel(facts, 2) : facts, today, CONJ_MAX_NEW_FACTS);
   if (introBudget > 0) {
     const candidates = facts
       .filter((f) => !f.introduced)
@@ -296,7 +339,7 @@ export function composeConjSession(profile: ConjProfile, now: string): ConjSessi
     if (selected.length >= reviewBudget) break;
     const def = conjFactDef(fact.key);
     if (!def) continue;
-    const isMaintenance = def.tense !== active;
+    const isMaintenance = hasLevel2 ? def.level === 1 : def.tense !== active;
     if (isMaintenance && maintenance >= CONJ_MAINTENANCE_CAP) continue;
     if (!conjCoexistsWithAll(fact, newFacts, selected)) continue;
     selected.push(fact);

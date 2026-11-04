@@ -97,6 +97,7 @@ interface ParentDashboardStrings {
   learnMoreLeitner: string;
   leitnerGrid: string;
   leitnerGridSubtitle: (op: string) => string;
+  conjLevel2Grid: string;
   opDivision: string;
   opMultiplication: string;
   opRemainder: string;
@@ -294,6 +295,7 @@ const parentDashboardFr: ParentDashboardStrings = {
   masteredFromBox: (box) => `Maîtrisées : à partir de la boîte ${box}.`,
   learnMoreLeitner: 'En savoir plus sur le système de Leitner',
   leitnerGrid: 'Grille Leitner',
+  conjLevel2Grid: 'Niveau 2 : verbes comme finir, pouvoir, vouloir, prendre.',
   leitnerGridSubtitle: (op) =>
     `Une case par ${op}, colorée selon sa boîte. Le rouge signale les faits récents ou en difficulté, le vert ceux bien ancrés.`,
   opDivision: 'division',
@@ -517,6 +519,7 @@ const parentDashboardEn: ParentDashboardStrings = {
   masteredFromBox: (box) => `Mastered: box ${box} and up.`,
   learnMoreLeitner: 'Learn more about the Leitner system',
   leitnerGrid: 'Leitner grid',
+  conjLevel2Grid: 'Level 2: verbs like finir, pouvoir, vouloir, prendre.',
   leitnerGridSubtitle: (op) =>
     `One cell per ${op} fact, colored by its box. Red flags recent or tricky facts, green the well-learned ones.`,
   opDivision: 'division',

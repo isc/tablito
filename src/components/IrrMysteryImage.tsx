@@ -39,5 +39,5 @@ export default function IrrMysteryImage({ facts, theme }: IrrMysteryImageProps) 
     };
   };
 
-  return <MysteryGrid theme={theme} cellFor={cellFor} showHeaders={false} />;
+  return <MysteryGrid theme={theme} cellFor={cellFor} size={8} />;
 }

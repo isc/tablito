@@ -77,6 +77,10 @@ export type ConjTense = 'present' | 'imparfait' | 'futur';
 
 export type ConjPerson = 'je' | 'tu' | 'il' | 'nous' | 'vous' | 'ils';
 
+// Niveau de la matière (specs §15.3) : 1 = le socle, 2 = le programme de CM1 qui
+// s'ouvre une fois les trois temps maîtrisés.
+export type ConjLevel = 1 | 2;
+
 /**
  * Nature d'un fait de conjugaison (spec §2.1, §3.3) :
  * - `ending`   : une TERMINAISON régulière — « présent 1er groupe -ons ». Le
@@ -99,7 +103,7 @@ export type ConjFactKind = 'ending' | 'irregular' | 'stem';
  * Contrairement à MultiFact/DivisionFact, le fait persisté ne porte QUE sa clé :
  * la définition (temps, personne, verbe, phrases porteuses…) vit dans
  * l'inventaire statique de `lib/conjugationFacts.ts`, résolue par
- * `conjFactDef(key)`. Un inventaire de 63 entrées avec 2-3 phrases porteuses
+ * `conjFactDef(key)`. Un inventaire de 86 entrées avec 2-3 phrases porteuses
  * chacune n'a rien à faire dans le localStorage de chaque profil, et cette
  * indirection rend les corrections de l'inventaire (typo dans une phrase,
  * ajout d'une porteuse) rétro-actives sans migration.
@@ -180,6 +184,16 @@ export const MYSTERY_POOL = [
 
 export type MysteryTheme = (typeof MYSTERY_POOL)[number] | 'village';
 
+// Les champs du profil qui portent une image mystère.
+export const MYSTERY_THEME_FIELDS = [
+  'mysteryTheme',
+  'divisionMysteryTheme',
+  'remainderMysteryTheme',
+  'conjMysteryTheme',
+  'conj2MysteryTheme',
+  'irrMysteryTheme',
+] as const;
+
 export interface UserProfile {
   name: string;
   // Version de l'app qui a PRODUIT cet instantané. Purement diagnostique : rien
@@ -251,11 +265,14 @@ export interface UserProfile {
   remainderMysteryTheme?: MysteryTheme;
   // === Matière conjugaison (cf. spec Verbito). Optionnels : absents des
   // profils antérieurs, backfillés par normalizeProfile au chargement. ===
-  // Les 63 faits de conjugaison (cf. createInitialConjFacts).
+  // Les faits de conjugaison : les 63 du niveau 1 (cf. createInitialConjFacts),
+  // plus les 23 du niveau 2 une fois ouvert (cf. withConjLevel2Facts).
   conjFacts?: ConjFact[];
   // Image mystère dédiée à la conjugaison (spec §7.1) : matière séparée ⇒ pool
   // propre, tiré distinct des thèmes des niveaux de maths.
   conjMysteryTheme?: MysteryTheme;
+  // Image mystère du niveau 2 de la matière (specs §15.8), distincte de la première.
+  conj2MysteryTheme?: MysteryTheme;
   hasSeenConjIntro?: boolean;
   // Le test de placement de la conjugaison (spec §6.1) a-t-il été passé ? Flag
   // explicite plutôt qu'une inférence sur les boîtes : un enfant qui échoue à

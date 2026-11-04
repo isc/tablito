@@ -29,6 +29,9 @@ interface HomeScreenProps {
   // là mais jamais touchée : c'est la pastille discrète de découverte
   // (révélation différée, comme la règle bonus ×11 — jamais de modale).
   conjVisible: boolean;
+  // Niveau 2 ouvert et pas encore commencé : la pastille revient sur la tuile,
+  // signal discret sans modale, comme pour l'ouverture de la matière (§15.7).
+  conjHasNewLevel?: boolean;
   onStartConj: () => void;
   // === Matière verbes irréguliers anglais (specs §16) : même contrat que la
   // conjugaison — proposée dans toute langue sauf l'anglais.
@@ -227,6 +230,7 @@ export default function HomeScreen({
   conjAvailable = false,
   hasConjSessionAvailable = false,
   conjVisible = false,
+  conjHasNewLevel = false,
   onStartConj,
   irrAvailable = false,
   hasIrrSessionAvailable = false,
@@ -414,7 +418,7 @@ export default function HomeScreen({
                   icon={<IconVerb />}
                   label={t.subjectConj}
                   available={hasConjSessionAvailable}
-                  isNew={!conjVisible}
+                  isNew={!conjVisible || conjHasNewLevel}
                   onStart={onStartConj}
                   t={t}
                 />

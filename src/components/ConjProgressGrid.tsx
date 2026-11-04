@@ -1,34 +1,34 @@
 import { useMemo } from 'react';
-import type { ConjFact } from '../types';
+import type { ConjFact, ConjLevel } from '../types';
 import LeitnerGrid, { type LeitnerGridCell } from './LeitnerGrid';
-import { conjFactDefs, conjGridIndex, resolveConjQuestion } from '../lib/conjugationFacts';
+import { conjGrid } from '../lib/conjugationFacts';
 
 interface ConjProgressGridProps {
   facts: ConjFact[];
+  level?: ConjLevel;
 }
 
 /**
- * Grille Leitner de la conjugaison pour l'espace parent : 63 faits sur 8×8,
- * sans en-têtes — un fait de conjugaison n'est pas indexé par un couple de
- * nombres, contrairement aux tables (cf. LeitnerGrid `showHeaders`). La 64e
- * case reste vide (non introduite), comme sur l'image mystère : même ordre de
- * cases (l'inventaire), même formule d'indexation (`conjGridIndex`), donc le
- * parent qui regarde la grille et l'enfant qui regarde son image voient la
- * même chose au même endroit.
+ * Grille Leitner d'un niveau de la conjugaison pour l'espace parent, sans
+ * en-têtes — un fait de conjugaison n'est pas indexé par un couple de nombres,
+ * contrairement aux tables (cf. LeitnerGrid `size`). Les cases au-delà des faits
+ * restent vides (non introduites), comme sur l'image mystère : même `conjGrid`,
+ * donc le parent qui regarde la grille et l'enfant qui regarde son image voient
+ * la même chose au même endroit.
  */
-export default function ConjProgressGrid({ facts }: ConjProgressGridProps) {
+export default function ConjProgressGrid({ facts, level = 1 }: ConjProgressGridProps) {
   const factMap = useMemo(() => {
     const m = new Map<string, ConjFact>();
     for (const f of facts) m.set(f.key, f);
     return m;
   }, [facts]);
 
-  // Libellés des 63 cases : ils ne dépendent que de l'inventaire, jamais de
+  // Libellés des cases : ils ne dépendent que de l'inventaire, jamais de
   // l'état Leitner — dérivés une fois au montage plutôt qu'à chaque rendu.
-  const views = useMemo(() => conjFactDefs().map((def) => resolveConjQuestion(def, 0)), []);
+  const grid = useMemo(() => conjGrid(level), [level]);
 
   const cellFor = (row: number, col: number): LeitnerGridCell => {
-    const view = views[conjGridIndex(row, col)];
+    const view = grid.viewAt(row, col);
     if (!view) {
       return {
         box: 1,
@@ -52,5 +52,5 @@ export default function ConjProgressGrid({ facts }: ConjProgressGridProps) {
     };
   };
 
-  return <LeitnerGrid cellFor={cellFor} showHeaders={false} />;
+  return <LeitnerGrid cellFor={cellFor} size={grid.size} />;
 }

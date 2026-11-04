@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { MysteryTheme, BoxLevel } from '../types';
 import DotGrid from './DotGrid';
 import { useBoxLevelStrings, useMysteryGridStrings } from '../i18n/progress';
@@ -19,7 +19,6 @@ export interface MysteryCell {
 }
 
 const HEADERS = [2, 3, 4, 5, 6, 7, 8, 9];
-const PLAIN = [0, 1, 2, 3, 4, 5, 6, 7];
 
 // Les PNG par niveau sont produits par scripts/generate-mystery-levels.mjs et
 // servis depuis public/mystery/<theme>/level-{1..5}.png.
@@ -29,32 +28,35 @@ interface MysteryGridProps {
   theme: MysteryTheme;
   cellFor: (row: number, col: number) => MysteryCell;
   /**
-   * La grille n'affiche jamais d'en-têtes ; ce drapeau dit dans quel repère
-   * `cellFor` reçoit sa case. `true` (défaut) : les valeurs des tables, 2..9 —
-   * la case EST le fait (a × b). `false` : des indices 0..7 en ordre de
-   * lecture, pour une matière dont les faits ne sont pas indexés par un couple
-   * de nombres (la conjugaison). Même contrat que LeitnerGrid, à dessein : les
-   * deux grilles d'une même matière doivent numéroter leurs cases pareil.
+   * Dit dans quel repère `cellFor` reçoit sa case. Absent : les valeurs des
+   * tables, 2..9 — la case EST le fait (a × b). Présent : le côté de la grille,
+   * et des indices à partir de 0 en ordre de lecture, pour une matière dont les
+   * faits ne sont pas indexés par un couple de nombres (la conjugaison). Même
+   * contrat que LeitnerGrid, à dessein : les deux grilles d'une même matière
+   * doivent numéroter leurs cases pareil.
    */
-  showHeaders?: boolean;
+  size?: number;
 }
 
 /**
- * Grille mystère générique (specs §5.1 / §11.5). 8×8 cases ; chaque case affiche
- * une tranche de l'image du thème selon sa boîte Leitner (sprite, background-size
- * 800% + background-position). La multiplication et la division fournissent leur
- * propre mapping case→fait via `cellFor` — d'où aucune duplication de la grille.
+ * Grille mystère générique (specs §5.1 / §11.5). 8×8 cases par défaut ; chaque
+ * case affiche une tranche de l'image du thème selon sa boîte Leitner (sprite,
+ * background-size + background-position). La multiplication et la division
+ * fournissent leur propre mapping case→fait via `cellFor` — d'où aucune
+ * duplication de la grille.
  */
-export default function MysteryGrid({ theme, cellFor, showHeaders = true }: MysteryGridProps) {
+export default function MysteryGrid({ theme, cellFor, size }: MysteryGridProps) {
   const t = useMysteryGridStrings();
   const boxLevel = useBoxLevelStrings();
   const [selected, setSelected] = useState<MysteryCell | null>(null);
-  const values = showHeaders ? HEADERS : PLAIN;
+  const values = size === undefined ? HEADERS : Array.from({ length: size }, (_, i) => i);
+  const side = values.length;
+  const last = side - 1;
 
   return (
     <div className="mystery-image-container">
       <div className="mystery-image">
-        <div className="mystery-cells">
+        <div className="mystery-cells" style={{ '--mystery-size': side } as CSSProperties}>
           {values.map((row, rowIdx) =>
             values.map((col, colIdx) => {
               const cell = cellFor(row, col);
@@ -62,8 +64,8 @@ export default function MysteryGrid({ theme, cellFor, showHeaders = true }: Myst
                 cell.level > 0
                   ? {
                       backgroundImage: `url(${BASE}mystery/${theme}/level-${cell.level}.png)`,
-                      backgroundSize: '800% 800%',
-                      backgroundPosition: `${(colIdx / 7) * 100}% ${(rowIdx / 7) * 100}%`,
+                      backgroundSize: `${side * 100}% ${side * 100}%`,
+                      backgroundPosition: `${(colIdx / last) * 100}% ${(rowIdx / last) * 100}%`,
                     }
                   : undefined;
               return (
