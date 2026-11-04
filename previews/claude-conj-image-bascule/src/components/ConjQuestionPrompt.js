@@ -1,3 +1,0 @@
-import{jsx as t,jsxs as e}from"preact/jsx-runtime";import s from"./ConjForm.js";import i from"./ListenButton.js";import{conjStrings as p}from"../i18n/conjugation.js";function m({view:o,typed:r,caret:n,onReplay:a}){return e("div",{className:"conj-prompt",children:[e("div",{className:"conj-prompt-verb-row",children:[t("span",{className:"conj-verb-tag",children:o.verb}),t(i,{label:p.replay,onClick:a})]}),t(s,{stacked:!0,before:o.carrier.before,subject:o.subject,segment:[o.displayedStem,""],blank:!0,typed:r,caret:n,after:o.tail})]})}export{m as default};
-
-//# sourceMappingURL=ConjQuestionPrompt.js.map
