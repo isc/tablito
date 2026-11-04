@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import HomeScreen from '../screens/HomeScreen';
 import ProgressScreen from '../screens/ProgressScreen';
+import ConjMysteryImage from '../components/ConjMysteryImage';
 import { LangProvider } from '../i18n/LangProvider';
 import { addBadges, checkBadges, visibleBadgeDefinitions } from '../lib/badges';
 import {
@@ -330,6 +331,29 @@ describe('image du niveau 2', () => {
     fireEvent.click(tab);
     expect(document.querySelectorAll('.mystery-cell')).toHaveLength(64);
     expect(document.querySelector('.progress-stats-summary')?.textContent).toContain('63');
+  });
+
+  // La transition de fond des cases ferait glisser une image vers l'autre.
+  it('repart de cases neuves en changeant d’onglet', () => {
+    renderProgress(unlockedProfile());
+    const before = document.querySelector('.mystery-cell')!;
+    const tab = [...document.querySelectorAll('.progress-tab')].find((b) => b.textContent === 'Conjugaison')!;
+    fireEvent.click(tab);
+    expect(before.isConnected).toBe(false);
+  });
+
+  it('garde ses cases quand un fait change de boîte, pour que la transition joue', () => {
+    const profile = unlockedProfile();
+    const conjFacts = profile.conjFacts!;
+    const image = (facts: ConjFact[]) => (
+      <LangProvider>
+        <ConjMysteryImage facts={facts} theme={profile.mysteryTheme} />
+      </LangProvider>
+    );
+    const { rerender } = render(image(conjFacts));
+    const before = document.querySelector('.mystery-cell')!;
+    rerender(image(conjFacts.map((f) => ({ ...f, box: 2 as BoxLevel }))));
+    expect(before.isConnected).toBe(true);
   });
 
   it('n’a pas d’onglet avant l’ouverture', () => {
