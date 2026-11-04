@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["lib/version.ts"],
-  "sourcesContent": ["// Version de l'app, source unique. Le `?? 'dev'` n'est pas d\u00E9coratif : la\n// variable est inject\u00E9e par le build, donc absente en dev et sous vitest, o\u00F9\n// `import.meta.env.VITE_APP_VERSION` vaut `undefined` malgr\u00E9 son type `string`\n// (cf. src/env.d.ts). Trois sites la lisaient chacun de leur c\u00F4t\u00E9, dont un sans\n// repli \u2014 il affichait \u00AB vundefined \u00BB hors production.\nexport const APP_VERSION: string = import.meta.env.VITE_APP_VERSION ?? 'dev';\n"],
-  "mappings": "AAKO,MAAMA,EAAsB",
-  "names": ["APP_VERSION"]
-}
