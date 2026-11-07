@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["components/ConjRuleListenButton.tsx"],
-  "sourcesContent": ["import ListenButton from './ListenButton';\nimport { conjStrings as t } from '../i18n/conjugation';\nimport { conjRuleTtsKey, type ConjStrategy } from '../lib/conjugationRules';\n\ninterface ConjRuleListenButtonProps {\n  rule: ConjStrategy;\n  /** Lit un MP3, par le `speak` de l'\u00E9cran qui l'accueille. */\n  onSpeak: (key: string) => void;\n}\n\n/**\n * Bouton \u00AB \u00C9couter \u00BB d'une r\u00E8gle de conjugaison (MP3 `conj-rule-<id>`) :\n * l'enfant qui lit encore lentement se fait lire la r\u00E8gle.\n */\nexport default function ConjRuleListenButton({ rule, onSpeak }: ConjRuleListenButtonProps) {\n  return (\n    <ListenButton\n      className=\"conj-rule-listen-btn\"\n      label={t.listenRule}\n      onClick={() => onSpeak(conjRuleTtsKey(rule))}\n    />\n  );\n}\n"],
-  "mappings": "AAgBI,cAAAA,MAAA,qBAhBJ,OAAOC,MAAkB,iBACzB,OAAS,eAAeC,MAAS,sBACjC,OAAS,kBAAAC,MAAyC,0BAYnC,SAARC,EAAsC,CAAE,KAAAC,EAAM,QAAAC,CAAQ,EAA8B,CACzF,OACEN,EAACC,EAAA,CACC,UAAU,uBACV,MAAOC,EAAE,WACT,QAAS,IAAMI,EAAQH,EAAeE,CAAI,CAAC,EAC7C,CAEJ",
-  "names": ["jsx", "ListenButton", "t", "conjRuleTtsKey", "ConjRuleListenButton", "rule", "onSpeak"]
-}

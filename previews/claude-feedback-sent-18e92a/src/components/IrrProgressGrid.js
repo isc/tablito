@@ -1,3 +1,0 @@
-import{jsx as b}from"preact/jsx-runtime";import{useMemo as i}from"react";import c from"./LeitnerGrid.js";import{irrGridIndex as d,irrRecitation as m,irrVerbDefs as p}from"../lib/irregularVerbs.js";function f({facts:o}){const l=i(()=>new Map(o.map(r=>[r.key,r])),[o]),n=i(()=>p().map(r=>({key:r.key,label:m(r)})),[]);return b(c,{cellFor:(r,a)=>{const t=n[d(r,a)],e=t?l.get(t.key):void 0;return{box:e?.box??1,introduced:e?.introduced??!1,ariaLabel:t?.label??"",diagonal:!1,modal:{title:t?.label??"",correctCount:e?e.history.filter(s=>s.correct).length:0,totalAttempts:e?.history.length??0}}},size:8})}export{f as default};
-
-//# sourceMappingURL=IrrProgressGrid.js.map
