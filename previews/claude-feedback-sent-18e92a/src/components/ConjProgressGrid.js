@@ -1,0 +1,3 @@
+import{jsx as p}from"preact/jsx-runtime";import{useMemo as a}from"react";import d from"./LeitnerGrid.js";import{conjGrid as f}from"../lib/conjugationFacts.js";function m({facts:n,level:i=1}){const s=a(()=>{const t=new Map;for(const o of n)t.set(o.key,o);return t},[n]),l=a(()=>f(i),[i]);return p(d,{cellFor:(t,o)=>{const r=l.viewAt(t,o);if(!r)return{box:1,introduced:!1,ariaLabel:"",diagonal:!1,modal:{title:"",correctCount:0,totalAttempts:0}};const e=s.get(r.def.key);return{box:e?.box??1,introduced:e?.introduced??!1,ariaLabel:r.label,diagonal:!1,modal:{title:r.label,correctCount:e?e.history.filter(c=>c.correct).length:0,totalAttempts:e?.history.length??0}}},size:l.size})}export{m as default};
+
+//# sourceMappingURL=ConjProgressGrid.js.map
