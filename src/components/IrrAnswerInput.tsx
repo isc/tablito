@@ -46,7 +46,7 @@ interface IrrAnswerInputProps {
  * Saisie d'un verbe irrégulier (specs §16.6) : les cases « go → ___ → ___ »,
  * remplies à la voix (mode par défaut de la matière) ou au clavier, case par
  * case — « Suivant » (ou espace, Tab) passe du prétérit au participe, et un
- * clic sur une case la reprend.
+ * clic sur une case la reprend. Sur le participe, « = had » recopie le prétérit.
  */
 export default function IrrAnswerInput({
   def,
@@ -125,7 +125,15 @@ export default function IrrAnswerInput({
     ? Array.from({ length: slotCount }, (_, i) => heard[i] ?? null)
     : values.map((v) => v || null);
   const activeSlot = voice ? undefined : active;
-  const slotLabel = active < def.preterite.length ? t.slotPreterite : t.slotParticiple;
+  const onParticiple = active === slotCount - 1;
+  const slotLabel = onParticiple ? t.slotParticiple : t.slotPreterite;
+  // Un participe sur deux est le prétérit (had, had) : une touche le recopie au
+  // lieu de le retaper. Pour tous les verbes, sinon elle donnerait la réponse ;
+  // pas pour « be » : deux prétérits, lequel recopier ?
+  const preterite = def.preterite.length === 1 ? values[0] : '';
+  const sameKey = onParticiple && preterite
+    ? { label: t.sameAsPreterite(preterite), ariaLabel: t.sameAsPreteriteAria(preterite), onPress: () => handleSlot(preterite) }
+    : undefined;
 
   return (
     <div className="irr-answer">
@@ -169,6 +177,7 @@ export default function IrrAnswerInput({
             // Une autre case reste vide : on passe à elle.
             submitLabel={nextBlank(values, active) >= 0 ? t.nextSlot : undefined}
             submitOnSpace
+            extraKey={sameKey}
           />
           {STT_SUPPORTED && (
             <button type="button" className="session-input-switch" onClick={switchToVoice} disabled={disabled}>
