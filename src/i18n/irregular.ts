@@ -58,6 +58,9 @@ export const irrStrings = {
   slotParticiple: 'Participe',
   /** Validation d'une case qui n'est pas la dernière. */
   nextSlot: 'Suivant →',
+  /** Touche de la case du participe : recopie le prétérit tapé. */
+  sameAsPreterite: (word: string) => `= ${word}`,
+  sameAsPreteriteAria: (word: string) => `Pareil que le prétérit : ${word}`,
   /** Feedback. */
   correctMessages: ['Bravo !', 'Super !', 'Génial !', 'Yes!', 'Well done!'],
   wellDone: 'Bravo !',

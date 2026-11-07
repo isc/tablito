@@ -63,4 +63,46 @@ describe('IrrAnswerInput au clavier', () => {
     press(' ');
     expect(onSubmit).toHaveBeenCalledWith(['went', 'gone'], 'keypad');
   });
+
+  describe('« = had » recopie le prétérit dans le participe', () => {
+    const sameKey = () => document.querySelector<HTMLButtonElement>('.letterpad-btn-extra');
+
+    it('remplit la case et valide', () => {
+      const onSubmit = vi.fn();
+      render(<IrrAnswerInput def={requireIrrVerbDef('have')} onSubmit={onSubmit} token="t" />);
+      expect(sameKey()).toBeNull();
+      type('had');
+      press(' ');
+      expect(sameKey()?.textContent).toBe('= had');
+      fireEvent.click(sameKey()!);
+      expect(onSubmit).toHaveBeenCalledWith(['had', 'had'], 'keypad');
+    });
+
+    it('est là aussi quand le participe diffère : sinon elle donnerait la réponse', () => {
+      const onSubmit = vi.fn();
+      render(<IrrAnswerInput def={requireIrrVerbDef('begin')} onSubmit={onSubmit} token="t" />);
+      type('began');
+      press(' ');
+      fireEvent.click(sameKey()!);
+      expect(onSubmit).toHaveBeenCalledWith(['began', 'began'], 'keypad');
+    });
+
+    it('disparaît quand on revient sur le prétérit', () => {
+      render(<IrrAnswerInput def={requireIrrVerbDef('have')} onSubmit={vi.fn()} token="t" />);
+      type('had');
+      press(' ');
+      fireEvent.click(slots()[0]);
+      expect(sameKey()).toBeNull();
+    });
+
+    it('pas pour « be » : deux prétérits', () => {
+      render(<IrrAnswerInput def={requireIrrVerbDef('be')} onSubmit={vi.fn()} token="t" />);
+      type('was');
+      press(' ');
+      type('were');
+      press(' ');
+      expect(slots()[2].classList.contains('is-active')).toBe(true);
+      expect(sameKey()).toBeNull();
+    });
+  });
 });

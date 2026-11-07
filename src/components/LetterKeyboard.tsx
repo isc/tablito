@@ -68,6 +68,12 @@ interface LetterKeyboardProps {
    * mots, c'est le geste naturel (« was were been »), et Entrée ne se devine pas.
    */
   submitOnSpace?: boolean;
+  /**
+   * Une touche de plus, large de deux colonnes, après les lettres. En
+   * disposition `en`, elle remplit les deux cases vides de la dernière rangée
+   * (v w x y z) ; en `fr`, la grille est pleine et elle ouvrirait une rangée.
+   */
+  extraKey?: { label: string; ariaLabel: string; onPress: () => void };
 }
 
 export default function LetterKeyboard({
@@ -79,6 +85,7 @@ export default function LetterKeyboard({
   onInput,
   submitLabel = t.submit,
   submitOnSpace = false,
+  extraKey,
 }: LetterKeyboardProps) {
   const keys = layout === 'en' ? KEYS_EN : KEYS;
   // `input` est miroré dans `inputRef` pour éviter les closures stales : sous
@@ -174,6 +181,17 @@ export default function LetterKeyboard({
       <div className="letterpad-rows">
         <div className="letterpad-keys" style={{ '--letterpad-cols': LETTER_KEY_COLUMNS } as React.CSSProperties}>
           {keys.map(key)}
+          {extraKey && (
+            <button
+              type="button"
+              className="pad-btn letterpad-btn letterpad-btn-extra"
+              onClick={extraKey.onPress}
+              disabled={disabled}
+              aria-label={extraKey.ariaLabel}
+            >
+              {extraKey.label}
+            </button>
+          )}
         </div>
         <div className="letterpad-row--actions">
           <button

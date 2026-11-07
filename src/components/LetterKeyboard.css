@@ -49,6 +49,16 @@
   }
 }
 
+.letterpad-btn-extra {
+  grid-column: span 2;
+  min-width: 0;
+  padding: 0 6px;
+  font-size: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .letterpad-btn-backspace {
   flex: 1;
   font-size: 20px;
