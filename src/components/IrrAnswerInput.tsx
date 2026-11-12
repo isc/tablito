@@ -129,10 +129,11 @@ export default function IrrAnswerInput({
   const slotLabel = onParticiple ? t.slotParticiple : t.slotPreterite;
   // Un participe sur deux est le prétérit (had, had) : une touche le recopie au
   // lieu de le retaper. Pour tous les verbes, sinon elle donnerait la réponse ;
-  // pas pour « be » : deux prétérits, lequel recopier ?
+  // pas pour « be » : deux prétérits, lequel recopier ? Elle remplit la case
+  // sans valider : l'enfant relit, puis valide (avis d'un parent, nov. 2026).
   const preterite = def.preterite.length === 1 ? values[0] : '';
   const sameKey = onParticiple && preterite
-    ? { label: t.sameAsPreterite(preterite), ariaLabel: t.sameAsPreteriteAria(preterite), onPress: () => handleSlot(preterite) }
+    ? { label: t.sameAsPreterite(preterite), ariaLabel: t.sameAsPreteriteAria(preterite), onPress: () => handleTyping(preterite) }
     : undefined;
 
   return (

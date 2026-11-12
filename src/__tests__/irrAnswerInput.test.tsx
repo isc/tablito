@@ -67,7 +67,7 @@ describe('IrrAnswerInput au clavier', () => {
   describe('« = had » recopie le prétérit dans le participe', () => {
     const sameKey = () => document.querySelector<HTMLButtonElement>('.letterpad-btn-extra');
 
-    it('remplit la case et valide', () => {
+    it('remplit la case sans valider : l’enfant relit, puis valide', () => {
       const onSubmit = vi.fn();
       render(<IrrAnswerInput def={requireIrrVerbDef('have')} onSubmit={onSubmit} token="t" />);
       expect(sameKey()).toBeNull();
@@ -75,7 +75,23 @@ describe('IrrAnswerInput au clavier', () => {
       press(' ');
       expect(sameKey()?.textContent).toBe('= had');
       fireEvent.click(sameKey()!);
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(slots()[1].textContent).toBe('had');
+      fireEvent.click(document.querySelector('.letterpad-btn-ok')!);
       expect(onSubmit).toHaveBeenCalledWith(['had', 'had'], 'keypad');
+    });
+
+    it('remplace ce qui était commencé, et la saisie reste corrigeable', () => {
+      const onSubmit = vi.fn();
+      render(<IrrAnswerInput def={requireIrrVerbDef('get')} onSubmit={onSubmit} token="t" />);
+      type('got');
+      press(' ');
+      type('ge');
+      fireEvent.click(sameKey()!);
+      expect(slots()[1].textContent).toBe('got');
+      type('ten');
+      press('Enter');
+      expect(onSubmit).toHaveBeenCalledWith(['got', 'gotten'], 'keypad');
     });
 
     it('est là aussi quand le participe diffère : sinon elle donnerait la réponse', () => {
@@ -84,6 +100,7 @@ describe('IrrAnswerInput au clavier', () => {
       type('began');
       press(' ');
       fireEvent.click(sameKey()!);
+      press('Enter');
       expect(onSubmit).toHaveBeenCalledWith(['began', 'began'], 'keypad');
     });
 
