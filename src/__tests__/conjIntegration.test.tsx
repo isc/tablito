@@ -658,10 +658,12 @@ describe('Séance de conjugaison : flamme partagée, matières indépendantes (s
     expect(asked[0]).toBe('pres-g1-nous'); // la due passe avant les bonus
     expect(asked.length).toBeGreaterThan(1);
 
-    // Récap de la matière : message chaleureux, jauge en « formes verbales »,
-    // aucun score ni compte d'erreurs (§5.3).
+    // Récap de la matière : message chaleureux, aucun score ni compte
+    // d'erreurs (§5.3). Pas encore de forme connue (boîte ≥ 3) : la jauge
+    // « Tu connais » reste masquée (§3.5) — son libellé en « formes
+    // verbales » est vérifié dans recapCelebrations.test.tsx.
     expect(document.querySelector('.recap-screen')).not.toBeNull();
-    expect(text()).toContain('formes verbales');
+    expect(document.querySelector('.recap-progress-card')).toBeNull();
     // La réponse était juste et rapide ⇒ montée de boîte ⇒ et SEULEMENT dans
     // ce cas, l'annonce que l'image a changé (§10 du périmètre).
     expect(document.querySelector('.recap-image-link')).not.toBeNull();
