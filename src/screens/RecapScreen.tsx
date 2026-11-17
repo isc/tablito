@@ -222,17 +222,23 @@ export default function RecapScreen({
         </button>
       )}
 
-      <div className="recap-card recap-progress-card">
-        <div className="recap-progress-row">
-          <span className="recap-progress-eyebrow">{t.progressEyebrow}</span>
-          <span className="recap-progress-count">
-            <b>{knownFactsCount}</b> / {totalFacts} {noun}
-          </span>
+      {/* Masquée tant qu'aucun fait n'est connu (boîte ≥ 3) : il faut deux
+          bonnes réponses rapides sur deux jours, donc la 1re séance d'une
+          matière affichait toujours « Tu connais 0 / 36 », même sans faute —
+          lu comme « t'es nul » (avis d'un parent, 16/11/2026). */}
+      {knownFactsCount > 0 && (
+        <div className="recap-card recap-progress-card">
+          <div className="recap-progress-row">
+            <span className="recap-progress-eyebrow">{t.progressEyebrow}</span>
+            <span className="recap-progress-count">
+              <b>{knownFactsCount}</b> / {totalFacts} {noun}
+            </span>
+          </div>
+          <div className="recap-progress-bar">
+            <div className="recap-progress-fill" style={{ width: `${progressPct}%` }} />
+          </div>
         </div>
-        <div className="recap-progress-bar">
-          <div className="recap-progress-fill" style={{ width: `${progressPct}%` }} />
-        </div>
-      </div>
+      )}
 
       {newBadges.length > 0 && (
         <div className="recap-new-badges">

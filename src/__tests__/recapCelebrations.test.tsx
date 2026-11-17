@@ -82,3 +82,20 @@ describe('RecapScreen — déblocage du niveau 2', () => {
     expect(queryByText(/Tu débloques les divisions/)).toBeNull();
   });
 });
+
+describe('RecapScreen — jauge « Tu connais »', () => {
+  it('affichée dès qu’un fait est connu', () => {
+    const { getByText } = render(<RecapScreen {...baseProps} mode="mult" knownFactsCount={1} totalFacts={36} />);
+    expect(getByText('Tu connais')).toBeTruthy();
+  });
+
+  it('en conjugaison, compte des « formes verbales »', () => {
+    const { container } = render(<RecapScreen {...baseProps} mode="conj" knownFactsCount={3} totalFacts={63} />);
+    expect(container.querySelector('.recap-progress-count')?.textContent).toContain('formes verbales');
+  });
+
+  it('masquée à zéro : la 1re séance ne dit pas « 0 / 36 » à un enfant sans faute', () => {
+    const { queryByText } = render(<RecapScreen {...baseProps} mode="mult" knownFactsCount={0} totalFacts={36} />);
+    expect(queryByText('Tu connais')).toBeNull();
+  });
+});
