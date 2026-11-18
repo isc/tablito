@@ -123,6 +123,26 @@ describe('composeSession — introduction des derniers faits', () => {
     expect(introducedKeys.some((k) => candidates.includes(k))).toBe(true);
   });
 
+  it('garde 7×7 … 9×9 pour la fin, même quand l’espacement de 48 h bloque les derniers autres faits', () => {
+    // Il ne reste que 2×9 hors des tables 7 à 9 entre elles, bloqué par 2×8
+    // introduit hier : pas d'intro aujourd'hui plutôt qu'un saut à 8×9.
+    const facts = createInitialFacts();
+    const yesterday = addDays(TODAY, -1);
+    const longAgo = addDays(TODAY, -30);
+    for (const f of facts) {
+      if (Math.min(f.a, f.b) >= 7 || (f.a === 2 && f.b === 9)) continue;
+      const at = f.a === 2 && f.b === 8 ? yesterday : longAgo;
+      introduce(facts, f.a, f.b, 2, at, at);
+    }
+    const intros = () => composeSession(profileWith(facts), TODAY).filter((q) => q.isIntroduction);
+    expect(intros()).toEqual([]);
+
+    introduce(facts, 2, 9, 2, longAgo, longAgo);
+    const late = intros();
+    expect(late.length).toBeGreaterThan(0);
+    expect(late.every((q) => Math.min(q.fact.a, q.fact.b) >= 7)).toBe(true);
+  });
+
   it("n'introduit pas un fait similaire à un fait introduit dans les 48h", () => {
     // Garde-fou pour la spec : 8×9 introduit hier → 9×9 ne doit pas être
     // introduit aujourd'hui (similarité forte, opérande 9 partagé).
