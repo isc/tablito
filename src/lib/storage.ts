@@ -4,7 +4,6 @@ import { addBadges, checkBadges } from './badges';
 import { createInitialFacts } from './facts';
 import { createInitialDivisionFacts } from './divisionFacts';
 import { createInitialRemainderFacts } from './remainderFacts';
-import { inferIntroductionsFromKnowns } from './placement';
 import { sanitizeIrrClassVerbs } from './irregularVerbs';
 import { STREAK_FREEZE_INTERVAL, STREAK_FREEZE_MAX, settleStreak } from './streak';
 import { pickRandom, todayISO } from './utils';
@@ -567,10 +566,6 @@ export function normalizeProfile(profile: UserProfile): UserProfile {
     profile.streakFreezes = settled.streakFreezes;
     profile.freezeSettledDate = settled.freezeSettledDate;
   }
-  // Fix les profils créés avant l'ajout de l'inférence par dominance lors
-  // du test de placement : si des faits restent non introduits alors qu'on
-  // a une preuve de réussite sur des faits plus durs, on les introduit.
-  inferIntroductionsFromKnowns(profile.facts, todayISO());
   // Rétro-attribue les badges d'état déjà mérités mais absents du profil :
   // sans ça, un nouveau badge ajouté après coup demande une séance de plus
   // pour se débloquer. Les badges contextuels (MACHINE/VELOCE/PERSEVERANCE)

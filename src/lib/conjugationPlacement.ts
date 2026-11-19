@@ -12,8 +12,8 @@ import { conjFactDef, resolveConjQuestion } from './conjugationFacts';
 // n'as pas tout oublié, regarde tout ce qui est déjà là.
 //
 // Même structure que lib/placement.ts côté multiplication ; la différence, c'est
-// la DOMINANCE. En multiplication elle se calcule (un fait (a,b) est dominé par
-// tout (eA≥a, eB≥b)). En conjugaison il n'existe pas d'ordre numérique : la
+// la DOMINANCE. En multiplication elle se calcule (réussir eA×eB, c'est savoir
+// la table de eA jusqu'à eB). En conjugaison il n'existe pas d'ordre numérique : la
 // dominance est donc ÉNUMÉRÉE, sonde par sonde, et n'est affirmée que là où
 // elle est défendable (réussir « vous chanterez » démontre la terminaison -ez
 // ET la règle du futur — l'exemple même de la spec).

@@ -30,42 +30,23 @@ function boxFromResult(result: PlacementResult): BoxLevel {
   return 1;
 }
 
-// Marque comme introduit tout fait non encore introduit qui est "dominé"
-// par au moins un élément de `evidence` : un (eA, eB) domine un fait (a, b)
-// si eA ≥ a ET eB ≥ b. Repose sur l'invariant a ≤ b côté facts et evidence.
-//
-// La boîte de départ dépend de la qualité de la dominance :
-// - boîte 3 si au moins un dominant a été répondu correct *et rapide* (< 4 s),
-//   équivalent au niveau d'un fait testé directement et réussi rapidement ;
-// - boîte 2 sinon (dominance par corrects plus lents seulement).
-type DominanceEvidence = { a: number; b: number; isFast: boolean };
-
-function markDominated(
-  facts: MultiFact[],
-  evidence: DominanceEvidence[],
-  today: string,
-  excludeKeys: ReadonlySet<string> = new Set(),
-): void {
-  for (const fact of facts) {
-    if (fact.introduced) continue;
-    if (excludeKeys.has(getFactKey(fact.a, fact.b))) continue;
-    const dominators = evidence.filter((e) => e.a >= fact.a && e.b >= fact.b);
-    if (dominators.length === 0) continue;
-    const box: BoxLevel = dominators.some((d) => d.isFast) ? 3 : 2;
-    fact.introduced = true;
-    fact.box = box;
-    fact.lastSeen = today;
-    fact.nextDue = computeNextDue(box, today);
-  }
+// Dominance PAR TABLE : réussir (eA, eB), c'est savoir la table de eA (le
+// plus petit nombre) jusqu'à eB — 3×9 donne 2×3 et 3×3 à 3×8, 5×8 donne 2×5
+// à 4×5 et 5×5 à 5×7. Rien sur les autres tables : un enfant qui apprend
+// table par table, comme à l'école, peut savoir 5×8 sans avoir vu 4×6.
+// Repose sur l'invariant a ≤ b côté facts et résultats.
+function dominates(e: PlacementResult, fact: MultiFact): boolean {
+  return (fact.a === e.a && fact.b <= e.b) || fact.b === e.a;
 }
 
 // Pass 1 : place chaque fait directement testé à la boîte qui correspond
 // à la vitesse de réponse.
 //
-// Pass 2 : marque comme introduits (boîte 2 ou 3 selon la qualité de la
-// dominance) les faits non testés mais dominés par un test correct. Sans
-// cette passe, 2×2 et 2×3 (jamais testés) restent introduced=false et l'image
-// mystère les cache alors que l'enfant les connaît.
+// Pass 2 : marque comme introduits les faits non testés mais dominés par un
+// test correct — boîte 3 si au moins un dominant a été réussi vite (< 4 s,
+// comme un fait testé directement), boîte 2 sinon. Sans cette passe, 2×2 et
+// 2×3 (jamais testés) restent introduced=false et l'image mystère les cache
+// alors que l'enfant les connaît.
 export function seedFromPlacement(
   facts: MultiFact[],
   results: PlacementResult[],
@@ -102,29 +83,15 @@ export function seedFromPlacement(
   const testedKeys: ReadonlySet<string> = new Set(
     results.map((r) => getFactKey(r.a, r.b)),
   );
-  const evidence: DominanceEvidence[] = results
-    .filter((r) => r.correct)
-    .map((r) => ({ a: r.a, b: r.b, isFast: r.timeMs < RESPONSE_TIME.FAST }));
-  markDominated(facts, evidence, today, testedKeys);
-}
-
-// Migration : pour les profils créés avant l'ajout de la 2ᵉ passe de
-// seedFromPlacement, infère les faits manquants à partir des faits déjà
-// introduits qui ont au moins une bonne réponse en historique.
-// Idempotent : un profil sain reste inchangé (pas de candidat à inférer).
-export function inferIntroductionsFromKnowns(
-  facts: MultiFact[],
-  today: string,
-): void {
-  const evidence: DominanceEvidence[] = facts
-    .filter((f) => f.introduced && f.history.some((h) => h.correct))
-    .map((f) => ({
-      a: f.a,
-      b: f.b,
-      isFast: f.history.some(
-        (h) => h.correct && h.responseTimeMs < RESPONSE_TIME.FAST,
-      ),
-    }));
-  if (evidence.length === 0) return;
-  markDominated(facts, evidence, today);
+  const evidence = results.filter((r) => r.correct);
+  for (const fact of facts) {
+    if (fact.introduced || testedKeys.has(getFactKey(fact.a, fact.b))) continue;
+    const dominators = evidence.filter((e) => dominates(e, fact));
+    if (dominators.length === 0) continue;
+    const box: BoxLevel = dominators.some((d) => d.timeMs < RESPONSE_TIME.FAST) ? 3 : 2;
+    fact.introduced = true;
+    fact.box = box;
+    fact.lastSeen = today;
+    fact.nextDue = computeNextDue(box, today);
+  }
 }

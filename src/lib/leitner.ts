@@ -110,14 +110,12 @@ export function processAnswer<T extends Schedulable>(
 // Phase finale : seuil sous lequel on introduit les derniers faits restants
 // même si certains faits sont en boîte 1. Sans ça, un seul fait raté en
 // boîte 1 bloque indéfiniment l'intro des derniers faits après le seeding par
-// dominance du test de placement (qui ne peut inférer aucun fait du coin
-// difficile non couvert par les réponses correctes). À ce stade, l'enfant
-// maîtrise déjà la quasi-totalité ; la règle protectrice du début n'a plus
-// d'utilité.
+// dominance du test de placement (qui n'infère que les faits qu'une réponse
+// correcte couvre). À ce stade, l'enfant maîtrise déjà la quasi-totalité ; la
+// règle protectrice du début n'a plus d'utilité.
 //
-// Le trou de dominance n'est pas limité à 8×9/9×9 : il couvre tout le coin
-// difficile au-delà du dernier fait réussi au placement (ex : 7×9, 8×9, 9×9 —
-// 3 faits). Le seuil englobe ce coin avec marge (≤ 7 restants ⇔ ≥ 29/36
+// Même un placement parfait laisse 4 faits qu'aucune réponse ne couvre (2×9,
+// 5×9, 8×9, 9×9). Le seuil les englobe avec marge (≤ 7 restants ⇔ ≥ 29/36
 // introduits = clairement en fin de parcours).
 //
 // ⚠ Le seuil est RELATIF à la taille du jeu de faits, pas absolu. Écrit en dur

@@ -292,9 +292,9 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
       fireEvent.click(findButton(/J'ai compris/)!);
 
       const seeded = loadProfile()!;
-      // Le seeding par dominance doit avoir introduit 34 faits sur 36
-      // (8×9 et 9×9 ne sont dominés par aucun fait du set placement).
-      expect(seeded.facts.filter((f) => f.introduced)).toHaveLength(34);
+      // Le seeding par dominance doit avoir introduit 32 faits sur 36 (2×9,
+      // 5×9, 8×9 et 9×9 ne sont dominés par aucun fait du set placement).
+      expect(seeded.facts.filter((f) => f.introduced)).toHaveLength(32);
       expect(seeded.facts.find((f) => f.a === 8 && f.b === 9)?.introduced).toBe(false);
       expect(seeded.facts.find((f) => f.a === 9 && f.b === 9)?.introduced).toBe(false);
 
@@ -309,7 +309,7 @@ describe('Parcours utilisateur de bout en bout (DOM)', () => {
       // en permanence. On joue donc deux mois et on regarde le régime.
       //
       // ⚠ Ce scénario ne verrouille PAS le plafond de faits fragiles : le
-      // placement introduit 34/36 faits, donc on est dans la zone de fin de
+      // placement introduit 32/36 faits, donc on est dans la zone de fin de
       // parcours dès le jour 0 et c'est le filet qui répond, jamais le plafond.
       // Vérifié : ce test passe à l'identique avec l'ancienne règle. Le plafond
       // est verrouillé par `leitner.test.ts` et les tests de composeurs.
