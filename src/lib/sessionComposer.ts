@@ -33,6 +33,11 @@ export function randomDisplayOrder(fact: MultiFact): { displayA: number; display
     : { displayA: fact.b, displayB: fact.a };
 }
 
+/** 7×7, 7×8, 7×9, 8×8, 8×9, 9×9 : introduits après tous les autres (specs §3.4bis). */
+function isLateFact(fact: MultiFact): boolean {
+  return Math.min(fact.a, fact.b) >= 7;
+}
+
 /**
  * Returns which "table" a question belongs to (the smaller operand displayed).
  * Used for interleaving: we never want two consecutive questions from the same table.
@@ -95,7 +100,11 @@ export function composeSession(profile: UserProfile, now: string): SessionQuesti
   const introBudget = newFactBudget(facts, today, MAX_NEW_FACTS);
   if (introBudget > 0) {
     const notIntroduced = facts.filter((f) => !f.introduced);
-    const sorted = [...notIntroduced].sort(
+    // Les 6 faits des tables 7 à 9 entre elles en dernier (specs §3.4bis) : sans
+    // ce filtre, l'espacement de 48 h ci-dessous sautait par-dessus l'ordre
+    // canonique et posait 7×9 ou 7×7 dès la 1re semaine, hors du programme de CE1.
+    const early = notIntroduced.filter((f) => !isLateFact(f));
+    const sorted = (early.length > 0 ? early : notIntroduced).sort(
       (a, b) =>
         vanDeWalleStage(a.a, a.b) - vanDeWalleStage(b.a, b.b) || a.product - b.product,
     );

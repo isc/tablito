@@ -612,6 +612,15 @@ interface Badge {
     <li><strong>Derived</strong> — le reste (3×4, 3×6, 3×7, 3×8, 4×6, 4×7, 4×8, 6×7, 6×8, 7×8)</li>
   </ol>
   <p>Implémenté dans <code>vanDeWalleStage()</code> (<code>src/lib/leitner.ts</code>), partagé avec la division.</p>
+  <p><strong>Les tables 7 à 9 entre elles en dernier (multiplication).</strong> Les 6 faits 7×7, 7×8, 7×9, 8×8, 8×9 et 9×9 ne sont proposés qu'une fois les 30 autres introduits. Sans cette règle, l'espacement de 48 h (§1.2) sautait par-dessus la séquence : quand les candidats suivants étaient trop proches d'une intro récente, il prenait le premier fait libre plus loin, souvent 7×9 ou 7×7, dès la première semaine. Or le programme de CE1 (Eduscol 2025) voit les tables 1 à 6 et 10 aux périodes 1-2, puis 7, puis 8, et toutes en période 5 ; ces 6 faits sont aussi les plus durs partout ailleurs (Royaume-Uni : tables 6, 7 et 9 en Year 4), d'où une règle commune aux deux langues. L'ordre canonique s'applique tel quel à l'intérieur de chaque groupe. Remplacer cet ordre par celui du programme (table de 2, puis 3, puis 4…) n'apportait rien : l'espacement de 48 h le brassait autant, et le premier de ces 6 faits arrivait même plus tôt (rang 9 au lieu de 15).</p>
+  <p>Mesure (simulation sur les composeurs réels, 300 enfants par profil, une séance par jour ; médianes, sauf la dernière colonne, en moyenne) :</p>
+  <table>
+    <tr><th>Apprenant</th><th>1<sup>er</sup> fait 7-9 × 7-9 avant / après</th><th>36 faits introduits</th><th>Tables 2, 3 et 5 introduites</th><th>Faits des tables 2 à 6 en boîte 4+ à J30</th></tr>
+    <tr><td>Fort</td><td>J7 (rang 15) → J21 (rang 30)</td><td>J23 → J26</td><td>J19 → J18</td><td>29,0 → 29,3</td></tr>
+    <tr><td>Moyen</td><td>J9 (rang 15) → J27 (rang 30)</td><td>J31 → J33</td><td>J26 → J22</td><td>19,2 → 21,3</td></tr>
+    <tr><td>En difficulté</td><td>J35 (rang 18) → J86 (rang 30)</td><td>J91 → J91</td><td>J86 → J67</td><td>6,1 → 6,2</td></tr>
+  </table>
+  <p>Coût : deux ou trois jours de plus pour avoir vu les 36 faits, et la pile fragile ne bouge pas. Imposer en plus l'ordre 7, puis 8, puis 9 entre ces 6 faits coûtait deux jours de mieux, pour un groupe que l'enfant parcourt de toute façon en une semaine environ.</p>
 
   <h4>Stratégies utilisées (par ordre de priorité quand plusieurs s'appliquent)</h4>
   <table>
