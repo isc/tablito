@@ -1,3 +1,0 @@
-import{jsx as p}from"preact/jsx-runtime";import{useMemo as m}from"react";import u from"./LeitnerGrid.js";import{useFactCellStrings as d}from"../i18n/progress.js";function f({facts:o}){const n=d(),i=m(()=>{const e=new Map;for(const t of o)e.set(`${t.a},${t.b}`,t);return e},[o]);return p(u,{operator:"\xD7",cellFor:(e,t)=>{const s=Math.min(e,t),a=Math.max(e,t),r=i.get(`${s},${a}`),l=r?r.history.filter(c=>c.correct).length:0;return{box:r?.box??1,introduced:r?.introduced??!1,ariaLabel:n.multLabel(e,t,e*t),diagonal:e===t,modal:{title:r?`${r.a} \xD7 ${r.b} = ${r.product}`:"",correctCount:l,totalAttempts:r?.history.length??0}}}})}export{f as default};
-
-//# sourceMappingURL=ProgressGrid.js.map
