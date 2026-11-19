@@ -76,12 +76,12 @@ describe('composeSession — introduction des derniers faits', () => {
     expect(introduced.some((k) => candidates.includes(k))).toBe(true);
   });
 
-  it("introduit 8×9 ou 9×9 dès la 1ʳᵉ séance le jour du placement", () => {
+  it("introduit au plein budget dès la 1ʳᵉ séance le jour du placement", () => {
     // Cas réel : un enfant fait le test de placement « très bien réussi »
     // puis sa 1ʳᵉ séance le même jour. Avant le fix, les faits testés au
     // placement avaient un history avec date=today, donc tous les voisins
-    // avec un 8 ou un 9 étaient « récemment introduits » et bloquaient
-    // l'intro de 8×9 et 9×9.
+    // étaient « récemment introduits » et bloquaient l'intro des 4 faits
+    // restants (2×9, 5×9, puis 8×9 et 9×9, gardés pour la fin).
     const facts = createInitialFacts();
     acePlacement(facts, TODAY);
 
@@ -89,8 +89,7 @@ describe('composeSession — introduction des derniers faits', () => {
     const introducedKeys = session
       .filter((q) => q.isIntroduction)
       .map((q) => getFactKey(q.fact.a, q.fact.b));
-    const candidates = [getFactKey(8, 9), getFactKey(9, 9)];
-    expect(introducedKeys.some((k) => candidates.includes(k))).toBe(true);
+    expect(introducedKeys.sort()).toEqual([getFactKey(2, 9), getFactKey(5, 9)]);
   });
 
   it("introduit 8×9 / 9×9 même si ≥ MAX_QUESTIONS faits sont dus (mode tail)", () => {
