@@ -1,5 +1,5 @@
-import{createDebugOverlay as u,readDebugFlag as c,setDebugFlag as g}from"./debugTools.js";const s=400,a=12,r="multiplix-voice-debug";let n=c("voicedebug",r);const e=[];let t=null;function p(){return n}function b(o){n=o,g(r,o),!o&&(e.length=0,t?.remove(),t=null)}function f(o,i=""){if(!n)return;const l=`${new Date().toISOString().slice(11,23)} ${o}${i?` ${i}`:""}`;console.debug(`[voice] ${l}`),e.push(l),e.length>s&&e.shift(),t??=u({copyLabel:"Copier le journal vocal",copyText:()=>e.join(`
-`),position:"bottom",onDisable:()=>b(!1)}),t.log.textContent=e.slice(-a).join(`
-`)}export{p as isVoiceDebugOn,b as setVoiceDebug,f as voiceLog};
+import{createDebugOverlay as u,readDebugFlag as a,setDebugFlag as p}from"./debugTools.js";const f=400,v=12,c="multiplix-voice-debug",i="multiplix-voice-log";let r=a("voicedebug",c);const t=b();let o=null;function b(){try{const e=JSON.parse(localStorage.getItem(i)??"[]");return Array.isArray(e)?e.filter(n=>typeof n=="string"):[]}catch{return[]}}function s(e){try{e(localStorage)}catch{}}function m(){return r}function y(e){r=e,p(c,e),!e&&(o?.remove(),o=null)}function x(){return[...t]}function D(){t.length=0,s(e=>e.removeItem(i)),o&&(o.log.textContent="")}function O(e,n=""){const l=`${new Date().toISOString().slice(0,23)} ${e}${n?` ${n}`:""}`;t.push(l),t.length>f&&t.shift(),s(g=>g.setItem(i,JSON.stringify(t))),r&&(console.debug(`[voice] ${l}`),o??=u({copyLabel:"Copier le journal vocal",copyText:()=>t.join(`
+`),position:"bottom",onDisable:()=>y(!1)}),o.log.textContent=t.slice(-v).join(`
+`))}export{D as clearVoiceLog,x as getVoiceLog,m as isVoiceDebugOn,y as setVoiceDebug,O as voiceLog};
 
 //# sourceMappingURL=voiceDebug.js.map
