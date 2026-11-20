@@ -459,8 +459,9 @@ const VERSION_TAP_GAP_MS = 1000;
 
 /**
  * Le numéro de version, et l'easter egg du journal vocal : comme les options
- * pour les développeurs d'Android, 7 touches rapprochées l'activent, 7 autres
- * le coupent (le bandeau du journal a aussi son bouton « Désactiver »).
+ * pour les développeurs d'Android, 7 touches rapprochées affichent son bandeau,
+ * 7 autres le masquent (le bandeau a aussi son bouton « Désactiver »). Le
+ * journal, lui, se tient toujours (lib/voiceDebug).
  */
 function VersionLine({ t }: { t: ReturnType<typeof useParentDashboardStrings> }) {
   const taps = useRef({ count: 0, last: 0 });

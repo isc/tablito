@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { setBusy as setSwBusy } from 'virtual:pwa-register';
 import { submitFeedback, buildContext, feedbackEnabled, type FeedbackSource } from '../lib/feedback';
+import { clearVoiceLog, getVoiceLog } from '../lib/voiceDebug';
 import type { UserProfile } from '../types';
 import Modal from './Modal';
 import { useFeedbackModalStrings } from '../i18n/parent';
@@ -23,6 +24,9 @@ export default function FeedbackModal({ profile, source, onClose }: FeedbackModa
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [includeProfile, setIncludeProfile] = useState(false);
+  // Lu à l'ouverture : sans réponse à voix haute sur cet appareil, rien à joindre.
+  const [hasVoiceLog] = useState(() => getVoiceLog().length > 0);
+  const [includeVoiceLog, setIncludeVoiceLog] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const t = useFeedbackModalStrings();
@@ -43,8 +47,11 @@ export default function FeedbackModal({ profile, source, onClose }: FeedbackModa
       await submitFeedback({
         message: message.trim(),
         email: email.trim() || undefined,
-        context: buildContext(profile, includeProfile, source),
+        context: buildContext(profile, includeProfile, source, includeVoiceLog),
       });
+      // Parti avec l'avis : il n'a plus à rester sur l'appareil, et un prochain
+      // avis ne joindra que ce qui s'est passé depuis.
+      if (includeVoiceLog) clearVoiceLog();
       setStatus('success');
     } catch (err) {
       setStatus('error');
@@ -107,20 +114,23 @@ export default function FeedbackModal({ profile, source, onClose }: FeedbackModa
           />
 
           {profile && (
-            <label className="feedback-checkbox">
-              <input
-                type="checkbox"
-                checked={includeProfile}
-                onChange={(e) => setIncludeProfile(e.currentTarget.checked)}
-                disabled={status === 'sending'}
-              />
-              <span>
-                <strong>{t.attachHistory(profile.name)}</strong>
-                <span className="feedback-checkbox-hint">
-                  {t.attachHistoryHint}
-                </span>
-              </span>
-            </label>
+            <AttachBox
+              checked={includeProfile}
+              onChange={setIncludeProfile}
+              disabled={status === 'sending'}
+              label={t.attachHistory(profile.name)}
+              hint={t.attachHistoryHint}
+            />
+          )}
+
+          {hasVoiceLog && (
+            <AttachBox
+              checked={includeVoiceLog}
+              onChange={setIncludeVoiceLog}
+              disabled={status === 'sending'}
+              label={t.attachVoiceLog}
+              hint={t.attachVoiceLogHint}
+            />
           )}
 
           {status === 'error' && (
@@ -147,5 +157,29 @@ export default function FeedbackModal({ profile, source, onClose }: FeedbackModa
         </form>
       )}
     </Modal>
+  );
+}
+
+/** Une pièce jointe de l'avis, décochée par défaut (opt-in). */
+function AttachBox({ checked, onChange, disabled, label, hint }: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled: boolean;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <label className="feedback-checkbox">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.currentTarget.checked)}
+        disabled={disabled}
+      />
+      <span>
+        <strong>{label}</strong>
+        <span className="feedback-checkbox-hint">{hint}</span>
+      </span>
+    </label>
   );
 }

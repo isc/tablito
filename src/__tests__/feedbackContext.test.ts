@@ -93,6 +93,21 @@ describe('buildContext — ce que joint la case « historique détaillé »', ()
     expect(loadProfile()).not.toHaveProperty('appVersion');
   });
 
+  // « Micro buggy sur iPhone » (avis du 16/11/2026) : le user-agent ne dit ni
+  // si l'API existe, ni si l'app tournait installée. Sur un iPhone sans API, le
+  // micro ne démarre jamais, donc le journal vocal reste vide : ces deux champs
+  // partent avec tout avis, journal joint ou non.
+  it('dit quelle reconnaissance vocale existe et si l\'app est installée', () => {
+    const w = window as unknown as { webkitSpeechRecognition?: unknown };
+    expect(buildContext(null)).toMatchObject({ speech_api: 'none', standalone: false });
+    w.webkitSpeechRecognition = class {};
+    try {
+      expect(buildContext(null).speech_api).toBe('webkit');
+    } finally {
+      delete w.webkitSpeechRecognition;
+    }
+  });
+
   it('ne joint rien du tout quand la case n\'est pas cochée', () => {
     const ctx = buildContext(createNewProfile('Zoé'), false);
     expect(ctx.profile_snapshot).toBeUndefined();

@@ -225,12 +225,12 @@ describe('journal vocal : easter egg de la version', () => {
     tapVersion(1);
     expect(isVoiceDebugOn()).toBe(true);
     expect(localStorage.getItem('multiplix-voice-debug')).toBe('1');
-    expect(text()).toContain('Journal vocal activé');
+    expect(text()).toContain('Bandeau du journal vocal affiché');
 
     tapVersion(7);
     expect(isVoiceDebugOn()).toBe(false);
     expect(localStorage.getItem('multiplix-voice-debug')).toBeNull();
-    expect(text()).toContain('Journal vocal désactivé');
+    expect(text()).toContain('Bandeau du journal vocal masqué');
   });
 
   it('des touches espacées ne comptent pas', async () => {

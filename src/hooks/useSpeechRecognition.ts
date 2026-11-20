@@ -299,7 +299,7 @@ export function useSpeechRecognition({
       setError('not-supported');
       return;
     }
-    voiceLog('reco:start');
+    voiceLog('reco:start', `lang=${lang}`);
     wantListeningRef.current = true;
     // Démarrage explicite (geste utilisateur / nouvelle séance) : on repart
     // d'un compteur vierge pour le garde-fou anti-boucle.
@@ -310,7 +310,7 @@ export function useSpeechRecognition({
     if (phaseRef.current === 'starting') return;
     stuckRetriesRef.current = 0;
     launch(rec);
-  }, [ensureRecognition, launch]);
+  }, [ensureRecognition, launch, lang]);
 
   const abort = useCallback(() => {
     voiceLog('reco:abort');

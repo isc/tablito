@@ -1,7 +1,9 @@
 import type { UserProfile } from '../types';
+import { isStandalone } from './install';
 import { countMastered } from './leitner';
 import { supabaseEnv, supabaseHeaders } from './supabase';
 import { APP_VERSION } from './version';
+import { getVoiceLog } from './voiceDebug';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -13,6 +15,11 @@ export interface FeedbackContext {
   user_agent: string;
   locale: string;
   viewport: { w: number; h: number };
+  // Ce que le user-agent ne dit pas, pour un avis sur le micro : l'API de
+  // reconnaissance vocale présente, et l'app installée ou ouverte dans le
+  // navigateur (le comportement de WebKit diffère entre les deux).
+  speech_api: 'standard' | 'webkit' | 'none';
+  standalone: boolean;
   stats?: {
     total_sessions: number;
     facts_mastered: number;
@@ -38,6 +45,10 @@ export interface FeedbackContext {
   // Fraîcheur de l'instantané distant (ISO), quand `profile_source` vaut
   // 'watched' : l'écran l'affiche, le payload doit le dire aussi.
   profile_fetched_at?: string;
+  // Journal du micro de CET appareil (lib/voiceDebug), quel que soit le profil
+  // affiché : ce que la reconnaissance a compris et ce qu'elle a fait. Opt-in
+  // via sa propre case, proposée seulement quand le journal n'est pas vide.
+  voice_log?: string[];
 }
 
 /** D'où vient le profil joint à l'avis : cet appareil, ou un enfant suivi. */
@@ -50,13 +61,18 @@ export function buildContext(
   profile: UserProfile | null,
   includeFullProfile = false,
   source?: FeedbackSource,
+  includeVoiceLog = false,
 ): FeedbackContext {
   const ctx: FeedbackContext = {
     app_version: APP_VERSION,
     user_agent: navigator.userAgent,
     locale: navigator.language,
     viewport: { w: window.innerWidth, h: window.innerHeight },
+    speech_api:
+      'SpeechRecognition' in window ? 'standard' : 'webkitSpeechRecognition' in window ? 'webkit' : 'none',
+    standalone: isStandalone(),
   };
+  if (includeVoiceLog) ctx.voice_log = getVoiceLog();
   if (profile) {
     const start = new Date(profile.startDate).getTime();
     const days = Math.max(0, Math.floor((Date.now() - start) / 86_400_000));

@@ -221,7 +221,8 @@ interface ParentDashboardStrings {
   whatsNew: string;
   privacy: string;
   appVersionLabel: string;
-  // Easter egg : 7 touches sur la version basculent le journal vocal.
+  // Easter egg : 7 touches sur la version affichent ou masquent le bandeau du
+  // journal vocal (le journal, lui, se tient toujours).
   voiceDebugOn: string;
   voiceDebugOff: string;
   shareText: string;
@@ -444,8 +445,8 @@ const parentDashboardFr: ParentDashboardStrings = {
   whatsNew: 'Nouveautés',
   privacy: 'Confidentialité',
   appVersionLabel: "Version de l'app",
-  voiceDebugOn: "Journal vocal activé : il s'affiche en bas de l'écran pendant les réponses à voix haute.",
-  voiceDebugOff: 'Journal vocal désactivé.',
+  voiceDebugOn: "Bandeau du journal vocal affiché : il apparaît en bas de l'écran pendant les réponses à voix haute.",
+  voiceDebugOff: 'Bandeau du journal vocal masqué.',
   shareText: 'Tablito — pour apprendre les tables de multiplication.',
   formatSeconds: (seconds) =>
     `${seconds.toLocaleString(localeFor('fr'), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}\u00a0s`,
@@ -659,8 +660,8 @@ const parentDashboardEn: ParentDashboardStrings = {
   whatsNew: "What's new",
   privacy: 'Privacy',
   appVersionLabel: 'App version',
-  voiceDebugOn: 'Voice log on: it shows at the bottom of the screen during spoken answers.',
-  voiceDebugOff: 'Voice log off.',
+  voiceDebugOn: 'Voice log banner on: it shows at the bottom of the screen during spoken answers.',
+  voiceDebugOff: 'Voice log banner off.',
   shareText: 'Tablito — to learn the multiplication tables.',
   formatSeconds: (seconds) => `${seconds.toFixed(1)}s`,
   formatPercent: (percent) => `${percent}%`,
@@ -762,6 +763,8 @@ interface FeedbackModalStrings {
   // consulte l'onglet de son enfant croit joindre CE profil-là.
   attachHistory: (name: string) => string;
   attachHistoryHint: string;
+  attachVoiceLog: string;
+  attachVoiceLogHint: string;
   errorPrefix: (msg: string) => string;
   sendFailed: string;
   cancel: string;
@@ -782,6 +785,9 @@ const feedbackModalFr: FeedbackModalStrings = {
   attachHistory: (name) => `Joindre l'historique détaillé du profil de ${name}`,
   attachHistoryHint:
     "Si vous signalez un bug précis, ça aide à reproduire. Inclut les questions posées et les réponses données — pas le prénom. Uniquement le profil affiché ci-dessus, celui que vous êtes en train de regarder : pas les autres profils de cet appareil, pas les autres enfants suivis.",
+  attachVoiceLog: 'Joindre le journal du micro de cet appareil',
+  attachVoiceLogHint:
+    "Si la réponse à voix haute pose problème. Ce que la reconnaissance vocale a compris lors des dernières réponses dites sur cet appareil, et ce que le micro a fait : du texte, jamais le son.",
   errorPrefix: (msg) => `Erreur : ${msg}`,
   sendFailed: 'Envoi impossible',
   cancel: 'Annuler',
@@ -801,6 +807,9 @@ const feedbackModalEn: FeedbackModalStrings = {
   attachHistory: (name) => `Attach the detailed profile history for ${name}`,
   attachHistoryHint:
     "If you're reporting a specific bug, this helps reproduce it. Includes the questions asked and the answers given — not the first name. Only the profile shown above, the one you are currently looking at: not the other profiles on this device, and not the other children you follow.",
+  attachVoiceLog: "Attach this device's microphone log",
+  attachVoiceLogHint:
+    "If answering out loud isn't working. What speech recognition understood during the latest spoken answers on this device, and what the microphone did: text only, never audio.",
   errorPrefix: (msg) => `Error: ${msg}`,
   sendFailed: "Couldn't send",
   cancel: 'Cancel',
