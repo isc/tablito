@@ -6,7 +6,8 @@
 // chaque fichier est une requête HTTP à part).
 
 // Ouvrir l'app avec ?<param>=1 active le flag durablement, ?<param>=0 le
-// coupe. Flag éteint, les outils de debug doivent être des no-ops totaux.
+// coupe. Le flag commande l'affichage (bandeau, console), pas la collecte : le
+// journal vocal se tient dans tous les cas, sur l'appareil (cf. voiceDebug).
 export function readDebugFlag(param: string, storageKey: string): boolean {
   if (typeof window === 'undefined') return false;
   try {

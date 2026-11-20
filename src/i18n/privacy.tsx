@@ -51,7 +51,10 @@ const fr: PrivacyStrings = {
     <>
       Le prénom de l'enfant, sa progression (Leitner, badges, séances,
       streak) et ses préférences (son, mode vocal) sont stockés
-      localement dans le navigateur (<code>localStorage</code>).
+      localement dans le navigateur (<code>localStorage</code>), tout comme
+      le journal du micro : pour les dernières réponses dites à voix haute, ce
+      que la reconnaissance vocale a compris (du texte, jamais le son), de quoi
+      comprendre un micro qui fonctionne mal.
       L'application fonctionne entièrement hors-ligne après le premier
       chargement. Par défaut, rien n'est envoyé sur un serveur : les seules
       exceptions sont déclenchées par vous et décrites ci-dessous (l'envoi
@@ -70,8 +73,9 @@ const fr: PrivacyStrings = {
     <>le message que vous écrivez,</>,
     <>l'email si vous en fournissez un (optionnel, pour vous répondre),</>,
     <>
-      un contexte anonyme : navigateur, langue, taille d'écran, et
-      quelques statistiques agrégées (nombre de séances, faits
+      un contexte anonyme : navigateur (s'il sait reconnaître la voix, si
+      l'app y est installée), langue, taille d'écran, et quelques
+      statistiques agrégées (nombre de séances, faits
       maîtrisés, streak, jours depuis le début).
     </>,
     <>
@@ -84,6 +88,14 @@ const fr: PrivacyStrings = {
       séances). <strong>Ce profil-là uniquement</strong>&nbsp;: celui que
       l'espace parent affiche au moment de l'envoi — un enfant suivi à distance
       si c'est son onglet qui est ouvert — jamais les autres.
+    </>,
+    <>
+      si — et seulement si — vous cochez{' '}
+      <strong>«&nbsp;Joindre le journal du micro de cet appareil&nbsp;»</strong>
+      &nbsp;: ce journal (ce que la reconnaissance vocale a compris et ce que le
+      micro a fait lors des dernières réponses à voix haute sur cet appareil),
+      qui est alors effacé de l'appareil. Cette case n'apparaît que si le
+      journal n'est pas vide.
     </>,
   ],
   feedbackOutro: (
@@ -169,7 +181,7 @@ const fr: PrivacyStrings = {
     <>Aucun cookie de suivi, aucun analytics tiers.</>,
     <>Aucune publicité, aucun lien externe côté enfant.</>,
     <>Aucun nom de famille, école, adresse, ou donnée sensible.</>,
-    <>Aucune donnée vocale n'est enregistrée : le mode vocal utilise l'API du navigateur en local, rien ne sort.</>,
+    <>Aucun enregistrement de la voix. Le mode vocal s'appuie sur la reconnaissance vocale du navigateur, qui peut transmettre le son aux serveurs d'Apple ou de Google selon l'appareil ; Tablito n'en reçoit ni n'en garde rien.</>,
     <>Aucun prénom n'est envoyé, même avec le rappel quotidien activé.</>,
   ],
   rightsTitle: 'Vos droits',
@@ -192,7 +204,7 @@ const fr: PrivacyStrings = {
       formulaire <strong>«&nbsp;Envoyer un avis&nbsp;»</strong> du dashboard parent.
     </>
   ),
-  updated: 'Dernière mise à jour : juillet 2026.',
+  updated: 'Dernière mise à jour : novembre 2026.',
 };
 
 const en: PrivacyStrings = {
@@ -209,7 +221,10 @@ const en: PrivacyStrings = {
     <>
       The child's first name, their progress (Leitner, badges, sessions,
       streak) and their preferences (sound, voice mode) are stored
-      locally in the browser (<code>localStorage</code>). The app works
+      locally in the browser (<code>localStorage</code>), and so is the
+      microphone log: for the latest spoken answers, what speech recognition
+      understood (text only, never audio), to make sense of a microphone that
+      misbehaves. The app works
       entirely offline after the first load. By default, nothing is sent to
       a server: the only exceptions are triggered by you and described below
       (sending feedback, turning on the daily reminder, transferring to
@@ -227,7 +242,8 @@ const en: PrivacyStrings = {
     <>the message you write,</>,
     <>your email if you provide one (optional, so we can reply),</>,
     <>
-      anonymous context: browser, language, screen size, and a few
+      anonymous context: browser (whether it supports speech recognition,
+      whether the app is installed), language, screen size, and a few
       aggregated statistics (number of sessions, mastered facts, streak,
       days since you started).
     </>,
@@ -241,6 +257,13 @@ const en: PrivacyStrings = {
       <strong>That profile only</strong>: the one the parent area is showing
       when you send — a child you follow remotely if that is the open tab —
       never the others.
+    </>,
+    <>
+      if — and only if — you tick{' '}
+      <strong>"Attach this device's microphone log"</strong>: that log (what
+      speech recognition understood and what the microphone did during the
+      latest spoken answers on this device), which is then erased from the
+      device. This box only appears when the log is not empty.
     </>,
   ],
   feedbackOutro: (
@@ -321,7 +344,7 @@ const en: PrivacyStrings = {
     <>No tracking cookies, no third-party analytics.</>,
     <>No advertising, no external links on the child's side.</>,
     <>No last name, school, address, or sensitive data.</>,
-    <>No voice data is recorded: voice mode uses the browser's API locally, nothing leaves the device.</>,
+    <>No voice recordings. Voice mode relies on the browser's speech recognition, which may send the audio to Apple's or Google's servers depending on the device; Tablito receives and keeps none of it.</>,
     <>No first name is sent, even with the daily reminder turned on.</>,
   ],
   rightsTitle: 'Your rights',
@@ -344,7 +367,7 @@ const en: PrivacyStrings = {
       <strong>"Send feedback"</strong> form in the parent dashboard.
     </>
   ),
-  updated: 'Last updated: July 2026.',
+  updated: 'Last updated: November 2026.',
 };
 
 export const privacyStrings = { fr, en };
