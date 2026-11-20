@@ -1111,10 +1111,13 @@ const SECTIONS_FR = [
           <strong>Répétition espacée — les boîtes de Leitner.</strong> Chaque
           fait vit dans l'une des cinq boîtes numérotées de 1 (à peine appris)
           à 5 (bien ancré). Un fait nouveau démarre en boîte 1 : il est revu
-          le jour même. Une bonne réponse le fait monter d'une boîte et
-          repousse la prochaine révision : 1 jour en boîte 2, 3 jours en
-          boîte 3, 7 jours en boîte 4, 21 jours en boîte 5. Une erreur le
-          renvoie en boîte 1, le temps de le réancrer. L'enfant revoit ainsi
+          le jour même. Une bonne réponse rapide le fait monter d'une boîte
+          et repousse la prochaine révision : 1 jour en boîte 2, 3 jours en
+          boîte 3, 7 jours en boîte 4, 21 jours en boîte 5. Une bonne réponse
+          lente le laisse dans sa boîte, revu au même rythme : l'enfant a
+          sans doute encore compté, et un fait n'est su par cœur que lorsque
+          la réponse vient sans calcul. Une erreur le renvoie en boîte 1, le
+          temps de le réancrer. L'enfant revoit ainsi
           chaque fait juste avant de l'oublier, avec des intervalles de plus
           en plus longs — bien plus durable que le bachotage en une soirée.
           <span class="cite">Kang (2016) ; Cepeda et al. (2008) ; Rea &amp; Modigliani (1985)</span>
@@ -1204,7 +1207,8 @@ const SECTIONS_FR = [
       <ul class="guide-list">
         <li><strong>Un fait nouveau</strong> est d'abord présenté en trois temps : une grille de points (l'addition répétée), l'échange des facteurs (3×5 = 5×3), puis une astuce (« × 9, c'est × 10 moins une fois »).</li>
         <li><strong>Réponse</strong> au clavier ou à la voix. Un bouton sous le pavé change de mode, et le choix est retenu.</li>
-        <li><strong>Bonne réponse rapide</strong> : une étoile dorée.</li>
+        <li><strong>Bonne réponse rapide</strong> : une étoile dorée, et le fait progresse.</li>
+        <li><strong>Bonne réponse lente</strong> : l'étoile sans ses rayons. Le fait reste dans sa boîte : c'est la réponse qui vient sans calcul qui le fait avancer.</li>
         <li><strong>Erreur</strong> : la bonne réponse, la grille de points, l'astuce si le fait est récent. La question revient un peu plus loin.</li>
       </ul>
     `,
@@ -1422,10 +1426,13 @@ const SECTIONS_EN = [
           <strong>Spaced repetition — the Leitner boxes.</strong> Each fact
           lives in one of five boxes numbered from 1 (just learned) to 5
           (firmly anchored). A new fact starts in box 1: it is reviewed the
-          same day. A correct answer moves it up one box and pushes the next
-          review further out: 1 day in box 2, 3 days in box 3, 7 days in box
-          4, 21 days in box 5. A mistake sends it back to box 1, long enough
-          to re-anchor it. The child reviews each fact just before forgetting
+          same day. A quick correct answer moves it up one box and pushes the
+          next review further out: 1 day in box 2, 3 days in box 3, 7 days in
+          box 4, 21 days in box 5. A slow correct answer leaves it in its box,
+          reviewed at the same pace: the child probably still worked it out,
+          and a fact is only known by heart once the answer comes without
+          calculating. A mistake sends it back to box 1, long enough to
+          re-anchor it. The child reviews each fact just before forgetting
           it, with longer and longer intervals — far more durable than
           cramming in a single evening.
           <span class="cite">Kang (2016) ; Cepeda et al. (2008) ; Rea &amp; Modigliani (1985)</span>
@@ -1514,7 +1521,8 @@ const SECTIONS_EN = [
       <ul class="guide-list">
         <li><strong>A new fact</strong> is first shown in three steps: a grid of dots (repeated addition), swapping the factors (3×5 = 5×3), then a trick (“× 9 is × 10 minus one”).</li>
         <li><strong>Answers</strong> with the keypad or by voice. A button below the keypad switches mode, and the choice is remembered.</li>
-        <li><strong>Quick correct answer</strong>: a golden star.</li>
+        <li><strong>Quick correct answer</strong>: a golden star, and the fact moves up.</li>
+        <li><strong>Slow correct answer</strong>: the star without its rays. The fact stays in its box: an answer that comes without calculating is what moves it up.</li>
         <li><strong>Mistake</strong>: the right answer, the grid of dots, the trick if the fact is recent. The question comes back a little later.</li>
       </ul>
     `,
