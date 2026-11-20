@@ -451,3 +451,62 @@
   border: 2px solid var(--paper);
   box-shadow: 0 0 0 1px var(--coral);
 }
+
+/* === Suggestion de matière (specs §15.1) =================================
+   Bulle sous le prénom (une `.card`), dont la pointe vise la tuile suggérée. */
+.home-suggest {
+  position: relative;
+  width: 100%;
+  margin: 18px 0 0;
+  box-shadow: var(--shadow-sm);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+  animation: slideUp 0.4s ease both;
+}
+
+.home-suggest b {
+  white-space: nowrap;
+  color: var(--indigo);
+}
+
+.home-suggest::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: var(--tail-x, 50%);
+  width: 16px;
+  height: 16px;
+  background: var(--paper);
+  border-right: 1.5px solid var(--line);
+  border-bottom: 1.5px solid var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* Bord indigo épaissi par l'ombre plutôt que par la bordure : la tuile ne
+   change pas de taille et ses voisines ne bougent pas. */
+.home-subject-btn.is-suggested {
+  background: var(--indigo-soft);
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 1px var(--indigo), 0 6px 18px var(--indigo-shadow);
+  transform: translateY(-3px);
+  animation: home-suggest-bob 2.6s ease-in-out infinite;
+}
+
+/* L'animation primerait sur l'enfoncement du tap. */
+.home-subject-btn.is-suggested:active:not(:disabled) {
+  animation: none;
+}
+
+@keyframes home-suggest-bob {
+  50% { transform: translateY(-7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-suggest,
+  .home-subject-btn.is-suggested {
+    animation: none;
+  }
+}

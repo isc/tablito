@@ -9,6 +9,12 @@ import type { ChangelogEntry } from '../lib/changelog';
 
 const fr: ChangelogEntry[] = [
   {
+    date: '2026-11-20',
+    items: [
+      "Quand plusieurs matières sont proposées, l'accueil invite votre enfant à reprendre celle qu'il a laissée de côté depuis le plus longtemps («\u00a0Et si on faisait un peu de conjugaison\u00a0? Ça fait 5\u00a0jours\u00a0!\u00a0») et met sa tuile en avant. Les autres restent jouables comme avant.",
+    ],
+  },
+  {
     date: '2026-11-04',
     items: [
       "Conjugaison\u00a0: un deuxième niveau s'ouvre une fois les trois temps maîtrisés, avec les verbes comme finir, puis pouvoir, vouloir et prendre. 23 nouvelles formes du programme de CM1, une nouvelle image mystère et de nouveaux badges. Les formes déjà acquises continuent d'être révisées dans les mêmes séances.",
@@ -299,6 +305,12 @@ const fr: ChangelogEntry[] = [
 ];
 
 const en: ChangelogEntry[] = [
+  {
+    date: '2026-11-20',
+    items: [
+      "When several subjects are offered, the home screen nudges your child towards the one they have left aside the longest (\"How about a bit of conjugation? It's been 5 days!\") and highlights its tile. The others stay just as playable.",
+    ],
+  },
   {
     date: '2026-11-04',
     items: [

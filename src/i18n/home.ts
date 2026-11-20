@@ -1,4 +1,5 @@
 import { useStrings } from './lang';
+import type { Subject } from '../lib/hardestFacts';
 
 // Strings de l'écran d'accueil (HomeScreen) et de l'écran des règles
 // (RulesScreen). Même pattern que voice.ts : un dico `fr` source, un `en`
@@ -37,6 +38,8 @@ interface HomeStrings {
   subjectDoneLabel: (subject: string) => string;
   /** Pastille de découverte (première disponibilité, pas de modale). */
   subjectNewLabel: (subject: string) => string;
+  /** Bulle qui met en avant la matière délaissée (specs §15.1) — `days` ≥ 2. */
+  subjectSuggestion: (subject: Subject, days: number) => RuleMessage;
   myPictures: string;
   myPicture: string;
   badges: string;
@@ -65,6 +68,11 @@ const homeFr: HomeStrings = {
   subjectStart: (subject) => `${subject} — commencer la séance du jour`,
   subjectDoneLabel: (subject) => `${subject} — c'est fait pour aujourd'hui`,
   subjectNewLabel: (subject) => `${subject} — nouveau\u00a0!`,
+  subjectSuggestion: (subject, days) => ({
+    before: 'Et si on faisait un peu de ',
+    bold: { math: 'maths', conj: 'conjugaison', irr: 'verbes anglais' }[subject],
+    after: `\u00a0? Ça fait ${days}\u00a0jours\u00a0!`,
+  }),
   myPictures: 'Mes images',
   myPicture: 'Mon image',
   badges: 'Badges',
@@ -93,6 +101,11 @@ const homeEn: HomeStrings = {
   subjectStart: (subject) => `${subject} — start today's session`,
   subjectDoneLabel: (subject) => `${subject} — done for today`,
   subjectNewLabel: (subject) => `${subject} — new!`,
+  subjectSuggestion: (subject, days) => ({
+    before: 'How about a bit of ',
+    bold: { math: 'maths', conj: 'conjugation', irr: 'English verbs' }[subject],
+    after: `? It's been ${days} days!`,
+  }),
   myPictures: 'My pictures',
   myPicture: 'My picture',
   badges: 'Badges',

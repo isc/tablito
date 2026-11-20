@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import Mascot, { type MascotMood } from '../components/Mascot';
 import Feather from '../components/Feather';
@@ -7,6 +7,8 @@ import StreakDetailModal from '../components/StreakDetailModal';
 import FlameIcon from '../components/FlameIcon';
 import { getActiveStreak, isStreakProtectedByFreeze } from '../lib/streak';
 import { todayISO } from '../lib/utils';
+import type { Subject } from '../lib/hardestFacts';
+import { suggestSubject } from '../lib/subjectSuggestion';
 import { useHomeStrings } from '../i18n/home';
 
 interface HomeScreenProps {
@@ -184,6 +186,15 @@ function IconRuler() {
   );
 }
 
+interface SubjectTileProps {
+  subject: Subject;
+  icon: ReactNode;
+  label: string;
+  available: boolean;
+  isNew?: boolean;
+  onStart: () => void;
+}
+
 /**
  * Tuile de matière (spec Verbito §9). Une matière dont la séance du jour est
  * faite n'est pas grisée-punie : elle porte un ✓ tranquille et ne se relance
@@ -194,20 +205,14 @@ function SubjectTile({
   label,
   available,
   isNew = false,
+  suggested,
   onStart,
   t,
-}: {
-  icon: ReactNode;
-  label: string;
-  available: boolean;
-  isNew?: boolean;
-  onStart: () => void;
-  t: ReturnType<typeof useHomeStrings>;
-}) {
+}: SubjectTileProps & { suggested: boolean; t: ReturnType<typeof useHomeStrings> }) {
   return (
     <button
       type="button"
-      className={`home-subject-btn${available ? '' : ' is-done'}`}
+      className={`home-subject-btn${available ? '' : ' is-done'}${suggested ? ' is-suggested' : ''}`}
       onClick={onStart}
       disabled={!available}
       aria-label={available ? t.subjectStart(label) : t.subjectDoneLabel(label)}
@@ -320,6 +325,35 @@ export default function HomeScreen({
   const [greetingBefore, greetingAfter] = t.greeting(profile.name).split(profile.name);
   const greetingParts = { before: greetingBefore, after: greetingAfter ?? '' };
 
+  // Tuiles de matière, dans un ordre fixe : la suggestion (specs §15.1) en met
+  // une en avant sans la déplacer.
+  const tiles: SubjectTileProps[] = [
+    { subject: 'math', icon: <IconMaths />, label: t.subjectMaths, available: hasSessionAvailable, onStart },
+  ];
+  if (conjAvailable) {
+    tiles.push({
+      subject: 'conj',
+      icon: <IconVerb />,
+      label: t.subjectConj,
+      available: hasConjSessionAvailable,
+      isNew: !conjVisible || conjHasNewLevel,
+      onStart: onStartConj,
+    });
+  }
+  if (irrAvailable && onStartIrr) {
+    tiles.push({
+      subject: 'irr',
+      icon: <IconEnglish />,
+      label: t.subjectIrr,
+      available: hasIrrSessionAvailable,
+      isNew: !irrVisible,
+      onStart: onStartIrr,
+    });
+  }
+  const suggestion = suggestSubject(profile, tiles, today);
+  const suggestedIndex = tiles.findIndex((tile) => tile.subject === suggestion?.subject);
+  const suggestionText = suggestion && t.subjectSuggestion(suggestion.subject, suggestion.days);
+
   return (
     <div className="home-screen">
       <div className="home-top-bar">
@@ -398,41 +432,27 @@ export default function HomeScreen({
               {greetingParts.before}<span>{profile.name}</span>{greetingParts.after}
             </div>
           </div>
+          {suggestionText && (
+            // La pointe de la bulle vise la tuile suggérée : bulle et rangée de
+            // tuiles ont la même largeur, son centre est donc à (2i+1)/2n.
+            <p
+              className="card home-suggest"
+              style={{ '--tail-x': `${((2 * suggestedIndex + 1) / (2 * tiles.length)) * 100}%` } as CSSProperties}
+            >
+              {suggestionText.before}<b>{suggestionText.bold}</b>{suggestionText.after}
+            </p>
+          )}
         </div>
 
         <div className="home-cta-wrap">
-          {conjAvailable || irrAvailable ? (
+          {tiles.length > 1 ? (
             // Plusieurs matières ⇒ des tuiles jumelles. Chacune porte l'état de
             // SA séance du jour ; la flamme de série, elle, reste partagée
             // (§7.2 : une séance quelconque la maintient).
-            <div className={`home-subjects${conjAvailable && irrAvailable ? ' home-subjects--3' : ''}`}>
-              <SubjectTile
-                icon={<IconMaths />}
-                label={t.subjectMaths}
-                available={hasSessionAvailable}
-                onStart={onStart}
-                t={t}
-              />
-              {conjAvailable && (
-                <SubjectTile
-                  icon={<IconVerb />}
-                  label={t.subjectConj}
-                  available={hasConjSessionAvailable}
-                  isNew={!conjVisible || conjHasNewLevel}
-                  onStart={onStartConj}
-                  t={t}
-                />
-              )}
-              {irrAvailable && onStartIrr && (
-                <SubjectTile
-                  icon={<IconEnglish />}
-                  label={t.subjectIrr}
-                  available={hasIrrSessionAvailable}
-                  isNew={!irrVisible}
-                  onStart={onStartIrr}
-                  t={t}
-                />
-              )}
+            <div className={`home-subjects${tiles.length === 3 ? ' home-subjects--3' : ''}`}>
+              {tiles.map((tile, i) => (
+                <SubjectTile key={tile.subject} {...tile} suggested={i === suggestedIndex} t={t} />
+              ))}
             </div>
           ) : hasSessionAvailable ? (
             <button className="btn btn--indigo home-start-btn" onClick={onStart}>
