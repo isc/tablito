@@ -1,0 +1,3 @@
+let t=0,n=null,u=!1,i=!1;function d(){return typeof document<"u"&&document.visibilityState==="hidden"}function o(){const e=i||d();e&&n===null&&(n=Date.now()),!e&&n!==null&&(t+=Date.now()-n,n=null)}function s(){u||typeof document>"u"||(u=!0,o(),document.addEventListener("visibilitychange",o))}function r(){return n===null?t:t+(Date.now()-n)}const l={at:0,hiddenMs:0};function c(){return s(),{at:Date.now(),hiddenMs:r()}}function f(e){const a=r()-e.hiddenMs;return Math.max(0,Date.now()-e.at-a)}function h(e){s(),i=e,o()}function m(){t=0,i=!1,n=d()?Date.now():null}export{l as NOT_STARTED,f as activeMsSince,m as resetHiddenTimeForTests,h as setQuestionClockPaused,c as startQuestion};
+
+//# sourceMappingURL=questionClock.js.map
