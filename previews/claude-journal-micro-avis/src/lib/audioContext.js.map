@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["lib/audioContext.ts"],
+  "sourcesContent": ["// AudioContext partag\u00E9 entre useSound (bips Web Audio) et useTTS (lecture\n// MP3 d\u00E9cod\u00E9e via decodeAudioData). Avoir une seule instance par page \u00E9vite\n// les conflits iOS et permet \u00E0 `getAudioContext` d'\u00EAtre idempotent.\nlet ctx: AudioContext | null = null;\n\nexport function getAudioContext(): AudioContext {\n  if (!ctx || ctx.state === 'closed') {\n    ctx = new AudioContext();\n  }\n  if (ctx.state === 'suspended') {\n    ctx.resume();\n  }\n  return ctx;\n}\n"],
+  "mappings": "AAGA,IAAIA,EAA2B,KAExB,SAASC,GAAgC,CAC9C,OAAI,CAACD,GAAOA,EAAI,QAAU,YACxBA,EAAM,IAAI,cAERA,EAAI,QAAU,aAChBA,EAAI,OAAO,EAENA,CACT",
+  "names": ["ctx", "getAudioContext"]
+}

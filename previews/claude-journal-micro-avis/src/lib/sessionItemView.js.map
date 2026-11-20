@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["lib/sessionItemView.ts"],
+  "sourcesContent": ["import type { SessionItem } from '../types';\nimport { remainderDividend } from '../types';\n\n// D\u00E9rivation d'affichage d'une question, partag\u00E9e par SessionScreen (\u00E9nonc\u00E9)\n// et FeedbackOverlay (rappel de la question dans le feedback) : un seul\n// endroit d\u00E9cide de \u00AB ce qui s'affiche \u00E0 gauche/droite de l'op\u00E9rateur \u00BB pour\n// chaque type de question. Les pr\u00E9occupations propres \u00E0 chaque \u00E9cran (seuils,\n// cl\u00E9s TTS, r\u00E9ponse compos\u00E9e, grille) restent chez leurs consommateurs.\nexport interface ItemDisplay {\n  left: number;\n  op: '\u00D7' | '\u00F7';\n  right: number;\n}\n\nexport function itemDisplay(item: SessionItem): ItemDisplay {\n  if (item.kind === 'rem') {\n    return { left: remainderDividend(item), op: '\u00F7', right: item.fact.divisor };\n  }\n  if (item.kind === 'div') {\n    return { left: item.fact.dividend, op: '\u00F7', right: item.fact.divisor };\n  }\n  return { left: item.displayA, op: '\u00D7', right: item.displayB };\n}\n"],
+  "mappings": "AACA,OAAS,qBAAAA,MAAyB,WAa3B,SAASC,EAAYC,EAAgC,CAC1D,OAAIA,EAAK,OAAS,MACT,CAAE,KAAMF,EAAkBE,CAAI,EAAG,GAAI,OAAK,MAAOA,EAAK,KAAK,OAAQ,EAExEA,EAAK,OAAS,MACT,CAAE,KAAMA,EAAK,KAAK,SAAU,GAAI,OAAK,MAAOA,EAAK,KAAK,OAAQ,EAEhE,CAAE,KAAMA,EAAK,SAAU,GAAI,OAAK,MAAOA,EAAK,QAAS,CAC9D",
+  "names": ["remainderDividend", "itemDisplay", "item"]
+}
