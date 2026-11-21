@@ -432,9 +432,14 @@ export default function HomeScreen({
               {greetingParts.before}<span>{profile.name}</span>{greetingParts.after}
             </div>
           </div>
+        </div>
+
+        <div className="home-cta-wrap">
           {suggestionText && (
-            // La pointe de la bulle vise la tuile suggérée : bulle et rangée de
-            // tuiles ont la même largeur, son centre est donc à (2i+1)/2n.
+            // Posée sur les tuiles, pas sous le prénom : le bloc de la mascotte
+            // est centré dans l'espace libre, et sur un grand écran la bulle
+            // flottait à 100 px de la tuile qu'elle vise. Bulle et rangée de
+            // tuiles ont la même largeur : le centre de la tuile i est à (2i+1)/2n.
             <p
               className="card home-suggest"
               style={{ '--tail-x': `${((2 * suggestedIndex + 1) / (2 * tiles.length)) * 100}%` } as CSSProperties}
@@ -442,9 +447,6 @@ export default function HomeScreen({
               {suggestionText.before}<b>{suggestionText.bold}</b>{suggestionText.after}
             </p>
           )}
-        </div>
-
-        <div className="home-cta-wrap">
           {tiles.length > 1 ? (
             // Plusieurs matières ⇒ des tuiles jumelles. Chacune porte l'état de
             // SA séance du jour ; la flamme de série, elle, reste partagée
