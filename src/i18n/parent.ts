@@ -149,7 +149,11 @@ interface ParentDashboardStrings {
   remoteLoading: string;
   remoteError: string;
   remoteRevoked: (name: string) => string;
-  remoteSyncedAgo: (iso: string) => string;
+  // Ligne de fraîcheur d'un enfant suivi : l'âge du dernier dépôt de son
+  // appareil, ou, passé quelques jours, une alerte (il n'a pas joué, ou son
+  // appareil n'est pas en ligne : on ne sait pas lequel, d'où « de nouvelles »).
+  remoteUpdatedAgo: (iso: string) => string;
+  remoteStale: (name: string, days: number) => string;
   remoteRefresh: string;
   remoteNoData: string;
   // Suivi à distance : partager la progression d'ici (un bloc par enfant de
@@ -349,10 +353,11 @@ const parentDashboardFr: ParentDashboardStrings = {
     'Impossible de récupérer la progression pour le moment. Vérifiez la connexion internet, ou réessayez plus tard.',
   remoteRevoked: (name) =>
     `Le partage a été arrêté sur l'appareil de ${name}. Pour reprendre le suivi, scannez un nouveau QR code depuis son espace parent.`,
-  remoteSyncedAgo: (iso) => {
+  remoteUpdatedAgo: (iso) => {
     const ago = timeAgo(iso, 'fr');
-    return ago ? `Synchronisé ${ago}` : "Synchronisé à l'instant";
+    return ago ? `Mis à jour ${ago}` : "Mis à jour à l'instant";
   },
+  remoteStale: (name, days) => `Aucune nouvelle de ${name} depuis ${days} jour${days > 1 ? 's' : ''}`,
   remoteRefresh: 'Actualiser',
   remoteNoData: 'Aucune progression à afficher pour le moment.',
   watchTitle: 'Suivi à distance',
@@ -573,10 +578,11 @@ const parentDashboardEn: ParentDashboardStrings = {
     'Cannot fetch the progress right now. Check the internet connection, or try again later.',
   remoteRevoked: (name) =>
     `Sharing was turned off on ${name}'s device. To resume, scan a new QR code from their parent area.`,
-  remoteSyncedAgo: (iso) => {
+  remoteUpdatedAgo: (iso) => {
     const ago = timeAgo(iso, 'en');
-    return ago ? `Synced ${ago}` : 'Synced just now';
+    return ago ? `Updated ${ago}` : 'Updated just now';
   },
+  remoteStale: (name, days) => `No news from ${name} for ${days} day${days === 1 ? '' : 's'}`,
   remoteRefresh: 'Refresh',
   remoteNoData: 'No progress to show yet.',
   watchTitle: 'Remote follow',

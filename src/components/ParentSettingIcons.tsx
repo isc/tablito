@@ -97,6 +97,16 @@ export function PlusIcon() {
   );
 }
 
+// Actualiser la progression d'un enfant suivi (ligne de fraîcheur).
+export function RefreshIcon() {
+  return (
+    <Icon>
+      <path d="M16 10a6 6 0 11-1.8-4.3" />
+      <path d="M16 3.5v3.2h-3.2" />
+    </Icon>
+  );
+}
+
 // === Point de la semaine ===
 
 export function TargetIcon() {

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useRef, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useState, useEffect, useRef, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
 import BackChevron from '../components/BackChevron';
 import ParentChildPicker from '../components/ParentChildPicker';
@@ -6,6 +6,7 @@ import ParentFeedbackButton from '../components/ParentFeedbackButton';
 import ParentHelpPage from '../components/ParentHelpPage';
 import ParentOverview from '../components/ParentOverview';
 import ParentProfilesPage from '../components/ParentProfilesPage';
+import { RefreshIcon } from '../components/ParentSettingIcons';
 import ParentSettingsList from '../components/ParentSettingsList';
 import ParentSubjectDetail from '../components/ParentSubjectDetail';
 import ParentWatchPage from '../components/ParentWatchPage';
@@ -15,7 +16,8 @@ import { APP_VERSION } from '../lib/version';
 import { isVoiceDebugOn, setVoiceDebug } from '../lib/voiceDebug';
 import { setPushPref } from '../lib/push';
 import { getActiveProfileId, listProfiles, loadProfileById } from '../lib/storage';
-import { fetchWatched, type WatchFetchResult, type WatchPairing } from '../lib/watch';
+import { daysBetween } from '../lib/utils';
+import { fetchWatched, type WatchFetchResult, type WatchPairing, type WatchSnapshot } from '../lib/watch';
 import { hasRemoteLinks, listWatched, removeWatched, watchConfigured, type WatchedProfile } from '../lib/watchStore';
 
 // Pages d'information d'« Aide et infos », rarement ouvertes : chargées à la
@@ -67,9 +69,42 @@ interface ParentDashboardProps {
   onProfileInstalled: (profile: UserProfile) => void;
 }
 
-// État de la relecture du suivi sélectionné ('loading' + les trois issues de
-// fetchWatched : instantané, partage révoqué, échec).
-type RemoteState = 'loading' | WatchFetchResult;
+// Le suivi sélectionné, tel que relu. `snapshot` est le dernier instantané
+// lu : il reste à l'écran pendant une actualisation (`refreshing`) et après une
+// relecture ratée (`error`) — sa date dit son âge. Un partage révoqué l'efface,
+// c'est définitif. Pas d'état « chargement » : l'absence de vue pour la source
+// affichée EST le chargement.
+type RemoteView = {
+  code: string;
+  snapshot: WatchSnapshot | null;
+  status: 'ok' | 'refreshing' | 'error' | 'revoked';
+};
+
+function viewOf(code: string, result: WatchFetchResult, kept: WatchSnapshot | null): RemoteView {
+  if (result === 'revoked') return { code, snapshot: null, status: 'revoked' };
+  if (result === 'error') return { code, snapshot: kept, status: 'error' };
+  return { code, snapshot: result, status: 'ok' };
+}
+
+// Au-delà, la ligne de fraîcheur passe en alerte : l'appareil de l'enfant n'a
+// rien déposé depuis (pas joué, ou pas en ligne), et les chiffres ont cet âge.
+const STALE_DAYS = 3;
+
+// Ce que dit la ligne de fraîcheur du suivi. Rien pendant le premier
+// chargement : le corps de la page dit déjà « Récupération… ».
+function freshnessOf(
+  view: RemoteView | null,
+  name: string,
+  t: ReturnType<typeof useParentDashboardStrings>,
+): { text: string; alert: boolean } | null {
+  if (!view) return null;
+  if (view.status === 'revoked') return { text: t.remoteRevoked(name), alert: true };
+  if (view.status === 'error' || !view.snapshot) return { text: t.remoteError, alert: true };
+  const { updatedAt } = view.snapshot;
+  const days = daysBetween(updatedAt, new Date().toISOString());
+  if (days >= STALE_DAYS) return { text: t.remoteStale(name, days), alert: true };
+  return { text: t.remoteUpdatedAgo(updatedAt), alert: false };
+}
 
 // Un enfant que l'espace parent peut afficher : un profil de cet appareil, ou
 // un enfant suivi à distance. La clé est son identité stable dans le
@@ -146,8 +181,8 @@ export default function ParentDashboard({
   // répond à « ai-je déjà les données de la source affichée ? » sans état de
   // coordination supplémentaire (ni drapeau « saute le premier fetch », ni
   // compteur de rafraîchissement, ni dépendance d'effet à museler).
-  const [remote, setRemote] = useState<{ code: string; state: RemoteState } | null>(() =>
-    initialWatch ? { code: initialWatch.entry.code, state: initialWatch.snapshot } : null,
+  const [remote, setRemote] = useState<RemoteView | null>(() =>
+    initialWatch ? viewOf(initialWatch.entry.code, initialWatch.snapshot, null) : null,
   );
 
   // Code de la relecture la plus récemment lancée. Écrit hors render (dans
@@ -160,35 +195,48 @@ export default function ParentDashboard({
   // déportée dans un useCallback : c'est la forme que la règle
   // react-hooks/set-state-in-effect accepte, et celle déjà employée par
   // usePushPref. Aucun état « chargement » n'est posé ici — l'absence
-  // d'instantané pour la source affichée EST le chargement (cf. remoteState).
+  // vue pour la source affichée EST le chargement (cf. RemoteView).
   useEffect(() => {
     if (!selectedCode || inFlightRef.current === selectedCode) return;
     const entry = listWatched().find((w) => w.code === selectedCode);
     if (!entry) return;
     inFlightRef.current = selectedCode;
     let cancelled = false;
-    void fetchWatched(entry).then((state) => {
-      if (!cancelled) setRemote({ code: selectedCode, state });
+    void fetchWatched(entry).then((result) => {
+      if (!cancelled) setRemote(viewOf(selectedCode, result, null));
     });
     return () => {
       cancelled = true;
     };
   }, [selectedCode]);
 
-  // « Actualiser » : même relecture, mais avec un retour visuel explicite —
-  // un instantané est déjà à l'écran, donc son remplacement doit se voir. Dans un
-  // handler d'événement, poser l'état est légitime (à l'inverse de l'effet).
-  const refreshRemote = async (entry: WatchedProfile) => {
+  // « Actualiser », et le retour de l'appli au premier plan : même relecture,
+  // sans effacer l'instantané affiché (l'icône tourne). `known` est cet
+  // instantané : inchangé sur le serveur, il n'est ni retéléchargé ni
+  // redéchiffré. Dans un handler d'événement, poser l'état est légitime (à
+  // l'inverse de l'effet).
+  const refreshRemote = useCallback(async (entry: WatchedProfile, known: WatchSnapshot | null) => {
     inFlightRef.current = entry.code;
-    setRemote({ code: entry.code, state: 'loading' });
-    const state = await fetchWatched(entry);
-    if (inFlightRef.current === entry.code) setRemote({ code: entry.code, state });
-  };
+    setRemote((prev) => (prev?.code === entry.code && prev.snapshot ? { ...prev, status: 'refreshing' } : null));
+    const result = await fetchWatched(entry, known);
+    if (inFlightRef.current !== entry.code) return;
+    setRemote((prev) => viewOf(entry.code, result, prev?.code === entry.code ? prev.snapshot : null));
+  }, []);
 
   // N'est vrai que si l'état chargé correspond bien à la source affichée.
-  const remoteState: RemoteState | null =
-    watchedEntry && remote?.code === watchedEntry.code ? remote.state : null;
-  const remoteSnapshot = typeof remoteState === 'object' ? remoteState : null;
+  const remoteView = watchedEntry && remote?.code === watchedEntry.code ? remote : null;
+  const remoteSnapshot = remoteView?.snapshot ?? null;
+
+  // Un parent qui laisse l'espace parent ouvert et y revient le lendemain doit
+  // voir la progression du jour, pas celle de la veille.
+  useEffect(() => {
+    if (!watchedEntry) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refreshRemote(watchedEntry, remoteSnapshot);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [watchedEntry, remoteSnapshot, refreshRemote]);
   // Profil réellement rendu : un enfant de l'appareil, ou l'instantané de
   // l'enfant suivi.
   const shown = watchedEntry
@@ -200,6 +248,7 @@ export default function ParentDashboard({
   // ni un enfant suivi (ses réglages se font sur son propre appareil).
   const editable = shown === profile;
   const shownName = shown?.name ?? watchedEntry?.name ?? '';
+  const freshness = freshnessOf(remoteView, shownName, t);
   // « Envoyer un avis » : sur l'accueil et sur la page d'une matière, là où
   // un parent repère un souci. L'avis joint le profil affiché.
   const feedbackButton = (
@@ -222,7 +271,7 @@ export default function ParentDashboard({
     // L'instantané est déjà déchiffré : on l'étiquette, et marquer le code comme
     // servi évite que l'effet relance une relecture inutile juste après.
     inFlightRef.current = paired.entry.code;
-    setRemote({ code: paired.entry.code, state: paired.snapshot });
+    setRemote(viewOf(paired.entry.code, paired.snapshot, null));
     setChosen(WATCH + paired.entry.code);
     // Retour à l'accueil, sur l'enfant qu'on vient d'appairer : c'est lui qu'on
     // voulait voir.
@@ -340,38 +389,28 @@ export default function ParentDashboard({
       )}
 
       {/* Fraîcheur du suivi : sans elle, un appareil enfant éteint depuis une
-          semaine afficherait des stats périmées sans le dire. Une section
-          comme les autres : elle en prend les marges, sous l'en-tête comme
-          sous le sélecteur. */}
-      {watchedEntry && (
-        <div className="parent-section">
-          <div className="parent-remote-bar">
-            {(remoteState === null || remoteState === 'loading') && (
-              <span className="parent-remote-status">{t.remoteLoading}</span>
-            )}
-            {remoteState === 'error' && (
-              <span className="parent-remote-status parent-remote-status--error">
-                {t.remoteError}
-              </span>
-            )}
-            {remoteState === 'revoked' && (
-              <span className="parent-remote-status parent-remote-status--error">
-                {t.remoteRevoked(watchedEntry.name)}
-              </span>
-            )}
-            {remoteSnapshot && (
-              <span className="parent-remote-status">
-                {t.remoteSyncedAgo(remoteSnapshot.updatedAt)}
-              </span>
-            )}
+          semaine afficherait des stats périmées sans le dire. Une ligne de
+          légende, pas une carte : elle ne prend de couleur que lorsqu'elle porte
+          une alerte. Une section pour les marges, sous l'en-tête comme sous le
+          sélecteur. */}
+      {watchedEntry && freshness && (
+        <div className="parent-section parent-remote-line">
+          <p
+            className={`parent-section-subtitle parent-remote-status${freshness.alert ? ' parent-remote-status--alert' : ''}`}
+          >
+            {freshness.text}
+          </p>
+          {remoteView?.status !== 'revoked' && (
             <button
-              className="parent-action-btn parent-remote-refresh"
-              onClick={() => void refreshRemote(watchedEntry)}
-              disabled={remoteState === null || remoteState === 'loading'}
+              className={`parent-remote-refresh${remoteView?.status === 'refreshing' ? ' is-spinning' : ''}`}
+              onClick={() => void refreshRemote(watchedEntry, remoteSnapshot)}
+              disabled={remoteView?.status === 'refreshing'}
+              aria-label={t.remoteRefresh}
+              title={t.remoteRefresh}
             >
-              {t.remoteRefresh}
+              <RefreshIcon />
             </button>
-          </div>
+          )}
         </div>
       )}
 
@@ -398,7 +437,7 @@ export default function ParentDashboard({
       ) : watchedEntry ? (
         <div className="parent-section">
           <p className="parent-section-subtitle">
-            {remoteState === null || remoteState === 'loading' ? t.remoteLoading : t.remoteNoData}
+            {remoteView ? t.remoteNoData : t.remoteLoading}
           </p>
         </div>
       ) : (

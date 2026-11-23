@@ -481,37 +481,77 @@
 
 /* === Suivi à distance === */
 
-/* Barre de fraîcheur du profil suivi, dans sa section (cf. ParentDashboard). */
-.parent-remote-bar {
+/* Ligne de fraîcheur du profil suivi (cf. ParentDashboard) : une légende,
+   comme celles sous les cartes, et une icône pour actualiser. */
+.parent-remote-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--line);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--sage) 8%, var(--paper));
+  justify-content: center;
+  gap: 8px;
 }
 
+/* Avec .parent-section-subtitle, dont elle prend la typographie. */
 .parent-remote-status {
-  font-size: 13px;
-  color: var(--ink-soft);
+  margin: 0;
+  text-align: center;
 }
 
-.parent-remote-status--error {
+.parent-remote-status--alert {
   color: var(--coral);
+  font-weight: 700;
 }
 
-/* Bouton compact : il vit dans la barre, pas dans une grille d'actions. */
+/* Rond de 28 px, à la manière du bouton retour ; la zone tactile déborde
+   jusqu'à 44 px. */
 .parent-remote-refresh {
+  position: relative;
   flex-shrink: 0;
-  width: auto;
-  padding: 6px 12px;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
 }
 
-.parent-remote-refresh:disabled {
-  opacity: 0.5;
+.parent-remote-refresh::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.parent-remote-refresh svg {
+  width: 17px;
+  height: 17px;
+}
+
+.parent-remote-refresh:active {
+  background: var(--cream-deep);
+}
+
+.parent-remote-refresh.is-spinning svg {
+  animation: parent-remote-spin 0.8s linear infinite;
+}
+
+@keyframes parent-remote-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parent-remote-refresh.is-spinning svg {
+    animation: none;
+  }
+
+  .parent-remote-refresh.is-spinning {
+    opacity: 0.5;
+  }
 }
 
 /* Appairage d'un suivi (cf. ParentWatchPairing) : scanner le QR de l'autre
