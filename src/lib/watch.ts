@@ -132,11 +132,17 @@ export async function readWatchRow(code: string, since: string | null): Promise<
   }
 }
 
-/** Relit et déchiffre l'instantané d'un profil suivi. */
-export async function fetchWatched(creds: WatchCredentials): Promise<WatchFetchResult> {
-  const row = await readWatchRow(creds.code, null);
+/** Relit et déchiffre l'instantané d'un profil suivi. `known`, l'instantané
+ *  déjà en main, est rendu tel quel si le dépôt n'a pas bougé depuis : rien à
+ *  retélécharger ni à redéchiffrer. */
+export async function fetchWatched(
+  creds: WatchCredentials,
+  known: WatchSnapshot | null = null,
+): Promise<WatchFetchResult> {
+  const row = await readWatchRow(creds.code, known?.updatedAt ?? null);
   if (row === 'error') return 'error';
   if (!row) return 'revoked';
+  if (known && row.payload === null) return known;
   const profile = await unpackProfile(row.payload ?? '', creds.key);
   if (!profile) return 'error';
   // Le prénom peut avoir changé depuis l'appairage : on garde le libellé à jour

@@ -142,6 +142,22 @@ describe('côté suiveur (appareil du parent)', () => {
     expect(typeof result === 'object' && result.profile.totalSessions).toBe(42);
   });
 
+  it('rend l’instantané déjà en main si le dépôt n’a pas bougé, le neuf sinon', async () => {
+    const rows = mockWatchServer();
+    const { link, profile, id } = await pairedLink();
+    const creds = parseWatchLink(link)!;
+    const known = (await addWatched(link))!.snapshot;
+
+    // Même objet : ni retéléchargé, ni redéchiffré, ni rendu à nouveau.
+    expect(await fetchWatched(creds, known)).toBe(known);
+    expect(JSON.parse(String(vi.mocked(fetch).mock.lastCall![1]!.body)).p_since).toBe(known.updatedAt);
+
+    await syncProfile(id, { ...profile, totalSessions: 42 });
+    const result = await fetchWatched(creds, known);
+    expect(typeof result === 'object' && result.profile.totalSessions).toBe(42);
+    expect(typeof result === 'object' && result.updatedAt).toBe(rows.get(creds.code)!.updated_at);
+  });
+
   it('signale un partage arrêté côté enfant', async () => {
     mockWatchServer();
     const { link, id } = await pairedLink();

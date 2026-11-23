@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { addProfile, createNewProfile, getActiveProfileId, listProfiles, loadProfile } from '../lib/storage';
 import { createTransfer } from '../lib/transfer';
-import { startWatch, addWatched, fetchWatched, type WatchPairing } from '../lib/watch';
+import { startWatch, addWatched, fetchWatched, packSnapshot, type WatchPairing } from '../lib/watch';
 import { listWatched, loadWatchCredentials } from '../lib/watchStore';
 import { childChip, childChips, sessionsShown } from './helpers/dom';
 import { mockSupabaseServer, mockWatchServer, stubSupabaseEnv } from './helpers/watchServer';
@@ -95,17 +95,17 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('appareil qui ne fait que suivre (aucun profil local)', () => {
-  // Reproduit l'appareil du parent : l'enfant a partagé depuis le sien, le
-  // parent a scanné, et il ne reste QUE l'entrée de suivi en local.
-  async function seedWatcherOnly(name = 'Zoé', totalSessions = 9) {
-    const { link } = await shareChildProgress(name, totalSessions);
-    localStorage.clear();
-    localStorage.setItem('multiplix-lang', 'fr');
-    const paired = await addWatched(link);
-    return { link, paired: paired! };
-  }
+// Reproduit l'appareil du parent : l'enfant a partagé depuis le sien, le
+// parent a scanné, et il ne reste QUE l'entrée de suivi en local.
+async function seedWatcherOnly(name = 'Zoé', totalSessions = 9) {
+  const { link } = await shareChildProgress(name, totalSessions);
+  localStorage.clear();
+  localStorage.setItem('multiplix-lang', 'fr');
+  const paired = await addWatched(link);
+  return { link, paired: paired! };
+}
 
+describe('appareil qui ne fait que suivre (aucun profil local)', () => {
   it('boote sur l’espace parent au lieu de l’onboarding enfant', async () => {
     mockWatchServer({ otherCalls: 'ignore' });
     await seedWatcherOnly();
@@ -629,5 +629,96 @@ describe('appareil mixte : un profil local ET un enfant suivi', () => {
     expect(document.querySelector('.parent-dashboard--settings')).toBeNull();
     expect(document.querySelector('.parent-title')?.textContent).toBe('Zoé');
     expect(sessionsShown()).toBe('30');
+  });
+});
+
+describe('ligne de fraîcheur de l’enfant suivi', () => {
+  const HOUR = 3_600_000;
+
+  // L'appareil du parent suit Zoé (9 séances). Le serveur est à portée :
+  // l'appareil de Zoé y redépose (deposit), ou son dernier dépôt vieillit (age).
+  async function seedFollowing() {
+    const rows = mockWatchServer({ otherCalls: 'ignore' });
+    const { entry } = (await seedWatcherOnly()).paired;
+    const deposit = async (newSessions: number) => {
+      const payload = await packSnapshot(practisingChild('Zoé', newSessions), entry.key);
+      rows.set(entry.code, { payload, updated_at: new Date().toISOString() });
+    };
+    const age = (ms: number) => {
+      rows.get(entry.code)!.updated_at = new Date(Date.now() - ms).toISOString();
+    };
+    return { deposit, age };
+  }
+
+  function line() {
+    const el = document.querySelector('.parent-remote-status');
+    return { text: el?.textContent ?? '', alert: el?.classList.contains('parent-remote-status--alert') ?? false };
+  }
+
+  async function clickRefresh() {
+    await act(async () => {
+      fireEvent.click(document.querySelector('.parent-remote-refresh')!);
+    });
+    await flush();
+  }
+
+  it('dit l’âge des données, puis alerte passé 3 jours sans nouvelles', async () => {
+    const { age } = await seedFollowing();
+    age(HOUR);
+    await renderApp();
+    expect(line()).toEqual({ text: 'Mis à jour il y a 1 heure', alert: false });
+
+    age(5 * 24 * HOUR);
+    await clickRefresh();
+    expect(line()).toEqual({ text: 'Aucune nouvelle de Zoé depuis 5 jours', alert: true });
+  });
+
+  it('actualise sans effacer la progression affichée', async () => {
+    const { deposit } = await seedFollowing();
+    await renderApp();
+    expect(sessionsShown()).toBe('9');
+
+    // Relecture retenue en vol : l'icône tourne, la progression reste.
+    await deposit(10);
+    const fetchMock = vi.mocked(fetch);
+    const serve = fetchMock.getMockImplementation()!;
+    let release!: () => void;
+    fetchMock.mockImplementationOnce(
+      (...args) => new Promise((resolve) => (release = () => resolve(serve(...args)))),
+    );
+    await clickRefresh();
+    expect(document.querySelector('.parent-remote-refresh.is-spinning')).not.toBeNull();
+    expect(sessionsShown()).toBe('9');
+
+    release();
+    await flush();
+    expect(document.querySelector('.parent-remote-refresh.is-spinning')).toBeNull();
+    expect(sessionsShown()).toBe('10');
+  });
+
+  it('une actualisation ratée garde la progression, et le dit', async () => {
+    await seedFollowing();
+    await renderApp();
+
+    vi.mocked(fetch).mockImplementationOnce(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    await clickRefresh();
+    expect(sessionsShown()).toBe('9');
+    expect(line()).toEqual({ text: expect.stringMatching(/^Impossible de récupérer/), alert: true });
+  });
+
+  it('relit la progression au retour de l’appli au premier plan', async () => {
+    const { deposit } = await seedFollowing();
+    await renderApp();
+
+    // jsdom (pretendToBeVisual) se dit déjà visible : l'événement suffit.
+    await deposit(10);
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await flush();
+    expect(sessionsShown()).toBe('10');
+    expect(line()).toEqual({ text: "Mis à jour à l'instant", alert: false });
   });
 });
