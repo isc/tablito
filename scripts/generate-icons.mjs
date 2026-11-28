@@ -2,12 +2,13 @@
 // Rasterise public/icons/icon.svg (master 1024×1024) vers les PNG utilisés
 // par la PWA et les navigateurs : icon-192, icon-512, apple-touch-icon (180).
 //
-// Le `-v2` des deux premiers compte : une icône redessinée change de nom de
-// fichier (`-v3`, ici et partout où le nom est cité). Chrome régénère une PWA
-// Android installée quand son manifeste change, mais une image remplacée à la
-// même adresse ne suit pas : le Piou redessiné du 2026-09-23 n'était toujours
-// pas sur le téléphone d'Ivan deux mois plus tard, mise à jour de la WebAPK du
-// 4 novembre comprise (`chrome://webapks`).
+// Une app déjà installée depuis Chrome sur Android garde l'icône de son
+// installation : au-delà de 11 % de différence environ, Chrome garde l'ancienne,
+// sans dialogue ni erreur, tout en mettant à jour le reste du manifeste
+// (`WEB_APK_ICON_UPDATE_BLOCKED_AT_PERCENTAGE` dans `WebApkUpdateManager.java`
+// de Chromium ; `chrome://webapks` affiche « Succeeded »). Renommer les
+// fichiers n'y change rien, essayé le 2026-11-28 : seule une désinstallation
+// suivie d'une réinstallation donne la nouvelle icône.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -18,8 +19,8 @@ const iconsDir = join(here, '..', 'public', 'icons');
 const masterPath = join(iconsDir, 'icon.svg');
 
 const targets = [
-  { name: 'icon-192-v2.png', size: 192 },
-  { name: 'icon-512-v2.png', size: 512 },
+  { name: 'icon-192.png', size: 192 },
+  { name: 'icon-512.png', size: 512 },
   { name: 'apple-touch-icon.png', size: 180 },
 ];
 
