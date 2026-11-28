@@ -36,7 +36,7 @@
 // Les marqueurs de version, de base path et de liste d'assets sont
 // substitués par scripts/build.mjs.
 
-const VERSION = "20261128094603"
+const VERSION = "20261128100444"
 const CACHE = 'tablito-' + VERSION
 const BASE = "/"
 const ASSETS = [
@@ -47,8 +47,8 @@ const ASSETS = [
   "/fonts/jetbrains-mono-normal-k6OThhvA.woff2",
   "/fonts/nunito-normal-aBTMnFcQ.woff2",
   "/icons/apple-touch-icon.png",
-  "/icons/icon-192-v2.png",
-  "/icons/icon-512-v2.png",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
   "/icons/icon.svg",
   "/index.html",
   "/manifest.en.webmanifest",
@@ -354,8 +354,8 @@ self.addEventListener('push', (e) => {
   e.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: BASE + 'icons/icon-192-v2.png',
-      badge: BASE + 'icons/icon-192-v2.png',
+      icon: BASE + 'icons/icon-192.png',
+      badge: BASE + 'icons/icon-192.png',
       tag,
       data: { url },
     })
